@@ -67,6 +67,30 @@ class AndroidDownloadRemovalSafetyTest {
             .getDeclaredField("downloadScheduler").apply { isAccessible = true }
         val previousScheduler = schedulerField.get(DownloadsPlatformDownloader)
         try {
+            val reopened = AndroidDownloadScheduler(completed.scheduler.context)
+            val persisted = reopened.store.get(completed.item.fileName)
+            assertTrue(isPrivateStarlitDownloadFile(completed.scheduler.directory, completed.file),
+                "Fixture media must be inside its verified private downloads directory")
+            assertTrue(persisted != null,
+                "Fixture transfer must survive store reopening; records=${reopened.store.transfers.value.keys}")
+            if (persisted.item.status != DownloadStatus.Completed) {
+                // Windows Robolectric can leave the first AtomicFile value on
+                // disk after the fixture's update. Recreate only this test
+                // record, with the final state, before simulating process death.
+                val records = File(completed.scheduler.context.filesDir, "download-transfers")
+                val record = requireNotNull(records.listFiles().orEmpty().firstOrNull {
+                    it.name.endsWith(".json") && it.readText().contains(completed.item.id)
+                })
+                android.util.AtomicFile(record).delete()
+                val current = requireNotNull(completed.scheduler.store.get(completed.item.fileName))
+                completed.scheduler.store.update(current.item.fileName, current.generation) { it }
+            }
+            val finalized = requireNotNull(AndroidDownloadScheduler(completed.scheduler.context)
+                .store.get(completed.item.fileName))
+            assertEquals(profileId, finalized.profileId)
+            assertEquals(DownloadStatus.Completed, finalized.item.status)
+            assertEquals(completed.item.localFileUri, finalized.item.localFileUri)
+
             // Model a newly launched Activity with a store that has not been opened.
             schedulerField.set(DownloadsPlatformDownloader, null)
             DownloadsPlatformDownloader.initialize(completed.scheduler.context)
