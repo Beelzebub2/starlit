@@ -1,6 +1,7 @@
 /* eslint-disable no-unused-vars */
 import * as internals from "./playerScreenContext.js";
 import { LastPlaybackStore } from "../../../data/local/lastPlaybackStore.js";
+import { canContinueTizenFirstFrameWait } from "../../../core/player/tizenFirstFrameBudget.js";
 export function createPlayerScreenMethods34() {
   const {
     PlayerController,
@@ -53,6 +54,18 @@ export function createPlayerScreenMethods34() {
       const previousSourceCandidate = this.getCurrentStreamCandidate();
       const sourceCandidate =
         explicitSourceCandidate || this.getStreamCandidateByUrl(normalizedStreamUrl) || this.getCurrentStreamCandidate();
+      if (Environment.isTizen()) {
+        // Keep one first-frame deadline across native player retries, redirects
+        // and EngineFS restarts. An explicit new source or user retry gets a
+        // fresh budget, but an automatic fallback cannot buy infinite time.
+        const sourceKey = String(sourceCandidate?.infoHash || sourceCandidate?.url || normalizedStreamUrl);
+        const manualRetry = !preservePanel && !preservePlaybackState && this.isStartupErrorVisible?.();
+        const sourceChanged = this.tizenFirstFrameSourceKey !== sourceKey && !preservePlaybackState;
+        if (!this.tizenFirstFrameStartedAt || manualRetry || sourceChanged) {
+          this.tizenFirstFrameStartedAt = Date.now();
+          this.tizenFirstFrameSourceKey = sourceKey;
+        }
+      }
       const preserveWebOsTrackSelections = this.shouldPreserveWebOsTrackSelections(
         previousSourceCandidate,
         sourceCandidate,
