@@ -210,8 +210,11 @@ function start(options, callback) {
           requestSelection();
           return;
         }
-        deselect();
         position += count; waiting = false;
+        // Retain the selected verified piece while this range reads further
+        // 256 KiB chunks from it. Releasing after each chunk could let
+        // distant ranges evict this piece and trigger repeated downloads.
+        if (position > end || Math.floor(position / engine.torrent.pieceLength) !== piece) deselect();
         stream.push(buffer);
         if (position > end) stream.push(null);
       });
@@ -219,7 +222,8 @@ function start(options, callback) {
     stream._read = function () {
       if (dead || waiting || position > end) return;
       waiting = true;
-      requestSelection();
+      if (selected >= 0) notify();
+      else requestSelection();
     };
     stream.destroy = function () {
       if (dead) return; dead = true; unqueue(); deselect();
