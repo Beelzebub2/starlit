@@ -4,16 +4,17 @@
 // and the HTTP cache without allocating or downloading a multi-gigabyte file.
 var assert = require('assert'), crypto = require('crypto'), net = require('net'), http = require('http');
 var Wire = require('peer-wire-protocol'), bncode = require('bncode'), runtime = require('./media-http.cjs');
-var MiB = 1024 * 1024, pieceLength = 4 * MiB, pieceCount = 870, total = pieceLength * pieceCount;
-var head = new Buffer(pieceLength), tail = new Buffer(pieceLength), hashes = new Buffer(pieceCount * 20);
-head.fill(17); tail.fill(41); hashes.fill(0);
+var MiB = 1024 * 1024, pieceLength = 16 * MiB, pieceCount = 218, middleIndex = Math.floor(pieceCount / 2), total = pieceLength * pieceCount;
+var head = new Buffer(pieceLength), middle = new Buffer(pieceLength), tail = new Buffer(pieceLength), hashes = new Buffer(pieceCount * 20);
+head.fill(17); middle.fill(29); tail.fill(41); hashes.fill(0);
 crypto.createHash('sha1').update(head).digest().copy(hashes, 0);
+crypto.createHash('sha1').update(middle).digest().copy(hashes, middleIndex * 20);
 crypto.createHash('sha1').update(tail).digest().copy(hashes, (pieceCount - 1) * 20);
 var metadata = bncode.encode({ name: 'synthetic-video.mkv', length: total,
   'piece length': pieceLength, pieces: hashes });
 var hash = crypto.createHash('sha1').update(metadata).digest('hex');
 var secret = new Buffer(32); secret.fill(12); secret = secret.toString('hex');
-var seed, service, port, sockets = [], mediaPieces = Object.create(null), finished = false;
+var seed, service, port, sockets = [], mediaPieces = Object.create(null), firstRequestByPiece = Object.create(null), finished = false;
 var watchdog = setTimeout(function () { finish(new Error('Large media regression watchdog')); }, 30000);
 function finish(error) {
   if (finished) return;
@@ -74,6 +75,7 @@ seed = net.createServer(function (socket) {
     wire.handshake(hash, '-STSEED-123456789012', { extended: true });
     var bits = new Buffer(Math.ceil(pieceCount / 8)); bits.fill(0);
     bits[0] |= 128;
+    bits[middleIndex >> 3] |= 128 >> (middleIndex % 8);
     bits[(pieceCount - 1) >> 3] |= 128 >> ((pieceCount - 1) % 8);
     wire.bitfield({ buffer: bits }); wire.unchoke();
   });
@@ -94,9 +96,15 @@ seed = net.createServer(function (socket) {
   });
   wire.on('request', function (index, offset, length, cb) {
     seededRequests++;
-    if (index !== 0 && index !== pieceCount - 1) return finish(new Error('Unexpected piece ' + index));
+    if (index !== 0 && index !== middleIndex && index !== pieceCount - 1) return finish(new Error('Unexpected piece ' + index));
     mediaPieces[index] = true;
-    var data = index === 0 ? head : tail;
+    var data = index === 0 ? head : index === middleIndex ? middle : tail;
+    // Keep one block missing per active piece briefly so stats can observe
+    // the third AVPlay range waiting instead of all downloads finishing first.
+    if (!firstRequestByPiece[index]) {
+      firstRequestByPiece[index] = true;
+      return setTimeout(function () { cb(null, data.slice(offset, offset + length)); }, 500);
+    }
     cb(null, data.slice(offset, offset + length));
   });
 });
@@ -128,12 +136,20 @@ seed.listen(0, '127.0.0.1', function () {
       ticket = result.playbackTicket;
       assert(/^[a-f0-9]{64}$/.test(ticket));
       assert.equal(seededRequests, 0, 'Metadata resolution must not preload video');
-      return Promise.all([
+      var ranges = Promise.all([
         getRange(0, 65535, head.slice(0, 65536)),
+        getRange(middleIndex * pieceLength, middleIndex * pieceLength + 65535, middle.slice(0, 65536)),
         getRange(total - 65536, total - 1, tail.slice(pieceLength - 65536))
       ]);
+      return delay(100).then(stats).then(function (report) {
+        var state = JSON.parse(report.body.toString());
+        assert.equal(state.pieceSelectionLimit, 2, 'Large pieces must use two active slots');
+        assert.equal(state.activePieceSelections, 2, 'Two pieces should be actively selected');
+        assert.equal(state.queuedPieceSelections, 1, 'Third AVPlay range must queue, not fail');
+        return ranges;
+      });
     }).then(function () {
-      assert(mediaPieces[0] && mediaPieces[pieceCount - 1], 'Both video ends must be downloaded');
+      assert(mediaPieces[0] && mediaPieces[middleIndex] && mediaPieces[pieceCount - 1], 'Head, middle and tail must be downloaded');
       return stats(true);
     }).then(function (res) {
       assert.equal(res.status, 200);
@@ -141,6 +157,8 @@ seed.listen(0, '127.0.0.1', function () {
       assert.equal(ready.state, 'ready');
       assert.equal(ready.pieceLengthBytes, pieceLength);
       assert.equal(ready.pieceCount, pieceCount);
+      assert.equal(ready.pieceSelectionLimit, 2);
+      assert.equal(ready.queuedPieceSelections, 0);
       assert(ready.lastPieceAgeMs >= 0);
       assert(ready.cache.bytes <= 48 * MiB, 'Completed-piece cache exceeded memory cap');
       finish();
