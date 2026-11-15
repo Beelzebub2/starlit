@@ -162,15 +162,15 @@ function observeOrHydrate(image) {
   }
   observer.observe(image);
   // Some TV engines deliver the first IntersectionObserver callback late on
-  // the first frame. Hydrate an already visible image now; the pending flag
-  // keeps the observer callback from starting the same job twice.
+  // the first frame. Queue already visible images now; constrained TVs use
+  // the same per-frame budget while other TVs still hydrate immediately.
   const rect = image.getBoundingClientRect();
   const visible =
     rect.bottom > 0 &&
     rect.top < (Number(globalThis.innerHeight) || 0) &&
     rect.right > 0 &&
     rect.left < (Number(globalThis.innerWidth) || 0);
-  if (visible) hydrate(image);
+  if (visible) scheduleHydration(image);
 }
 function prepareImage(image) {
   if (!isLazyArtworkImage(image)) return;
