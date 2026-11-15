@@ -170,7 +170,11 @@ function observeOrHydrate(image) {
     rect.top < (Number(globalThis.innerHeight) || 0) &&
     rect.right > 0 &&
     rect.left < (Number(globalThis.innerWidth) || 0);
-  if (visible) scheduleHydration(image);
+  if (visible) {
+    // A late observer callback must not schedule a second decode.
+    observer?.unobserve?.(image);
+    scheduleHydration(image);
+  }
 }
 function prepareImage(image) {
   if (!isLazyArtworkImage(image)) return;
