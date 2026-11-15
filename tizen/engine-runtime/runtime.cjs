@@ -205,8 +205,8 @@ function start(options, callback) {
           // A cache eviction can race an AVPlay seek. Drop the old selection
           // before retrying so the torrent scheduler does not accumulate
           // duplicate high-priority selections during repeated cache misses.
-          deselect();
           engine.invalidate(piece);
+          deselect();
           requestSelection();
           return;
         }
