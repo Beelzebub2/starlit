@@ -6,7 +6,20 @@ var usbCache = require('./usb-cache.cjs');
 var networkPolicy = require('./network-policy.cjs'), net = require('net');
 var MAX_CACHE = 48 * 1024 * 1024, MAX_PIECE = 32 * 1024 * 1024;
 var MAX_FILES = 1024, MAX_PIECES = 65536, MAX_TORRENT_BYTES = 1024 * 1024 * 1024 * 1024;
-var MAX_MEDIA_STREAMS = 4;
+var MAX_MEDIA_STREAMS = 4, MAX_MEDIA_READ_CHUNK = 256 * 1024;
+function mediaSelectionLimit(pieceLength) {
+  // Cap simultaneous in-flight full-piece buffers, not HTTP connections.
+  // A 32 MiB torrent piece can occupy far more RAM than a 256 KiB HTTP read.
+  if (pieceLength >= 16 * 1024 * 1024) return 2;
+  if (pieceLength >= 8 * 1024 * 1024) return 3;
+  return MAX_MEDIA_STREAMS;
+}
+function mediaReadLength(position, end, pieceLength, torrentLength) {
+  // A large AVPlay range must not queue an entire 32 MiB torrent piece as
+  // one HTTP buffer. Keep reads bounded even for multi-gigabyte video files.
+  var offset = position % pieceLength;
+  return Math.min(MAX_MEDIA_READ_CHUNK, pieceLength - offset, torrentLength - position, end - position + 1);
+}
 var PROBE = new Buffer('starlit-range-probe-v1');
 function validateTorrent(t) {
   if (!t || !Array.isArray(t.files) || !Array.isArray(t.pieces) || !t.files.length || !t.pieces.length) {
@@ -77,7 +90,7 @@ function start(options, callback) {
           trackers.push(tracker);
         });
       } catch (err) { return json(res, 400, { error: err.message }); }
-      var entry = { hash: hash, tickets: Object.create(null), pending: [res], ready: false, streams: [], timer: null, engine: null, cache: null };
+      var entry = { hash: hash, tickets: Object.create(null), pending: [res], ready: false, streams: [], timer: null, engine: null, cache: null, cacheReadRetries: 0, startedAt: Date.now(), lastPieceAt: 0, activeSelections: 0, selectionQueue: [] };
       var invalidate = function (index) { if (entry.engine && entry.engine.invalidate) entry.engine.invalidate(index); };
       var cache = usbProfile ? usbCache.create(usbProfile, invalidate, function () { usbProfile = null; }) :
         createCache(Math.min(options.cacheBytes || MAX_CACHE, MAX_CACHE), invalidate);
@@ -90,6 +103,7 @@ function start(options, callback) {
         if (entry.pending) { entry.pending.forEach(function (r) { json(r, 502, { error: entry.error }); }); entry.pending = []; }
         if (active === entry) remove();
       });
+      entry.engine.on('download', function () { entry.lastPieceAt = Date.now(); });
       entry.engine.on('ready', function () {
         if (active !== entry) return;
         clearTimeout(entry.timer); entry.ready = true;
@@ -127,42 +141,92 @@ function start(options, callback) {
     var r = headers(res, req, file.length, mime[extension && extension[1].toLowerCase()] || 'application/octet-stream');
     if (!r) return;
     if (req.method === 'HEAD') return res.end();
-    var engine = entry.engine, position = file.offset + r.start, end = file.offset + r.end, waiting = false, selected = -1, dead = false;
+    var engine = entry.engine, position = file.offset + r.start, end = file.offset + r.end, waiting = false, reading = false, selected = -1, dead = false, queued = false, queuedCallback = null;
     var stream = new Readable(); entry.streams.push(stream);
     function detach() {
       var index = entry.streams.indexOf(stream);
       if (index >= 0) entry.streams.splice(index, 1);
     }
-    function deselect() { if (selected >= 0) { engine.deselect(selected, selected, true, notify); selected = -1; } }
+    function promoteWaiting() {
+      if (active !== entry) return;
+      var max = mediaSelectionLimit(engine.torrent.pieceLength);
+      while (entry.activeSelections < max && entry.selectionQueue.length) {
+        var next = entry.selectionQueue.shift();
+        if (next) next();
+      }
+    }
+    function unqueue() {
+      if (!queued) return;
+      queued = false;
+      var index = entry.selectionQueue.indexOf(queuedCallback);
+      if (index >= 0) entry.selectionQueue.splice(index, 1);
+      queuedCallback = null;
+    }
+    function deselect() {
+      if (selected < 0) return;
+      var old = selected;
+      selected = -1;
+      engine.deselect(old, old, true, notify);
+      entry.activeSelections = Math.max(0, entry.activeSelections - 1);
+      promoteWaiting();
+    }
+    function requestSelection() {
+      if (dead || !waiting || reading || selected >= 0) return;
+      if (entry.activeSelections >= mediaSelectionLimit(engine.torrent.pieceLength)) {
+        if (!queued) {
+          queued = true;
+          queuedCallback = function () { queued = false; queuedCallback = null; requestSelection(); };
+          entry.selectionQueue.push(queuedCallback);
+        }
+        return;
+      }
+      unqueue();
+      selected = Math.floor(position / engine.torrent.pieceLength);
+      entry.activeSelections++;
+      engine.select(selected, selected, true, notify);
+      notify();
+    }
     function notify() {
-      if (dead || !waiting || selected < 0 || !engine.bitfield.get(selected)) return;
-      var piece = selected; waiting = false;
+      if (dead || !waiting || reading || selected < 0 || !engine.bitfield.get(selected)) return;
+      var piece = selected;
       var pieceStart = piece * engine.torrent.pieceLength;
       var offset = position - pieceStart;
-      var pieceBytes = Math.min(engine.torrent.pieceLength, engine.torrent.length - pieceStart);
-      var count = Math.min(pieceBytes - offset, end - position + 1);
+      var count = mediaReadLength(position, end, engine.torrent.pieceLength, engine.torrent.length);
       if (offset < 0 || count <= 0) return stream.destroy();
-      // A small AVPlay HTTP range should not read a whole large cached piece
-      // from removable storage. The torrent engine has already verified it.
+      // Preserve backpressure and event-loop responsiveness: read at most
+      // 256 KiB per pull, never a whole 32 MiB piece for an open-ended range.
+      // Keep the pending state until the asynchronous cache read completes.
+      reading = true;
       engine.store.get(piece, { offset: offset, length: count }, function (err, buffer) {
+        reading = false;
         if (dead) return;
         if (err || !buffer || buffer.length !== count) {
+          entry.cacheReadRetries++;
+          // A cache eviction can race an AVPlay seek. Drop the old selection
+          // before retrying so the torrent scheduler does not accumulate
+          // duplicate high-priority selections during repeated cache misses.
           engine.invalidate(piece);
-          waiting = true;
-          return engine.select(piece, piece, true, notify);
+          deselect();
+          requestSelection();
+          return;
         }
-        deselect();
-        position += count; stream.push(buffer);
+        position += count; waiting = false;
+        // Retain the selected verified piece while this range reads further
+        // 256 KiB chunks from it. Releasing after each chunk could let
+        // distant ranges evict this piece and trigger repeated downloads.
+        if (position > end || Math.floor(position / engine.torrent.pieceLength) !== piece) deselect();
+        stream.push(buffer);
         if (position > end) stream.push(null);
       });
     }
     stream._read = function () {
       if (dead || waiting || position > end) return;
-      waiting = true; selected = Math.floor(position / engine.torrent.pieceLength);
-      engine.select(selected, selected, true, notify); notify();
+      waiting = true;
+      if (selected >= 0) notify();
+      else requestSelection();
     };
     stream.destroy = function () {
-      if (dead) return; dead = true; deselect();
+      if (dead) return; dead = true; unqueue(); deselect();
       detach();
       stream.unpipe(res); stream.emit('close'); if (!res.finished) res.destroy();
       // Cancel incomplete pieces only after the last range closes. A seek or
@@ -170,7 +234,7 @@ function start(options, callback) {
       if (!entry.streams.length && engine.releasePending) engine.releasePending();
     };
     stream.on('error', function () { stream.destroy(); });
-    res.on('close', stream.destroy); stream.on('end', function () { dead = true; deselect(); detach(); });
+    res.on('close', stream.destroy); stream.on('end', function () { dead = true; unqueue(); deselect(); detach(); });
     stream.pipe(res);
   }
   server = http.createServer(function (req, res) {
@@ -246,23 +310,35 @@ function start(options, callback) {
       req.on('data', function (chunk) { size += chunk.length; if (size > 16384) { failed = true; chunks = []; json(res, 413, { error: 'Request too large' }); } else if (!failed) chunks.push(chunk); });
       req.on('end', function () { if (failed) return; try { create(m[1], JSON.parse(Buffer.concat(chunks).toString()), res); } catch (err) { json(res, 400, { error: 'Invalid create request' }); } }); return;
     }
-    if (!active || active.hash !== m[1] || !active.ready) return json(res, 404, { error: 'Torrent unavailable' });
+    if (!active || active.hash !== m[1]) return json(res, 404, { error: 'Torrent unavailable' });
     if (m[2] === 'stats' && req.method === 'GET') {
       if (req.headers['x-starlit-token'] !== options.controlToken) return json(res, 403, { error: 'Trusted control token required' });
-      // Private, on-demand process metrics for physical-device memory QA.
-      // These describe the Node service process, not the TV's total memory or AVPlay.
-      var usage = process.memoryUsage();
+      // Metadata discovery can stall before the old stats route became
+      // available. Keep diagnostics private throughout the create lifecycle.
+      // These are Node service metrics, not total TV/AVPlay memory.
+      var usage = process.memoryUsage(), now = Date.now();
+      var torrent = active.ready ? active.engine.torrent : null;
       return json(res, 200, {
         infoHash: active.hash,
+        state: active.ready ? 'ready' : 'metadata',
+        metadataElapsedMs: Math.max(0, now - active.startedAt),
         peers: active.engine.swarm.wires.length,
         downloaded: active.engine.swarm.downloaded,
         downloadSpeed: active.engine.swarm.downloadSpeed(),
         activeRanges: active.streams.length,
+        activePieceSelections: active.activeSelections,
+        queuedPieceSelections: active.selectionQueue.length,
+        pieceSelectionLimit: torrent ? mediaSelectionLimit(torrent.pieceLength) : null,
+        cacheReadRetries: active.cacheReadRetries,
+        pieceLengthBytes: torrent ? torrent.pieceLength : null,
+        pieceCount: torrent ? torrent.pieces.length : null,
+        lastPieceAgeMs: active.lastPieceAt ? Math.max(0, now - active.lastPieceAt) : null,
         cache: active.cache.stats,
         memory: { rssBytes: usage.rss, heapUsedBytes: usage.heapUsed, heapTotalBytes: usage.heapTotal },
         uptimeSeconds: process.uptime()
       });
     }
+    if (!active.ready) return json(res, 404, { error: 'Torrent unavailable' });
     if (/^\d+$/.test(m[2]) && (req.method === 'GET' || req.method === 'HEAD')) { var suppliedTicket = url.parse(req.url, true).query.ticket; if (!suppliedTicket || suppliedTicket !== active.tickets[Number(m[2])]) return json(res, 403, { error: 'Playback ticket required' }); return media(req, res, active, Number(m[2])); }
     json(res, 405, { error: 'Method unavailable' });
   });
@@ -273,4 +349,4 @@ function start(options, callback) {
   server.listen(port, '127.0.0.1', callback);
   return { server: server, stop: function (cb) { stopping = true; remove(function () { sockets.slice().forEach(function (s) { s.destroy(); }); server.close(cb); }); } };
 }
-module.exports = { start: start, validateTorrent: validateTorrent, version: 'starlit-torrent-1' };
+module.exports = { start: start, validateTorrent: validateTorrent, mediaReadLength: mediaReadLength, mediaSelectionLimit: mediaSelectionLimit, version: 'starlit-torrent-1' };
