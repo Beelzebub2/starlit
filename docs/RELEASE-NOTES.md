@@ -1,3 +1,17 @@
+## Starlit 1.27.1
+
+### TV packaging and release reliability
+
+- **Release recovery:** The v1.27.0 tag was superseded before stable installers were published after a webOS packaging-check regression was found. This patch carries forward its merged improvements with the corrected TV verification.
+- **LG webOS developer package:** Correct the release-repository identity verification after the GitHub migration, allowing the existing LG packaging pipeline to validate the canonical Starlit source.
+- **TV installer and phone-to-TV features:** Rebuild the merged v1.27.0 improvements with the current Windows TV installer runtime and unchanged Samsung/LG application identities.
+
+### Compatibility and verification
+
+- This is a compatible patch update. No playback, account, storage, pairing or data-format changes were introduced beyond the v1.27.0 source.
+- Windows, signed Android phone and Android TV, and Linux installers publish only after the tagged platform builds, signature, checksum and provenance checks succeed.
+- Samsung Tizen WGT, LG webOS IPK and the Windows TV installer are separate **developer previews**, not physically accepted stable packages. Samsung per-device signing and Developer Mode, LG developer pairing, and hardware playback/remote/USB checks remain necessary. Upstream webOS CLI dependency security advisories remain outstanding. No iOS App Store release is included.
+
 ## Starlit 1.27.0
 
 ### Playback, library and settings
