@@ -51,8 +51,10 @@ import {
 } from "./core/deeplink/launchDeepLink.js";
 // These legacy Web-only overrides are no longer user settings. Navigation now
 // uses the stable grid algorithm and simulator detection automatically.
-LocalStore.remove("strictDpadGridNavigation");
-LocalStore.remove("rotatedDpadMapping");
+runAfterFirstHomePaint(() => {
+  LocalStore.remove("strictDpadGridNavigation");
+  LocalStore.remove("rotatedDpadMapping");
+});
 (function applyLegacyPatches() {
   const originalGetElementById = document.getElementById;
   document.getElementById = function (id) {
@@ -662,10 +664,14 @@ async function bootstrapApp() {
   }
   PlayerController.init();
   installCustomPosterFallback();
-  preloadMaterialIconFont();
   installWebOsImgurImageFallback();
+  // Both the large icon font and ambient-mode timers are optional before the
+  // first route. Avoid competing with Home's first catalog rows on Tizen 5.
+  runAfterFirstHomePaint(() => {
+    preloadMaterialIconFont();
+    AmbientMode.start();
+  });
   // Media-server account sync is unavailable; user-configured servers remain local.
-  AmbientMode.start();
   FocusEngine.init();
   setupProviderCredentialForegroundLifecycle();
   setupTizenPlaybackLifecycle();

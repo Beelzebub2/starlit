@@ -46,6 +46,49 @@ Optional plugin/QuickJS, HLS and DASH assets appear in the distribution but are
 not evidence that all those assets execute at startup. Check actual script
 requests and parse stacks rather than treating package size as launch memory.
 
+## Bounded legacy runtime work (new, device acceptance pending)
+
+- **First-frame deadline:** Tizen playback has a 90-second absolute first-frame
+  clock per selected source. AVPlay reporting READY and EngineFS continuing to
+  download cannot postpone the startup error indefinitely. Automatic fallback
+  retains the clock; a new source or explicit retry resets it. Successful
+  timeline advancement clears the clock. This improves error recovery rather
+  than proving that a failed codec/torrent starts playing.
+- **Browser HLS memory:** constrained Tizen uses a 24-second forward MSE window
+  and a 32 MiB hls.js buffer target; native AVPlay and nonconstrained TVs keep
+  their existing policy. Confirm that high-bitrate FHD HLS does not rebuffer.
+- **Artwork and background:** third-party HTTP images on targeted Library,
+  Search, see-all and related-title poster surfaces now use the same
+  IntersectionObserver visibility gate as trusted TMDB assets on constrained
+  TVs, with direct IMG hydration (no CORS worker) and a five-images-per-frame
+  dispatch budget. Eligible TMDB poster sources use the existing panel-aware
+  CDN normalization instead of decoding oversized originals. Image observation/
+  queued work pauses when hidden and re-observes unresolved placeholders upon
+  foregrounding.
+- **Navigation:** the generic D-pad nearest-row/column selection no longer
+  allocates and sorts repeated full candidate lists. The opt-in frame budget
+  diagnostic now uses a fixed ring buffer rather than shifting hundreds of
+  samples on every frame. DOM geometry remains screen-specific and still
+  needs remote key-to-focus hardware traces.
+- **Boot deferral:** two retired navigation settings, optional ambient-mode
+  timers and icon font preloading are deferred beyond first paint; the
+  fallback for sessions that never reach Home is 8 seconds on constrained TVs
+  instead of 2.5 seconds, avoiding additional work during slow initial routes.
+  This does **not** split the monolithic app bundle or prove faster parse time.
+- **UHD HLS:** known explicit 4K/2160p/HDR resolution labels are recognized
+  even with suffixes; sources with truly unknown resolution still keep the
+  existing conservative browser-first fallback.
+- **CI coverage:** first-frame deadline behavior, direction selection, HLS
+  buffer budgets, artwork suspension and hydration, and UHD labels have
+  dedicated regression tests. Chrome 56/Tizen 4 remains the configured build
+  baseline; no unverified module-loader or dynamic import requirement is added.
+
+The remaining highest-impact launch opportunity is to split nonessential
+screens out of the ~3.9 MiB app IIFE **without** losing Tizen 4 support. That
+is an architectural task requiring a compatible fallback build, exact-asset
+browser tests, and signed hardware comparisons. Node CI and simulated browser
+captures are not release acceptance on retail 2019 sets.
+
 ## Repeatable physical-TV protocol
 
 1. Record firmware, free storage, active app version, signed WGT SHA-256 and the

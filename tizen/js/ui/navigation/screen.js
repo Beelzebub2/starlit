@@ -1,4 +1,5 @@
 import { focusWithoutScroll } from "./focusWithoutScroll.js";
+import { pickDirectionalTarget } from "./directionalFocusTarget.js";
 // The incoming screen fades and rises once (css/starlit-ui.css). The class is
 // removed after the animation so the screen does not keep a compositor layer.
 export const SCREEN_ENTER_CLASS = "tv-screen-enter";
@@ -136,89 +137,7 @@ export const ScreenUtils = {
       focusWithoutScroll(current);
       return;
     }
-    const currentRect = rects.get(current) || current.getBoundingClientRect();
-    const cx = currentRect.left + currentRect.width / 2;
-    const cy = currentRect.top + currentRect.height / 2;
-    const candidates = list
-      .filter((node) => node !== current)
-      .map((node) => {
-        const rect = rects.get(node);
-        const nx = rect.left + rect.width / 2;
-        const ny = rect.top + rect.height / 2;
-        const dx = nx - cx;
-        const dy = ny - cy;
-        return { node, rect, dx, dy };
-      })
-      .filter(({ dx, dy }) => {
-        if (direction === "up") return dy < -2;
-        if (direction === "down") return dy > 2;
-        if (direction === "left") return dx < -2;
-        if (direction === "right") return dx > 2;
-        return false;
-      })
-      .map((entry) => {
-        const primary =
-          direction === "up" || direction === "down" ? Math.abs(entry.dy) : Math.abs(entry.dx);
-        const secondary =
-          direction === "up" || direction === "down" ? Math.abs(entry.dx) : Math.abs(entry.dy);
-        const axisTolerance =
-          direction === "up" || direction === "down"
-            ? Math.max(currentRect.width * 0.7, entry.rect.width * 0.7, 48)
-            : Math.max(currentRect.height * 0.7, entry.rect.height * 0.7, 48);
-        const aligned =
-          direction === "up" || direction === "down"
-            ? secondary <= axisTolerance
-            : secondary <= axisTolerance;
-        return {
-          ...entry,
-          aligned,
-          score: primary * 1000 + secondary
-        };
-      });
-    let target = null;
-    if (direction === "up" || direction === "down") {
-      const nearestPrimary = candidates.reduce((min, entry) => {
-        const primary = Math.abs(entry.dy);
-        return Math.min(min, primary);
-      }, Number.POSITIVE_INFINITY);
-      const rowTolerance = Math.max(currentRect.height * 0.9, 42);
-      const nearestRow = candidates.filter((entry) => {
-        const primary = Math.abs(entry.dy);
-        return primary <= nearestPrimary + rowTolerance;
-      });
-      const alignedInRow = nearestRow
-        .filter((entry) => entry.aligned)
-        .sort((left, right) => Math.abs(left.dx) - Math.abs(right.dx));
-      const rowSorted = nearestRow.sort((left, right) => {
-        const sec = Math.abs(left.dx) - Math.abs(right.dx);
-        if (sec !== 0) {
-          return sec;
-        }
-        return Math.abs(left.dy) - Math.abs(right.dy);
-      });
-      target = alignedInRow[0]?.node || rowSorted[0]?.node || null;
-    } else {
-      const nearestPrimary = candidates.reduce((min, entry) => {
-        const primary = Math.abs(entry.dx);
-        return Math.min(min, primary);
-      }, Number.POSITIVE_INFINITY);
-      const columnTolerance = Math.max(currentRect.width * 0.9, 42);
-      const nearestColumn = candidates.filter((entry) => {
-        const primary = Math.abs(entry.dx);
-        return primary <= nearestPrimary + columnTolerance;
-      });
-      const alignedInColumn = nearestColumn
-        .filter((entry) => entry.aligned)
-        .sort((left, right) => Math.abs(left.dy) - Math.abs(right.dy));
-      const columnSorted = nearestColumn.sort((left, right) => {
-        const sec = Math.abs(left.dy) - Math.abs(right.dy);
-        if (sec !== 0) {
-          return sec;
-        }
-        return Math.abs(left.dx) - Math.abs(right.dx);
-      });
-      target = alignedInColumn[0]?.node || columnSorted[0]?.node || null;
-    }
+    const target = pickDirectionalTarget(list, current, direction, rects);
     if (!target) {
       return;
     }

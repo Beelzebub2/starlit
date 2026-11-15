@@ -11,7 +11,7 @@ const source = (await readFile(new URL("./tvArtworkLazyLoader.js", import.meta.u
   .replace(/^import [^;]+;$/gm, "")
   .replace(/^export /gm, "");
 const TRANSPARENT_PIXEL = "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
-function buildContext({ rescaler = true } = {}) {
+function buildContext({ rescaler = true, constrained = false } = {}) {
   const pending = [];
   const released = [];
   const context = vm.createContext({
@@ -28,8 +28,9 @@ function buildContext({ rescaler = true } = {}) {
       }),
     resetArtworkRescaler: () => {},
     shouldRescaleHomeArtwork: () => rescaler,
-    getTvRuntimePerformanceProfile: () => ({ isTvRuntime: true }),
+    getTvRuntimePerformanceProfile: () => ({ isTvRuntime: true, isPerformanceConstrained: constrained }),
     getTvArtworkPixelRatio: () => 1,
+    normalizeTmdbPosterUrl: (url) => url.replace("/t/p/original/", "/t/p/w342/"),
     registerSessionTeardownHandler: () => {}
   });
   context.globalThis = context;
@@ -184,4 +185,152 @@ test("TV without an image worker or IntersectionObserver keeps the native image 
   const { context } = buildContext({ rescaler: false });
   context.document = { body: { nodeType: 1 } };
   assert.equal(context.api.startTvArtworkLazyLoader(), false);
+});
+
+
+test("constrained TV hydrates third-party posters only after visibility", () => {
+  const { context, pending } = buildContext({ rescaler: false, constrained: true });
+  const sourceUrl = "https://addon.example/assets/poster.jpg";
+  const image = makeImage(sourceUrl);
+  image.getBoundingClientRect = () => ({ top: 2000, bottom: 2338, left: 0, right: 220, width: 220, height: 338 });
+  const frames = [];
+  context.requestAnimationFrame = (callback) => { frames.push(callback); return frames.length; };
+  context.cancelAnimationFrame = () => {};
+  context.innerWidth = 1920;
+  context.innerHeight = 1080;
+  context.IntersectionObserver = class {
+    constructor(callback) { context.artworkObserver = this; this.callback = callback; }
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  };
+  context.MutationObserver = class { observe() {} disconnect() {} };
+  context.document = { body: { nodeType: 1, querySelectorAll: () => [image], closest: () => null } };
+  assert.equal(context.api.startTvArtworkLazyLoader(), true);
+  assert.equal(image.src, TRANSPARENT_PIXEL);
+  context.artworkObserver.callback([{ target: image, isIntersecting: true }]);
+  assert.equal(image.src, TRANSPARENT_PIXEL, "decode dispatch must wait for the frame budget");
+  frames.shift()();
+  assert.equal(image.src, sourceUrl, "third-party image must load via native IMG");
+  assert.equal(pending.length, 0, "no CORS-requiring worker path for arbitrary hosts");
+  context.api.stopTvArtworkLazyLoader();
+});
+test("legacy poster visibility bursts are paced to five images per frame", () => {
+  const { context } = buildContext({ rescaler: false, constrained: true });
+  const images = Array.from({ length: 13 }, (_, index) => makeImage("https://addon.example/" + index + ".jpg"));
+  images.forEach((image) => {
+    image.getBoundingClientRect = () => ({ top: 2200, bottom: 2538, left: 0, right: 220, width: 220, height: 338 });
+  });
+  const frames = [];
+  context.requestAnimationFrame = (callback) => { frames.push(callback); return frames.length; };
+  context.cancelAnimationFrame = () => {};
+  context.IntersectionObserver = class {
+    constructor(callback) { context.artworkObserver = this; this.callback = callback; }
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  };
+  context.MutationObserver = class { observe() {} disconnect() {} };
+  context.document = { body: { nodeType: 1, querySelectorAll: () => images, closest: () => null } };
+  assert.equal(context.api.startTvArtworkLazyLoader(), true);
+  context.artworkObserver.callback(images.map((image) => ({ target: image, isIntersecting: true })));
+  assert.equal(frames.length, 1);
+  const hydrated = () => images.filter((image) => image.src !== TRANSPARENT_PIXEL).length;
+  assert.equal(hydrated(), 0);
+  frames.shift()();
+  assert.equal(hydrated(), 5);
+  frames.shift()();
+  assert.equal(hydrated(), 10);
+  frames.shift()();
+  assert.equal(hydrated(), 13);
+  context.api.stopTvArtworkLazyLoader();
+});
+
+
+test("constrained TV paces initially visible posters to five per frame", () => {
+  const { context } = buildContext({ rescaler: false, constrained: true });
+  const images = Array.from({ length: 12 }, (_, index) =>
+    makeImage("https://addon.example/visible-" + index + ".jpg"));
+  const frames = [];
+  const observed = new Set();
+  context.requestAnimationFrame = (callback) => { frames.push(callback); return frames.length; };
+  context.cancelAnimationFrame = () => {};
+  context.innerWidth = 1920;
+  context.innerHeight = 1080;
+  context.IntersectionObserver = class {
+    observe(image) { observed.add(image); }
+    unobserve(image) { observed.delete(image); }
+    disconnect() { observed.clear(); }
+  };
+  context.MutationObserver = class { observe() {} disconnect() {} };
+  context.document = {
+    body: { nodeType: 1, querySelectorAll: () => images, closest: () => null }
+  };
+  assert.equal(context.api.startTvArtworkLazyLoader(), true);
+  const hydrated = () => images.filter((image) => image.src !== TRANSPARENT_PIXEL).length;
+  assert.equal(frames.length, 1, "visible images should share one scheduled frame");
+  assert.equal(observed.size, 0, "visible images should not remain observed for duplicate callbacks");
+  assert.equal(hydrated(), 0, "initial render should not decode all visible artwork");
+  frames.shift()();
+  assert.equal(hydrated(), 5);
+  frames.shift()();
+  assert.equal(hydrated(), 10);
+  frames.shift()();
+  assert.equal(hydrated(), 12);
+  context.api.stopTvArtworkLazyLoader();
+});
+
+test("background suspends poster work and resuming restores unpainted placeholders", () => {
+  const { context } = buildContext({ rescaler: false, constrained: true });
+  const image = makeImage("https://addon.example/poster.jpg");
+  image.getBoundingClientRect = () => ({ top: 2000, bottom: 2338, left: 0, right: 220, width: 220, height: 338 });
+  const handlers = new Map();
+  const observed = [];
+  const frames = [];
+  let disconnects = 0;
+  context.requestAnimationFrame = (callback) => { frames.push(callback); return frames.length; };
+  context.cancelAnimationFrame = () => {};
+  context.IntersectionObserver = class {
+    constructor(callback) { this.callback = callback; context.artworkObserver = this; }
+    observe(node) { observed.push(node); }
+    unobserve() {}
+    disconnect() { observed.length = 0; disconnects++; }
+  };
+  context.MutationObserver = class { observe() {} disconnect() {} };
+  context.document = {
+    visibilityState: "visible",
+    addEventListener(event, handler) { handlers.set(event, handler); },
+    removeEventListener(event) { handlers.delete(event); },
+    body: { nodeType: 1, querySelectorAll: () => [image], closest: () => null }
+  };
+  context.innerWidth = 1920;
+  context.innerHeight = 1080;
+  assert.equal(context.api.startTvArtworkLazyLoader(), true);
+  assert.equal(observed.length, 1);
+  context.artworkObserver.callback([{ target: image, isIntersecting: true }]);
+  assert.equal(frames.length, 1);
+  context.document.visibilityState = "hidden";
+  handlers.get("visibilitychange")();
+  assert(disconnects > 0);
+  assert.equal(image.src, TRANSPARENT_PIXEL);
+  frames.shift()();
+  assert.equal(image.src, TRANSPARENT_PIXEL, "cancelled background frame must not hydrate artwork");
+  context.document.visibilityState = "visible";
+  handlers.get("visibilitychange")();
+  assert.equal(observed.length, 1, "unhydrated image should be observed again");
+  context.artworkObserver.callback([{ target: image, isIntersecting: true }]);
+  frames.shift()();
+  assert.equal(image.src, "https://addon.example/poster.jpg");
+  context.api.stopTvArtworkLazyLoader();
+  assert.equal(handlers.size, 0);
+});
+
+test("legacy non-Home posters use a smaller TMDB decode source without changing third-party URLs", () => {
+  const { context } = buildContext({ rescaler: false, constrained: true });
+  const tmdb = makeImage("https://image.tmdb.org/t/p/original/oversized.jpg");
+  const addon = makeImage("https://addon.example/original.jpg");
+  context.api.prepareImage(tmdb);
+  context.api.prepareImage(addon);
+  assert.equal(tmdb.src, "https://image.tmdb.org/t/p/w342/oversized.jpg");
+  assert.equal(addon.src, "https://addon.example/original.jpg");
 });
