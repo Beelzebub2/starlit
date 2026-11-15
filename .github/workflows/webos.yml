@@ -16,6 +16,8 @@ concurrency:
   cancel-in-progress: true
 jobs:
   build:
+    # Non-stable developer-preview releases are not eligible for a stable IPK.
+    if: github.event_name != 'release' || !github.event.release.prerelease
     runs-on: ubuntu-latest
     defaults:
       run:
