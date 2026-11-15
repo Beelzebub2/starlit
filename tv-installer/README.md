@@ -63,3 +63,9 @@ Updates are **manual** in the desktop installer. LG sideloads do not automatical
 The resulting EXE is in the dist directory. PR CI also publishes an **unverified** development artifact. Electron runs the UI in a sandbox with context isolation and denied external navigation; temporary package downloads are removed after use while user-selected local files and legitimate saved signing credentials remain intact.
 
 **Hardware validation still needed:** test LG and Samsung TV connections, signing, installation, in-place updates, D-pad navigation, media playback, audio/subtitles, account sync and standby recovery. Record the actual TV model, firmware, results and exact package checksum; CI success is not a device compatibility guarantee.
+
+### Security and runtime limitations
+
+The installer uses a patched Electron runtime, but the official `@webos-tools/cli` still publishes an independently shrinkwrapped dependency tree with unresolved npm advisories (including critical and high severity). Root-level npm overrides do not replace that shrinkwrap. The installer only invokes the allowlisted `ares-setup-device`, `ares-novacom`, `ares-install`, and `ares-launch` commands; it does not intentionally expose the CLI's HTTP server. This limits known entry points but **does not prove the transitive advisories unexploitable**. The stable installer remains blocked pending the dependency review and physical-device acceptance.
+
+The CLI's `ssh2` dependency includes optional native CPU detection which cannot currently be rebuilt against the patched Electron V8 ABI. The portable installer therefore skips dependency rebuilding and relies on SSH's non-native fallback. Basic Windows packaging and unit tests do not replace a real LG pairing/install test.
