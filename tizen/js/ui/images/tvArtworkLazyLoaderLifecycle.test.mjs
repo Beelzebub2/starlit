@@ -30,6 +30,7 @@ function buildContext({ rescaler = true, constrained = false } = {}) {
     shouldRescaleHomeArtwork: () => rescaler,
     getTvRuntimePerformanceProfile: () => ({ isTvRuntime: true, isPerformanceConstrained: constrained }),
     getTvArtworkPixelRatio: () => 1,
+    normalizeTmdbPosterUrl: (url) => url.replace("/t/p/original/", "/t/p/w342/"),
     registerSessionTeardownHandler: () => {}
   });
   context.globalThis = context;
@@ -289,4 +290,14 @@ test("background suspends poster work and resuming restores unpainted placeholde
   assert.equal(image.src, "https://addon.example/poster.jpg");
   context.api.stopTvArtworkLazyLoader();
   assert.equal(handlers.size, 0);
+});
+
+test("legacy non-Home posters use a smaller TMDB decode source without changing third-party URLs", () => {
+  const { context } = buildContext({ rescaler: false, constrained: true });
+  const tmdb = makeImage("https://image.tmdb.org/t/p/original/oversized.jpg");
+  const addon = makeImage("https://addon.example/original.jpg");
+  context.api.prepareImage(tmdb);
+  context.api.prepareImage(addon);
+  assert.equal(tmdb.src, "https://image.tmdb.org/t/p/w342/oversized.jpg");
+  assert.equal(addon.src, "https://addon.example/original.jpg");
 });
