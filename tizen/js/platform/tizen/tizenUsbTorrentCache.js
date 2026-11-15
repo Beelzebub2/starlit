@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Starlit contributors. SPDX-License-Identifier: MIT.
 // Opt-in, removable torrent cache detection for Samsung Tizen TVs.
 import { trustedEngineFsControlHeaders } from "./starlitControlBridge.js";
+import { TizenEngineFsService } from "./tizenEngineFsService.js";
 
 const KEY = "starlit.tizen.usbTorrentCache.enabled.v1";
 let configuredUrl = "";
@@ -131,6 +132,30 @@ async function control(baseUrl, path, payload, timeoutMs = 5000) {
     return await response.json();
   } finally { clearTimeout(timer); }
 }
+function retryableServiceError(error) {
+  const message = String(error?.message || error || "");
+  return error?.name === "TypeError" ||
+    /failed to fetch|networkerror|network request failed|load failed|request timed out|HTTP 403|authorization unavailable/i.test(message);
+}
+function unavailableServiceState() {
+  // The UI translates this stable code instead of displaying browser-specific
+  // network errors such as "Failed to fetch".
+  return { mode: "memory", reason: "", issue: "service-unavailable" };
+}
+async function controlWithRecovery(baseUrl, path, payload, timeoutMs = 5000, recovery = null) {
+  try {
+    return await control(baseUrl, path, payload, timeoutMs);
+  } catch (error) {
+    if (!retryableServiceError(error)) throw error;
+    if (recovery?.attempted) throw error;
+    if (recovery) recovery.attempted = true;
+    // A legacy Tizen service may have stopped since its initial health probe,
+    // or restarted with a new trusted MessagePort token. Reconnect once only.
+    const service = await TizenEngineFsService.ensureStarted({ purpose: "p2p" });
+    if (service?.status !== "success") throw error;
+    return control(service.baseUrl, path, payload, timeoutMs);
+  }
+}
 function watchStorage() {
   if (listenerId != null || !globalThis.tizen?.filesystem?.addStorageStateChangeListener) return;
   try {
@@ -219,11 +244,13 @@ export const TizenUsbTorrentCache = {
       let best = null;
       let bestDrive = null;
       let busy = false;
+      let serviceUnavailable = false;
+      const recovery = { attempted: false };
       for (const drive of drives) {
         try {
-          const result = await control(baseUrl, "/cache/probe", {
+          const result = await controlWithRecovery(baseUrl, "/cache/probe", {
             root: drive.root, freeBytes: drive.freeBytes, totalBytes: drive.totalBytes
-          }, 30000);
+          }, 30000, recovery);
           if (result.mode === "usb" && (!best || result.writeMBps > best.writeMBps)) {
             best = result; bestDrive = drive;
           } else if (!best) {
@@ -231,19 +258,27 @@ export const TizenUsbTorrentCache = {
           }
         } catch (error) {
           if (String(error?.message || error).includes("HTTP 409")) busy = true;
-          if (!best) state = { mode: "memory", reason: String(error?.message || error) };
+          if (retryableServiceError(error)) serviceUnavailable = true;
+          if (!best) {
+            state = retryableServiceError(error) ? unavailableServiceState()
+              : { mode: "memory", reason: String(error?.message || error) };
+          }
         }
       }
       if (best && bestDrive) {
         if (bestDrive !== drives[drives.length - 1]) {
-          best = await control(baseUrl, "/cache/probe", {
+          best = await controlWithRecovery(baseUrl, "/cache/probe", {
             root: bestDrive.root, freeBytes: bestDrive.freeBytes, totalBytes: bestDrive.totalBytes
-          }, 30000);
+          }, 30000, recovery);
         }
         state = { ...best, label: bestDrive.label };
         configuredUrl = best.mode === "usb" ? baseUrl : "";
       } else {
-        await control(baseUrl, "/cache/disable", {}).catch(() => {});
+        // A 409 or failed local transport does not prove the existing cache
+        // is safe to disable. Preserve in-flight playback and retry later.
+        if (!busy && !serviceUnavailable) {
+          await control(baseUrl, "/cache/disable", {}).catch(() => {});
+        }
         configuredUrl = "";
       }
       if (attempt !== generation || !this.isEnabled()) {
@@ -258,7 +293,8 @@ export const TizenUsbTorrentCache = {
       return state;
     })().catch((error) => {
       configuredUrl = "";
-      state = { mode: "memory", reason: String(error?.message || error) };
+      state = retryableServiceError(error) ? unavailableServiceState()
+        : { mode: "memory", reason: String(error?.message || error) };
       return state;
     }).finally(() => { pending = null; });
     return pending;
@@ -266,8 +302,21 @@ export const TizenUsbTorrentCache = {
   async getState(baseUrl) {
     lastUrl = baseUrl;
     if (this.isEnabled() && baseUrl) await this.configure(baseUrl);
+    if (state.issue === "service-unavailable") {
+      // Do not launch another expensive service start for the status endpoint
+      // immediately after a failed probe. The next settings refresh retries
+      // after the bounded configure backoff.
+      return { ...state, enabled: this.isEnabled(), configured: false,
+        active: null, cacheBytes: 0, profile: "memory" };
+    }
     let server = null;
-    try { server = await control(baseUrl, "/cache/status"); } catch (_) {}
+    try { server = await controlWithRecovery(baseUrl, "/cache/status"); }
+    catch (error) {
+      if (retryableServiceError(error) && this.isEnabled()) {
+        configuredUrl = "";
+        state = unavailableServiceState();
+      }
+    }
     return { ...state, enabled: this.isEnabled(), configured: Boolean(server?.configured),
       active: server?.active || null,
       cacheBytes: server?.cacheBytes || state.cacheBytes || 0,

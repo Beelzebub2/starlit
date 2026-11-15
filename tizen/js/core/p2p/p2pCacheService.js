@@ -108,7 +108,9 @@ export const P2pCacheService = {
     try {
       baseUrl = await resolveBaseUrl();
       if (!baseUrl) {
-        return { supported: true, available: false };
+        return { supported: true, available: false,
+          usbEnabled: this.usbEnabled(),
+          usbIssue: this.usbEnabled() ? "service-unavailable" : "" };
       }
       if (Platform.isTizen()) {
         const state = await TizenUsbTorrentCache.getState(baseUrl);
@@ -119,6 +121,7 @@ export const P2pCacheService = {
           usbMode: state.active?.mode || (state.configured ? "usb" : "memory"),
           usbProfile: state.profile,
           usbReason: state.reason || "",
+          usbIssue: state.issue || "",
           usbLabel: state.label || "",
           usbWriteMBps: Number(state.writeMBps) || 0,
           usbReadMBps: Number(state.readMBps) || 0,
