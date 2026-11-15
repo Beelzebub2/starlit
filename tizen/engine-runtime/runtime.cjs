@@ -83,7 +83,7 @@ function start(options, callback) {
           trackers.push(tracker);
         });
       } catch (err) { return json(res, 400, { error: err.message }); }
-      var entry = { hash: hash, tickets: Object.create(null), pending: [res], ready: false, streams: [], timer: null, engine: null, cache: null, cacheReadRetries: 0 };
+      var entry = { hash: hash, tickets: Object.create(null), pending: [res], ready: false, streams: [], timer: null, engine: null, cache: null, cacheReadRetries: 0, startedAt: Date.now(), lastPieceAt: 0 };
       var invalidate = function (index) { if (entry.engine && entry.engine.invalidate) entry.engine.invalidate(index); };
       var cache = usbProfile ? usbCache.create(usbProfile, invalidate, function () { usbProfile = null; }) :
         createCache(Math.min(options.cacheBytes || MAX_CACHE, MAX_CACHE), invalidate);
@@ -96,6 +96,7 @@ function start(options, callback) {
         if (entry.pending) { entry.pending.forEach(function (r) { json(r, 502, { error: entry.error }); }); entry.pending = []; }
         if (active === entry) remove();
       });
+      entry.engine.on('download', function () { entry.lastPieceAt = Date.now(); });
       entry.engine.on('ready', function () {
         if (active !== entry) return;
         clearTimeout(entry.timer); entry.ready = true;
@@ -262,25 +263,32 @@ function start(options, callback) {
       req.on('data', function (chunk) { size += chunk.length; if (size > 16384) { failed = true; chunks = []; json(res, 413, { error: 'Request too large' }); } else if (!failed) chunks.push(chunk); });
       req.on('end', function () { if (failed) return; try { create(m[1], JSON.parse(Buffer.concat(chunks).toString()), res); } catch (err) { json(res, 400, { error: 'Invalid create request' }); } }); return;
     }
-    if (!active || active.hash !== m[1] || !active.ready) return json(res, 404, { error: 'Torrent unavailable' });
+    if (!active || active.hash !== m[1]) return json(res, 404, { error: 'Torrent unavailable' });
     if (m[2] === 'stats' && req.method === 'GET') {
       if (req.headers['x-starlit-token'] !== options.controlToken) return json(res, 403, { error: 'Trusted control token required' });
-      // Private, on-demand process metrics for physical-device memory QA.
-      // These describe the Node service process, not the TV's total memory or AVPlay.
-      var usage = process.memoryUsage();
+      // Metadata discovery can stall before the old stats route became
+      // available. Keep diagnostics private throughout the create lifecycle.
+      // These are Node service metrics, not total TV/AVPlay memory.
+      var usage = process.memoryUsage(), now = Date.now();
+      var torrent = active.ready ? active.engine.torrent : null;
       return json(res, 200, {
         infoHash: active.hash,
+        state: active.ready ? 'ready' : 'metadata',
+        metadataElapsedMs: Math.max(0, now - active.startedAt),
         peers: active.engine.swarm.wires.length,
         downloaded: active.engine.swarm.downloaded,
         downloadSpeed: active.engine.swarm.downloadSpeed(),
         activeRanges: active.streams.length,
         cacheReadRetries: active.cacheReadRetries,
-        pieceLengthBytes: active.engine.torrent.pieceLength,
+        pieceLengthBytes: torrent ? torrent.pieceLength : null,
+        pieceCount: torrent ? torrent.pieces.length : null,
+        lastPieceAgeMs: active.lastPieceAt ? Math.max(0, now - active.lastPieceAt) : null,
         cache: active.cache.stats,
         memory: { rssBytes: usage.rss, heapUsedBytes: usage.heapUsed, heapTotalBytes: usage.heapTotal },
         uptimeSeconds: process.uptime()
       });
     }
+    if (!active.ready) return json(res, 404, { error: 'Torrent unavailable' });
     if (/^\d+$/.test(m[2]) && (req.method === 'GET' || req.method === 'HEAD')) { var suppliedTicket = url.parse(req.url, true).query.ticket; if (!suppliedTicket || suppliedTicket !== active.tickets[Number(m[2])]) return json(res, 403, { error: 'Playback ticket required' }); return media(req, res, active, Number(m[2])); }
     json(res, 405, { error: 'Method unavailable' });
   });
