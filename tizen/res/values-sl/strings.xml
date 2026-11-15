@@ -3465,4 +3465,9 @@
     <string name="tv_phone_verify_code">Preverite to kodo na telefonu:</string>
     <string name="tv_phone_verify_title">Potrdim telefon?</string>
     <string name="tv_phone_waiting">Čakanje na telefon</string>
+
+    <!-- Optional, privacy-limited reliability diagnostics (TV). -->
+    <string name="diagnostics_consent_usage">Anonimna diagnostika</string>
+    <string name="diagnostics_consent_usage_detail">Zagoni aplikacije, tehnične napake, opozorila in rezultati predvajanja po različici aplikacije in platformi. Brez sledenja obiskanim zaslonom ali trajnega ID-ja naprave.</string>
+    <string name="diagnostics_consent_privacy">Brez naslovov, iskanj, računov, URL-jev ali surovih dnevnikov. Začasni naključni žeton omejuje zlorabe; zapisi se hranijo do 30 dni.</string>
 </resources>

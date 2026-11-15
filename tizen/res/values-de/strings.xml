@@ -3465,4 +3465,9 @@
     <string name="tv_phone_verify_code">Vergleiche diesen Code mit dem auf deinem Handy:</string>
     <string name="tv_phone_verify_title">Handy bestätigen?</string>
     <string name="tv_phone_waiting">Warten auf das Handy</string>
+
+    <!-- Optional, privacy-limited reliability diagnostics (TV). -->
+    <string name="diagnostics_consent_usage">Anonyme Diagnose</string>
+    <string name="diagnostics_consent_usage_detail">App-Starts; Technische Fehler, Warnungen und Wiedergabe-/Download-Ergebnisse nach App-Version und Plattform. Keine Bildschirmbesuche oder dauerhafte Geräte-ID.</string>
+    <string name="diagnostics_consent_privacy">Keine Titel, Suchanfragen, Konten, URLs oder Rohprotokolle. Ein temporärer Zufallstoken schränkt den Missbrauch ein; Aufzeichnungen werden bis zu 30 Tage aufbewahrt.</string>
 </resources>

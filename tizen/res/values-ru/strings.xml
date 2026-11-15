@@ -3467,4 +3467,9 @@
     <string name="tv_phone_verify_code">Сверьте этот код с кодом на телефоне:</string>
     <string name="tv_phone_verify_title">Подтвердить телефон?</string>
     <string name="tv_phone_waiting">Ожидание телефона</string>
+
+    <!-- Optional, privacy-limited reliability diagnostics (TV). -->
+    <string name="diagnostics_consent_usage">Анонимная диагностика</string>
+    <string name="diagnostics_consent_usage_detail">Приложение запускается; Технические ошибки, предупреждения и результаты воспроизведения/загрузки в зависимости от версии приложения и платформы. Никаких посещений экрана или постоянного идентификатора устройства.</string>
+    <string name="diagnostics_consent_privacy">Никаких заголовков, поисковых запросов, учетных записей, URL-адресов или необработанных журналов. Временный случайный токен ограничивает злоупотребления; записи хранятся до 30 дней.</string>
 </resources>

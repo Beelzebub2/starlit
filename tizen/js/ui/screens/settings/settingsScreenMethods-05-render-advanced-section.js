@@ -1,5 +1,6 @@
 /* eslint-disable no-unused-vars */
 import * as internals from "./settingsScreenContext.js";
+import { TvUsageDiagnostics } from "../../../core/diagnostics/tvUsageDiagnostics.js";
 export function createSettingsScreenMethods05() {
   const {
     LocalStore,
@@ -74,6 +75,28 @@ export function createSettingsScreenMethods05() {
       });
       this.actionMap.set("advanced:streamSpeedTest", () => {
         this.startStreamSpeedTest();
+      });
+      this.actionMap.set("advanced:tvUsageDiagnostics", () => {
+        if (TvUsageDiagnostics.isEnabled()) {
+          TvUsageDiagnostics.setEnabled(false);
+          return;
+        }
+        this.openOptionDialog({
+          title: t("diagnostics_consent_usage", {}, "Anonymous diagnostics"),
+          message: t("diagnostics_consent_usage_detail", {},
+            "App launches, technical errors, warnings and playback outcomes by app version and platform.") +
+            "\n\n" + t("diagnostics_consent_privacy", {},
+              "No titles, searches, accounts, URLs or raw logs. Records are kept up to 30 days."),
+          options: [
+            { id: "cancel", labelKey: "action_cancel" },
+            { id: "enable", labelKey: "profile_confirm" }
+          ],
+          selectedId: "cancel",
+          returnFocusKey: "advanced:tvUsageDiagnostics",
+          onSelect: (option) => {
+            if (option.id === "enable") TvUsageDiagnostics.setEnabled(true);
+          }
+        });
       });
       if (isEssential) {
         return `
@@ -153,6 +176,20 @@ export function createSettingsScreenMethods05() {
             </div>
           </div>
           ${this.renderNetworkTestsSection()}
+          <div class="settings-group-heading">
+            <div class="settings-group-title">${escapeHtml(t("advanced_section_diagnostics", {}, "Diagnostics"))}</div>
+          </div>
+          <div class="settings-group-card"><div class="settings-stack">
+            ${this.renderToggleRow({
+              focusKey: "advanced:tvUsageDiagnostics",
+              title: t("diagnostics_consent_usage", {}, "Anonymous diagnostics"),
+              subtitle: t("diagnostics_consent_usage_detail", {},
+                "App launches, technical errors, warnings and playback outcomes by app version and platform.") +
+                " " + t("diagnostics_consent_privacy", {},
+                  "No titles, searches, accounts, URLs or raw logs. Records are kept up to 30 days."),
+              checked: TvUsageDiagnostics.isEnabled()
+            })}
+          </div></div>
         `;
     },
     renderNetworkTestsSection() {

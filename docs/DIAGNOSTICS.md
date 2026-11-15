@@ -35,6 +35,45 @@ installation identifier until they expire. Event totals reflect consenting
 reports, **not** distinct users, devices or watched titles.
 If the network or telemetry server fails, normal app operation continues.
 
+## Smart TV reliability diagnostics (Tizen and webOS)
+
+The TV web app offers an **independent, device-local opt-in** under
+Settings > Advanced > Diagnostics. It is off on new TV installations, including
+after signing into an existing account; mobile/desktop consent does not enable
+TV reporting. Disabling it removes pending events and aborts an in-flight
+request on runtimes supporting AbortController.
+
+The TV reports only fixed health codes: app launch, slow startup, known
+playback/stall failures, torrent resolver failures, plugin-service failures,
+USB-cache warnings, subtitle failures, and uncaught runtime/promise errors.
+Unknown console warnings are **not** uploaded. The pre-existing on-device
+debug console can still show diagnostic details locally; its free-form
+messages, stacks, metadata and URLs never enter telemetry payloads.
+
+The client initializes after first Home paint (or the existing bounded
+startup fallback), keeps at most 12 categorical events in volatile memory,
+deduplicates the same event type for 60 seconds, and sends at most one
+event per 20 seconds, with a cap of 30 sends per app session. It does not
+send while the player/source screen is active or while the app is hidden.
+Failures are silently discarded, with no disk queue, retransmission,
+analytics SDK or per-frame sampling. These limits prioritize playback and
+D-pad responsiveness on older TVs over complete error delivery.
+
+An ephemeral random session token is used only for gateway rate limiting;
+neither it nor a device identifier is stored in OpenObserve. If secure
+randomness, consent storage, or the telemetry endpoint is unavailable,
+reporting fails closed. The gateway validates the exact four permitted JSON
+fields and derives severity/component from the event's fixed code.
+This feature does not install a crash reporter or send crash dumps on TV.
+An abrupt power loss, process kill or fatal error before initialization
+may therefore produce **no** remote diagnostic event.
+
+Deployment requires updating the gateway to accept Tizen/webOS before
+publishing a new TV build, configuring 30-day retention and confirming the
+public privacy policy covers TV health signals. Test the release on
+resource-constrained Tizen and webOS hardware; passing unit tests is not
+proof of zero impact on a particular television.
+
 ## Optional crash reporting
 
 Sentry reports are enabled independently of reliability diagnostics. When

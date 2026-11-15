@@ -3465,4 +3465,9 @@
     <string name="tv_phone_verify_code">Kontrollera denna kod på din mobil:</string>
     <string name="tv_phone_verify_title">Godkänna mobilen?</string>
     <string name="tv_phone_waiting">Väntar på mobilen</string>
+
+    <!-- Optional, privacy-limited reliability diagnostics (TV). -->
+    <string name="diagnostics_consent_usage">Anonym diagnostik</string>
+    <string name="diagnostics_consent_usage_detail">Appstarter; Tekniska fel, varningar och resultat för uppspelning och hämtning per version och plattform. Inga skärmbesök eller permanenta enhets-ID:n.</string>
+    <string name="diagnostics_consent_privacy">Inga titlar, sökningar, konton, URL:er eller råloggar. En tillfällig token motverkar missbruk; uppgifter sparas högst 30 dagar.</string>
 </resources>

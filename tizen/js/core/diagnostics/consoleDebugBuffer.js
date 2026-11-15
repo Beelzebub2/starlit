@@ -131,28 +131,29 @@ function formatConsoleArgument(value) {
   }
   return truncate(formatObject(value), MAX_ARGUMENT_LENGTH);
 }
-function notifyListeners() {
+function notifyListeners(event) {
   listeners.forEach((listener) => {
     try {
-      listener();
+      listener(event);
     } catch (_) {}
   });
 }
 function captureConsoleEvent(level, args) {
   const timestamp = Date.now();
   const formattedArgs = Array.prototype.slice.call(args || []).map(formatConsoleArgument);
-  events.push({
+  const event = {
     id: nextEventId++,
     level,
     timestamp,
     isoTime: new Date(timestamp).toISOString(),
     args: formattedArgs,
     message: truncate(formattedArgs.join(" "), MAX_MESSAGE_LENGTH)
-  });
+  };
+  events.push(event);
   if (events.length > MAX_EVENTS) {
     events.splice(0, events.length - MAX_EVENTS);
   }
-  notifyListeners();
+  notifyListeners(event);
 }
 export function installConsoleDebugBuffer() {
   if (installed) {
@@ -195,6 +196,16 @@ export function getConsoleDebugEvents() {
   return events.map((event) => ({
     ...event,
     args: [...event.args]
+  }));
+}
+// Diagnostics only needs a few recent static warning prefixes. Avoid cloning
+// the potentially large on-device debug buffer when opting in after first paint.
+export function getRecentConsoleDebugEvents(limit = 12) {
+  const count = Math.max(0, Math.min(12, Math.trunc(Number(limit) || 0)));
+  if (!count) return [];
+  return events.slice(-count).map((event) => ({
+    level: event.level,
+    args: event.args.length ? [event.args[0]] : []
   }));
 }
 export function subscribeToConsoleDebugEvents(listener) {

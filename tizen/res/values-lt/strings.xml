@@ -3467,4 +3467,9 @@ Klaida: Bandomoji simuliuojama klaida — tai nėra tikras gedimas. Šaltinis gr
     <string name="tv_phone_verify_code">Palyginkite šį kodą su kodu telefone:</string>
     <string name="tv_phone_verify_title">Patvirtinti telefoną?</string>
     <string name="tv_phone_waiting">Laukiama telefono</string>
+
+    <!-- Optional, privacy-limited reliability diagnostics (TV). -->
+    <string name="diagnostics_consent_usage">Anoniminė diagnostika</string>
+    <string name="diagnostics_consent_usage_detail">Programėlės paleidimai, techninės klaidos, įspėjimai ir atkūrimo rezultatai pagal programėlės versiją ir platformą. Ekranų peržiūros ir nuolatinis įrenginio ID nerenkami.</string>
+    <string name="diagnostics_consent_privacy">Nesiunčiami pavadinimai, paieškos, paskyros, URL ar neapdoroti žurnalai. Laikinas atsitiktinis žetonas riboja piktnaudžiavimą; įrašai saugomi iki 30 dienų.</string>
 </resources>

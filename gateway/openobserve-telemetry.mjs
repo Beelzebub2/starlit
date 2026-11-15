@@ -12,6 +12,13 @@ export const TELEMETRY_SIGNALS = Object.freeze({
   download_failed: { severity: 'error', component: 'downloads' },
   download_retry_warning: { severity: 'warning', component: 'downloads' },
   download_quota_warning: { severity: 'warning', component: 'downloads' },
+  tv_runtime_error: { severity: 'error', component: 'runtime' },
+  tv_unhandled_rejection: { severity: 'error', component: 'runtime' },
+  tv_startup_slow: { severity: 'warning', component: 'startup' },
+  tv_playback_stalled: { severity: 'warning', component: 'playback' },
+  tv_plugin_failed: { severity: 'error', component: 'plugin' },
+  tv_usb_cache_warning: { severity: 'warning', component: 'storage' },
+  tv_subtitle_failed: { severity: 'warning', component: 'subtitles' },
 });
 // Old clients may still send screen visits or download-list refresh events.
 // Acknowledge them without storing anything, even before they update.
@@ -24,7 +31,7 @@ export const TELEMETRY_EVENTS = Object.freeze([
 ]);
 const events = new Set(TELEMETRY_EVENTS);
 const discardedEvents = new Set(LEGACY_DISCARDED_EVENTS);
-const platforms = new Set(['android', 'desktop', 'ios']);
+const platforms = new Set(['android', 'desktop', 'ios', 'tizen', 'webos']);
 const MAX_BODY_BYTES = 1024;
 const MAX_DAILY_EVENTS = 100_000;
 const MAX_EVENTS_PER_SESSION_PER_MINUTE = 30;

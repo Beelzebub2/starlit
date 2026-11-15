@@ -3462,4 +3462,9 @@
     <string name="tv_phone_verify_code">Provjeri ovaj kod na telefonu:</string>
     <string name="tv_phone_verify_title">Odobriti telefon?</string>
     <string name="tv_phone_waiting">Čekanje telefona</string>
+
+    <!-- Optional, privacy-limited reliability diagnostics (TV). -->
+    <string name="diagnostics_consent_usage">Anonimna dijagnostika</string>
+    <string name="diagnostics_consent_usage_detail">Pokretanja aplikacije, tehničke pogreške, upozorenja i ishodi reprodukcije prema verziji aplikacije i platformi. Bez praćenja posjećenih zaslona ili trajnog ID-a uređaja.</string>
+    <string name="diagnostics_consent_privacy">Bez naslova, pretraga, računa, URL-ova ili izvornih zapisnika. Privremeni nasumični token ograničava zlouporabu; podaci se čuvaju do 30 dana.</string>
 </resources>
