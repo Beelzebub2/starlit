@@ -61,14 +61,20 @@ requests and parse stacks rather than treating package size as launch memory.
   Search, see-all and related-title poster surfaces now use the same
   IntersectionObserver visibility gate as trusted TMDB assets on constrained
   TVs, with direct IMG hydration (no CORS worker) and a five-images-per-frame
-  dispatch budget. Image observation/queued work pauses when hidden and
-  re-observes unresolved placeholders upon foregrounding.
+  dispatch budget. Eligible TMDB poster sources use the existing panel-aware
+  CDN normalization instead of decoding oversized originals. Image observation/
+  queued work pauses when hidden and re-observes unresolved placeholders upon
+  foregrounding.
 - **Navigation:** the generic D-pad nearest-row/column selection no longer
-  allocates and sorts repeated full candidate lists. DOM geometry remains
-  screen-specific and still needs remote key-to-focus hardware traces.
+  allocates and sorts repeated full candidate lists. The opt-in frame budget
+  diagnostic now uses a fixed ring buffer rather than shifting hundreds of
+  samples on every frame. DOM geometry remains screen-specific and still
+  needs remote key-to-focus hardware traces.
 - **Boot deferral:** two retired navigation settings, optional ambient-mode
-  timers and icon font preloading are deferred beyond first paint. This
-  does **not** split the monolithic app bundle or prove faster parse time.
+  timers and icon font preloading are deferred beyond first paint; the
+  fallback for sessions that never reach Home is 8 seconds on constrained TVs
+  instead of 2.5 seconds, avoiding additional work during slow initial routes.
+  This does **not** split the monolithic app bundle or prove faster parse time.
 - **UHD HLS:** known explicit 4K/2160p/HDR resolution labels are recognized
   even with suffixes; sources with truly unknown resolution still keep the
   existing conservative browser-first fallback.
