@@ -247,6 +247,37 @@ test("legacy poster visibility bursts are paced to five images per frame", () =>
 });
 
 
+test("constrained TV paces initially visible posters to five per frame", () => {
+  const { context } = buildContext({ rescaler: false, constrained: true });
+  const images = Array.from({ length: 12 }, (_, index) =>
+    makeImage("https://addon.example/visible-" + index + ".jpg"));
+  const frames = [];
+  context.requestAnimationFrame = (callback) => { frames.push(callback); return frames.length; };
+  context.cancelAnimationFrame = () => {};
+  context.innerWidth = 1920;
+  context.innerHeight = 1080;
+  context.IntersectionObserver = class {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  };
+  context.MutationObserver = class { observe() {} disconnect() {} };
+  context.document = {
+    body: { nodeType: 1, querySelectorAll: () => images, closest: () => null }
+  };
+  assert.equal(context.api.startTvArtworkLazyLoader(), true);
+  const hydrated = () => images.filter((image) => image.src !== TRANSPARENT_PIXEL).length;
+  assert.equal(frames.length, 1, "visible images should share one scheduled frame");
+  assert.equal(hydrated(), 0, "initial render should not decode all visible artwork");
+  frames.shift()();
+  assert.equal(hydrated(), 5);
+  frames.shift()();
+  assert.equal(hydrated(), 10);
+  frames.shift()();
+  assert.equal(hydrated(), 12);
+  context.api.stopTvArtworkLazyLoader();
+});
+
 test("background suspends poster work and resuming restores unpainted placeholders", () => {
   const { context } = buildContext({ rescaler: false, constrained: true });
   const image = makeImage("https://addon.example/poster.jpg");
