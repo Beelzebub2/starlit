@@ -5,15 +5,18 @@ const path = require("node:path");
 const os = require("node:os");
 const fs = require("node:fs/promises");
 const { Readable } = require("node:stream");
+const { PassThrough } = require("node:stream");
+const { EventEmitter } = require("node:events");
 const { createHash } = require("node:crypto");
 const JSZip = require("jszip");
 const { inspectWgt } = require("../src/wgt.cjs");
 const { isLanIPv4, localLanIps, platformInfo } = require("../src/platforms.cjs");
 const { operate } = require("../src/installer.cjs");
 const { expectedReleaseAssets, fetchVerifiedRelease } = require("../src/releases.cjs");
+const { extractSamsungSignInUrl, isSamsungSignInUrl } = require("../src/samsung-auth.cjs");
 const {
   validateSamsungTarget, validateSigning, operateSamsung, ensureSamsungCli,
-  cliFailure, ZIP_SHA256, EXE_SHA256
+  cliFailure, runSamsungCli, ZIP_SHA256, EXE_SHA256
 } = require("../src/samsung.cjs");
 
 async function createWgt({
@@ -86,7 +89,7 @@ test("Samsung commands target only the Starlit TV package and preserve data on u
       action: "install", target, source: "local", filePath: file, signing: "samsung"
     }, deps);
     assert.equal(installed.version, "1.24.0");
-    assert.deepEqual(calls[1], ["install", file, "--tv", target.ip, "--samsung-cert"]);
+    assert.deepEqual(calls[1], ["install", file, "--tv", target.ip, "--samsung-cert", "--no-browser"]);
     await operateSamsung({ action: "install", target, source: "local", filePath: file, signing: "tizen-public" }, deps);
     assert.deepEqual(calls[2], ["install", file, "--tv", target.ip, "--tizen-cert", "public"]);
     for (const args of calls) {
@@ -120,9 +123,63 @@ test("Samsung commands target only the Starlit TV package and preserve data on u
 test("Samsung CLI errors describe safe recovery, never bypass security checks", () => {
   assert.match(cliFailure(3, "warning").message, /Host PC IP/);
   assert.match(cliFailure(1, "certificate login").message, /Samsung signing/);
+  assert.match(cliFailure(1, "Port 4794 is in use").message, /port 4794/);
+  assert.match(cliFailure(1, "No sign-in arrived within 5 minutes").message, /timed out/);
   assert.match(cliFailure(1, "connection refused").message, /could not reach/i);
   assert.match(ZIP_SHA256, /^[a-f0-9]{64}$/);
   assert.match(EXE_SHA256, /^[a-f0-9]{64}$/);
+});
+test("Samsung sign-in URL allowlist accepts only the pinned OAuth endpoint and callback", () => {
+  const valid = "https://account.samsung.com/accounts/be1dce529476c1a6d407c4c7578c31bd/signInGate" +
+    "?locale=&clientId=v285zxnl3h&redirect_uri=http%3A%2F%2Flocalhost%3A4794%2Fsignin%2Fcallback";
+  assert.equal(isSamsungSignInUrl(valid), true);
+  assert.equal(extractSamsungSignInUrl("Open this address:\r\n" + valid + "\r\n"), valid);
+  for (const invalid of [
+    valid.replace("https:", "http:"),
+    valid.replace("account.samsung.com", "account.samsung.com.attacker.test"),
+    valid.replace("signin%2Fcallback", "other"),
+    valid.replace("v285zxnl3h", "attacker"),
+    "https://account.samsung.com/other?clientId=v285zxnl3h"
+  ]) {
+    assert.equal(isSamsungSignInUrl(invalid), false);
+    assert.equal(extractSamsungSignInUrl("Link: " + invalid), "");
+  }
+});
+test("Samsung CLI reports sign-in separately from JSON without leaking its URL to status", async () => {
+  const status = [], loginUrls = [];
+  let cliArgs;
+  const loginUrl = "https://account.samsung.com/accounts/be1dce529476c1a6d407c4c7578c31bd/signInGate" +
+    "?locale=&clientId=v285zxnl3h&redirect_uri=http%3A%2F%2Flocalhost%3A4794%2Fsignin%2Fcallback";
+  const result = await runSamsungCli(path.join(os.tmpdir(), "fake-samsung-cli.exe"),
+    ["install", "test.wgt", "--samsung-cert", "--no-browser"], {
+      timeoutMs: 1000,
+      onStatus: message => status.push(message),
+      onSignInUrl: url => loginUrls.push(url),
+      spawnImpl: (_executable, args, options) => {
+        cliArgs = args;
+        assert.equal(options.shell, false);
+        const child = new EventEmitter();
+        child.stdout = new PassThrough();
+        child.stderr = new PassThrough();
+        child.kill = () => {};
+        process.nextTick(() => {
+          child.stderr.write("A Samsung account sign-in is needed to create the signing certificate.\r\n");
+          child.stderr.write("Open this address in a browser on this machine and sign in:\r\n");
+          child.stderr.write(loginUrl.slice(0, 90));
+          child.stderr.write(loginUrl.slice(90) + "\r\n");
+          child.stdout.write('{"ok":true}\n');
+          child.emit("close", 0);
+        });
+        return child;
+      }
+    });
+  assert.deepEqual(result, { ok: true });
+  assert.equal(loginUrls.length, 1);
+  assert.equal(loginUrls[0], loginUrl);
+  assert.equal(cliArgs.at(-2), "--json");
+  assert.equal(cliArgs.at(-1), "--plain");
+  assert.ok(status.some(message => /sign-in is ready/i.test(message)));
+  assert.ok(status.every(message => !message.includes("https://")));
 });
 test("Samsung CLI download fails closed when upstream archive checksum is invalid", { skip: process.platform !== "win32" }, async () => {
   const dir = await fs.mkdtemp(path.join(os.tmpdir(), "starlit-tv-cli-integrity-test-"));

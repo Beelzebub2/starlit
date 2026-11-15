@@ -3501,4 +3501,9 @@
     <string name="tv_phone_verify_code">Controlla questo codice sul telefono:</string>
     <string name="tv_phone_verify_title">Autorizzare il telefono?</string>
     <string name="tv_phone_waiting">In attesa del telefono</string>
+
+    <!-- Optional, privacy-limited reliability diagnostics (TV). -->
+    <string name="diagnostics_consent_usage">Diagnostica anonima</string>
+    <string name="diagnostics_consent_usage_detail">L\'app viene avviata; Errori tecnici, avvisi ed esiti di riproduzione/download per versione dell\'app e piattaforma. Nessuna visita allo schermo o ID dispositivo persistente.</string>
+    <string name="diagnostics_consent_privacy">Nessun titolo, ricerca, account, URL o registro non elaborato. Un token casuale temporaneo limita gli abusi; i registri vengono conservati fino a 30 giorni.</string>
 </resources>

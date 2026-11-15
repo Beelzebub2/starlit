@@ -46,16 +46,46 @@ function resolveDrive(label) {
     } catch (error) { finish(error); }
   });
 }
-function nativePathFromFile(file) {
-  if (!file || file.readOnly === true || file.isDirectory === false ||
-      typeof file.toURI !== "function") return "";
+function nativePathFromUri(uri) {
   try {
-    const url = new URL(file.toURI());
+    // URL() normalizes ../ segments before exposing pathname. Reject them in
+    // the original URI first so no mount URI can be redirected outside USB.
+    if (typeof uri !== "string" || !uri.startsWith("file:///") || uri.length > 1024) return "";
+    const rawPath = decodeURIComponent(uri.slice("file://".length).split(/[?#]/, 1)[0]);
+    if (!rawPath.startsWith("/") || rawPath.includes("\\") ||
+        rawPath.includes("\0") || rawPath.split("/").some((part) => part === "." || part === "..")) return "";
+    const url = new URL(uri);
     if (url.protocol !== "file:" || url.hostname || url.search || url.hash) return "";
     const path = decodeURIComponent(url.pathname);
     if (!path.startsWith("/") || path.includes("\0") || path.split("/").includes("..")) return "";
     return path;
   } catch (_) { return ""; }
+}
+async function nativeMountPath(filesystem, label) {
+  // Tizen 5 introduced path-based Filesystem APIs. The older File handle from
+  // resolve() is deprecated and may time out on older Smart TVs. Use modern
+  // path validation first to avoid blocking the remote-control interface.
+  // A detected mount is not proof it can be used for caching: the isolated
+  // EngineFS service independently verifies filesystem access and writes.
+  if (typeof filesystem.isDirectory === "function" &&
+      typeof filesystem.toURI === "function") {
+    try {
+      if (filesystem.isDirectory(label) === true) {
+        const path = nativePathFromUri(filesystem.toURI(label));
+        if (path) return path;
+      }
+    } catch (_) { /* Older firmware may reject the newer path API. */ }
+  }
+  if (typeof filesystem.resolve === "function") {
+    try {
+      const file = await resolveDrive(label);
+      if (file?.readOnly === true || file?.isDirectory === false) return "";
+      const path = typeof file?.toURI === "function"
+        ? nativePathFromUri(file.toURI()) : "";
+      if (path) return path;
+    } catch (_) { /* Legacy access is optional on Tizen 5. */ }
+  }
+  return "";
 }
 function usableUnit(unit) {
   return unit && Number.isSafeInteger(Number(unit.capacity)) &&
@@ -65,7 +95,9 @@ function usableUnit(unit) {
 }
 async function findDrives() {
   const api = globalThis.tizen;
-  if (!api?.filesystem?.listStorages || !api?.filesystem?.resolve) {
+  if (!api?.filesystem?.listStorages ||
+      (!api.filesystem.resolve &&
+       !(api.filesystem.isDirectory && api.filesystem.toURI))) {
     return { drives: [], reason: "TV USB filesystem API unavailable" };
   }
   let storages;
@@ -73,10 +105,17 @@ async function findDrives() {
   catch (error) {
     return { drives: [], reason: "Cannot list TV storage: " + String(error?.message || error) };
   }
-  const candidates = (Array.isArray(storages) ? storages : []).filter(
+  // Some native WebIDL bindings return array-like collections rather than
+  // genuine JavaScript arrays. Only inspect a bounded set of storage records.
+  const entries = storages && Number.isSafeInteger(storages.length) &&
+    storages.length >= 0 && storages.length <= 64
+    ? Array.from(storages) : [];
+  const candidates = entries.filter(
     (item) => item?.type === "EXTERNAL" && item?.state === "MOUNTED" && item?.label
   );
-  if (!candidates.length) return { drives: [], reason: "No mounted USB drive reported by Tizen" };
+  if (!candidates.length) {
+    return { drives: [], mountedCount: 0, reason: "No mounted USB drive reported by Tizen" };
+  }
   // On some TV firmware versions SystemInfo omits removable disks even though
   // Filesystem lists and resolves them. The service can measure the specific
   // native mount safely; do not confuse a missing capacity report with no USB.
@@ -98,16 +137,15 @@ async function findDrives() {
   const drives = [];
   for (const candidate of candidates) {
     try {
-      const resolved = await resolveDrive(String(candidate.label));
-      const root = nativePathFromFile(resolved);
+      const root = await nativeMountPath(api.filesystem, String(candidate.label));
       if (root) {
         drives.push({ label: String(candidate.label), root, freeBytes, totalBytes });
       }
     } catch (_) {
-      // Unwritable, unmounted or inaccessible devices cannot be selected.
+      // A mount without a validated native path cannot be probed by EngineFS.
     }
   }
-  return { drives, reason: drives.length
+  return { drives, mountedCount: candidates.length, reason: drives.length
     ? (units.length ? "" : "USB connected; checking free space in EngineFS")
     : "USB mounted but not writable or accessible to Starlit" };
 }

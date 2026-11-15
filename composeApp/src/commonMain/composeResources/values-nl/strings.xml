@@ -2511,6 +2511,7 @@
     <string name="remote_tv_starlit_code">Koppelcode voor tv</string>
     <string name="remote_tv_starlit_failed">Verbinding mislukt. Controleer de code en probeer opnieuw.</string>
     <string name="remote_tv_starlit_hint">Open Beheren met telefoon op de tv. Voer hier de code in en keur goed op de tv.</string>
+    <string name="remote_tv_starlit_title">Starlit op je tv</string>
     <string name="remote_handoff_approve">Kies bron op PC</string>
     <string name="remote_handoff_approve_description">Een gekoppelde telefoon heeft deze titel aangevraagd. Accepteer alleen als u het verzoek herkent. Starlit opent de normale bronkiezer op deze PC; de telefoon kan geen stream leveren of bronbeperkingen omzeilen.</string>
     <string name="remote_handoff_approve_title">Spelen op deze PC?</string>
@@ -2530,6 +2531,7 @@
     <string name="remote_tv_home">Thuis</string>
     <string name="remote_tv_left">Links</string>
     <string name="remote_tv_manual_hint">Als detectie is geblokkeerd, voert u de lokale IP in die wordt weergegeven in de netwerkinstellingen van uw TV.</string>
+    <string name="remote_tv_manual_ip_label">Lokaal IPv4-adres van de tv</string>
     <string name="remote_tv_manual_title">Verbinden via IP adres</string>
     <string name="remote_tv_mute">Dempen</string>
     <string name="remote_tv_navigation">Navigatie</string>

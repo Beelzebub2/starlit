@@ -3283,6 +3283,7 @@
     <string name="remote_tv_starlit_code">کد جفت‌سازی تلویزیون</string>
     <string name="remote_tv_starlit_failed">اتصال ناموفق بود. کد را بررسی کنید و دوباره تلاش کنید.</string>
     <string name="remote_tv_starlit_hint">در تلویزیون مدیریت با تلفن را باز کنید. کد را اینجا وارد کرده و در تلویزیون تأیید کنید.</string>
+    <string name="remote_tv_starlit_title">Starlit روی تلویزیون شما</string>
     <string name="remote_tv_android_only">TV در حال حاضر در تلفن‌های Android موجود است.</string>
     <string name="remote_tv_available">تلویزیون های موجود</string>
     <string name="remote_tv_connected_title">TV متصل شد</string>
@@ -3293,6 +3294,7 @@
     <string name="remote_tv_home">صفحه اصلی</string>
     <string name="remote_tv_left">چپ</string>
     <string name="remote_tv_manual_hint">اگر اکتشاف مسدود شده است، IP محلی نشان داده شده در تنظیمات شبکه TV خود را وارد کنید.</string>
+    <string name="remote_tv_manual_ip_label">نشانی IPv4 محلی تلویزیون</string>
     <string name="remote_tv_manual_title">با آدرس IP متصل شوید</string>
     <string name="remote_tv_mute">بی صدا</string>
     <string name="remote_tv_navigation">ناوبری</string>

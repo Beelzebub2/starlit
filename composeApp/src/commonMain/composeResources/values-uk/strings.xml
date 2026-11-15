@@ -3319,6 +3319,7 @@
     <string name="remote_tv_starlit_code">Код сполучення з телевізором</string>
     <string name="remote_tv_starlit_failed">Не вдалося підключитися. Перевірте код і повторіть спробу.</string>
     <string name="remote_tv_starlit_hint">На телевізорі відкрийте Керування з телефона. Введіть код тут і підтвердьте на телевізорі.</string>
+    <string name="remote_tv_starlit_title">Starlit на вашому телевізорі</string>
     <string name="remote_tv_android_only">TV зараз доступне на телефонах Android.</string>
     <string name="remote_tv_available">Телевізори в наявності</string>
     <string name="remote_tv_connected_title">TV підключено</string>
@@ -3329,6 +3330,7 @@
     <string name="remote_tv_home">Додому</string>
     <string name="remote_tv_left">Ліворуч</string>
     <string name="remote_tv_manual_hint">Якщо виявлення заблоковано, введіть локальний IP, який відображається в налаштуваннях мережі вашого TV.</string>
+    <string name="remote_tv_manual_ip_label">Локальна IPv4-адреса телевізора</string>
     <string name="remote_tv_manual_title">Підключитися за адресою IP.</string>
     <string name="remote_tv_mute">Вимкнути звук</string>
     <string name="remote_tv_navigation">Навігація</string>

@@ -3306,6 +3306,7 @@
     <string name="remote_tv_starlit_code">电视配对码</string>
     <string name="remote_tv_starlit_failed">连接失败。请检查代码并重试。</string>
     <string name="remote_tv_starlit_hint">在电视上打开使用手机管理。在此输入代码，然后在电视上批准。</string>
+    <string name="remote_tv_starlit_title">电视上的 Starlit</string>
     <string name="remote_tv_android_only">TV 远程控制当前可在 Android 手机上使用。</string>
     <string name="remote_tv_available">可用电视</string>
     <string name="remote_tv_connected_title">TV 已连接</string>
@@ -3316,6 +3317,7 @@
     <string name="remote_tv_home">首页</string>
     <string name="remote_tv_left">左</string>
     <string name="remote_tv_manual_hint">如果发现被阻止，请输入 TV 网络设置中显示的本地 IP。</string>
+    <string name="remote_tv_manual_ip_label">电视的本地 IPv4 地址</string>
     <string name="remote_tv_manual_title">通过 IP 地址连接</string>
     <string name="remote_tv_mute">静音</string>
     <string name="remote_tv_navigation">导航</string>

@@ -3468,4 +3468,9 @@
     <string name="tv_phone_verify_code">طابق هذا الرمز مع الرمز على هاتفك:</string>
     <string name="tv_phone_verify_title">الموافقة على الهاتف؟</string>
     <string name="tv_phone_waiting">في انتظار الهاتف</string>
+
+    <!-- Optional, privacy-limited reliability diagnostics (TV). -->
+    <string name="diagnostics_consent_usage">تشخيص مجهول</string>
+    <string name="diagnostics_consent_usage_detail">إطلاق التطبيق؛ الأخطاء الفنية والتحذيرات ونتائج التشغيل/التنزيل حسب إصدار التطبيق والنظام الأساسي. لا توجد زيارات للشاشة أو معرف الجهاز المستمر.</string>
+    <string name="diagnostics_consent_privacy">لا توجد عناوين أو عمليات بحث أو حسابات أو عناوين URL أو سجلات أولية. رمز عشوائي مؤقت يحد من إساءة الاستخدام؛ يتم الاحتفاظ بالسجلات لمدة تصل إلى 30 يومًا.</string>
 </resources>

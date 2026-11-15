@@ -3484,4 +3484,9 @@
     <string name="tv_phone_unavailable">Conexão indisponível</string>
     <string name="tv_phone_disconnect">Desconectar</string>
     <string name="tv_phone_connection_error">Verifique a conexão e tente novamente.</string>
+
+    <!-- Optional, privacy-limited reliability diagnostics (TV). -->
+    <string name="diagnostics_consent_usage">Diagnósticos anônimos</string>
+    <string name="diagnostics_consent_usage_detail">Aberturas do app; Erros técnicos, alertas e resultados de reprodução e downloads por versão e plataforma. Sem rastrear telas ou ID persistente.</string>
+    <string name="diagnostics_consent_privacy">Sem títulos, pesquisas, contas, URLs ou logs brutos. Um token temporário limita abusos; os dados são mantidos por até 30 dias.</string>
 </resources>

@@ -3465,4 +3465,9 @@
     <string name="tv_phone_verify_code">Compară acest cod pe telefon:</string>
     <string name="tv_phone_verify_title">Aprobi telefonul?</string>
     <string name="tv_phone_waiting">Se așteaptă telefonul</string>
+
+    <!-- Optional, privacy-limited reliability diagnostics (TV). -->
+    <string name="diagnostics_consent_usage">Diagnosticare anonimă</string>
+    <string name="diagnostics_consent_usage_detail">Se lansează aplicația; Erori tehnice, avertismente și rezultate de redare/descărcare în funcție de versiunea aplicației și platformă. Fără vizite de ecran sau ID persistent de dispozitiv.</string>
+    <string name="diagnostics_consent_privacy">Fără titluri, căutări, conturi, adrese URL sau jurnale brute. Un token aleatoriu temporar limitează abuzul; evidențele se păstrează până la 30 de zile.</string>
 </resources>

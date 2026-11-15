@@ -990,6 +990,7 @@
     <string name="remote_tv_starlit_code">קוד צימוד לטלוויזיה</string>
     <string name="remote_tv_starlit_failed">החיבור נכשל. בדוק את הקוד ונסה שוב.</string>
     <string name="remote_tv_starlit_hint">בטלוויזיה פתח ניהול מהטלפון. הזן את הקוד כאן ואשר בטלוויזיה.</string>
+    <string name="remote_tv_starlit_title">Starlit בטלוויזיה שלך</string>
     <string name="remote_handoff_approve">בחר מקור ב-PC</string>
     <string name="remote_handoff_approve_description">טלפון מותאם ביקש את הכותר הזה. קבל רק אם אתה מזהה את הבקשה. Starlit יפתח את בוחר המקורות הרגיל ב-PC זה; הטלפון לא יכול לספק זרם או לעקוף הגבלות מקור.</string>
     <string name="remote_handoff_approve_title">לשחק ב-PC?</string>
@@ -1009,6 +1010,7 @@
     <string name="remote_tv_home">בית</string>
     <string name="remote_tv_left">שמאל</string>
     <string name="remote_tv_manual_hint">אם הגילוי חסום, הזן את IP המקומי המוצג בהגדרות הרשת של TV שלך.</string>
+    <string name="remote_tv_manual_ip_label">כתובת IPv4 מקומית של הטלוויזיה</string>
     <string name="remote_tv_manual_title">התחבר באמצעות כתובת IP</string>
     <string name="remote_tv_mute">השתקה</string>
     <string name="remote_tv_navigation">ניווט</string>

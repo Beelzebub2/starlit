@@ -2498,6 +2498,7 @@
     <string name="remote_tv_starlit_code">Код сопряжения с ТВ</string>
     <string name="remote_tv_starlit_failed">Не удалось подключиться. Проверьте код и попробуйте снова.</string>
     <string name="remote_tv_starlit_hint">На телевизоре откройте Управление с телефона. Введите код здесь и подтвердите на ТВ.</string>
+    <string name="remote_tv_starlit_title">Starlit на вашем телевизоре</string>
     <string name="remote_handoff_approve">Выберите источник на PC</string>
     <string name="remote_handoff_approve_description">Сопряженный телефон запросил это название. Принимайте только в том случае, если вы узнали запрос. Starlit откроет обычный инструмент выбора источника для этого PC; телефон не может обеспечить поток или обойти ограничения источника.</string>
     <string name="remote_handoff_approve_title">Играть на этом PC?</string>
@@ -2517,6 +2518,7 @@
     <string name="remote_tv_home">Главная страница</string>
     <string name="remote_tv_left">Слева</string>
     <string name="remote_tv_manual_hint">Если обнаружение заблокировано, введите локальный IP, указанный в сетевых настройках вашего TV.</string>
+    <string name="remote_tv_manual_ip_label">Локальный IPv4-адрес телевизора</string>
     <string name="remote_tv_manual_title">Подключение по адресу IP</string>
     <string name="remote_tv_mute">Без звука</string>
     <string name="remote_tv_navigation">Навигация</string>

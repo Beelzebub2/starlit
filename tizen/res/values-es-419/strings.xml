@@ -3471,4 +3471,9 @@
     <string name="tv_phone_verify_code">Verifica este código en tu celular:</string>
     <string name="tv_phone_verify_title">¿Aprobar celular?</string>
     <string name="tv_phone_waiting">Esperando el celular</string>
+
+    <!-- Optional, privacy-limited reliability diagnostics (TV). -->
+    <string name="diagnostics_consent_usage">Diagnóstico anónimo</string>
+    <string name="diagnostics_consent_usage_detail">Se inicia la aplicación; Errores técnicos, advertencias y resultados de reproducción/descarga por versión de la aplicación y plataforma. Sin visitas a la pantalla ni identificación persistente del dispositivo.</string>
+    <string name="diagnostics_consent_privacy">Sin títulos, búsquedas, cuentas, URL ni registros sin procesar. Un token aleatorio temporal limita el abuso; Los registros se conservan hasta por 30 días.</string>
 </resources>

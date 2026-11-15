@@ -8,6 +8,7 @@ const JSZip = require("jszip");
 const { platformInfo, isLanIPv4 } = require("./platforms.cjs");
 const { inspectWgt, MAX_WGT } = require("./wgt.cjs");
 const { fetchBounded, fetchVerifiedRelease } = require("./releases.cjs");
+const { extractSamsungSignInUrl } = require("./samsung-auth.cjs");
 
 // Pinned independent GPL-3.0-only tool. Starlit does not redistribute it:
 // the user initiates downloading the verified upstream release on first use.
@@ -79,8 +80,14 @@ function cliFailure(exitCode, output) {
   if (exitCode === 3) {
     return new Error("The TV failed a Samsung pre-install check. Enable Developer Mode, set Host PC IP to this computer's LAN IP, reboot the TV and retry without bypassing safety checks.");
   }
+  if (/port\s+4794\s+is in use/i.test(text)) {
+    return new Error("Samsung sign-in cannot receive the browser response because port 4794 is already in use. Close another Apps2Samsung sign-in session and retry.");
+  }
+  if (/no sign-in arrived within|sign.in.*timed out|timed out.*sign.in/i.test(text)) {
+    return new Error("Samsung account sign-in timed out. Finish signing in through the browser on this PC, then retry. The login window is valid for five minutes.");
+  }
   if (/certificate|sign-in|signing|authorization|login/i.test(text)) {
-    return new Error("Samsung signing was not completed. Complete the browser sign-in or select Tizen public signing, then retry using the same certificate for updates.");
+    return new Error("Samsung signing did not complete. Check the Samsung account sign-in in your browser, then retry. Keep the same certificate for future updates.");
   }
   if (/refused|timeout|unreachable|could not connect|network/i.test(text)) {
     return new Error("Could not reach the Samsung TV. Check the TV's IP, Developer Mode, Host PC IP and local network.");
@@ -88,16 +95,34 @@ function cliFailure(exitCode, output) {
   return new Error("Samsung TV command failed (exit " + exitCode + "). Check the TV's Developer Mode connection and the Apps2Samsung certificate settings.");
 }
 
-async function runSamsungCli(executable, args, { timeoutMs = 420000 } = {}) {
+async function runSamsungCli(executable, args, {
+  timeoutMs = 420000, onStatus = () => {}, onSignInUrl = () => {},
+  spawnImpl = spawn
+} = {}) {
   if (!path.isAbsolute(executable) || !Array.isArray(args) || args.some(a => typeof a !== "string")) {
     throw new Error("Invalid Samsung CLI invocation");
   }
   return new Promise((resolve, reject) => {
-    const child = spawn(executable, [...args, "--json", "--plain"], {
+    const child = spawnImpl(executable, [...args, "--json", "--plain"], {
       shell: false, windowsHide: true, stdio: ["ignore", "pipe", "pipe"],
       env: { ...process.env, NO_COLOR: "1" }
     });
-    let stdout = "", stderr = "", finished = false;
+    let stdout = "", stderr = "", finished = false, pendingProgress = "";
+    let signInShown = false;
+    const handleLine = line => {
+      const url = extractSamsungSignInUrl(line);
+      if (url && !signInShown) {
+        signInShown = true;
+        onSignInUrl(url);
+        onStatus("Samsung sign-in is ready. Use Open Samsung sign-in in this installer, then return when finished.");
+        return;
+      }
+      if (/a samsung account sign-in is needed|open this address in a browser/i.test(line)) {
+        onStatus("A Samsung account sign-in is needed to create the certificate.");
+      } else if (/creating.*certificate|signing.*package|connecting.*tv|installing.*package/i.test(line)) {
+        onStatus(line.trim().slice(0, 240));
+      }
+    };
     function end(error, result) {
       if (finished) return;
       finished = true;
@@ -110,9 +135,17 @@ async function runSamsungCli(executable, args, { timeoutMs = 420000 } = {}) {
       end(new Error("Samsung installation took too long. Check the TV and certificate sign-in before retrying."));
     }, timeoutMs);
     child.stdout.on("data", data => { stdout = (stdout + data).slice(-262144); });
-    child.stderr.on("data", data => { stderr = (stderr + data).slice(-262144); });
+    child.stderr.on("data", data => {
+      const chunk = String(data);
+      stderr = (stderr + chunk).slice(-262144);
+      pendingProgress += chunk;
+      const lines = pendingProgress.split(/\r?\n/);
+      pendingProgress = lines.pop().slice(-4096);
+      for (const line of lines) handleLine(line);
+    });
     child.once("error", err => end(new Error("Could not start the Samsung installer: " + err.message)));
     child.once("close", code => {
+      if (pendingProgress) handleLine(pendingProgress);
       if (code !== 0) return end(cliFailure(code, stderr + "\n" + stdout));
       let parsed = {};
       try { parsed = JSON.parse(stdout.trim()); } catch { /* CLI versions may produce text. */ }
@@ -126,25 +159,26 @@ async function operateSamsung({
 } = {}, {
   run = runSamsungCli, ensureTool = ensureSamsungCli, fetchRelease = fetchVerifiedRelease,
   toolsDir = path.join(process.env.APPDATA || os.homedir(), "Starlit TV Installer", "tools"),
-  onStatus = () => {}
+  onStatus = () => {}, onSignInUrl = () => {}
 } = {}) {
   const { ip } = validateSamsungTarget(target);
   if (!["pair", "install", "launch", "uninstall"].includes(action)) {
     throw new Error("Unsupported Samsung TV operation");
   }
   const executable = await ensureTool({ toolsDir, onStatus });
+  const cliOptions = { onStatus, onSignInUrl };
   if (action === "pair") {
     onStatus("Checking Samsung TV Developer Mode and connection");
-    await run(executable, ["tv", ip]);
+    await run(executable, ["tv", ip], cliOptions);
     return { connected: true, platform: "tizen" };
   }
   const appId = platformInfo("tizen").appId;
   if (action === "launch") {
-    await run(executable, ["launch", appId, "--tv", ip]);
+    await run(executable, ["launch", appId, "--tv", ip], cliOptions);
     return { launched: true, appId };
   }
   if (action === "uninstall") {
-    await run(executable, ["uninstall", appId, "--tv", ip]);
+    await run(executable, ["uninstall", appId, "--tv", ip], cliOptions);
     return { uninstalled: true, appId };
   }
   validateSigning(signing);
@@ -163,13 +197,15 @@ async function operateSamsung({
     const stat = await fs.stat(packagePath);
     if (!stat.isFile() || stat.size <= 0 || stat.size > MAX_WGT) throw new Error("Invalid or oversized Samsung WGT");
     const manifest = await inspectWgt(await fs.readFile(packagePath));
-    onStatus("Signing Starlit " + manifest.version + " for this Samsung TV");
+    onStatus(signing === "samsung"
+      ? "Signing Starlit " + manifest.version + " with Samsung. If sign-in is required, a button will appear here."
+      : "Signing Starlit " + manifest.version + " with a Tizen public certificate.");
     const args = ["install", packagePath, "--tv", ip];
-    if (signing === "samsung") args.push("--samsung-cert");
+    if (signing === "samsung") args.push("--samsung-cert", "--no-browser");
     else args.push("--tizen-cert", "public");
     // Deliberately omit --yes, --allow-remove, --remove-first and --new-id.
     // Updates must keep the same author certificate and application identity.
-    const outcome = await run(executable, args);
+    const outcome = await run(executable, args, cliOptions);
     if (outcome && outcome.via === "tvstore") {
       return { pendingTvConfirmation: true, version: manifest.version, appId };
     }

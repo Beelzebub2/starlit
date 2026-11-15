@@ -3464,4 +3464,9 @@
     <string name="tv_phone_verify_code">Ellenőrizd ezt a kódot a telefonodon:</string>
     <string name="tv_phone_verify_title">Jóváhagyod a telefont?</string>
     <string name="tv_phone_waiting">Várakozás a telefonra</string>
+
+    <!-- Optional, privacy-limited reliability diagnostics (TV). -->
+    <string name="diagnostics_consent_usage">Névtelen diagnosztika</string>
+    <string name="diagnostics_consent_usage_detail">Alkalmazás indul; Technikai hibák, figyelmeztetések és lejátszási/letöltési eredmények alkalmazásverzió és platform szerint. Nincs képernyőlátogatás vagy állandó eszközazonosító.</string>
+    <string name="diagnostics_consent_privacy">Nincsenek címek, keresések, fiókok, URL-ek vagy nyers naplók. Egy ideiglenes véletlenszerű token korlátozza a visszaélést; a feljegyzéseket 30 napig megőrzik.</string>
 </resources>
