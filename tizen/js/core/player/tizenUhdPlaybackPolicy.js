@@ -16,7 +16,9 @@ export function shouldPreferTizenUhdHls({
     return false;
   }
   const resolution = String(sourceResolution || "").trim().toLowerCase();
-  if (!/^(?:4k|uhd|2160p?|3840\s*[x×]\s*2160)$/.test(resolution)) {
+  // Explicit resolution labels may carry HDR/codec suffixes. Accept an
+  // isolated UHD token but never guess from an unknown or 1080p label.
+  if (!/(?:^|[^a-z0-9])(?:4k|uhd|2160p?|3840\\s*[x×]\\s*2160)(?=$|[^a-z0-9])/.test(resolution)) {
     return false;
   }
   const versionMatch = String(tizenVersion || "").trim().match(/^(\d+)(?:\.(\d+))?/);
