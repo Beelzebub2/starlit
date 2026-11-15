@@ -1,4 +1,22 @@
 import { focusWithoutScroll } from "./focusWithoutScroll.js";
+// The incoming screen fades and rises once (css/starlit-ui.css). The class is
+// removed after the animation so the screen does not keep a compositor layer.
+export const SCREEN_ENTER_CLASS = "tv-screen-enter";
+export const SCREEN_ENTER_CLEAR_MS = 420;
+export function playScreenEnter(container, schedule = setTimeout, cancel = clearTimeout) {
+  const classes = container?.classList;
+  if (!classes) {
+    return;
+  }
+  if (container.__tvScreenEnterTimer) {
+    cancel(container.__tvScreenEnterTimer);
+  }
+  classes.add(SCREEN_ENTER_CLASS);
+  container.__tvScreenEnterTimer = schedule(() => {
+    container.__tvScreenEnterTimer = null;
+    classes.remove(SCREEN_ENTER_CLASS);
+  }, SCREEN_ENTER_CLEAR_MS);
+}
 export const ScreenUtils = {
   // Micro-fade for fast-path TVs: returns the full enter class on capable
   // hardware, a cheap opacity-only fade class on fast-path TVs, or "" when
@@ -37,6 +55,9 @@ export const ScreenUtils = {
     }
     if (container.style.display !== "block") {
       container.style.display = "block";
+      // A screen that was hidden has no running animation, so the enter
+      // animation starts with this first displayed frame.
+      playScreenEnter(container);
     }
   },
   hide(container) {

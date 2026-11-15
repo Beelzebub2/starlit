@@ -301,6 +301,7 @@ export const SECTION_ICONS = {
   watchParty: "groups",
   appearance: "palette",
   display: "tv",
+  ambient: "wallpaper",
   layout: "grid_view",
   contentDiscovery: "explore",
   plugins: "build",

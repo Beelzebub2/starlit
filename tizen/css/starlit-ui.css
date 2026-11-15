@@ -1,0 +1,2055 @@
+/*
+ * Starlit UI layer for TV (Samsung Tizen and LG webOS).
+ *
+ * Loads after starlit-tv.css and restyles every screen onto one system:
+ * flat translucent surfaces with a hairline, a white focus fill for buttons,
+ * a theme-coloured ring for rows and cards, and motion that only ever
+ * animates transform and opacity.
+ *
+ * Performance rules (TV compositors are weak, older Tizen rasterises in
+ * software):
+ *   - no backdrop-filter, no blur filters, no animated shadows
+ *   - no transition on width, height, margin, padding, colour or shadow
+ *   - no permanent will-change layers; transitions promote for their duration
+ *   - motion tiers: full (2022+ TVs), lite (.performance-constrained: short,
+ *     opacity-first, no scaling of artwork) and none (.tv-reduce-motion,
+ *     Settings > Display & scaling > Lighter animations)
+ *
+ * Every length is a px value on the 1080-tall reference canvas. No vw/vh,
+ * clamp(), min() or max(): Tizen 4 runs Chromium 56.
+ */
+
+/* ---- Motion tiers ---------------------------------------------------------- */
+
+.performance-constrained {
+  --tv-dur-focus: 120ms;
+  --tv-dur-glide: 160ms;
+  --tv-dur-enter: 200ms;
+  --tv-dur-fade: 140ms;
+}
+
+@keyframes tvScreenEnter {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 18px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes tvFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes tvPanelIn {
+  from {
+    opacity: 0;
+    transform: translate3d(24px, 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes tvRiseIn {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 14px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes tvPopIn {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Screen changes: the incoming screen fades and rises (ScreenUtils.show adds
+   the class for one animation). The player never animates: AVPlay draws the
+   video on its own plane behind the page. */
+#app .screen.tv-screen-enter {
+  -webkit-animation: tvScreenEnter var(--tv-dur-enter) var(--tv-ease-enter) both;
+  animation: tvScreenEnter var(--tv-dur-enter) var(--tv-ease-enter) both;
+}
+
+.performance-constrained #app .screen.tv-screen-enter {
+  -webkit-animation-name: tvFadeIn;
+  animation-name: tvFadeIn;
+}
+
+#app #player.tv-screen-enter,
+.tv-reduce-motion #app .screen.tv-screen-enter {
+  -webkit-animation: none;
+  animation: none;
+}
+
+/* The per-screen enter animations this replaces slid whole shells (layout
+   and blur on some screens); the container animation above covers them. */
+#app .home-route-content-enter,
+#app .search-route-enter,
+#app .library-route-enter,
+#app .settings-route-enter,
+#app .addons-route-enter,
+#app .nuvio-route-slide-enter,
+#app .tizen-fade-enter,
+#app .settings-shell.settings-route-enter,
+#app .search-screen-shell.search-route-enter,
+#app .library-shell.library-route-enter {
+  -webkit-animation: none;
+  animation: none;
+}
+
+/* ---- Performance guards ----------------------------------------------------- */
+
+/* Blur is the most expensive effect a TV can draw. Solid panels instead. */
+#app .modern-sidebar-shell.blur-enabled .modern-sidebar-panel,
+#app .modern-sidebar-shell.blur-enabled.expanded:not(.collapsing) .modern-sidebar-panel,
+#app .series-stream-panel,
+#app .stream-route-panel-shell,
+#app .detail-trailer-control-bar {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+/* Spoiler-hidden episode thumbs: a dim instead of a 12px software blur. */
+#app .series-episode-image.is-blurred,
+#app .home-screen-shell .home-continue-card-blur-next-up .home-continue-bg {
+  -webkit-filter: none;
+  filter: none;
+  opacity: 0.16;
+}
+
+/* Permanent compositor layers cost GPU memory on every screen that shows
+   them. Transitions promote an element only while they run. */
+#app .home-nav-item,
+#app .settings-nav-label,
+#app .settings-slide-panel,
+#app .settings-workspace,
+#app .home-sidebar,
+#app .profile-main-layer,
+#app .settings-layout-preview-modern-row,
+#app .settings-layout-preview-grid-canvas,
+#app .settings-layout-preview-classic-row.is-featured,
+#app .player-loading-logo-fill-clip,
+#app .player-parental-line {
+  will-change: auto;
+}
+
+/* The player timeline is rewritten every tick; a width transition turned
+   each tick into a run of layouts. Snap instead. */
+#app .player-progress-fill,
+#app .player-progress-buffered,
+#app .player-seek-fill,
+#app .player-progress-track {
+  -webkit-transition: none;
+  transition: none;
+}
+
+/* Upstream gives every element on a constrained TV a 140 ms transition
+   (components-44: `.performance-constrained * { transition-duration }`).
+   transition-property defaults to `all`, so every focus move animated
+   colour, background, shadow and size frame by frame on the slowest sets.
+   Keep the short duration, but only for compositor properties. */
+html.performance-constrained *,
+html.performance-constrained *::before,
+html.performance-constrained *::after {
+  transition-property: transform, opacity !important;
+}
+
+/* The same upstream rule cuts every keyframe animation to 0.01 ms. These
+   are single-layer opacity fades, far cheaper than the shell slides that
+   rule was written for, so they keep their (shortened) duration. */
+.performance-constrained #app .screen.tv-screen-enter,
+.performance-constrained #app .settings-shell .settings-content.is-section-transitioning,
+.performance-constrained #app .settings-dialog,
+html.performance-constrained body .nuvio-dialog-panel {
+  -webkit-animation-duration: var(--tv-dur-enter) !important;
+  animation-duration: var(--tv-dur-enter) !important;
+}
+
+.tv-reduce-motion.performance-constrained #app .screen.tv-screen-enter,
+.tv-reduce-motion.performance-constrained #app .settings-shell .settings-content.is-section-transitioning,
+.tv-reduce-motion.performance-constrained #app .settings-dialog,
+html.tv-reduce-motion.performance-constrained body .nuvio-dialog-panel {
+  -webkit-animation: none !important;
+  animation: none !important;
+}
+
+/* Each screen is an island: focus changes inside one never restyle another. */
+#app .screen {
+  contain: layout style;
+}
+
+/* ---- Shared focus system --------------------------------------------------- */
+
+/* Buttons, chips, keys and pills: a white fill when focused, a small lift. */
+#app .tv-focus-button,
+#app .series-primary-btn,
+#app .series-secondary-btn,
+#app .series-circle-btn,
+#app .series-season-btn,
+#app .stream-route-chip,
+#app .search-key,
+#app .qr-action-btn,
+body .nuvio-dialog-button,
+#app .settings-dialog-option,
+#app .settings-text-dialog-actions button,
+#app .library-view-mode-button,
+#app .collections-new,
+#app .tv-addon-button {
+  -webkit-transition: -webkit-transform var(--tv-dur-focus) var(--tv-ease-glide);
+  transition: transform var(--tv-dur-focus) var(--tv-ease-glide);
+}
+
+.tv-reduce-motion #app .series-primary-btn,
+.tv-reduce-motion #app .series-secondary-btn,
+.tv-reduce-motion #app .series-circle-btn,
+.tv-reduce-motion #app .series-season-btn,
+.tv-reduce-motion #app .stream-route-chip,
+.tv-reduce-motion #app .search-key,
+.tv-reduce-motion #app .qr-action-btn,
+.tv-reduce-motion body .nuvio-dialog-button,
+.tv-reduce-motion #app .settings-dialog-option,
+.tv-reduce-motion #app .library-view-mode-button,
+.tv-reduce-motion #app .collections-new,
+.tv-reduce-motion #app .tv-addon-button {
+  -webkit-transition: none;
+  transition: none;
+}
+
+/* ---- Navigation rail ------------------------------------------------------- */
+
+#app .home-sidebar.expanded {
+  background: var(--tv-panel);
+  box-shadow: 24px 0 64px rgba(0, 0, 0, 0.55);
+}
+
+#app .home-nav-item,
+#app .home-profile-pill {
+  position: relative;
+  -webkit-transition: -webkit-transform var(--tv-dur-focus) var(--tv-ease-glide);
+  transition: transform var(--tv-dur-focus) var(--tv-ease-glide);
+}
+
+#app .home-nav-item.selected,
+#app .home-sidebar.content-expanded .home-nav-item.selected {
+  background: transparent;
+  color: var(--tv-text);
+}
+
+/* Selected route: a short accent bar beside the icon instead of a fill. */
+#app .home-nav-item.selected::before {
+  content: "";
+  position: absolute;
+  left: -16px;
+  top: 22px;
+  width: 6px;
+  height: 28px;
+  border-radius: 3px;
+  background: var(--tv-accent);
+}
+
+#app .home-nav-item.focused,
+#app .home-sidebar.content-expanded .home-nav-item.focused,
+#app .home-sidebar.content-expanded .home-nav-item.selected.focused {
+  background: var(--tv-text);
+  color: var(--tv-on-selected);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45) !important;
+  -webkit-transform: scale(1.06);
+  transform: scale(1.06);
+}
+
+#app .home-sidebar.content-expanded .home-nav-item.focused,
+#app .home-sidebar.content-expanded .home-nav-item.selected.focused {
+  -webkit-transform: none;
+  transform: none;
+}
+
+#app .home-profile-pill.focused,
+#app .home-sidebar.content-expanded .home-profile-pill.focused {
+  background: transparent;
+  color: var(--tv-text);
+  box-shadow: none !important;
+}
+
+#app .home-sidebar.content-expanded .home-profile-pill.focused {
+  background: var(--tv-surface-2);
+}
+
+#app .home-profile-pill.focused .home-profile-avatar {
+  box-shadow: 0 0 0 3px var(--tv-bg), 0 0 0 7px var(--tv-text);
+}
+
+.tv-reduce-motion #app .home-nav-item,
+.tv-reduce-motion #app .home-profile-pill {
+  -webkit-transition: none;
+  transition: none;
+}
+
+.performance-constrained #app .home-nav-item.focused {
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4) !important;
+  -webkit-transform: scale(1.06) !important;
+  transform: scale(1.06) !important;
+}
+
+.tv-reduce-motion #app .home-nav-item.focused {
+  -webkit-transform: none !important;
+  transform: none !important;
+}
+
+/* ---- Settings ------------------------------------------------------------- */
+
+#app .settings-shell .settings-sidebar-frame {
+  flex: 0 0 560px;
+  width: 560px;
+  padding: 72px 32px 32px 96px;
+  background: var(--tv-panel);
+  box-shadow: inset -1px 0 0 var(--tv-hairline);
+}
+
+#app .settings-heading {
+  margin: 0 0 24px 24px;
+  font-size: 44px;
+  line-height: 52px;
+  letter-spacing: -0.02em;
+}
+
+/* The section list. A single glider (one small layer) slides between items
+   instead of every item repainting its own fill. */
+#app .settings-shell .settings-sidebar {
+  position: relative;
+  gap: 4px;
+}
+
+/* No flex gap (Tizen 4/5): space the items, never the absolutely placed
+   glider, which would shift by the margin. */
+html.no-flex-gap #app .settings-shell .settings-sidebar > * + * {
+  margin-top: 4px;
+}
+
+html.no-flex-gap #app .settings-shell .settings-sidebar > .settings-nav-glider {
+  margin: 0;
+}
+
+#app .settings-shell .settings-nav-item {
+  position: relative;
+  z-index: 1;
+  min-height: 58px;
+  padding: 0 24px;
+  border-radius: 18px;
+  background: transparent;
+  color: var(--tv-text-2);
+}
+
+#app .settings-shell .settings-nav-item .settings-nav-leading {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  min-width: 0;
+}
+
+#app .settings-shell .settings-nav-item .settings-nav-icon {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  color: var(--tv-text-3);
+  font-size: 30px;
+  line-height: 30px;
+}
+
+#app .settings-shell .settings-nav-item .settings-nav-icon-svg {
+  fill: currentColor;
+}
+
+#app .settings-shell .settings-nav-item .settings-nav-label {
+  font-size: 26px;
+  line-height: 34px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+#app .settings-shell .settings-nav-item.selected {
+  background: transparent;
+  color: var(--tv-text);
+}
+
+#app .settings-shell .settings-nav-item.selected .settings-nav-icon {
+  color: var(--tv-accent);
+}
+
+#app .settings-shell .settings-nav-item.focused {
+  background: transparent;
+  color: var(--tv-on-selected);
+  box-shadow: none;
+}
+
+#app .settings-shell .settings-nav-item.focused .settings-nav-icon {
+  color: var(--tv-on-selected);
+}
+
+/* Without the glider (first frame, horizontal "Horizon" rail) each item
+   paints its own state. */
+#app .settings-shell .settings-sidebar:not(.has-glider) .settings-nav-item.selected {
+  background: var(--tv-surface-2);
+}
+
+#app .settings-shell .settings-sidebar:not(.has-glider) .settings-nav-item.focused {
+  background: var(--tv-text);
+}
+
+#app .settings-nav-glider {
+  position: absolute;
+  z-index: 0;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 58px;
+  margin: 0;
+  border-radius: 18px;
+  background: var(--tv-text);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+  -webkit-transition: -webkit-transform var(--tv-dur-glide) var(--tv-ease-glide);
+  transition: transform var(--tv-dur-glide) var(--tv-ease-glide);
+}
+
+/* Focus is in the section or the rail: the glider rests on the open section
+   as a quiet tint with an accent bar. */
+#app .settings-nav-glider.is-resting {
+  background: var(--tv-surface-2);
+  box-shadow: inset 6px 0 0 var(--tv-accent);
+}
+
+#app .settings-nav-glider.is-snapping,
+.tv-reduce-motion #app .settings-nav-glider {
+  -webkit-transition: none;
+  transition: none;
+}
+
+/* Content pane */
+#app .settings-shell .settings-content-frame {
+  padding: 80px 96px 0 72px;
+}
+
+/* Every flex container that sets a gap also states its display, so the
+   build emits the margin fallback for engines without flex gap (Tizen 4/5). */
+#app .settings-shell .settings-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+#app .settings-shell .settings-content.is-section-transitioning {
+  -webkit-animation: tvPanelIn var(--tv-dur-enter) var(--tv-ease-enter) both;
+  animation: tvPanelIn var(--tv-dur-enter) var(--tv-ease-enter) both;
+}
+
+.performance-constrained #app .settings-shell .settings-content.is-section-transitioning {
+  -webkit-animation-name: tvFadeIn;
+  animation-name: tvFadeIn;
+}
+
+.tv-reduce-motion #app .settings-shell .settings-content.is-section-transitioning {
+  -webkit-animation: none;
+  animation: none;
+}
+
+#app .settings-shell .settings-content-header {
+  margin-bottom: 16px;
+}
+
+#app .settings-shell .settings-title {
+  font-size: 52px;
+  line-height: 60px;
+  letter-spacing: -0.025em;
+}
+
+#app .settings-shell .settings-subtitle {
+  margin-top: 10px;
+  color: var(--tv-text-3);
+  font-size: 24px;
+  line-height: 32px;
+}
+
+/* Group headings read as small eyebrows. */
+#app .settings-shell .settings-group-heading {
+  margin: 20px 0 4px;
+  padding: 0 4px;
+}
+
+#app .settings-shell .settings-group-title {
+  color: var(--tv-text-3);
+  font-size: 20px;
+  line-height: 26px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+#app .settings-shell .settings-group-subtitle {
+  margin-top: 6px;
+  color: var(--tv-text-3);
+  font-size: 22px;
+  line-height: 28px;
+}
+
+#app .settings-shell .settings-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Rows */
+#app .settings-shell .settings-action-row,
+#app .settings-shell .settings-account-action-button {
+  min-height: 104px;
+  padding: 18px 28px;
+  border-radius: 22px;
+  background: var(--tv-surface);
+  box-shadow: inset 0 0 0 1px var(--tv-hairline);
+  -webkit-transition: none;
+  transition: none;
+}
+
+/* Wide rows take the ring at once. Scaling a 1100 px row by 1% was barely
+   visible and cost a style pass every frame of every focus move. */
+#app .settings-shell .settings-action-row.focused,
+#app .settings-shell .settings-account-action-button.focused {
+  background: var(--tv-focus-bg);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.1),
+    0 0 0 3px var(--tv-ring),
+    0 16px 40px rgba(0, 0, 0, 0.45);
+  -webkit-transform: none;
+  transform: none;
+}
+
+#app .settings-shell .settings-action-row.is-disabled {
+  opacity: 0.5;
+}
+
+#app .settings-shell .settings-row-title {
+  font-size: 28px;
+  line-height: 34px;
+  font-weight: 650;
+}
+
+#app .settings-shell .settings-row-subtitle {
+  color: var(--tv-text-3);
+  font-size: 22px;
+  line-height: 28px;
+}
+
+#app .settings-shell .settings-action-row.focused .settings-row-subtitle {
+  color: var(--tv-text-2);
+}
+
+#app .settings-shell .settings-row-tail {
+  display: flex;
+  gap: 10px;
+  color: var(--tv-text-2);
+}
+
+#app .settings-shell .settings-row-value {
+  color: var(--tv-text-2);
+  font-size: 24px;
+  font-weight: 600;
+}
+
+#app .settings-shell .settings-action-row.focused .settings-row-value,
+#app .settings-shell .settings-action-row.focused .settings-row-tail {
+  color: var(--tv-text);
+}
+
+/* Collapsible groups say Open/Closed with the chevron alone. */
+#app .settings-shell .settings-collapsible-trigger .settings-row-value {
+  display: none;
+}
+
+#app .settings-shell .settings-collapsible-body {
+  margin-top: 8px;
+  padding: 0 0 8px 24px;
+  box-shadow: inset 3px 0 0 var(--tv-hairline-strong);
+}
+
+#app .settings-shell .settings-row-leading-image,
+#app .settings-shell .settings-account-button-icon {
+  flex: 0 0 auto;
+  width: 52px;
+  height: 52px;
+  margin-right: 8px;
+  padding: 10px;
+  border-radius: 14px;
+  background: var(--tv-surface-2);
+  object-fit: contain;
+}
+
+#app .settings-shell .settings-account-button-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  color: var(--tv-accent);
+  font-size: 30px;
+}
+
+/* Toggles */
+#app .settings-shell .settings-toggle-pill {
+  width: 72px;
+  height: 40px;
+  padding: 4px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+#app .settings-shell .settings-toggle-thumb {
+  width: 32px;
+  height: 32px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+#app .settings-shell .settings-toggle-pill.is-checked {
+  background: var(--tv-accent);
+}
+
+#app .settings-shell .settings-action-row.focused .settings-toggle-pill:not(.is-checked) {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Account */
+#app .settings-shell .settings-account-description {
+  color: var(--tv-text-2);
+  font-size: 26px;
+  line-height: 36px;
+}
+
+#app .settings-shell .settings-account-inline-note {
+  margin: 4px 0 20px;
+  padding: 16px 20px;
+  border-radius: 16px;
+  background: var(--tv-surface);
+  color: var(--tv-text-3);
+  font-size: 22px;
+  line-height: 30px;
+}
+
+#app .settings-shell .settings-account-button-title {
+  font-size: 28px;
+  line-height: 34px;
+  font-weight: 650;
+}
+
+#app .settings-shell .settings-account-button-subtitle {
+  margin-top: 4px;
+  color: var(--tv-text-3);
+  font-size: 22px;
+  line-height: 28px;
+}
+
+/* Appearance: theme cards */
+#app .settings-shell .settings-theme-row {
+  display: flex;
+  gap: 16px;
+  padding: 8px 4px 12px;
+}
+
+#app .settings-shell .settings-theme-card {
+  width: 176px;
+  min-height: 164px;
+  padding: 20px 12px 16px;
+  border-radius: 22px;
+  background: var(--tv-surface);
+  box-shadow: inset 0 0 0 1px var(--tv-hairline);
+  -webkit-transition: -webkit-transform var(--tv-dur-focus) var(--tv-ease-glide);
+  transition: transform var(--tv-dur-focus) var(--tv-ease-glide);
+}
+
+#app .settings-shell .settings-theme-card.is-selected {
+  background: var(--tv-surface-2);
+  box-shadow: inset 0 0 0 2px var(--tv-hairline-strong);
+}
+
+#app .settings-shell .settings-theme-card.focused {
+  background: var(--tv-text);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45);
+  -webkit-transform: scale(1.06);
+  transform: scale(1.06);
+}
+
+.tv-reduce-motion #app .settings-shell .settings-theme-card {
+  -webkit-transition: none;
+  transition: none;
+}
+
+#app .settings-shell .settings-theme-card.focused .settings-theme-name {
+  color: var(--tv-on-selected);
+}
+
+#app .settings-shell .settings-theme-swatch {
+  width: 72px;
+  height: 72px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+}
+
+#app .settings-shell .settings-theme-name {
+  margin-top: 14px;
+  color: var(--tv-text-2);
+  font-size: 22px;
+  line-height: 28px;
+  font-weight: 600;
+}
+
+/* About */
+#app .settings-shell .settings-about-brand {
+  margin-bottom: 20px;
+  padding: 40px 0 36px;
+  border-radius: 28px;
+  background: var(--tv-surface);
+  background-image: radial-gradient(ellipse 60% 90% at 50% 0%, rgba(120, 140, 255, 0.18), transparent 70%);
+  box-shadow: inset 0 0 0 1px var(--tv-hairline);
+}
+
+#app .settings-shell .settings-about-copy {
+  color: var(--tv-text-3);
+  font-size: 22px;
+  line-height: 30px;
+}
+
+/* Tracking: one column like every other section. */
+#app .settings-shell .settings-tracking-panel {
+  display: block;
+  -webkit-animation: none;
+  animation: none;
+}
+
+#app .settings-shell .settings-tracking-hero {
+  display: block;
+  width: auto;
+  height: auto;
+  margin: 0 0 24px;
+  padding: 0;
+  background: none;
+}
+
+#app .settings-shell .settings-tracking-hero > div {
+  margin: 0;
+  padding: 0;
+}
+
+#app .settings-shell .settings-trakt-title {
+  color: var(--tv-text);
+  font-size: 52px;
+  line-height: 60px;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+}
+
+#app .settings-shell .settings-trakt-description {
+  max-width: 960px;
+  margin-top: 10px;
+  color: var(--tv-text-3);
+  font-size: 24px;
+  line-height: 32px;
+}
+
+#app .settings-shell .settings-trakt-scroll-area {
+  width: auto;
+  height: auto;
+  overflow: visible;
+}
+
+#app .settings-shell .settings-trakt-card {
+  width: auto;
+  margin: 16px 0 24px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+#app .settings-shell .settings-trakt-card-title {
+  margin: 0 0 4px;
+  padding: 0 4px;
+  color: var(--tv-text-3);
+  font-size: 20px;
+  line-height: 26px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+#app .settings-shell .settings-tracking-card-subtitle {
+  margin: 0 0 14px;
+  padding: 0 4px;
+  color: var(--tv-text-3);
+  font-size: 22px;
+  line-height: 28px;
+}
+
+#app .settings-shell .settings-trakt-options-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ---- Dialogs --------------------------------------------------------------- */
+
+#app .settings-dialog-backdrop,
+body .nuvio-dialog-backdrop {
+  background: var(--tv-scrim);
+}
+
+#app .settings-dialog,
+body .nuvio-dialog-panel {
+  border: 0;
+  border-radius: var(--tv-radius-panel);
+  background: var(--tv-panel);
+  box-shadow:
+    inset 0 0 0 1px var(--tv-hairline-strong),
+    0 40px 120px rgba(0, 0, 0, 0.6);
+  -webkit-animation: tvPopIn var(--tv-dur-enter) var(--tv-ease-enter) both;
+  animation: tvPopIn var(--tv-dur-enter) var(--tv-ease-enter) both;
+}
+
+.performance-constrained #app .settings-dialog,
+.performance-constrained body .nuvio-dialog-panel {
+  -webkit-animation-name: tvFadeIn;
+  animation-name: tvFadeIn;
+}
+
+.tv-reduce-motion #app .settings-dialog,
+.tv-reduce-motion body .nuvio-dialog-panel {
+  -webkit-animation: none;
+  animation: none;
+}
+
+#app .settings-dialog-title,
+body .nuvio-dialog-title {
+  color: var(--tv-text);
+  font-size: 40px;
+  line-height: 48px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+body .nuvio-dialog-subtitle,
+#app .settings-text-dialog-message {
+  color: var(--tv-text-2);
+  font-size: 24px;
+  line-height: 34px;
+}
+
+#app .settings-dialog-option,
+body .nuvio-dialog-button {
+  min-height: 72px;
+  border: 0;
+  border-radius: 20px;
+  background: var(--tv-surface-2);
+  color: var(--tv-text);
+  font-size: 26px;
+}
+
+#app .settings-dialog-option.focused,
+body .nuvio-dialog-button.focused {
+  background: var(--tv-text);
+  color: var(--tv-on-selected);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.4);
+  -webkit-transform: scale(1.03);
+  transform: scale(1.03);
+}
+
+#app .settings-dialog-option.is-selected:not(.focused),
+#app .settings-dialog-option.selected:not(.focused) {
+  background: var(--tv-focus-bg);
+  box-shadow: inset 0 0 0 2px var(--tv-accent);
+}
+
+/* ---- Choose a source --------------------------------------------------------- */
+
+/* Left pane: the episode artwork on a quiet panel, what plays, then hints. */
+#app .stream-route-left {
+  background: var(--tv-panel);
+  box-shadow: inset -1px 0 0 var(--tv-hairline);
+}
+
+#app .stream-route-thumb {
+  width: 456px;
+  height: 256px;
+  margin: 0 0 32px;
+  border-radius: 22px;
+  box-shadow:
+    inset 0 0 0 1px var(--tv-hairline-strong),
+    0 24px 56px rgba(0, 0, 0, 0.5);
+  -webkit-animation: tvRiseIn var(--tv-dur-enter) var(--tv-ease-enter) both;
+  animation: tvRiseIn var(--tv-dur-enter) var(--tv-ease-enter) both;
+}
+
+.performance-constrained #app .stream-route-thumb,
+.tv-reduce-motion #app .stream-route-thumb {
+  -webkit-animation: none;
+  animation: none;
+}
+
+#app .stream-route-plays-best {
+  padding: 22px 24px;
+  border-radius: 22px;
+  background: var(--tv-surface);
+  box-shadow: inset 0 0 0 1px var(--tv-hairline);
+}
+
+#app .stream-route-plays-best-title {
+  color: var(--tv-text-3);
+  font-size: 18px;
+  line-height: 24px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+#app .stream-route-hint-key {
+  padding: 2px 12px;
+  border-radius: 8px;
+  background: var(--tv-surface-3);
+  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.35);
+}
+
+#app .stream-route-heading-title {
+  font-size: 52px;
+  line-height: 60px;
+  letter-spacing: -0.025em;
+}
+
+#app .stream-route-heading-count {
+  padding: 0 16px;
+  border-radius: var(--tv-radius-pill);
+  background: var(--tv-surface);
+  color: var(--tv-text-2);
+  font-size: 22px;
+  line-height: 40px;
+}
+
+/* Filter chips */
+#app .stream-route-chip {
+  background: var(--tv-surface-2);
+  color: var(--tv-text-2);
+}
+
+#app .stream-route-chip.selected {
+  background: var(--tv-surface-3);
+  color: var(--tv-text);
+  box-shadow: inset 0 0 0 2px var(--tv-hairline-strong);
+}
+
+#app .stream-route-chip.focused,
+#app .stream-route-chip.selected.focused {
+  background: var(--tv-text);
+  color: var(--tv-on-selected);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4);
+  -webkit-transform: scale(var(--tv-focus-button-scale));
+  transform: scale(var(--tv-focus-button-scale));
+}
+
+/* Source rows */
+#app .stream-route-card {
+  border-radius: 22px;
+  background: var(--tv-surface);
+  box-shadow: inset 0 0 0 1px var(--tv-hairline);
+}
+
+#app .stream-route-card.focused {
+  background: var(--tv-focus-bg);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.1),
+    0 0 0 3px var(--tv-ring),
+    0 18px 44px rgba(0, 0, 0, 0.5);
+}
+
+.performance-constrained #app .stream-route-card.focused,
+.legacy-tizen #app .stream-route-card.focused {
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.1),
+    0 0 0 3px var(--tv-ring) !important;
+}
+
+/* Resolution tiles by tier: 4K gold, 1080p/1440p accent, the rest neutral. */
+#app .stream-route-quality {
+  border-radius: var(--tv-radius-tile);
+  background: var(--tv-surface-2);
+  box-shadow: inset 0 0 0 1px var(--tv-hairline);
+}
+
+#app .stream-route-quality[data-tier="4k"] {
+  background: rgba(245, 196, 81, 0.14);
+  box-shadow: inset 0 0 0 2px rgba(245, 196, 81, 0.55);
+}
+
+#app .stream-route-quality[data-tier="4k"] .stream-route-quality-res {
+  color: var(--tv-gold);
+}
+
+#app .stream-route-quality[data-tier="1080p"],
+#app .stream-route-quality[data-tier="1440p"] {
+  background: rgba(var(--secondary-color-rgb-legacy, 49, 133, 245), 0.16);
+  box-shadow: inset 0 0 0 2px rgba(var(--secondary-color-rgb-legacy, 49, 133, 245), 0.5);
+}
+
+#app .stream-route-quality[data-hdr="true"] .stream-route-quality-range {
+  color: var(--tv-text);
+}
+
+#app .stream-route-card-heading {
+  font-weight: 650;
+}
+
+#app .stream-route-card-meta {
+  color: var(--tv-text-3);
+}
+
+#app .stream-route-card.focused .stream-route-card-meta {
+  color: var(--tv-text-2);
+}
+
+#app .stream-route-warning {
+  border-radius: 8px;
+}
+
+#app .stream-route-card-status {
+  padding: 0 14px;
+  border-radius: var(--tv-radius-pill);
+  background: var(--tv-surface);
+  font-size: 22px;
+  line-height: 40px;
+}
+
+#app .stream-route-card-status.is-instant {
+  background: rgba(95, 224, 181, 0.14);
+  color: var(--tv-mint);
+}
+
+#app .stream-route-addon-badge {
+  border-radius: 14px;
+  background: var(--tv-surface-2);
+  box-shadow: inset 0 0 0 1px var(--tv-hairline);
+}
+
+/* ---- Title details -------------------------------------------------------- */
+
+/* Primary action carries the theme colour; focus is white for every button. */
+#app .series-primary-btn {
+  background: var(--tv-accent);
+  color: var(--tv-on-accent);
+}
+
+#app .series-primary-btn svg,
+#app .series-primary-btn path {
+  fill: currentColor;
+}
+
+#app .series-secondary-btn,
+#app .series-circle-btn {
+  background: var(--tv-surface-3);
+  box-shadow: inset 0 0 0 1px var(--tv-hairline);
+}
+
+#app .series-primary-btn.focused,
+#app .series-secondary-btn.focused,
+#app .series-circle-btn.focused,
+#app .series-circle-btn.is-library-selected.focused,
+#app .series-circle-btn.is-selected.focused {
+  background: var(--tv-text);
+  color: var(--tv-on-selected);
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.5);
+  -webkit-transform: scale(var(--tv-focus-button-scale));
+  transform: scale(var(--tv-focus-button-scale));
+}
+
+#app .series-primary-btn.focused svg,
+#app .series-primary-btn.focused path,
+#app .series-circle-btn.focused svg,
+#app .series-circle-btn.focused path {
+  color: var(--tv-on-selected);
+}
+
+/* The upstream fast path pins focus to a 2px outline on every Tizen. Buttons
+   carry no artwork, so the white fill and a short scale stay cheap. */
+.performance-constrained #app .series-primary-btn.focused,
+.performance-constrained #app .series-secondary-btn.focused,
+.performance-constrained #app .series-circle-btn.focused,
+.performance-constrained #app .series-season-btn.focused,
+.legacy-tizen #app .series-primary-btn.focused,
+.legacy-tizen #app .series-secondary-btn.focused,
+.legacy-tizen #app .series-circle-btn.focused,
+.legacy-tizen #app .series-season-btn.focused {
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45) !important;
+  -webkit-transform: scale(var(--tv-focus-button-scale)) !important;
+  transform: scale(var(--tv-focus-button-scale)) !important;
+}
+
+.performance-constrained #app .series-detail-actions .series-primary-btn,
+.performance-constrained #app .series-detail-actions .series-circle-btn,
+.performance-constrained #app .series-detail-actions .series-secondary-btn,
+.performance-constrained #app .series-season-btn,
+.legacy-tizen #app .series-detail-actions .series-primary-btn,
+.legacy-tizen #app .series-detail-actions .series-circle-btn,
+.legacy-tizen #app .series-detail-actions .series-secondary-btn,
+.legacy-tizen #app .series-season-btn {
+  -webkit-transition: -webkit-transform var(--tv-dur-focus) var(--tv-ease-glide) !important;
+  transition: transform var(--tv-dur-focus) var(--tv-ease-glide) !important;
+}
+
+.tv-reduce-motion #app .series-primary-btn.focused,
+.tv-reduce-motion #app .series-secondary-btn.focused,
+.tv-reduce-motion #app .series-circle-btn.focused,
+.tv-reduce-motion #app .series-season-btn.focused {
+  -webkit-transform: none !important;
+  transform: none !important;
+}
+
+.tv-reduce-motion #app .series-detail-actions .series-primary-btn,
+.tv-reduce-motion #app .series-detail-actions .series-circle-btn,
+.tv-reduce-motion #app .series-detail-actions .series-secondary-btn,
+.tv-reduce-motion #app .series-season-btn {
+  -webkit-transition: none !important;
+  transition: none !important;
+}
+
+#app .detail-hero-body > .detail-resume-indicator {
+  color: var(--tv-text-2);
+}
+
+#app .series-detail-description.focused {
+  background: var(--tv-surface-2);
+  box-shadow:
+    0 0 0 14px var(--tv-surface-2),
+    0 0 0 17px var(--tv-ring);
+}
+
+/* Season tabs: one segmented strip. */
+#app .series-season-btn {
+  background: transparent;
+  color: var(--tv-text-3);
+}
+
+#app .series-season-btn.selected {
+  background: var(--tv-surface-3);
+  color: var(--tv-text);
+}
+
+#app .series-season-btn.focused,
+#app .series-season-btn.selected.focused {
+  background: var(--tv-text);
+  color: var(--tv-on-selected);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
+  -webkit-transform: scale(var(--tv-focus-button-scale));
+  transform: scale(var(--tv-focus-button-scale));
+}
+
+/* Episode artwork: hairline at rest, ring and lift on focus. */
+#app .series-episode-image {
+  border-radius: 18px;
+  box-shadow: inset 0 0 0 1px var(--tv-hairline);
+}
+
+#app .series-episode-card.focused .series-episode-image {
+  box-shadow:
+    0 0 0 4px var(--tv-ring),
+    0 18px 40px rgba(0, 0, 0, 0.5);
+}
+
+#app .series-episode-card.focused .series-episode-title {
+  color: var(--tv-text);
+}
+
+/* Cast, ratings and "No cast information" start on the content keyline. */
+#app .series-insight-section,
+#app .movie-cast-section {
+  padding-left: var(--tv-keyline-full);
+  padding-right: var(--tv-keyline-full);
+}
+
+#app .series-insight-empty {
+  padding: 0;
+  color: var(--tv-text-3);
+  font-size: var(--tv-type-meta);
+  line-height: var(--tv-type-meta-lh);
+}
+
+#app .movie-detail-content .series-insight-section {
+  margin-top: 40px;
+}
+
+/* ---- Poster grids: Library, Discover, See all, search results ------------- */
+
+#app .seeall-shell {
+  padding: 72px 96px 48px;
+}
+
+#app .seeall-header {
+  margin-bottom: 36px;
+}
+
+#app .seeall-grid {
+  gap: 28px 24px;
+}
+
+#app .seeall-title,
+#app .library-page-title {
+  color: var(--tv-text);
+  font-size: 52px;
+  line-height: 60px;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+}
+
+#app .seeall-subtitle {
+  margin-top: 8px;
+  color: var(--tv-text-3);
+  font-size: 22px;
+  line-height: 28px;
+}
+
+#app .seeall-card,
+#app .library-grid-card {
+  -webkit-transition: -webkit-transform var(--tv-dur-focus) var(--tv-ease-glide);
+  transition: transform var(--tv-dur-focus) var(--tv-ease-glide);
+  transform-origin: 50% 40%;
+}
+
+#app .seeall-card-poster-wrap {
+  border: 0;
+  border-radius: 18px;
+  background: var(--tv-bg-card);
+  box-shadow: inset 0 0 0 1px var(--tv-hairline);
+  -webkit-transition: none;
+  transition: none;
+}
+
+#app .seeall-card.focused {
+  -webkit-transform: scale(1.06);
+  transform: scale(1.06);
+}
+
+#app .seeall-card.focused .seeall-card-poster-wrap {
+  border: 0;
+  background: var(--tv-bg-card);
+  box-shadow:
+    0 0 0 4px var(--tv-ring),
+    0 20px 44px rgba(0, 0, 0, 0.55);
+}
+
+#app .seeall-card-title {
+  margin-top: 8px;
+  color: var(--tv-text-2);
+  font-size: 24px;
+  line-height: 30px;
+  font-weight: 650;
+}
+
+#app .seeall-card-year {
+  color: var(--tv-text-3);
+  font-size: 20px;
+  line-height: 26px;
+}
+
+#app .seeall-card.focused .seeall-card-title {
+  color: var(--tv-text);
+}
+
+#app .library-grid-card.focused {
+  -webkit-transform: scale(1.06);
+  transform: scale(1.06);
+}
+
+#app .library-grid-poster {
+  border-radius: 18px;
+  box-shadow: inset 0 0 0 1px var(--tv-hairline);
+}
+
+#app .library-grid-card.focused .library-grid-poster-image {
+  border: 0;
+}
+
+#app .library-grid-card.focused .library-grid-poster {
+  box-shadow:
+    0 0 0 4px var(--tv-ring),
+    0 20px 44px rgba(0, 0, 0, 0.55);
+}
+
+/* Artwork never scales on constrained TVs (repainting a poster costs more
+   than the motion is worth there); the ring still appears at once. */
+.performance-constrained #app .seeall-card,
+.performance-constrained #app .library-grid-card,
+.tv-reduce-motion #app .seeall-card,
+.tv-reduce-motion #app .library-grid-card {
+  -webkit-transition: none;
+  transition: none;
+}
+
+.performance-constrained #app .seeall-card.focused,
+.performance-constrained #app .library-grid-card.focused,
+.tv-reduce-motion #app .seeall-card.focused,
+.tv-reduce-motion #app .library-grid-card.focused {
+  -webkit-transform: none;
+  transform: none;
+}
+
+/* Filter pickers (Library, Discover): label over value, chevron on the right. */
+#app .library-picker-anchor {
+  min-height: 96px;
+  border: 0;
+  border-radius: 22px;
+  background: var(--tv-surface);
+  box-shadow: inset 0 0 0 1px var(--tv-hairline);
+  -webkit-transition: none;
+  transition: none;
+}
+
+#app .library-picker-anchor.focused {
+  border: 0;
+  background: var(--tv-focus-bg);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.1),
+    0 0 0 3px var(--tv-ring);
+}
+
+#app .library-picker-title {
+  color: var(--tv-text-3);
+  font-size: 18px;
+  line-height: 24px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+#app .library-picker-value {
+  margin-top: 4px;
+  color: var(--tv-text);
+  font-size: 28px;
+  line-height: 36px;
+  font-weight: 650;
+}
+
+#app .library-picker-icon {
+  color: var(--tv-text-3);
+}
+
+#app .library-picker-anchor.focused .library-picker-icon {
+  color: var(--tv-text);
+}
+
+/* Library: header, source tag and the Servers / Saved / Cloud switch. */
+#app .library-page {
+  padding-top: 24px;
+}
+
+#app .library-page-source {
+  padding: 0 18px;
+  border-radius: var(--tv-radius-pill);
+  background: var(--tv-surface-2);
+  color: var(--tv-text-2);
+  font-size: 18px;
+  line-height: 44px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+#app .library-view-mode-row {
+  display: inline-flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  padding: 6px;
+  border-radius: var(--tv-radius-pill);
+  background: var(--tv-surface);
+  box-shadow: inset 0 0 0 1px var(--tv-hairline);
+}
+
+#app .library-view-mode-button {
+  min-width: 140px;
+  height: 52px;
+  padding: 0 28px;
+  border: 0;
+  border-radius: var(--tv-radius-pill);
+  background: transparent;
+  color: var(--tv-text-2);
+  font-size: 22px;
+  font-weight: 650;
+}
+
+#app .library-view-mode-button.selected {
+  background: var(--tv-surface-3);
+  color: var(--tv-text);
+}
+
+#app .library-view-mode-button.focused,
+#app .library-view-mode-button.selected.focused {
+  background: var(--tv-text);
+  color: var(--tv-on-selected);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4);
+  -webkit-transform: scale(1.05);
+  transform: scale(1.05);
+}
+
+/* Empty states read as a quiet card with the icon above the copy. */
+#app .library-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+#app .library-empty-title {
+  color: var(--tv-text);
+  font-size: 36px;
+  line-height: 44px;
+  font-weight: 800;
+}
+
+#app .library-empty-subtitle {
+  color: var(--tv-text-3);
+  font-size: 24px;
+  line-height: 32px;
+}
+
+/* ---- Collections ----------------------------------------------------------- */
+
+#app .collections-shell {
+  background: var(--tv-bg);
+}
+
+#app .collections-main {
+  padding: 80px var(--tv-keyline-full) 128px;
+}
+
+#app .collections-title {
+  font-size: 52px;
+  line-height: 60px;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+}
+
+#app .collections-subtitle {
+  margin-top: 10px;
+  color: var(--tv-text-3);
+  font-size: 24px;
+  line-height: 32px;
+}
+
+#app .collections-new {
+  height: 72px;
+  padding: 0 32px 0 24px;
+  border-radius: var(--tv-radius-pill);
+  background: var(--tv-accent);
+  color: var(--tv-on-accent);
+  font-size: 24px;
+  font-weight: 700;
+}
+
+#app .collections-new.focused {
+  background: var(--tv-text);
+  color: var(--tv-on-selected);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+  -webkit-transform: scale(var(--tv-focus-button-scale));
+  transform: scale(var(--tv-focus-button-scale));
+}
+
+#app .collections-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+#app .collections-card {
+  padding: 24px 28px 24px 36px;
+  border-radius: 24px;
+  background: var(--tv-surface);
+  box-shadow: inset 0 0 0 1px var(--tv-hairline);
+}
+
+#app .collections-card-copy h2 {
+  font-size: 30px;
+  line-height: 38px;
+  font-weight: 700;
+}
+
+#app .collections-card-subtitle {
+  color: var(--tv-text-3);
+}
+
+#app .collections-action {
+  width: 72px;
+  min-width: 72px;
+  height: 72px;
+  min-height: 72px;
+  padding: 0;
+  border-radius: 50%;
+  background: var(--tv-surface-2);
+  color: var(--tv-text-2);
+  -webkit-transition: -webkit-transform var(--tv-dur-focus) var(--tv-ease-glide);
+  transition: transform var(--tv-dur-focus) var(--tv-ease-glide);
+}
+
+#app .collections-action .material-icons {
+  font-size: 34px;
+}
+
+#app .collections-action.focused {
+  background: var(--tv-text);
+  color: var(--tv-on-selected);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4);
+  -webkit-transform: scale(1.08);
+  transform: scale(1.08);
+}
+
+#app .collections-action-danger.focused {
+  background: #ff6b7a;
+  color: #1a0507;
+}
+
+#app .collections-empty {
+  margin-top: 8px;
+  padding: 48px;
+  border-radius: 28px;
+  background: var(--tv-surface);
+  box-shadow: inset 0 0 0 1px var(--tv-hairline);
+  color: var(--tv-text-2);
+  text-align: center;
+}
+
+/* ---- Profile picker --------------------------------------------------------- */
+
+/* The avatar used to grow by animating width and height (a reflow of the
+   whole grid every frame). It scales instead. */
+#app .profile-avatar-ring,
+#app .profile-card.focused .profile-avatar-ring,
+#app .profile-grid-compact .profile-card.focused .profile-avatar-ring {
+  width: 228px;
+  height: 228px;
+  border-width: 0;
+  box-shadow: inset 0 0 0 2px var(--tv-hairline-strong);
+  -webkit-transition: -webkit-transform var(--tv-dur-focus) var(--tv-ease-glide);
+  transition: transform var(--tv-dur-focus) var(--tv-ease-glide);
+}
+
+#app .profile-grid-compact .profile-avatar-ring {
+  width: 176px;
+  height: 176px;
+}
+
+#app .profile-avatar,
+#app .profile-card.focused .profile-avatar {
+  width: 196px;
+  height: 196px;
+  font-size: 80px;
+  -webkit-transition: none;
+  transition: none;
+}
+
+#app .profile-grid-compact .profile-avatar,
+#app .profile-grid-compact .profile-card.focused .profile-avatar {
+  width: 150px;
+  height: 150px;
+  font-size: 60px;
+}
+
+#app .profile-card.focused .profile-avatar-ring {
+  box-shadow:
+    0 0 0 5px var(--tv-text),
+    0 24px 56px rgba(0, 0, 0, 0.55);
+  -webkit-transform: scale(1.08);
+  transform: scale(1.08);
+}
+
+#app .profile-grid-compact .profile-card.focused .profile-avatar-ring {
+  width: 176px;
+  height: 176px;
+}
+
+.tv-reduce-motion #app .profile-avatar-ring {
+  -webkit-transition: none;
+  transition: none;
+}
+
+#app .profile-name {
+  margin-top: 18px;
+  color: var(--tv-text-2);
+  font-size: 30px;
+  font-weight: 650;
+}
+
+#app .profile-card.focused .profile-name {
+  color: var(--tv-text);
+}
+
+#app .profile-title {
+  font-size: 64px;
+  line-height: 76px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+#app .profile-subtitle,
+#app .profile-hint {
+  color: var(--tv-text-3);
+}
+
+/* ---- Add-ons ---------------------------------------------------------------- */
+
+#app #plugin {
+  overflow-y: auto;
+  background: var(--tv-bg);
+}
+
+#app .tv-addons {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 80px var(--tv-keyline-full) 96px;
+  color: var(--tv-text);
+}
+
+#app .tv-addons-eyebrow {
+  margin: 0 0 12px;
+  color: var(--tv-ring);
+  font-size: 20px;
+  line-height: 24px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+#app .tv-addons-title {
+  margin: 0;
+  font-size: 64px;
+  line-height: 72px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+#app .tv-addons-lede {
+  max-width: 1040px;
+  margin: 14px 0 0;
+  color: var(--tv-text-2);
+  font-size: 26px;
+  line-height: 36px;
+}
+
+#app .tv-addons-install {
+  margin-top: 40px;
+  padding: 28px 32px 24px;
+  border-radius: var(--tv-radius-panel);
+  background: var(--tv-surface);
+  box-shadow: inset 0 0 0 1px var(--tv-hairline);
+}
+
+#app .tv-addons-label {
+  display: block;
+  margin-bottom: 14px;
+  color: var(--tv-text-3);
+  font-size: 18px;
+  line-height: 24px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+#app .tv-addons-install-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+#app .tv-addons-field {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 76px;
+  padding: 0 28px;
+  border: 0;
+  border-radius: 20px;
+  outline: 0;
+  background: rgba(0, 0, 0, 0.35);
+  box-shadow: inset 0 0 0 2px var(--tv-hairline-strong);
+  color: var(--tv-text);
+  font: inherit;
+  font-size: 26px;
+}
+
+#app .tv-addons-field.focused {
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 255, 255, 0.2),
+    0 0 0 3px var(--tv-ring);
+}
+
+#app .tv-addons-status {
+  margin: 14px 0 0;
+  color: var(--tv-text-2);
+  font-size: 22px;
+  line-height: 30px;
+}
+
+#app .tv-addons-status:empty {
+  display: none;
+}
+
+#app .tv-addons-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 28px;
+}
+
+#app .tv-addon-button {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  height: 72px;
+  padding: 0 30px;
+  border: 0;
+  border-radius: var(--tv-radius-pill);
+  background: var(--tv-surface-2);
+  box-shadow: inset 0 0 0 1px var(--tv-hairline);
+  color: var(--tv-text);
+  font: inherit;
+  font-size: 24px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+#app .tv-addon-button .material-icons {
+  font-size: 30px;
+}
+
+#app .tv-addon-button.is-primary {
+  height: 76px;
+  background: var(--tv-accent);
+  box-shadow: none;
+  color: var(--tv-on-accent);
+}
+
+#app .tv-addon-button.focused {
+  background: var(--tv-text);
+  color: var(--tv-on-selected);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+  -webkit-transform: scale(var(--tv-focus-button-scale));
+  transform: scale(var(--tv-focus-button-scale));
+}
+
+#app .tv-addon-button.is-danger.focused {
+  background: #ff6b7a;
+  color: #1a0507;
+}
+
+#app .tv-addons-list {
+  margin-top: 48px;
+}
+
+#app .tv-addons-list-title {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 0 0 16px;
+  color: var(--tv-text-3);
+  font-size: 20px;
+  line-height: 26px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+#app .tv-addons-count {
+  padding: 0 12px;
+  border-radius: var(--tv-radius-pill);
+  background: var(--tv-surface-2);
+  color: var(--tv-text-2);
+  letter-spacing: 0;
+}
+
+#app .tv-addons-list ul {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+#app .tv-addon-row {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 18px 20px 18px 22px;
+  border-radius: 24px;
+  background: var(--tv-surface);
+  box-shadow: inset 0 0 0 1px var(--tv-hairline);
+}
+
+#app .tv-addon-row.is-disabled .tv-addon-logo,
+#app .tv-addon-row.is-disabled .tv-addon-copy {
+  opacity: 0.5;
+}
+
+#app .tv-addon-logo {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  overflow: hidden;
+  border-radius: 18px;
+  background: var(--tv-surface-2);
+  color: var(--tv-text);
+  font-size: 26px;
+  font-weight: 800;
+}
+
+#app .tv-addon-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+#app .tv-addon-copy {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+}
+
+#app .tv-addon-name {
+  overflow: hidden;
+  color: var(--tv-text);
+  font-size: 28px;
+  line-height: 36px;
+  font-weight: 700;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+#app .tv-addon-meta {
+  overflow: hidden;
+  color: var(--tv-text-3);
+  font-size: 22px;
+  line-height: 28px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+#app .tv-addon-state {
+  flex: 0 0 auto;
+  padding: 0 14px;
+  border-radius: var(--tv-radius-pill);
+  background: var(--tv-surface-2);
+  color: var(--tv-text-3);
+  font-size: 20px;
+  line-height: 36px;
+  font-weight: 700;
+}
+
+#app .tv-addon-state.is-on {
+  background: rgba(95, 224, 181, 0.14);
+  color: var(--tv-mint);
+}
+
+#app .tv-addons-empty {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 36px 40px;
+  border-radius: var(--tv-radius-panel);
+  background: var(--tv-surface);
+  box-shadow: inset 0 0 0 1px var(--tv-hairline);
+  color: var(--tv-text-2);
+  font-size: 24px;
+  line-height: 34px;
+}
+
+#app .tv-addons-empty .material-icons {
+  color: var(--tv-text-3);
+  font-size: 56px;
+}
+
+#app .tv-addons-empty p {
+  margin: 0;
+}
+
+/* ---- Search ----------------------------------------------------------------- */
+
+#app .search-key {
+  background: var(--tv-surface-2);
+  box-shadow: inset 0 0 0 1px var(--tv-hairline);
+}
+
+#app .search-key.focused {
+  background: var(--tv-text);
+  color: var(--tv-on-selected);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.45);
+  -webkit-transform: scale(1.1);
+  transform: scale(1.1);
+}
+
+.tv-reduce-motion #app .search-key.focused {
+  -webkit-transform: none;
+  transform: none;
+}
+
+/* ---- Sign in ------------------------------------------------------------------ */
+
+#app .qr-step-number {
+  background: var(--tv-surface-2);
+  box-shadow: inset 0 0 0 1px var(--tv-hairline-strong);
+}
+
+#app .qr-action-btn.focused {
+  background: var(--tv-text);
+  color: var(--tv-on-selected);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+  -webkit-transform: scale(var(--tv-focus-button-scale));
+  transform: scale(var(--tv-focus-button-scale));
+}
+
+#app .qr-card {
+  box-shadow: 0 40px 100px rgba(0, 0, 0, 0.55);
+  -webkit-animation: tvPopIn var(--tv-dur-enter) var(--tv-ease-enter) both;
+  animation: tvPopIn var(--tv-dur-enter) var(--tv-ease-enter) both;
+}
+
+.performance-constrained #app .qr-card,
+.tv-reduce-motion #app .qr-card {
+  -webkit-animation: none;
+  animation: none;
+}
+
+/* ---- Player --------------------------------------------------------------------- */
+
+#app .player-progress-track {
+  height: 8px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.24);
+}
+
+#app .player-progress-fill {
+  border-radius: 4px;
+}
+
+/* ---- Home ------------------------------------------------------------------------ */
+
+#app .home-row-title {
+  font-weight: 750;
+  letter-spacing: -0.01em;
+}
+
+#app .home-continue-badge {
+  border-radius: 10px;
+  background: rgba(8, 10, 15, 0.78);
+  box-shadow: inset 0 0 0 1px var(--tv-hairline);
+}
+
+/* Cast / Ratings switch under the episodes. */
+#app .series-insight-tab {
+  height: 52px;
+  padding: 0 24px;
+  border: 0;
+  border-radius: var(--tv-radius-pill);
+  background: transparent;
+  color: var(--tv-text-3);
+  font-size: 24px;
+  line-height: 52px;
+  font-weight: 700;
+  box-shadow: none;
+}
+
+#app .series-insight-tab.selected {
+  background: var(--tv-surface-3);
+  color: var(--tv-text);
+}
+
+#app .series-insight-tab.focused,
+#app .series-insight-tab.selected.focused {
+  background: var(--tv-text);
+  color: var(--tv-on-selected);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
+}
+
+#app .series-insight-divider {
+  display: none;
+}
+
+#app .series-insight-tabs {
+  display: flex;
+  gap: 8px;
+}
+
+/* Player buttons read over any frame: a dark glass-free disc, white on focus. */
+#app .player-control-btn {
+  background: rgba(10, 12, 18, 0.58);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16);
+  -webkit-transition: -webkit-transform var(--tv-dur-focus) var(--tv-ease-glide);
+  transition: transform var(--tv-dur-focus) var(--tv-ease-glide);
+}
+
+#app .player-control-btn.is-primary {
+  background: var(--tv-accent);
+  box-shadow: none;
+}
+
+#app .player-control-btn.focused,
+#app .player-control-btn.is-primary.focused {
+  background: var(--tv-text);
+  color: var(--tv-on-selected);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.5);
+  -webkit-transform: scale(1.08);
+  transform: scale(1.08);
+}
+
+#app .player-control-btn.focused .player-control-icon-mask {
+  background-color: var(--tv-on-selected);
+}
+
+.tv-reduce-motion #app .player-control-btn {
+  -webkit-transition: none;
+  transition: none;
+}
+
+.tv-reduce-motion #app .player-control-btn.focused {
+  -webkit-transform: none;
+  transform: none;
+}
+
+/* Settings text entry (URLs, keys, names). */
+#app .settings-text-dialog-field {
+  border: 0;
+  border-radius: 20px;
+  background: rgba(0, 0, 0, 0.35);
+  box-shadow: inset 0 0 0 2px var(--tv-hairline-strong);
+  color: var(--tv-text);
+}
+
+#app .settings-text-dialog-field.focused,
+#app .settings-text-dialog-field:focus {
+  background: rgba(0, 0, 0, 0.45);
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 255, 255, 0.2),
+    0 0 0 3px var(--tv-ring);
+  color: var(--tv-text);
+}

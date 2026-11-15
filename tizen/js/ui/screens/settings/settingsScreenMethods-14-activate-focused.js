@@ -132,6 +132,9 @@ export function createSettingsScreenMethods14() {
       return true;
     },
     async onKeyDown(event) {
+      if (this.navSelectionTimer && !this.isNavStepKey(Number(event?.keyCode || 0))) {
+        await this.flushNavSelection();
+      }
       if (Platform.isBackEvent(event)) {
         event?.preventDefault?.();
         if (this.textDialog) {
