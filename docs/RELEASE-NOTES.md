@@ -1,3 +1,23 @@
+## Starlit 1.28.0
+
+### Phone-to-TV controller
+
+- **Refreshed TV remote on mobile:** Improve Samsung and LG device discovery, pairing guidance and connection feedback, with clearer directional, playback and volume controls. The paired-device flow supports private-network connections and existing TV pairing codes.
+
+### Samsung TV and installer development previews
+
+- **TV presentation and navigation:** Refresh the Tizen interface layout, visual styling and focus handling, with particular attention to constrained TV runtimes.
+- **USB torrent cache reliability:** Better recognize mounted USB storage through compatible Tizen filesystem paths and recover gracefully from local cache-service disconnections. USB cache remains optional, with conservative service retries and clearer unavailable states.
+- **Opt-in TV diagnostics:** Add bounded, privacy-conscious TV error and warning events, with consent off by default. Live delivery requires the corresponding server-side telemetry service to be deployed and verified.
+- **TV installer usability:** Embed the Starlit Windows icon, provide a conventional Setup executable alongside the portable development build, and show Samsung certificate browser sign-in and timeout guidance.
+
+### Compatibility and release scope
+
+- This is a compatible minor update. Existing accounts, library data, installed add-ons and device-pairing identities remain unchanged.
+- Windows, signed Android phone and Android TV, and Linux installers are distributed only after the tagged release workflow passes platform builds, signing, security, provenance and checksum checks.
+- Samsung Tizen WGT, LG webOS IPK and the Windows TV installer are separate **developer previews**, not stable release assets. The latest TV changes still need physical playback, remote, USB and signed-package acceptance; the TV installer also has inherited dependency security advisories requiring review. The diagnostics gateway is not automatically deployed by this release.
+- No iOS App Store release is included. The existing supported UI localization catalogs are retained; this release adds no new UI strings beyond previously merged localized changes.
+
 ## Starlit 1.27.1
 
 ### TV packaging and release reliability
