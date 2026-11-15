@@ -11,7 +11,7 @@ const source = (await readFile(new URL("./tvArtworkLazyLoader.js", import.meta.u
   .replace(/^import [^;]+;$/gm, "")
   .replace(/^export /gm, "");
 const TRANSPARENT_PIXEL = "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
-function buildContext({ rescaler = true } = {}) {
+function buildContext({ rescaler = true, constrained = false } = {}) {
   const pending = [];
   const released = [];
   const context = vm.createContext({
@@ -28,7 +28,7 @@ function buildContext({ rescaler = true } = {}) {
       }),
     resetArtworkRescaler: () => {},
     shouldRescaleHomeArtwork: () => rescaler,
-    getTvRuntimePerformanceProfile: () => ({ isTvRuntime: true }),
+    getTvRuntimePerformanceProfile: () => ({ isTvRuntime: true, isPerformanceConstrained: constrained }),
     getTvArtworkPixelRatio: () => 1,
     registerSessionTeardownHandler: () => {}
   });
