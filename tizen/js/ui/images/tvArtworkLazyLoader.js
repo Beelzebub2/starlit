@@ -39,6 +39,7 @@ export function canRescaleArtworkHost(source) {
 let started = false;
 let observer = null;
 let mutations = null;
+let artworkPaused = false;
 const HYDRATIONS_PER_FRAME = 5;
 const queuedHydrations = new Set();
 let hydrationFrame = null;
@@ -232,6 +233,25 @@ function onMutations(records) {
     record.removedNodes.forEach(releaseTree);
   }
 }
+function onArtworkVisibilityChange() {
+  if (!started) return;
+  const hidden = document.visibilityState === "hidden" || document.webkitHidden === true;
+  if (hidden) {
+    artworkPaused = true;
+    cancelQueuedHydrations();
+    observer?.disconnect?.();
+    mutations?.disconnect?.();
+    return;
+  }
+  if (!artworkPaused) return;
+  artworkPaused = false;
+  if (document.body) {
+    mutations?.observe?.(document.body, { childList: true, subtree: true });
+    // Re-observe only placeholders that have not been hydrated. Painted
+    // images remain untouched, so foreground resume does not flash posters.
+    prepareTree(document.body);
+  }
+}
 /** Start the shared lazy artwork pass once per app run. */
 export function startTvArtworkLazyLoader() {
   if (started) return false;
@@ -254,10 +274,16 @@ export function startTvArtworkLazyLoader() {
     mutations = new globalThis.MutationObserver(onMutations);
     mutations.observe(document.body, { childList: true, subtree: true });
   }
+  document.addEventListener?.("visibilitychange", onArtworkVisibilityChange);
+  document.addEventListener?.("webkitvisibilitychange", onArtworkVisibilityChange);
   prepareTree(document.body);
+  onArtworkVisibilityChange();
   return true;
 }
 export function stopTvArtworkLazyLoader() {
+  document.removeEventListener?.("visibilitychange", onArtworkVisibilityChange);
+  document.removeEventListener?.("webkitvisibilitychange", onArtworkVisibilityChange);
+  artworkPaused = false;
   cancelQueuedHydrations();
   observer?.disconnect?.();
   mutations?.disconnect?.();
