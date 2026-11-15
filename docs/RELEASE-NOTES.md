@@ -1,3 +1,25 @@
+## Starlit 1.27.0
+
+### Playback, library and settings
+
+- **Mobile and Android TV player controls:** Refresh transport controls, playback options and focus behavior on smaller screens and television layouts.
+- **MyAnimeList rewatching:** Match anime entries automatically from known identifiers and title aliases where possible. Ask for a choice only when a match cannot be resolved confidently, and retry tracking updates against the matched entry.
+- **Android settings search:** Scroll to the specific setting and highlight the target control, including dynamically populated tracking cards, rather than stopping at the settings page.
+- **Bluetooth remote discovery:** Show previously paired Windows PCs even when a new Bluetooth device scan returns no results.
+
+### Phone-to-TV pairing and television improvements
+
+- **Phone-assisted TV setup and playback:** Pair a phone using the TV's QR code or pairing code to manage compatible add-ons and plugins, send selected playback sources to the TV, and access supported remote controls. Pairing is access-controlled and rate-limited.
+- **Samsung and LG installer preview:** Discover compatible TVs on the local network, show guided device-selection and installation progress, preserve known LG device selections, and retain a manual fallback.
+- **Samsung Tizen playback and responsiveness:** Reduce offscreen artwork work on older TVs, improve Home navigation and keyboard focus, select compatible UHD/HLS playback paths, and detect USB storage more reliably. Torrent playback accepts larger bounded metadata and concurrent media ranges; writable USB cache remains opt-in.
+- **Tizen 5 plugin developer preview:** Provide an optional JavaScript/ASM.js execution path for supported legacy plugins, with bounded network work and clearer compatibility warnings. This does not guarantee that arbitrary plugins work on every TV.
+
+### Languages and compatibility
+
+- **Localized interface:** Synchronize translations for recently changed settings, playback and TV management flows across the supported phone and TV language catalogs.
+- Windows, signed Android phone and Android TV, and Linux installers are published only after the tagged release builds, tests, signatures, checksums and provenance checks succeed.
+- Samsung Tizen WGT, LG webOS IPK, and the Windows TV installer remain developer previews, not signed public assets in this release. Real-device testing is still required for large-torrent first-frame playback, TV plugin compatibility, USB cache, remote input and 4K playback. No iOS App Store release is included.
+
 ## Starlit 1.26.0
 
 ### Phone-to-PC controller
