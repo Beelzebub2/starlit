@@ -3321,6 +3321,7 @@ Had permintaan</string>
     <string name="remote_tv_starlit_code">Kod pasangan TV</string>
     <string name="remote_tv_starlit_failed">Sambungan gagal. Semak kod dan cuba lagi.</string>
     <string name="remote_tv_starlit_hint">Pada TV, buka Urus dengan telefon. Masukkan kod di sini dan luluskan pada TV.</string>
+    <string name="remote_tv_starlit_title">Starlit pada TV anda</string>
     <string name="remote_tv_android_only">TV alat kawalan jauh kini tersedia pada telefon Android.</string>
     <string name="remote_tv_available">TV yang tersedia</string>
     <string name="remote_tv_connected_title">TV disambungkan</string>
@@ -3331,6 +3332,7 @@ Had permintaan</string>
     <string name="remote_tv_home">Rumah</string>
     <string name="remote_tv_left">Kiri</string>
     <string name="remote_tv_manual_hint">Jika penemuan disekat, masukkan IP setempat yang ditunjukkan dalam tetapan rangkaian TV anda.</string>
+    <string name="remote_tv_manual_ip_label">Alamat IPv4 tempatan TV</string>
     <string name="remote_tv_manual_title">Sambung melalui alamat IP.</string>
     <string name="remote_tv_mute">Redam</string>
     <string name="remote_tv_navigation">Navigasi</string>

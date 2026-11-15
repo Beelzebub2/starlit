@@ -2598,6 +2598,7 @@
     <string name="remote_tv_starlit_code">Κωδικός σύζευξης τηλεόρασης</string>
     <string name="remote_tv_starlit_failed">Η σύνδεση απέτυχε. Έλεγξε τον κωδικό και δοκίμασε ξανά.</string>
     <string name="remote_tv_starlit_hint">Στην τηλεόραση άνοιξε τη Διαχείριση με τηλέφωνο. Πληκτρολόγησε εδώ τον κωδικό και ενέκρινε στην τηλεόραση.</string>
+    <string name="remote_tv_starlit_title">Το Starlit στην τηλεόρασή σας</string>
     <string name="remote_handoff_approve">Επιλέξτε πηγή στο PC</string>
     <string name="remote_handoff_approve_description">Ένα συζευγμένο τηλέφωνο ζήτησε αυτόν τον τίτλο. Αποδεχτείτε μόνο εάν αναγνωρίζετε το αίτημα. Το Starlit θα ανοίξει τον κανονικό επιλογέα πηγής σε αυτό το PC. το τηλέφωνο δεν μπορεί να παρέχει ροή ή να παρακάμψει περιορισμούς πηγής.</string>
     <string name="remote_handoff_approve_title">Παίξτε σε αυτό το PC;</string>
@@ -2617,6 +2618,7 @@
     <string name="remote_tv_home">Αρχική</string>
     <string name="remote_tv_left">Αριστερά</string>
     <string name="remote_tv_manual_hint">Εάν η ανακάλυψη είναι αποκλεισμένη, εισαγάγετε το τοπικό IP που εμφανίζεται στις ρυθμίσεις δικτύου του TV σας.</string>
+    <string name="remote_tv_manual_ip_label">Τοπική διεύθυνση IPv4 της τηλεόρασης</string>
     <string name="remote_tv_manual_title">Σύνδεση μέσω IP διεύθυνσης</string>
     <string name="remote_tv_mute">Σίγαση</string>
     <string name="remote_tv_navigation">Πλοήγηση</string>

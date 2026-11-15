@@ -2603,6 +2603,7 @@
     <string name="remote_tv_starlit_code">ٹی وی جوڑنے کا کوڈ</string>
     <string name="remote_tv_starlit_failed">کنکشن ناکام ہو گیا۔ کوڈ چیک کریں اور دوبارہ کوشش کریں۔</string>
     <string name="remote_tv_starlit_hint">ٹی وی پر فون سے انتظام کھولیں۔ یہاں کوڈ درج کریں اور ٹی وی پر منظوری دیں۔</string>
+    <string name="remote_tv_starlit_title">آپ کے ٹی وی پر Starlit</string>
     <string name="remote_handoff_approve">PC پر ذریعہ منتخب کریں</string>
     <string name="remote_handoff_approve_description">ایک جوڑے والے فون نے اس عنوان کی درخواست کی۔ صرف اس صورت میں قبول کریں جب آپ درخواست کو تسلیم کریں۔ Starlit اس PC پر نارمل سورس چننے والا کھولے گا؛ فون سٹریم فراہم نہیں کر سکتا یا ماخذ کی پابندیوں کو نظرانداز نہیں کر سکتا۔</string>
     <string name="remote_handoff_approve_title">اس PC پر کھیلیں؟</string>
@@ -2622,6 +2623,7 @@
     <string name="remote_tv_home">گھر</string>
     <string name="remote_tv_left">چھوڑ دیا۔</string>
     <string name="remote_tv_manual_hint">اگر دریافت مسدود ہے، تو اپنے TV کی نیٹ ورک سیٹنگز میں دکھایا گیا مقامی IP درج کریں۔</string>
+    <string name="remote_tv_manual_ip_label">ٹی وی کا مقامی IPv4 پتہ</string>
     <string name="remote_tv_manual_title">IP ایڈریس سے جڑیں۔</string>
     <string name="remote_tv_mute">خاموش</string>
     <string name="remote_tv_navigation">نیویگیشن</string>

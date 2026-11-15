@@ -3109,6 +3109,7 @@
     <string name="remote_tv_home">Home</string>
     <string name="remote_tv_left">Left</string>
     <string name="remote_tv_manual_hint">If discovery is blocked, enter the local IP shown in your TV's network settings.</string>
+    <string name="remote_tv_manual_ip_label">TV local IPv4 address</string>
     <string name="remote_tv_manual_title">Connect by IP address</string>
     <string name="remote_tv_mute">Mute</string>
     <string name="remote_tv_navigation">Navigation</string>
@@ -3123,6 +3124,7 @@
     <string name="remote_tv_starlit_code">TV pairing code</string>
     <string name="remote_tv_starlit_failed">Connection failed. Check the code and try again.</string>
     <string name="remote_tv_starlit_hint">On the TV, open Manage with phone. Enter its code here, then approve on the TV.</string>
+    <string name="remote_tv_starlit_title">Starlit on your TV</string>
     <string name="remote_tv_tab">TV</string>
     <string name="remote_tv_title">TV remote</string>
     <string name="remote_tv_up">Up</string>

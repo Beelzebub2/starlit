@@ -3286,6 +3286,7 @@
     <string name="remote_tv_starlit_code">டிவி இணைப்புக் குறியீடு</string>
     <string name="remote_tv_starlit_failed">இணைப்பு தோல்வியடைந்தது. குறியீட்டைச் சரிபார்த்து மீண்டும் முயலவும்.</string>
     <string name="remote_tv_starlit_hint">டிவியில் தொலைபேசி மூலம் நிர்வகி என்பதைத் திறக்கவும். குறியீட்டை இங்கே உள்ளிட்டு டிவியில் ஒப்புதல் அளிக்கவும்.</string>
+    <string name="remote_tv_starlit_title">உங்கள் டிவியில் Starlit</string>
     <string name="remote_tv_android_only">TV ரிமோட் கண்ட்ரோல் தற்போது Android தொலைபேசிகளில் கிடைக்கிறது.</string>
     <string name="remote_tv_available">கிடைக்கக்கூடிய டிவிகள்</string>
     <string name="remote_tv_connected_title">TV இணைக்கப்பட்டது</string>
@@ -3296,6 +3297,7 @@
     <string name="remote_tv_home">வீடு</string>
     <string name="remote_tv_left">இடது</string>
     <string name="remote_tv_manual_hint">கண்டுபிடிப்பு தடுக்கப்பட்டால், உங்கள் TV இன் நெட்வொர்க் அமைப்புகளில் காட்டப்பட்டுள்ள உள்ளூர் IP ஐ உள்ளிடவும்.</string>
+    <string name="remote_tv_manual_ip_label">டிவியின் உள்ளூர் IPv4 முகவரி</string>
     <string name="remote_tv_manual_title">IP முகவரி மூலம் இணைக்கவும்</string>
     <string name="remote_tv_mute">முடக்கு</string>
     <string name="remote_tv_navigation">வழிசெலுத்தல்</string>

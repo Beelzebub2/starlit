@@ -572,7 +572,7 @@ private fun FoundPcGroup(
 
 /** A shimmering stand-in row while the search may still find more PCs. */
 @Composable
-private fun SearchingPlaceholderRow() {
+internal fun SearchingPlaceholderRow() {
     Row(
         Modifier
             .fillMaxWidth()

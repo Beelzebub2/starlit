@@ -3323,6 +3323,7 @@ Nagbalik ang</string>
     <string name="remote_tv_starlit_code">Code sa pagpares ng TV</string>
     <string name="remote_tv_starlit_failed">Hindi kumonekta. Tingnan ang code at subukang muli.</string>
     <string name="remote_tv_starlit_hint">Sa TV, buksan ang Pamahalaan gamit ang telepono. Ilagay ang code dito at aprubahan sa TV.</string>
+    <string name="remote_tv_starlit_title">Starlit sa iyong TV</string>
     <string name="remote_tv_android_only">TV remote control ay kasalukuyang available sa Android na mga telepono.</string>
     <string name="remote_tv_available">Mga available na TV</string>
     <string name="remote_tv_connected_title">TV konektado</string>
@@ -3333,6 +3334,7 @@ Nagbalik ang</string>
     <string name="remote_tv_home">Tahanan</string>
     <string name="remote_tv_left">Kaliwa</string>
     <string name="remote_tv_manual_hint">Kung naka-block ang pagtuklas, ilagay ang lokal na IP na ipinapakita sa mga setting ng network ng iyong TV.</string>
+    <string name="remote_tv_manual_ip_label">Lokal na IPv4 address ng TV</string>
     <string name="remote_tv_manual_title">Kumonekta sa pamamagitan ng IP address</string>
     <string name="remote_tv_mute">I-mute</string>
     <string name="remote_tv_navigation">Navigation</string>
