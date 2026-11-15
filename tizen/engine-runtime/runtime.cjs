@@ -7,6 +7,13 @@ var networkPolicy = require('./network-policy.cjs'), net = require('net');
 var MAX_CACHE = 48 * 1024 * 1024, MAX_PIECE = 32 * 1024 * 1024;
 var MAX_FILES = 1024, MAX_PIECES = 65536, MAX_TORRENT_BYTES = 1024 * 1024 * 1024 * 1024;
 var MAX_MEDIA_STREAMS = 4, MAX_MEDIA_READ_CHUNK = 256 * 1024;
+function mediaSelectionLimit(pieceLength) {
+  // Cap simultaneous in-flight full-piece buffers, not HTTP connections.
+  // A 32 MiB torrent piece can occupy far more RAM than a 256 KiB HTTP read.
+  if (pieceLength >= 16 * 1024 * 1024) return 2;
+  if (pieceLength >= 8 * 1024 * 1024) return 3;
+  return MAX_MEDIA_STREAMS;
+}
 function mediaReadLength(position, end, pieceLength, torrentLength) {
   // A large AVPlay range must not queue an entire 32 MiB torrent piece as
   // one HTTP buffer. Keep reads bounded even for multi-gigabyte video files.
@@ -83,7 +90,7 @@ function start(options, callback) {
           trackers.push(tracker);
         });
       } catch (err) { return json(res, 400, { error: err.message }); }
-      var entry = { hash: hash, tickets: Object.create(null), pending: [res], ready: false, streams: [], timer: null, engine: null, cache: null, cacheReadRetries: 0, startedAt: Date.now(), lastPieceAt: 0 };
+      var entry = { hash: hash, tickets: Object.create(null), pending: [res], ready: false, streams: [], timer: null, engine: null, cache: null, cacheReadRetries: 0, startedAt: Date.now(), lastPieceAt: 0, activeSelections: 0, selectionQueue: [] };
       var invalidate = function (index) { if (entry.engine && entry.engine.invalidate) entry.engine.invalidate(index); };
       var cache = usbProfile ? usbCache.create(usbProfile, invalidate, function () { usbProfile = null; }) :
         createCache(Math.min(options.cacheBytes || MAX_CACHE, MAX_CACHE), invalidate);
@@ -134,13 +141,51 @@ function start(options, callback) {
     var r = headers(res, req, file.length, mime[extension && extension[1].toLowerCase()] || 'application/octet-stream');
     if (!r) return;
     if (req.method === 'HEAD') return res.end();
-    var engine = entry.engine, position = file.offset + r.start, end = file.offset + r.end, waiting = false, reading = false, selected = -1, dead = false;
+    var engine = entry.engine, position = file.offset + r.start, end = file.offset + r.end, waiting = false, reading = false, selected = -1, dead = false, queued = false, queuedCallback = null;
     var stream = new Readable(); entry.streams.push(stream);
     function detach() {
       var index = entry.streams.indexOf(stream);
       if (index >= 0) entry.streams.splice(index, 1);
     }
-    function deselect() { if (selected >= 0) { engine.deselect(selected, selected, true, notify); selected = -1; } }
+    function promoteWaiting() {
+      if (active !== entry) return;
+      var max = mediaSelectionLimit(engine.torrent.pieceLength);
+      while (entry.activeSelections < max && entry.selectionQueue.length) {
+        var next = entry.selectionQueue.shift();
+        if (next) next();
+      }
+    }
+    function unqueue() {
+      if (!queued) return;
+      queued = false;
+      var index = entry.selectionQueue.indexOf(queuedCallback);
+      if (index >= 0) entry.selectionQueue.splice(index, 1);
+      queuedCallback = null;
+    }
+    function deselect() {
+      if (selected < 0) return;
+      var old = selected;
+      selected = -1;
+      engine.deselect(old, old, true, notify);
+      entry.activeSelections = Math.max(0, entry.activeSelections - 1);
+      promoteWaiting();
+    }
+    function requestSelection() {
+      if (dead || !waiting || reading || selected >= 0) return;
+      if (entry.activeSelections >= mediaSelectionLimit(engine.torrent.pieceLength)) {
+        if (!queued) {
+          queued = true;
+          queuedCallback = function () { queued = false; queuedCallback = null; requestSelection(); };
+          entry.selectionQueue.push(queuedCallback);
+        }
+        return;
+      }
+      unqueue();
+      selected = Math.floor(position / engine.torrent.pieceLength);
+      entry.activeSelections++;
+      engine.select(selected, selected, true, notify);
+      notify();
+    }
     function notify() {
       if (dead || !waiting || reading || selected < 0 || !engine.bitfield.get(selected)) return;
       var piece = selected;
@@ -162,9 +207,7 @@ function start(options, callback) {
           // duplicate high-priority selections during repeated cache misses.
           deselect();
           engine.invalidate(piece);
-          selected = piece;
-          engine.select(piece, piece, true, notify);
-          notify();
+          requestSelection();
           return;
         }
         deselect();
@@ -175,11 +218,11 @@ function start(options, callback) {
     }
     stream._read = function () {
       if (dead || waiting || position > end) return;
-      waiting = true; selected = Math.floor(position / engine.torrent.pieceLength);
-      engine.select(selected, selected, true, notify); notify();
+      waiting = true;
+      requestSelection();
     };
     stream.destroy = function () {
-      if (dead) return; dead = true; deselect();
+      if (dead) return; dead = true; unqueue(); deselect();
       detach();
       stream.unpipe(res); stream.emit('close'); if (!res.finished) res.destroy();
       // Cancel incomplete pieces only after the last range closes. A seek or
@@ -187,7 +230,7 @@ function start(options, callback) {
       if (!entry.streams.length && engine.releasePending) engine.releasePending();
     };
     stream.on('error', function () { stream.destroy(); });
-    res.on('close', stream.destroy); stream.on('end', function () { dead = true; deselect(); detach(); });
+    res.on('close', stream.destroy); stream.on('end', function () { dead = true; unqueue(); deselect(); detach(); });
     stream.pipe(res);
   }
   server = http.createServer(function (req, res) {
@@ -279,6 +322,9 @@ function start(options, callback) {
         downloaded: active.engine.swarm.downloaded,
         downloadSpeed: active.engine.swarm.downloadSpeed(),
         activeRanges: active.streams.length,
+        activePieceSelections: active.activeSelections,
+        queuedPieceSelections: active.selectionQueue.length,
+        pieceSelectionLimit: torrent ? mediaSelectionLimit(torrent.pieceLength) : null,
         cacheReadRetries: active.cacheReadRetries,
         pieceLengthBytes: torrent ? torrent.pieceLength : null,
         pieceCount: torrent ? torrent.pieces.length : null,
@@ -299,4 +345,4 @@ function start(options, callback) {
   server.listen(port, '127.0.0.1', callback);
   return { server: server, stop: function (cb) { stopping = true; remove(function () { sockets.slice().forEach(function (s) { s.destroy(); }); server.close(cb); }); } };
 }
-module.exports = { start: start, validateTorrent: validateTorrent, mediaReadLength: mediaReadLength, version: 'starlit-torrent-1' };
+module.exports = { start: start, validateTorrent: validateTorrent, mediaReadLength: mediaReadLength, mediaSelectionLimit: mediaSelectionLimit, version: 'starlit-torrent-1' };
