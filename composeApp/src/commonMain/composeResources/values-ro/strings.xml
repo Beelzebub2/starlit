@@ -2178,6 +2178,7 @@
     <string name="remote_tv_starlit_code">Cod de asociere a televizorului</string>
     <string name="remote_tv_starlit_failed">Conexiunea a eșuat. Verifică codul și încearcă din nou.</string>
     <string name="remote_tv_starlit_hint">Pe televizor, deschide Gestionează cu telefonul. Introdu codul aici și aprobă pe televizor.</string>
+    <string name="remote_tv_starlit_title">Starlit pe televizorul tău</string>
     <string name="remote_handoff_approve">Alegeți sursa pe PC</string>
     <string name="remote_handoff_approve_description">Un telefon asociat a solicitat acest titlu. Acceptați doar dacă recunoașteți solicitarea. Starlit va deschide selectorul de sursă normal pe acest PC; telefonul nu poate furniza un flux sau ocoli restricțiile de sursă.</string>
     <string name="remote_handoff_approve_title">Jucați pe acest PC?</string>
@@ -2197,6 +2198,7 @@
     <string name="remote_tv_home">Acasă</string>
     <string name="remote_tv_left">Stânga</string>
     <string name="remote_tv_manual_hint">Dacă descoperirea este blocată, introduceți IP local afișat în setările rețelei dvs. TV.</string>
+    <string name="remote_tv_manual_ip_label">Adresa IPv4 locală a televizorului</string>
     <string name="remote_tv_manual_title">Conectați-vă după adresa IP.</string>
     <string name="remote_tv_mute">Dezactivează</string>
     <string name="remote_tv_navigation">Navigare</string>

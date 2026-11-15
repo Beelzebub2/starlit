@@ -2624,6 +2624,7 @@
     <string name="remote_tv_starlit_code">Kód párovania TV</string>
     <string name="remote_tv_starlit_failed">Pripojenie zlyhalo. Skontrolujte kód a skúste znova.</string>
     <string name="remote_tv_starlit_hint">Na televízore otvorte Spravovať telefónom. Zadajte kód a potvrďte na TV.</string>
+    <string name="remote_tv_starlit_title">Starlit na vašom televízore</string>
     <string name="remote_handoff_approve">Vyberte zdroj na PC</string>
     <string name="remote_handoff_approve_description">Spárovaný telefón si vyžiadal tento titul. Prijmite len vtedy, ak žiadosť poznáte. Starlit otvorí bežný výber zdroja na tomto PC; telefón nemôže poskytovať stream alebo obísť obmedzenia zdroja.</string>
     <string name="remote_handoff_approve_title">Hrať na tomto PC?</string>
@@ -2643,6 +2644,7 @@
     <string name="remote_tv_home">Domov</string>
     <string name="remote_tv_left">Vľavo</string>
     <string name="remote_tv_manual_hint">Ak je zisťovanie zablokované, zadajte miestne IP zobrazené v nastaveniach siete vášho TV.</string>
+    <string name="remote_tv_manual_ip_label">Miestna IPv4 adresa televízora</string>
     <string name="remote_tv_manual_title">Pripojte sa pomocou adresy IP</string>
     <string name="remote_tv_mute">Stlmiť</string>
     <string name="remote_tv_navigation">Navigácia</string>

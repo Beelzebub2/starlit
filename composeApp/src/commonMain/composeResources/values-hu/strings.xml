@@ -2380,6 +2380,7 @@
     <string name="remote_tv_starlit_code">TV párosítási kód</string>
     <string name="remote_tv_starlit_failed">A csatlakozás sikertelen. Ellenőrizd a kódot, és próbáld újra.</string>
     <string name="remote_tv_starlit_hint">A tévén nyisd meg a Kezelés telefonnal menüt. Írd be a kódot, majd hagyd jóvá a tévén.</string>
+    <string name="remote_tv_starlit_title">Starlit a tévéjén</string>
     <string name="remote_handoff_approve">Forrás kiválasztása a PC oldalon</string>
     <string name="remote_handoff_approve_description">Egy párosított telefon kérte ezt a címet. Csak akkor fogadja el, ha felismeri a kérést. Starlit megnyitja a normál forrásválasztót ezen a PC-on; a telefon nem tud adatfolyamot biztosítani, vagy megkerüli a forráskorlátozásokat.</string>
     <string name="remote_handoff_approve_title">Játssz ezen a PC-on?</string>
@@ -2399,6 +2400,7 @@
     <string name="remote_tv_home">Kezdőlap</string>
     <string name="remote_tv_left">Balra</string>
     <string name="remote_tv_manual_hint">Ha a felderítés blokkolva van, adja meg a TV hálózati beállításaiban látható helyi IP kódot.</string>
+    <string name="remote_tv_manual_ip_label">A tévé helyi IPv4-címe</string>
     <string name="remote_tv_manual_title">Csatlakozás IP cím alapján</string>
     <string name="remote_tv_mute">Némítás</string>
     <string name="remote_tv_navigation">Navigáció</string>

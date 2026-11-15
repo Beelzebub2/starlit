@@ -2629,6 +2629,7 @@
     <string name="remote_tv_starlit_code">Mã ghép đôi TV</string>
     <string name="remote_tv_starlit_failed">Kết nối thất bại. Kiểm tra mã và thử lại.</string>
     <string name="remote_tv_starlit_hint">Trên TV, mở Quản lý bằng điện thoại. Nhập mã vào đây và phê duyệt trên TV.</string>
+    <string name="remote_tv_starlit_title">Starlit trên TV của bạn</string>
     <string name="remote_handoff_approve">Chọn nguồn trên PC</string>
     <string name="remote_handoff_approve_description">Một điện thoại được ghép nối đã yêu cầu tiêu đề này. Chỉ chấp nhận nếu bạn nhận ra yêu cầu. Starlit sẽ mở bộ chọn nguồn thông thường trên PC này; điện thoại không thể cung cấp luồng hoặc bỏ qua các hạn chế về nguồn.</string>
     <string name="remote_handoff_approve_title">Chơi trên PC này?</string>
@@ -2648,6 +2649,7 @@
     <string name="remote_tv_home">Trang chủ</string>
     <string name="remote_tv_left">Còn lại</string>
     <string name="remote_tv_manual_hint">Nếu việc khám phá bị chặn, hãy nhập IP cục bộ được hiển thị trong cài đặt mạng của TV của bạn.</string>
+    <string name="remote_tv_manual_ip_label">Địa chỉ IPv4 cục bộ của TV</string>
     <string name="remote_tv_manual_title">Kết nối theo địa chỉ IP</string>
     <string name="remote_tv_mute">Tắt tiếng</string>
     <string name="remote_tv_navigation">Điều hướng</string>

@@ -2199,6 +2199,7 @@
     <string name="remote_tv_starlit_code">Codice di abbinamento TV</string>
     <string name="remote_tv_starlit_failed">Connessione non riuscita. Controlla il codice e riprova.</string>
     <string name="remote_tv_starlit_hint">Sulla TV apri Gestisci con il telefono. Inserisci qui il codice e approva sulla TV.</string>
+    <string name="remote_tv_starlit_title">Starlit sulla tua TV</string>
     <string name="remote_handoff_approve">Choose source on PC</string>
     <string name="remote_handoff_approve_description">A paired phone requested this title. Only accept if you recognize the request. Starlit will open the normal source picker on this PC; il telefono non può fornire uno streaming o ignorare le restrizioni sulla sorgente.</string>
     <string name="remote_handoff_approve_title">Play on this PC?</string>
@@ -2218,6 +2219,7 @@
     <string name="remote_tv_home">Casa</string>
     <string name="remote_tv_left">A sinistra</string>
     <string name="remote_tv_manual_hint">Se il rilevamento è bloccato, inserisci il IP locale mostrato nelle impostazioni di rete del tuo TV.</string>
+    <string name="remote_tv_manual_ip_label">Indirizzo IPv4 locale della TV</string>
     <string name="remote_tv_manual_title">Connect by IP address</string>
     <string name="remote_tv_mute">Disattiva audio</string>
     <string name="remote_tv_navigation">Navigazione</string>

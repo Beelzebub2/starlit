@@ -1700,6 +1700,7 @@
     <string name="remote_tv_starlit_code">Kode penyandingan TV</string>
     <string name="remote_tv_starlit_failed">Koneksi gagal. Periksa kode lalu coba lagi.</string>
     <string name="remote_tv_starlit_hint">Di TV, buka Kelola dengan ponsel. Masukkan kode di sini, lalu setujui di TV.</string>
+    <string name="remote_tv_starlit_title">Starlit di TV Anda</string>
     <string name="remote_handoff_approve">Pilih sumber di PC</string>
     <string name="remote_handoff_approve_description">Telepon berpasangan meminta judul ini. Terima hanya jika Anda mengenali permintaan tersebut. Starlit akan membuka pemilih sumber normal pada PC ini; telepon tidak dapat mengalirkan atau melewati batasan sumber.</string>
     <string name="remote_handoff_approve_title">Mainkan di PC ini?</string>
@@ -1719,6 +1720,7 @@
     <string name="remote_tv_home">Rumah</string>
     <string name="remote_tv_left">Kiri</string>
     <string name="remote_tv_manual_hint">Jika penemuan diblokir, masukkan IP lokal yang ditampilkan di pengaturan jaringan TV Anda.</string>
+    <string name="remote_tv_manual_ip_label">Alamat IPv4 lokal TV</string>
     <string name="remote_tv_manual_title">Hubungkan dengan alamat IP.</string>
     <string name="remote_tv_mute">Bisu</string>
     <string name="remote_tv_navigation">Navigasi</string>

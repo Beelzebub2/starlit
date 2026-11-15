@@ -3283,6 +3283,7 @@
     <string name="remote_tv_starlit_code">టీవీ జత చేసే కోడ్</string>
     <string name="remote_tv_starlit_failed">కనెక్షన్ విఫలమైంది. కోడ్ తనిఖీ చేసి మళ్లీ ప్రయత్నించండి.</string>
     <string name="remote_tv_starlit_hint">టీవీలో ఫోన్‌తో నిర్వహించు తెరవండి. ఇక్కడ కోడ్ నమోదు చేసి టీవీలో ఆమోదించండి.</string>
+    <string name="remote_tv_starlit_title">మీ టీవీలో Starlit</string>
     <string name="remote_tv_android_only">TV రిమోట్ కంట్రోల్ ప్రస్తుతం Android ఫోన్‌లలో అందుబాటులో ఉంది.</string>
     <string name="remote_tv_available">అందుబాటులో ఉన్న టీవీలు</string>
     <string name="remote_tv_connected_title">TV కనెక్ట్ చేయబడింది</string>
@@ -3293,6 +3294,7 @@
     <string name="remote_tv_home">హోమ్</string>
     <string name="remote_tv_left">ఎడమ</string>
     <string name="remote_tv_manual_hint">ఆవిష్కరణ బ్లాక్ చేయబడితే, మీ TV నెట్‌వర్క్ సెట్టింగ్‌లలో చూపబడిన స్థానిక IPని నమోదు చేయండి.</string>
+    <string name="remote_tv_manual_ip_label">టీవీ స్థానిక IPv4 చిరునామా</string>
     <string name="remote_tv_manual_title">IP చిరునామా ద్వారా కనెక్ట్ చేయండి</string>
     <string name="remote_tv_mute">మ్యూట్ చేయండి</string>
     <string name="remote_tv_navigation">నావిగేషన్</string>

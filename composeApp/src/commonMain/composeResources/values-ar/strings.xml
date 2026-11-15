@@ -2374,6 +2374,7 @@
     <string name="remote_tv_starlit_code">رمز إقران التلفاز</string>
     <string name="remote_tv_starlit_failed">فشل الاتصال. تحقق من الرمز وحاول مجددًا.</string>
     <string name="remote_tv_starlit_hint">افتح الإدارة بالهاتف على التلفاز. أدخل الرمز هنا ثم وافق على التلفاز.</string>
+    <string name="remote_tv_starlit_title">Starlit على التلفاز</string>
     <string name="remote_handoff_approve">اختر المصدر على PC</string>
     <string name="remote_handoff_approve_description">طلب هاتف مقترن هذا العنوان. لا تقبل إلا إذا تعرفت على الطلب. Starlit سيفتح منتقي المصدر العادي على هذا PC؛ لا يمكن للهاتف توفير دفق أو تجاوز قيود المصدر.</string>
     <string name="remote_handoff_approve_title">العب على هذا PC؟</string>
@@ -2393,6 +2394,7 @@
     <string name="remote_tv_home">الصفحة الرئيسية</string>
     <string name="remote_tv_left">اليسار</string>
     <string name="remote_tv_manual_hint">إذا تم حظر الاكتشاف، أدخل IP المحلي الموضح في إعدادات شبكة TV لديك.</string>
+    <string name="remote_tv_manual_ip_label">عنوان IPv4 المحلي للتلفاز</string>
     <string name="remote_tv_manual_title">الاتصال عن طريق عنوان IP</string>
     <string name="remote_tv_mute">كتم الصوت</string>
     <string name="remote_tv_navigation">الملاحة</string>
