@@ -122,6 +122,21 @@ function setIpError(message) {
 function setPackageMissing(missing) {
   $("local-panel").classList.toggle("is-missing", missing);
 }
+function setSamsungAuthAvailable(available) {
+  const show = Boolean(available && busy && currentPlatform() === "tizen");
+  $("samsung-auth-status").hidden = !show;
+  $("btn-samsung-login").disabled = !show;
+  if (show) {
+    setStage("busy", "Complete Samsung sign-in",
+      "Open Samsung sign-in below and finish it in your browser. The installer will continue automatically.");
+    addLog("Samsung account sign-in is ready. Use the Open Samsung sign-in button.", "muted");
+    $("samsung-auth-status").scrollIntoView({
+      behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+      block: "center"
+    });
+    $("btn-samsung-login").focus({ preventScroll: true });
+  }
+}
 
 function syncSource() {
   const source = selectedSource();
@@ -157,6 +172,7 @@ function switchPlatform(name) {
   if (!info || busy) return;
   const selected = state[name];
   document.body.dataset.platform = name;
+  setSamsungAuthAvailable(false);
   $("tv-ip").value = selected.ip;
   $("tv-name").value = selected.name || "starlit-lg-tv";
   $("tv-passphrase").value = "";
@@ -252,6 +268,7 @@ async function perform(action) {
     }
   }
   if (action === "uninstall" && !(await confirmUninstall())) return;
+  setSamsungAuthAvailable(false);
   setBusy(true);
   setStage("busy", busyTitles[action](platform), "Starting…");
   addLog(action === "pair" ? "Checking " + platforms[platform].name + " Developer Mode" :
@@ -263,6 +280,7 @@ async function perform(action) {
     connectedPlatform = platform;
     resetConnectionStatus();
     setBusy(false);
+    setSamsungAuthAvailable(false);
     if (action === "pair") {
       $("tv-passphrase").value = "";
       addLog(platform === "webos" ? "LG pairing key saved." :
@@ -299,6 +317,7 @@ async function perform(action) {
       resetConnectionStatus();
     }
     setBusy(false);
+    setSamsungAuthAvailable(false);
     setStage("error", failTitles[action](platform), message);
   }
 }
@@ -414,6 +433,16 @@ $("btn-pair").addEventListener("click", () => perform("pair"));
 $("btn-install").addEventListener("click", () => perform("install"));
 $("btn-launch").addEventListener("click", () => perform("launch"));
 $("btn-uninstall").addEventListener("click", () => perform("uninstall"));
+$("btn-samsung-login").addEventListener("click", async () => {
+  if (!busy || currentPlatform() !== "tizen" || $("btn-samsung-login").disabled) return;
+  try {
+    const result = await api.openSamsungSignIn();
+    if (!result?.ok) throw new Error(result?.error || "Could not open Samsung sign-in");
+    addLog("Samsung sign-in opened in your browser. Complete it there and return to Starlit.", "muted");
+  } catch (error) {
+    addLog(error.message || String(error), "error");
+  }
+});
 $("btn-browse").addEventListener("click", async () => {
   if (busy || !api) return;
   try {
@@ -435,6 +464,7 @@ $("tv-form").addEventListener("keydown", event => {
   }
 });
 if (api) {
+  if (api.onAuth) api.onAuth(info => setSamsungAuthAvailable(info.available));
   api.onLog(message => {
     addLog(message);
     if (busy) $("caption-detail").textContent = message;

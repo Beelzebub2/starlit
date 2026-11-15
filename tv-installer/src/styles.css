@@ -622,6 +622,22 @@ body[data-platform="tizen"] .field-ip input { max-width: calc(50% - 6px); }
 }
 .select option { background: #1f1f1f; color: var(--text); }
 
+.samsung-auth {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 14px;
+  padding: 14px;
+  background: #201c2a;
+  border: 1px solid rgba(166, 77, 240, .32);
+  border-radius: 12px;
+}
+.samsung-auth-copy { min-width: 0; }
+.samsung-auth-copy strong { display: block; font-size: 13px; font-weight: 600; }
+.samsung-auth-copy p { margin: 4px 0 0; color: #c7c2ce; font-size: 12px; line-height: 1.5; }
+.samsung-auth .button { flex: none; max-width: 44%; white-space: normal; height: auto; min-height: 36px; }
+
 .step-actions {
   display: flex;
   flex-wrap: wrap;
@@ -762,6 +778,8 @@ body[data-platform="tizen"] .field-ip input { max-width: calc(50% - 6px); }
   .flow { padding: 28px 24px 24px; }
   .fields { grid-template-columns: 1fr; }
   body[data-platform="tizen"] .field-ip input { max-width: none; }
+  .samsung-auth { align-items: stretch; flex-direction: column; }
+  .samsung-auth .button { max-width: none; }
 }
 @media (max-width: 720px) {
   body { overflow: auto; }

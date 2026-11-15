@@ -97,9 +97,16 @@
                     <option value="tizen-public">Tizen public certificate (no account)</option>
                   </select>
                 </span>
-                <small id="samsung-signing-help">The first install may open Samsung sign-in in your browser. Use the same certificate for every update.</small>
+                <small id="samsung-signing-help">When a new certificate is needed, the installer will offer a Samsung sign-in link. Use the same certificate for every update.</small>
               </div>
             </form>
+            <div class="samsung-auth" id="samsung-auth-status" role="status" aria-live="polite" hidden>
+              <div class="samsung-auth-copy">
+                <strong>Samsung account sign-in required</strong>
+                <p>Sign in through your browser on this PC, then return here. Keep the installer open while it receives the confirmation (up to five minutes).</p>
+              </div>
+              <button type="button" id="btn-samsung-login" class="button small secondary" disabled>Open Samsung sign-in</button>
+            </div>
             <div class="step-actions">
               <button type="button" id="btn-pair" class="button secondary">Pair with LG TV</button>
               <span class="connection" id="connection-status"><span class="connection-dot"></span><span>Not paired yet</span></span>
