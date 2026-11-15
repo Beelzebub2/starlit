@@ -190,9 +190,23 @@ test("missing EngineFS startup shows the same localized service issue", async ()
     await TizenUsbTorrentCache.setEnabled(true);
     const state = await P2pCacheService.getState();
     assert.equal(state.usbEnabled, true);
+    assert.equal(state.usbMounted, true, "native USB inventory works without EngineFS");
     assert.equal(state.usbIssue, "service-unavailable");
     assert.equal(state.available, false);
     assert.equal(state.error, undefined);
+  });
+});
+test("thrown EngineFS startup still reports mounted USB independently", async () => {
+  await withFixture(async () => {
+    TizenEngineFsService.ensureStarted = async () => {
+      throw new TypeError("Failed to fetch");
+    };
+    await TizenUsbTorrentCache.setEnabled(true);
+    const state = await P2pCacheService.getState();
+    assert.equal(state.available, false);
+    assert.equal(state.usbEnabled, true);
+    assert.equal(state.usbMounted, true);
+    assert.equal(state.usbIssue, "service-unavailable");
   });
 });
 
