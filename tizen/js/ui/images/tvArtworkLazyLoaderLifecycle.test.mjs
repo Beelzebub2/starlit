@@ -244,3 +244,49 @@ test("legacy poster visibility bursts are paced to five images per frame", () =>
   assert.equal(hydrated(), 13);
   context.api.stopTvArtworkLazyLoader();
 });
+
+
+test("background suspends poster work and resuming restores unpainted placeholders", () => {
+  const { context } = buildContext({ rescaler: false, constrained: true });
+  const image = makeImage("https://addon.example/poster.jpg");
+  image.getBoundingClientRect = () => ({ top: 2000, bottom: 2338, left: 0, right: 220, width: 220, height: 338 });
+  const handlers = new Map();
+  const observed = [];
+  const frames = [];
+  let disconnects = 0;
+  context.requestAnimationFrame = (callback) => { frames.push(callback); return frames.length; };
+  context.cancelAnimationFrame = () => {};
+  context.IntersectionObserver = class {
+    constructor(callback) { this.callback = callback; context.artworkObserver = this; }
+    observe(node) { observed.push(node); }
+    unobserve() {}
+    disconnect() { observed.length = 0; disconnects++; }
+  };
+  context.MutationObserver = class { observe() {} disconnect() {} };
+  context.document = {
+    visibilityState: "visible",
+    addEventListener(event, handler) { handlers.set(event, handler); },
+    removeEventListener(event) { handlers.delete(event); },
+    body: { nodeType: 1, querySelectorAll: () => [image], closest: () => null }
+  };
+  context.innerWidth = 1920;
+  context.innerHeight = 1080;
+  assert.equal(context.api.startTvArtworkLazyLoader(), true);
+  assert.equal(observed.length, 1);
+  context.artworkObserver.callback([{ target: image, isIntersecting: true }]);
+  assert.equal(frames.length, 1);
+  context.document.visibilityState = "hidden";
+  handlers.get("visibilitychange")();
+  assert(disconnects > 0);
+  assert.equal(image.src, TRANSPARENT_PIXEL);
+  frames.shift()();
+  assert.equal(image.src, TRANSPARENT_PIXEL, "cancelled background frame must not hydrate artwork");
+  context.document.visibilityState = "visible";
+  handlers.get("visibilitychange")();
+  assert.equal(observed.length, 1, "unhydrated image should be observed again");
+  context.artworkObserver.callback([{ target: image, isIntersecting: true }]);
+  frames.shift()();
+  assert.equal(image.src, "https://addon.example/poster.jpg");
+  context.api.stopTvArtworkLazyLoader();
+  assert.equal(handlers.size, 0);
+});
