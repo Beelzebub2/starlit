@@ -161,10 +161,11 @@ internal actual object DownloadsPlatformDownloader {
         // completed download, or a symlink on the strength of a saved URI.
         return runCatching {
             val context = appContext ?: return false
-            val scheduler = downloadScheduler ?: return false
             val file = localFileUri.toLocalFileOrNull() ?: return false
             val root = File(context.filesDir, "downloads")
             if (!isPrivateStarlitDownloadFile(root, file)) return false
+            // Removal can be the first transfer access after a process restart.
+            val scheduler = downloadScheduler ?: scheduler(context)
             val owned = scheduler.store.get(file.name) ?: return false
             if (owned.profileId != com.nuvio.app.features.profiles.ProfileRepository.activeProfileId ||
                 owned.item.status != DownloadStatus.Completed ||
@@ -174,9 +175,9 @@ internal actual object DownloadsPlatformDownloader {
     }
 
     actual fun removePartialFile(destinationFileName: String): Boolean {
-        val scheduler = downloadScheduler ?: return false
         if (destinationFileName.isBlank() || destinationFileName == "." ||
             destinationFileName == ".." || '/' in destinationFileName || '\\' in destinationFileName) return false
+        val scheduler = downloadScheduler ?: appContext?.let(::scheduler) ?: return false
         val transfer = scheduler.store.get(destinationFileName) ?: return false
         if (transfer.profileId != com.nuvio.app.features.profiles.ProfileRepository.activeProfileId) return false
         scheduler.remove(destinationFileName)

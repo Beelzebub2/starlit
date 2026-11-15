@@ -59,6 +59,34 @@ class AndroidDownloadRemovalSafetyTest {
     }
 
     @Test
+    fun deferredTransferStoreStillPermitsVerifiedCleanupAfterProcessRestart() {
+        val profileId = ProfileRepository.activeProfileId
+        val completed = completedDownload(profileId)
+        val partial = completedDownload(profileId)
+        val schedulerField = DownloadsPlatformDownloader::class.java
+            .getDeclaredField("downloadScheduler").apply { isAccessible = true }
+        val previousScheduler = schedulerField.get(DownloadsPlatformDownloader)
+        try {
+            // Model a newly launched Activity with a store that has not been opened.
+            schedulerField.set(DownloadsPlatformDownloader, null)
+            DownloadsPlatformDownloader.initialize(completed.scheduler.context)
+            assertEquals(null, schedulerField.get(DownloadsPlatformDownloader))
+
+            assertTrue(DownloadsPlatformDownloader.removeFile(completed.file.toURI().toString()))
+            assertFalse(completed.file.exists())
+
+            // A fresh process may remove a transfer record without opening its media.
+            schedulerField.set(DownloadsPlatformDownloader, null)
+            assertTrue(DownloadsPlatformDownloader.removePartialFile(partial.item.fileName))
+            assertTrue(partial.file.exists())
+        } finally {
+            schedulerField.set(DownloadsPlatformDownloader, previousScheduler)
+            completed.dispose()
+            partial.dispose()
+        }
+    }
+
+    @Test
     fun deletingCompletedOwnedMediaRequiresMatchingTransferAndActiveProfile() {
         val current = ProfileRepository.activeProfileId
         val owned = completedDownload(current)
