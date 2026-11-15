@@ -141,7 +141,7 @@ seed.listen(0, '127.0.0.1', function () {
         getRange(middleIndex * pieceLength, middleIndex * pieceLength + 65535, middle.slice(0, 65536)),
         getRange(total - 65536, total - 1, tail.slice(pieceLength - 65536))
       ]);
-      return delay(100).then(stats).then(function (report) {
+      return delay(100).then(function () { return stats(true); }).then(function (report) {
         var state = JSON.parse(report.body.toString());
         assert.equal(state.pieceSelectionLimit, 2, 'Large pieces must use two active slots');
         assert.equal(state.activePieceSelections, 2, 'Two pieces should be actively selected');
