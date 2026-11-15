@@ -1,3 +1,59 @@
+## Starlit 1.28.0
+
+### Phone-to-TV controller
+
+- **Refreshed TV remote on mobile:** Improve Samsung and LG device discovery, pairing guidance and connection feedback, with clearer directional, playback and volume controls. The paired-device flow supports private-network connections and existing TV pairing codes.
+
+### Samsung TV and installer development previews
+
+- **TV presentation and navigation:** Refresh the Tizen interface layout, visual styling and focus handling, with particular attention to constrained TV runtimes.
+- **USB torrent cache reliability:** Better recognize mounted USB storage through compatible Tizen filesystem paths and recover gracefully from local cache-service disconnections. USB cache remains optional, with conservative service retries and clearer unavailable states.
+- **Opt-in TV diagnostics:** Add bounded, privacy-conscious TV error and warning events, with consent off by default. Live delivery requires the corresponding server-side telemetry service to be deployed and verified.
+- **TV installer usability:** Embed the Starlit Windows icon, provide a conventional Setup executable alongside the portable development build, and show Samsung certificate browser sign-in and timeout guidance.
+
+### Compatibility and release scope
+
+- This is a compatible minor update. Existing accounts, library data, installed add-ons and device-pairing identities remain unchanged.
+- Windows, signed Android phone and Android TV, and Linux installers are distributed only after the tagged release workflow passes platform builds, signing, security, provenance and checksum checks.
+- Samsung Tizen WGT, LG webOS IPK and the Windows TV installer are separate **developer previews**, not stable release assets. The latest TV changes still need physical playback, remote, USB and signed-package acceptance; the TV installer also has inherited dependency security advisories requiring review. The diagnostics gateway is not automatically deployed by this release.
+- No iOS App Store release is included. The existing supported UI localization catalogs are retained; this release adds no new UI strings beyond previously merged localized changes.
+
+## Starlit 1.27.1
+
+### TV packaging and release reliability
+
+- **Release recovery:** The v1.27.0 tag was superseded before stable installers were published after a webOS packaging-check regression was found. This patch carries forward its merged improvements with the corrected TV verification.
+- **LG webOS developer package:** Correct the release-repository identity verification after the GitHub migration, allowing the existing LG packaging pipeline to validate the canonical Starlit source.
+- **TV installer and phone-to-TV features:** Rebuild the merged v1.27.0 improvements with the current Windows TV installer runtime and unchanged Samsung/LG application identities.
+
+### Compatibility and verification
+
+- This is a compatible patch update. No playback, account, storage, pairing or data-format changes were introduced beyond the v1.27.0 source.
+- Windows, signed Android phone and Android TV, and Linux installers publish only after the tagged platform builds, signature, checksum and provenance checks succeed.
+- Samsung Tizen WGT, LG webOS IPK and the Windows TV installer are separate **developer previews**, not physically accepted stable packages. Samsung per-device signing and Developer Mode, LG developer pairing, and hardware playback/remote/USB checks remain necessary. Upstream webOS CLI dependency security advisories remain outstanding. No iOS App Store release is included.
+
+## Starlit 1.27.0
+
+### Playback, library and settings
+
+- **Mobile and Android TV player controls:** Refresh transport controls, playback options and focus behavior on smaller screens and television layouts.
+- **MyAnimeList rewatching:** Match anime entries automatically from known identifiers and title aliases where possible. Ask for a choice only when a match cannot be resolved confidently, and retry tracking updates against the matched entry.
+- **Android settings search:** Scroll to the specific setting and highlight the target control, including dynamically populated tracking cards, rather than stopping at the settings page.
+- **Bluetooth remote discovery:** Show previously paired Windows PCs even when a new Bluetooth device scan returns no results.
+
+### Phone-to-TV pairing and television improvements
+
+- **Phone-assisted TV setup and playback:** Pair a phone using the TV's QR code or pairing code to manage compatible add-ons and plugins, send selected playback sources to the TV, and access supported remote controls. Pairing is access-controlled and rate-limited.
+- **Samsung and LG installer preview:** Discover compatible TVs on the local network, show guided device-selection and installation progress, preserve known LG device selections, and retain a manual fallback.
+- **Samsung Tizen playback and responsiveness:** Reduce offscreen artwork work on older TVs, improve Home navigation and keyboard focus, select compatible UHD/HLS playback paths, and detect USB storage more reliably. Torrent playback accepts larger bounded metadata and concurrent media ranges; writable USB cache remains opt-in.
+- **Tizen 5 plugin developer preview:** Provide an optional JavaScript/ASM.js execution path for supported legacy plugins, with bounded network work and clearer compatibility warnings. This does not guarantee that arbitrary plugins work on every TV.
+
+### Languages and compatibility
+
+- **Localized interface:** Synchronize translations for recently changed settings, playback and TV management flows across the supported phone and TV language catalogs.
+- Windows, signed Android phone and Android TV, and Linux installers are published only after the tagged release builds, tests, signatures, checksums and provenance checks succeed.
+- Samsung Tizen WGT, LG webOS IPK, and the Windows TV installer remain developer previews, not signed public assets in this release. Real-device testing is still required for large-torrent first-frame playback, TV plugin compatibility, USB cache, remote input and 4K playback. No iOS App Store release is included.
+
 ## Starlit 1.26.0
 
 ### Phone-to-PC controller

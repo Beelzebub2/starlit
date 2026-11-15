@@ -7,7 +7,7 @@ import {
   onFirstHomePaint,
   resetBootTimingsForTests
 } from "../js/core/diagnostics/bootTiming.js";
-import { runAfterFirstHomePaint } from "../js/runtime/startupScheduler.js";
+import { runAfterFirstHomePaint, startupFallbackMs } from "../js/runtime/startupScheduler.js";
 function flush(ms = 0) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -73,4 +73,10 @@ test("onFirstHomePaint unsubscribes and tolerates non-functions", () => {
   unsubscribe();
   markFirstHomePaint();
   assert.deepEqual(calls, []);
+});
+
+test("constrained TVs postpone optional startup tasks until the initial route settles", () => {
+  assert.equal(startupFallbackMs({ contains: (name) => name === "performance-constrained" }), 8000);
+  assert.equal(startupFallbackMs({ contains: () => false }), 2500);
+  assert.equal(startupFallbackMs(null), 2500);
 });

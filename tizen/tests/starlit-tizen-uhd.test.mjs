@@ -64,6 +64,11 @@ test("native UHD HLS preference is restricted to confirmed early UHD TVs and UHD
   assert.equal(shouldPreferTizenUhdHls(baseline), true);
   assert.equal(shouldPreferTizenUhdHls({ ...baseline, tizenVersion: "5.5" }), true);
   assert.equal(shouldPreferTizenUhdHls({ ...baseline, sourceResolution: "3840x2160" }), true);
+  assert.equal(shouldPreferTizenUhdHls({ ...baseline, sourceResolution: "2160p HDR10+" }), true);
+  assert.equal(shouldPreferTizenUhdHls({ ...baseline, sourceResolution: "4K Dolby Vision" }), true);
+  assert.equal(shouldPreferTizenUhdHls({ ...baseline, sourceResolution: "3840 x 2160 HEVC" }), true);
+  assert.equal(shouldPreferTizenUhdHls({ ...baseline, sourceResolution: "1440p" }), false);
+  assert.equal(shouldPreferTizenUhdHls({ ...baseline, sourceResolution: "not4k" }), false);
   for (const changed of [
     { isTizen: false }, { isHls: false }, { hasAvPlay: false },
     { uhdPanelSupported: false }, { uhdPanelSupported: null },

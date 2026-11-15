@@ -6,8 +6,12 @@ import {
   resetArtworkRescaler,
   shouldRescaleHomeArtwork
 } from "./tvPosterRescaler.js";
-import { getTvArtworkPixelRatio } from "../../platform/tvRuntimePerformance.js";
+import {
+  getTvArtworkPixelRatio,
+  getTvRuntimePerformanceProfile
+} from "../../platform/tvRuntimePerformance.js";
 import { registerSessionTeardownHandler } from "../../core/auth/sessionLifecycle.js";
+import { normalizeTmdbPosterUrl } from "../../core/tmdb/tmdbImageUrl.js";
 // Poster surfaces outside Home. Home already has its own bounded hydrator, so
 // these are only the screens that used to decode at the source size.
 const ARTWORK_SELECTOR = [
@@ -36,6 +40,46 @@ export function canRescaleArtworkHost(source) {
 let started = false;
 let observer = null;
 let mutations = null;
+let artworkPaused = false;
+const HYDRATIONS_PER_FRAME = 5;
+const queuedHydrations = new Set();
+let hydrationFrame = null;
+let hydrationFrameUsesTimeout = false;
+function cancelQueuedHydrations() {
+  if (hydrationFrame !== null) {
+    if (hydrationFrameUsesTimeout) clearTimeout(hydrationFrame);
+    else globalThis.cancelAnimationFrame?.(hydrationFrame);
+  }
+  hydrationFrame = null;
+  queuedHydrations.clear();
+}
+function flushHydrationBatch() {
+  hydrationFrame = null;
+  let remaining = HYDRATIONS_PER_FRAME;
+  for (const image of queuedHydrations) {
+    if (remaining-- <= 0) break;
+    queuedHydrations.delete(image);
+    hydrate(image);
+  }
+  if (queuedHydrations.size) scheduleHydrationFrame();
+}
+function scheduleHydrationFrame() {
+  if (hydrationFrame !== null) return;
+  hydrationFrameUsesTimeout = typeof globalThis.requestAnimationFrame !== "function";
+  hydrationFrame = hydrationFrameUsesTimeout
+    ? setTimeout(flushHydrationBatch, 16)
+    : globalThis.requestAnimationFrame(flushHydrationBatch);
+}
+function scheduleHydration(image) {
+  if (!getTvRuntimePerformanceProfile().isPerformanceConstrained) {
+    hydrate(image);
+    return;
+  }
+  // Decode a handful of images per paint rather than dispatching a wall of
+  // native IMG loads in the same IntersectionObserver callback on old TVs.
+  queuedHydrations.add(image);
+  scheduleHydrationFrame();
+}
 function isHttpSource(value) {
   return /^https?:\/\//i.test(String(value || "").trim());
 }
@@ -52,6 +96,7 @@ function releaseImage(image) {
     delete image.dataset.artworkObjectUrl;
   }
   observer?.unobserve?.(image);
+  queuedHydrations.delete(image);
 }
 function setArtworkSource(image, source) {
   const previous = image.dataset.artworkObjectUrl;
@@ -71,14 +116,22 @@ function hydrate(image) {
   image.dataset.artworkPending = "1";
   const token = String(Number(image.dataset.artworkToken || 0) + 1);
   image.dataset.artworkToken = token;
+  const finish = () => {
+    delete image.dataset.artworkPending;
+  };
+  // Tizen 5 / Chromium 63 has IntersectionObserver but no OffscreenCanvas.
+  // Still defer offscreen posters instead of downloading and decoding every
+  // result on screen mount. Never run the main-thread canvas fallback.
+  if (!shouldRescaleHomeArtwork() || !canRescaleArtworkHost(source)) {
+    finish();
+    setArtworkSource(image, source);
+    return;
+  }
   const rect = image.getBoundingClientRect();
   const fit = getHomeArtworkObjectFit(image);
   const ratio = getTvArtworkPixelRatio();
   const width = Math.round(Number(rect.width || 0) * ratio);
   const height = Math.round(Number(rect.height || 0) * ratio);
-  const finish = () => {
-    delete image.dataset.artworkPending;
-  };
   if (!isRescalableArtworkFit(fit) || !(width > 0) || !(height > 0)) {
     finish();
     setArtworkSource(image, source);
@@ -109,15 +162,19 @@ function observeOrHydrate(image) {
   }
   observer.observe(image);
   // Some TV engines deliver the first IntersectionObserver callback late on
-  // the first frame. Hydrate an already visible image now; the pending flag
-  // keeps the observer callback from starting the same job twice.
+  // the first frame. Queue already visible images now; constrained TVs use
+  // the same per-frame budget while other TVs still hydrate immediately.
   const rect = image.getBoundingClientRect();
   const visible =
     rect.bottom > 0 &&
     rect.top < (Number(globalThis.innerHeight) || 0) &&
     rect.right > 0 &&
     rect.left < (Number(globalThis.innerWidth) || 0);
-  if (visible) hydrate(image);
+  if (visible) {
+    // A late observer callback must not schedule a second decode.
+    observer?.unobserve?.(image);
+    scheduleHydration(image);
+  }
 }
 function prepareImage(image) {
   if (!isLazyArtworkImage(image)) return;
@@ -138,9 +195,13 @@ function prepareImage(image) {
   if (image.hasAttribute("data-src")) return;
   const source = image.getAttribute("src");
   if (!isHttpSource(source)) return;
-  if (!canRescaleArtworkHost(source)) return;
+  // Legacy TVs still need a visibility gate for third-party poster hosts.
+  // They load through IMG directly (no cross-origin worker fetch required).
+  if (!canRescaleArtworkHost(source) && !getTvRuntimePerformanceProfile().isPerformanceConstrained) return;
   image.dataset.artworkLazy = "1";
-  image.dataset.artworkSrc = source;
+  // Reuse the proven per-TV poster source size even when a catalog provides
+  // an oversized TMDB URL directly. Leave third-party URLs byte-for-byte.
+  image.dataset.artworkSrc = normalizeTmdbPosterUrl(source);
   image.src = TRANSPARENT_PIXEL;
   observeOrHydrate(image);
 }
@@ -170,7 +231,7 @@ function onIntersect(entries) {
   for (const entry of entries) {
     if (!entry.isIntersecting) continue;
     observer?.unobserve?.(entry.target);
-    hydrate(entry.target);
+    scheduleHydration(entry.target);
   }
 }
 function onMutations(records) {
@@ -179,9 +240,36 @@ function onMutations(records) {
     record.removedNodes.forEach(releaseTree);
   }
 }
+function onArtworkVisibilityChange() {
+  if (!started) return;
+  const hidden = document.visibilityState === "hidden" || document.webkitHidden === true;
+  if (hidden) {
+    artworkPaused = true;
+    cancelQueuedHydrations();
+    observer?.disconnect?.();
+    mutations?.disconnect?.();
+    return;
+  }
+  if (!artworkPaused) return;
+  artworkPaused = false;
+  if (document.body) {
+    mutations?.observe?.(document.body, { childList: true, subtree: true });
+    // Re-observe only placeholders that have not been hydrated. Painted
+    // images remain untouched, so foreground resume does not flash posters.
+    prepareTree(document.body);
+  }
+}
 /** Start the shared lazy artwork pass once per app run. */
 export function startTvArtworkLazyLoader() {
-  if (started || !shouldRescaleHomeArtwork()) return false;
+  if (started) return false;
+  const canRescale = shouldRescaleHomeArtwork();
+  // Older TV engines cannot resize images in workers, but Tizen 5 has a
+  // native IntersectionObserver. Keep the lightweight visibility gate on
+  // those devices; leave truly old engines without that API untouched.
+  const canDeferLegacyArt =
+    getTvRuntimePerformanceProfile().isTvRuntime &&
+    typeof globalThis.IntersectionObserver === "function";
+  if (!canRescale && !canDeferLegacyArt) return false;
   if (!globalThis.document?.body) return false;
   started = true;
   if (typeof globalThis.IntersectionObserver === "function") {
@@ -193,10 +281,17 @@ export function startTvArtworkLazyLoader() {
     mutations = new globalThis.MutationObserver(onMutations);
     mutations.observe(document.body, { childList: true, subtree: true });
   }
+  document.addEventListener?.("visibilitychange", onArtworkVisibilityChange);
+  document.addEventListener?.("webkitvisibilitychange", onArtworkVisibilityChange);
   prepareTree(document.body);
+  onArtworkVisibilityChange();
   return true;
 }
 export function stopTvArtworkLazyLoader() {
+  document.removeEventListener?.("visibilitychange", onArtworkVisibilityChange);
+  document.removeEventListener?.("webkitvisibilitychange", onArtworkVisibilityChange);
+  artworkPaused = false;
+  cancelQueuedHydrations();
   observer?.disconnect?.();
   mutations?.disconnect?.();
   observer = null;

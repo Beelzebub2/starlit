@@ -2443,6 +2443,7 @@
     <string name="remote_tv_home">Início</string>
     <string name="remote_tv_left">Esquerda</string>
     <string name="remote_tv_manual_hint">Se a pesquisa não funcionar, introduz o IP local mostrado nas definições de rede da TV.</string>
+    <string name="remote_tv_manual_ip_label">Endereço IPv4 local da TV</string>
     <string name="remote_tv_manual_title">Ligar por endereço IP</string>
     <string name="remote_tv_mute">Silenciar</string>
     <string name="remote_tv_navigation">Navegação</string>
@@ -2457,6 +2458,7 @@
     <string name="remote_tv_starlit_code">Código de emparelhamento da TV</string>
     <string name="remote_tv_starlit_failed">Falha na ligação. Verifica o código e tenta novamente.</string>
     <string name="remote_tv_starlit_hint">Na TV, abre Gerir com telemóvel. Introduz o código aqui e aprova na TV.</string>
+    <string name="remote_tv_starlit_title">Starlit na sua TV</string>
     <string name="remote_tv_tab">TV</string>
     <string name="remote_tv_title">Comando da TV</string>
     <string name="remote_tv_up">Cima</string>

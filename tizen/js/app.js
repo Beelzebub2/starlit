@@ -6,6 +6,7 @@ import { installCustomPosterFallback } from "./core/poster/customPoster.js";
 import { installWebOsImgurImageFallback } from "./core/media/imageProxy.js";
 import { startTvArtworkLazyLoader } from "./ui/images/tvArtworkLazyLoader.js";
 import { installFrameBudgetSampler } from "./core/diagnostics/frameBudget.js";
+import { TvUsageDiagnostics } from "./core/diagnostics/tvUsageDiagnostics.js";
 import { AmbientMode } from "./ui/ambient/ambientMode.js";
 /* global __NUVIO_APP_VERSION__ */
 import "./core/diagnostics/consoleDebugBuffer.js";
@@ -50,8 +51,10 @@ import {
 } from "./core/deeplink/launchDeepLink.js";
 // These legacy Web-only overrides are no longer user settings. Navigation now
 // uses the stable grid algorithm and simulator detection automatically.
-LocalStore.remove("strictDpadGridNavigation");
-LocalStore.remove("rotatedDpadMapping");
+runAfterFirstHomePaint(() => {
+  LocalStore.remove("strictDpadGridNavigation");
+  LocalStore.remove("rotatedDpadMapping");
+});
 (function applyLegacyPatches() {
   const originalGetElementById = document.getElementById;
   document.getElementById = function (id) {
@@ -661,10 +664,14 @@ async function bootstrapApp() {
   }
   PlayerController.init();
   installCustomPosterFallback();
-  preloadMaterialIconFont();
   installWebOsImgurImageFallback();
+  // Both the large icon font and ambient-mode timers are optional before the
+  // first route. Avoid competing with Home's first catalog rows on Tizen 5.
+  runAfterFirstHomePaint(() => {
+    preloadMaterialIconFont();
+    AmbientMode.start();
+  });
   // Media-server account sync is unavailable; user-configured servers remain local.
-  AmbientMode.start();
   FocusEngine.init();
   setupProviderCredentialForegroundLifecycle();
   setupTizenPlaybackLifecycle();
@@ -682,6 +689,15 @@ async function bootstrapApp() {
   }
   runAfterFirstHomePaint(() => {
     void checkForAppUpdateOnStartup();
+  });
+  // The opt-in TV reporter is deliberately initialized only after first paint,
+  // so startup, remote navigation and player initialization never wait for it.
+  runAfterFirstHomePaint(() => {
+    TvUsageDiagnostics.start({
+      platform: Platform.getName(),
+      version: APP_VERSION,
+      route: () => Router.getCurrent()
+    });
   });
   markBootStage("Restoring session");
   DeviceSessionRegistration.start();
@@ -804,3 +820,4 @@ window.addEventListener("unhandledrejection", (event) => {
   }
   console.warn("Unhandled promise rejection", event?.reason);
 });
+window.addEventListener("beforeunload", () => TvUsageDiagnostics.stop());

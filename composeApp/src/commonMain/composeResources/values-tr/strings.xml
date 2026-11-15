@@ -2403,6 +2403,7 @@ Bu özelliği tamamen kendi sorumluluğunuzda kullanırsınız. P2P istediğiniz
     <string name="remote_tv_starlit_code">TV eşleştirme kodu</string>
     <string name="remote_tv_starlit_failed">Bağlantı başarısız. Kodu kontrol edip tekrar deneyin.</string>
     <string name="remote_tv_starlit_hint">TV’de Telefonla yönet seçeneğini açın. Kodu buraya girip TV’den onaylayın.</string>
+    <string name="remote_tv_starlit_title">TV’nizde Starlit</string>
     <string name="remote_handoff_approve">PC\'da kaynağı seçin</string>
     <string name="remote_handoff_approve_description">Eşleştirilmiş bir telefon bu başlığı istedi. Yalnızca isteği tanıyorsanız kabul edin. Starlit bu PC üzerinde normal kaynak seçiciyi açacaktır; telefon bir akış sağlayamaz veya kaynak kısıtlamalarını atlayamaz.</string>
     <string name="remote_handoff_approve_title">Bu PC üzerinde çalınsın mı?</string>
@@ -2422,6 +2423,7 @@ Bu özelliği tamamen kendi sorumluluğunuzda kullanırsınız. P2P istediğiniz
     <string name="remote_tv_home">Ana Sayfa</string>
     <string name="remote_tv_left">Sol</string>
     <string name="remote_tv_manual_hint">Bulma engellenirse, TV ağ ayarlarınızda gösterilen yerel IP\'ı girin.</string>
+    <string name="remote_tv_manual_ip_label">TV’nin yerel IPv4 adresi</string>
     <string name="remote_tv_manual_title">IP adresiyle bağlan</string>
     <string name="remote_tv_mute">Sessiz</string>
     <string name="remote_tv_navigation">Gezinme</string>

@@ -3471,4 +3471,9 @@
     <string name="tv_phone_verify_code">Đối chiếu mã này trên điện thoại:</string>
     <string name="tv_phone_verify_title">Phê duyệt điện thoại?</string>
     <string name="tv_phone_waiting">Đang chờ điện thoại</string>
+
+    <!-- Optional, privacy-limited reliability diagnostics (TV). -->
+    <string name="diagnostics_consent_usage">Chẩn đoán ẩn danh</string>
+    <string name="diagnostics_consent_usage_detail">Ra mắt ứng dụng; Lỗi kỹ thuật, cảnh báo và kết quả phát lại/tải xuống theo phiên bản và nền tảng ứng dụng. Không có lượt truy cập màn hình hoặc ID thiết bị liên tục.</string>
+    <string name="diagnostics_consent_privacy">Không có tiêu đề, tìm kiếm, tài khoản, URL hoặc nhật ký thô. Mã thông báo ngẫu nhiên tạm thời hạn chế lạm dụng; hồ sơ được lưu giữ lên đến 30 ngày.</string>
 </resources>

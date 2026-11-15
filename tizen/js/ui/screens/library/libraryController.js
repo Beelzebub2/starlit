@@ -229,7 +229,8 @@ function stripCountSuffix(value) {
 }
 function typeLabelForEmptyState(key) {
   if (!key || key === ALL_KEY) {
-    return "all";
+    // "No titles yet", not "No all yet".
+    return "titles";
   }
   return libraryTypeLabel(key)
     .replace(/\s+\(\d+\)$/, "")

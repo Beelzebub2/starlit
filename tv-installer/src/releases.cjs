@@ -26,7 +26,7 @@ function expectedReleaseAssets(release, platform = "webos") {
 }
 function approvedAssetUrl(raw, tag, filename) {
   const address = new URL(String(raw || ""));
-  const permittedPaths = [REPO, "Beelzebub2/starlit"].map(repo =>
+  const permittedPaths = [...new Set([REPO, "Beelzebub2/nuvio-native", "Beelzebub2/starlit"])].map(repo =>
     "/" + repo + "/releases/download/" + tag + "/" + filename);
   if (address.protocol !== "https:" || address.hostname !== "github.com" ||
       !permittedPaths.includes(address.pathname) || address.username || address.password) {

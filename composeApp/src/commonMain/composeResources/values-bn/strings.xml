@@ -2635,6 +2635,7 @@
     <string name="remote_tv_starlit_code">টিভি জোড়ার কোড</string>
     <string name="remote_tv_starlit_failed">সংযোগ ব্যর্থ হয়েছে। কোড যাচাই করে আবার চেষ্টা করুন।</string>
     <string name="remote_tv_starlit_hint">টিভিতে ফোন দিয়ে পরিচালনা খুলুন। এখানে কোড লিখুন এবং টিভিতে অনুমোদন দিন।</string>
+    <string name="remote_tv_starlit_title">আপনার টিভিতে Starlit</string>
     <string name="remote_handoff_approve">PC-এ উৎস বেছে নিন</string>
     <string name="remote_handoff_approve_description">একটি জোড়া ফোন এই শিরোনামের অনুরোধ করেছে৷ আপনি অনুরোধ চিনতে পারলে তবেই গ্রহণ করুন। Starlit এই PC-এ স্বাভাবিক উৎস পিকার খুলবে; ফোন একটি স্ট্রিম বা বাইপাস উৎস সীমাবদ্ধতা সরবরাহ করতে পারে না।</string>
     <string name="remote_handoff_approve_title">এই PC এ খেলবেন?</string>
@@ -2654,6 +2655,7 @@
     <string name="remote_tv_home">বাড়ি</string>
     <string name="remote_tv_left">বাম</string>
     <string name="remote_tv_manual_hint">আবিষ্কার ব্লক করা থাকলে, আপনার TV এর নেটওয়ার্ক সেটিংসে দেখানো স্থানীয় IP লিখুন।</string>
+    <string name="remote_tv_manual_ip_label">টিভির স্থানীয় IPv4 ঠিকানা</string>
     <string name="remote_tv_manual_title">IP ঠিকানা দ্বারা সংযোগ করুন</string>
     <string name="remote_tv_mute">নিঃশব্দ</string>
     <string name="remote_tv_navigation">নেভিগেশন</string>

@@ -3466,4 +3466,9 @@
     <string name="tv_phone_verify_code">Proveri ovaj kod na telefonu:</string>
     <string name="tv_phone_verify_title">Odobriti telefon?</string>
     <string name="tv_phone_waiting">Čekanje telefona</string>
+
+    <!-- Optional, privacy-limited reliability diagnostics (TV). -->
+    <string name="diagnostics_consent_usage">Anonimna dijagnostika</string>
+    <string name="diagnostics_consent_usage_detail">Pokretanja aplikacije, tehničke greške, upozorenja i ishodi reprodukcije po verziji aplikacije i platformi. Bez praćenja posećenih ekrana ili trajnog ID-a uređaja.</string>
+    <string name="diagnostics_consent_privacy">Bez naslova, pretraga, naloga, URL adresa ili sirovih zapisa. Privremeni nasumični token ograničava zloupotrebu; podaci se čuvaju do 30 dana.</string>
 </resources>

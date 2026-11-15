@@ -1,5 +1,5 @@
 {
-  "githubRepo": "Beelzebub2/nuvio-native",
+  "githubRepo": "Beelzebub2/starlit",
   "webos": {
     "appId": "app.starlit.webos",
     "assetPattern": "^Starlit-WebOS-\\d+\\.\\d+\\.\\d+\\.ipk$"

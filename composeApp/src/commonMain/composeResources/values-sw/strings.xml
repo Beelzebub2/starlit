@@ -3279,6 +3279,7 @@
     <string name="remote_tv_starlit_code">Msimbo wa kuoanisha TV</string>
     <string name="remote_tv_starlit_failed">Muunganisho umeshindikana. Angalia msimbo ujaribu tena.</string>
     <string name="remote_tv_starlit_hint">Kwenye TV, fungua Dhibiti kwa simu. Ingiza msimbo hapa kisha idhinisha kwenye TV.</string>
+    <string name="remote_tv_starlit_title">Starlit kwenye TV yako</string>
     <string name="remote_tv_android_only">TV kidhibiti cha mbali kinapatikana kwa sasa kwenye simu za Android.</string>
     <string name="remote_tv_available">Televisheni Zinazopatikana</string>
     <string name="remote_tv_connected_title">TV imeunganishwa</string>
@@ -3289,6 +3290,7 @@
     <string name="remote_tv_home">Nyumbani</string>
     <string name="remote_tv_left">Kushoto</string>
     <string name="remote_tv_manual_hint">Ugunduzi ukizuiwa, weka IP iliyo karibu nawe iliyoonyeshwa katika mipangilio ya mtandao ya TV yako.</string>
+    <string name="remote_tv_manual_ip_label">Anwani ya IPv4 ya ndani ya TV</string>
     <string name="remote_tv_manual_title">Unganisha kwa IP anwani</string>
     <string name="remote_tv_mute">Nyamazisha</string>
     <string name="remote_tv_navigation">Urambazaji</string>

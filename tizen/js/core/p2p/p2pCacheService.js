@@ -1,6 +1,6 @@
 import { Platform } from "../../platform/index.js";
 import { TizenEngineFsService } from "../../platform/tizen/tizenEngineFsService.js";
-import { TizenUsbTorrentCache } from "../../platform/tizen/tizenUsbTorrentCache.js";
+import { detectTizenUsbStorage, TizenUsbTorrentCache } from "../../platform/tizen/tizenUsbTorrentCache.js";
 import { requestWebOsCompanionService } from "../../platform/webos/webosCompanionService.js";
 const REQUEST_TIMEOUT_MS = 4000;
 const LOCAL_HOSTS = new Set(["127.0.0.1", "localhost", "::1"]);
@@ -53,6 +53,18 @@ async function resolveBaseUrl() {
     }
   }
   return "";
+}
+async function unavailableTizenCacheState() {
+  const usbEnabled = TizenUsbTorrentCache.isEnabled();
+  let usbMounted = false;
+  if (usbEnabled) {
+    try {
+      const inventory = await detectTizenUsbStorage();
+      usbMounted = Number(inventory?.mountedCount) > 0;
+    } catch (_) { /* A failed inventory must not block RAM fallback. */ }
+  }
+  return { supported: true, available: false, usbEnabled, usbMounted,
+    usbIssue: usbEnabled ? "service-unavailable" : "" };
 }
 async function requestJson(baseUrl, path, options = {}) {
   const response = await withTimeout(
@@ -108,7 +120,11 @@ export const P2pCacheService = {
     try {
       baseUrl = await resolveBaseUrl();
       if (!baseUrl) {
-        return { supported: true, available: false };
+        // USB inventory is a native filesystem query and must not depend on
+        // the optional streaming service being online. Distinguish a mounted
+        // drive from a failed EngineFS connection in settings.
+        return Platform.isTizen() ? unavailableTizenCacheState()
+          : { supported: true, available: false };
       }
       if (Platform.isTizen()) {
         const state = await TizenUsbTorrentCache.getState(baseUrl);
@@ -119,6 +135,7 @@ export const P2pCacheService = {
           usbMode: state.active?.mode || (state.configured ? "usb" : "memory"),
           usbProfile: state.profile,
           usbReason: state.reason || "",
+          usbIssue: state.issue || "",
           usbLabel: state.label || "",
           usbWriteMBps: Number(state.writeMBps) || 0,
           usbReadMBps: Number(state.readMBps) || 0,
@@ -141,6 +158,9 @@ export const P2pCacheService = {
         activeBytes: Math.max(0, Number(usage?.activeBytes) || 0)
       };
     } catch (error) {
+      if (Platform.isTizen()) {
+        return unavailableTizenCacheState();
+      }
       return {
         supported: true,
         available: false,

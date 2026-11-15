@@ -21,6 +21,10 @@ export function renderPlaybackP2pBody(
   const usbEnabled = cacheState?.usbEnabled ?? internals.P2pCacheService.usbEnabled();
   const usbStatus = !usbEnabled
     ? t("settings_usb_cache_off", {}, "Disabled; torrents use a bounded RAM cache.")
+    : cacheState?.usbIssue === "service-unavailable"
+      ? (cacheState?.usbMounted
+          ? t("usb_cache_offer_title", {}, "USB storage connected") + " · " : "") +
+        t("account_error_service_unavailable", {}, "Service unavailable. Please try again later.")
     : cacheState?.usbConfigured
       ? t("settings_usb_cache_active", {}, "Automatic USB cache: ") +
         formatByteSize(cacheState.cacheSizeBytes) + " · " +

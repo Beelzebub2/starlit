@@ -5,6 +5,9 @@ export function createSettingsScreenMethods15() {
   const { ScreenUtils } = internals;
   return {
     cleanup() {
+      this.cancelNavSelection?.();
+      this.navGlider = null;
+      this.navGliderBox = null;
       stopMdbListAuthorization.call(this);
       this.closeCustomPosterPhoneConfig?.();
       this.closeCustomPosterPhoneConfig = null;

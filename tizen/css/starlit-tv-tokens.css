@@ -118,6 +118,32 @@
   --tv-bg-elevated: var(--bg-elevated, #141a24);
   --tv-bg-card: var(--card-bg, #161e2a);
 
+  /* Surfaces (Starlit UI layer, css/starlit-ui.css). Flat translucent fills
+     and a hairline instead of blur: a TV GPU composites these for free. */
+  --tv-surface: rgba(255, 255, 255, 0.05);
+  --tv-surface-2: rgba(255, 255, 255, 0.08);
+  --tv-surface-3: rgba(255, 255, 255, 0.12);
+  --tv-hairline: rgba(255, 255, 255, 0.07);
+  --tv-hairline-strong: rgba(255, 255, 255, 0.14);
+  --tv-panel: #10141d; /* side panes and dialogs on the default theme */
+  --tv-scrim: rgba(5, 7, 11, 0.72);
+  --tv-gold: #f5c451; /* 4K tier */
+  --tv-mint: #5fe0b5; /* instant / cached */
+  --tv-radius-panel: 28px;
+  --tv-radius-tile: 14px;
+
+  /* Motion. Only transform and opacity ever animate, so every movement stays
+     on the compositor. Constrained TVs get shorter, opacity-first variants
+     and "Lighter animations" turns all of it off. */
+  --tv-ease-glide: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --tv-ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
+  --tv-ease-exit: cubic-bezier(0.4, 0, 1, 1);
+  --tv-dur-focus: 180ms;
+  --tv-dur-glide: 220ms;
+  --tv-dur-enter: 300ms;
+  --tv-dur-fade: 180ms;
+  --tv-focus-button-scale: 1.06;
+
   /* The three focus treatments, as shadows (no layout, no blur). */
   --tv-focus-shadow-button: 0 0 0 4px var(--tv-bg), 0 0 0 9px var(--tv-ring);
   --tv-focus-shadow-row: 0 0 0 4px var(--tv-bg), 0 0 0 8px var(--tv-ring);

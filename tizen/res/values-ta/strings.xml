@@ -3465,4 +3465,9 @@
     <string name="tv_phone_verify_code">இந்தக் குறியீட்டைத் தொலைபேசியில் சரிபார்க்கவும்:</string>
     <string name="tv_phone_verify_title">தொலைபேசியை அனுமதிக்கவா?</string>
     <string name="tv_phone_waiting">தொலைபேசிக்காகக் காத்திருக்கிறது</string>
+
+    <!-- Optional, privacy-limited reliability diagnostics (TV). -->
+    <string name="diagnostics_consent_usage">அடையாளமற்ற பிழைக் கண்டறிதல்</string>
+    <string name="diagnostics_consent_usage_detail">செயலி திறப்புகள்; தொழில்நுட்பப் பிழைகள், எச்சரிக்கைகள், இயக்கம் மற்றும் பதிவிறக்க முடிவுகள் மட்டும். திரைப் பார்வைகளோ நிரந்தர சாதன அடையாளமோ பதிவு செய்யப்படாது.</string>
+    <string name="diagnostics_consent_privacy">தலைப்புகள், தேடல்கள், கணக்குகள், URLகள், மூலப் பதிவுகள் இல்லை. தற்காலிக டோக்கன் தவறான பயன்பாட்டைத் தடுக்கிறது; 30 நாட்கள் வரை சேமிப்பு.</string>
 </resources>

@@ -2220,6 +2220,7 @@
     <string name="remote_tv_starlit_code">Code d’appairage du téléviseur</string>
     <string name="remote_tv_starlit_failed">Échec de la connexion. Vérifie le code et réessaie.</string>
     <string name="remote_tv_starlit_hint">Sur le téléviseur, ouvre Gérer avec le téléphone. Saisis le code ici, puis approuve sur le téléviseur.</string>
+    <string name="remote_tv_starlit_title">Starlit sur votre téléviseur</string>
     <string name="remote_handoff_approve">Choisissez la source sur PC</string>
     <string name="remote_handoff_approve_description">Un téléphone couplé a demandé ce titre. N\'acceptez que si vous reconnaissez la demande. Starlit ouvrira le sélecteur de source normal sur ce PC ; le téléphone ne peut pas fournir de flux ou contourner les restrictions de source.</string>
     <string name="remote_handoff_approve_title">Jouer sur ce PC ?</string>
@@ -2239,6 +2240,7 @@
     <string name="remote_tv_home">Accueil</string>
     <string name="remote_tv_left">Gauche</string>
     <string name="remote_tv_manual_hint">Si la découverte est bloquée, entrez le IP local affiché dans les paramètres réseau de votre TV.</string>
+    <string name="remote_tv_manual_ip_label">Adresse IPv4 locale du téléviseur</string>
     <string name="remote_tv_manual_title">Se connecter par l\'adresse IP</string>
     <string name="remote_tv_mute">Muet</string>
     <string name="remote_tv_navigation">Navigation</string>

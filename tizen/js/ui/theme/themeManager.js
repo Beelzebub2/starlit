@@ -180,6 +180,8 @@ export const ThemeManager = {
       "--bg-elevated-rgb": toRgbChannels(colors["--bg-elevated"], "26 26 26"),
       "--card-bg-rgb": toRgbChannels(colors["--card-bg"], "34 34 34"),
       "--secondary-color-rgb": toRgbChannels(colors["--secondary-color"], "245 245 245"),
+      // Comma form for rgba(): Tizen 4/5 cannot parse space-separated rgb().
+      "--secondary-color-rgb-legacy": toLegacyRgbChannels(colors["--secondary-color"], "245, 245, 245"),
       "--focus-color-rgb": toRgbChannels(colors["--focus-color"], "255 255 255"),
       "--player-secondary": colors["--secondary-color"],
       "--player-accent-gradient": colors["--accent-gradient"] || colors["--secondary-color"],

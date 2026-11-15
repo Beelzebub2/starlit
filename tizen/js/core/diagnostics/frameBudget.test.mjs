@@ -111,3 +111,20 @@ test("the global sampler is inert unless the performance flag is on", () => {
   delete globalThis.requestAnimationFrame;
   delete globalThis.cancelAnimationFrame;
 });
+
+test("frame timing ring buffer replaces oldest samples across multiple wraps", () => {
+  const frames = fakeFrames([10, 11, 20, 30, 40, 50, 60]);
+  const sampler = createFrameBudgetSampler({
+    now: frames.now, requestFrame: frames.requestFrame, cancelFrame: frames.cancelFrame, sampleLimit: 3
+  });
+  sampler.start();
+  for (let index = 0; index < 7; index += 1) frames.step();
+  const snapshot = sampler.snapshot();
+  assert.equal(snapshot.frames, 3);
+  assert.equal(snapshot.windowMs, 150);
+  assert.equal(snapshot.p50, 50);
+  assert.equal(snapshot.max, 60);
+  assert.equal(snapshot.over33ms, 3);
+  assert.equal(snapshot.over50ms, 1);
+  sampler.stop();
+});

@@ -3466,4 +3466,9 @@
     <string name="tv_phone_verify_code">スマートフォンのコードと照合してください:</string>
     <string name="tv_phone_verify_title">スマートフォンを承認しますか？</string>
     <string name="tv_phone_waiting">スマートフォンを待機中</string>
+
+    <!-- Optional, privacy-limited reliability diagnostics (TV). -->
+    <string name="diagnostics_consent_usage">匿名診断</string>
+    <string name="diagnostics_consent_usage_detail">アプリが起動します。アプリのバージョンとプラットフォームごとの技術的なエラー、警告、再生/ダウンロードの結果。画面へのアクセスや永続的なデバイス ID はありません。</string>
+    <string name="diagnostics_consent_privacy">タイトル、検索、アカウント、URL、生のログはありません。一時的なランダム トークンにより悪用が制限されます。記録は最大 30 日間保存されます。</string>
 </resources>

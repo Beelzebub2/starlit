@@ -3482,4 +3482,9 @@
     <string name="tv_phone_unavailable">Ligação indisponível</string>
     <string name="tv_phone_disconnect">Desligar</string>
     <string name="tv_phone_connection_error">Verifica a ligação e tenta novamente.</string>
+
+    <!-- Optional, privacy-limited reliability diagnostics (TV). -->
+    <string name="diagnostics_consent_usage">Diagnósticos anónimos</string>
+    <string name="diagnostics_consent_usage_detail">Aberturas da aplicação; Erros técnicos, avisos e resultados de reprodução e transferências por versão e plataforma. Sem registo de ecrãs nem ID persistente.</string>
+    <string name="diagnostics_consent_privacy">Sem títulos, pesquisas, contas, URLs ou registos brutos. Um token temporário limita abusos; os dados são guardados até 30 dias.</string>
 </resources>

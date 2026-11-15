@@ -3468,4 +3468,9 @@
     <string name="tv_phone_verify_code">Vérifiez ce code sur votre téléphone :</string>
     <string name="tv_phone_verify_title">Autoriser le téléphone ?</string>
     <string name="tv_phone_waiting">En attente du téléphone</string>
+
+    <!-- Optional, privacy-limited reliability diagnostics (TV). -->
+    <string name="diagnostics_consent_usage">Diagnostics anonymes</string>
+    <string name="diagnostics_consent_usage_detail">Lancement de l\'application ; Erreurs techniques, avertissements et résultats de lecture/téléchargement par version de l\'application et plate-forme. Aucune visite d\'écran ni identifiant d\'appareil persistant.</string>
+    <string name="diagnostics_consent_privacy">Aucun titre, recherche, compte, URL ou journal brut. Un jeton aléatoire temporaire limite les abus ; les enregistrements sont conservés jusqu’à 30 jours.</string>
 </resources>

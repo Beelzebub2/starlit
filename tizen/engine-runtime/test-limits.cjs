@@ -35,6 +35,15 @@ var badPath = fixture(4 * MiB, 1, 1);
 badPath.files[0].path = new Array(2050).join('a');
 invalid(badPath, /Invalid torrent file metadata/);
 invalid(fixture(8 * 1024, 1, 1), /piece size must be/);
+// Validate multi-gigabyte absolute byte offsets without allocating movie data.
+var largeMediaBytes = Math.floor(3.4 * 1024 * MiB);
+assert.equal(runtime.mediaReadLength(0, largeMediaBytes - 1, 32 * MiB, largeMediaBytes), 256 * 1024);
+assert.equal(runtime.mediaReadLength(32 * MiB - 101, largeMediaBytes - 1, 32 * MiB, largeMediaBytes), 101);
+assert.equal(runtime.mediaReadLength(largeMediaBytes - 17, largeMediaBytes - 1, 32 * MiB, largeMediaBytes), 17);
+assert.equal(runtime.mediaSelectionLimit(4 * MiB), 4, 'Small torrent pieces preserve AVPlay concurrency');
+assert.equal(runtime.mediaSelectionLimit(8 * MiB), 3, 'Medium pieces use fewer in-flight allocations');
+assert.equal(runtime.mediaSelectionLimit(16 * MiB), 2, 'Large pieces must not run four downloads at once');
+assert.equal(runtime.mediaSelectionLimit(32 * MiB), 2, 'Largest supported pieces remain playable');
 var cache = createCache(48 * MiB, function () {});
 var storage = cache.factory(32 * MiB);
 var first = new Buffer(32 * MiB), second = new Buffer(32 * MiB);

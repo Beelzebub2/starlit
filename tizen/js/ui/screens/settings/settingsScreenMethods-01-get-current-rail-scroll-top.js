@@ -320,12 +320,14 @@ export function createSettingsScreenMethods01() {
           }
         });
     },
+    // The list markup does not depend on the open section, so opening another
+    // section keeps the same nodes (and the glider); syncNavSelection marks it.
     renderNav() {
       return this.visibleSections
         .map(
           (item, index) => `
-          <button class="settings-nav-item focusable${this.activeSection === item.id ? " selected" : ""}"
-                  data-zone="nav" role="tab" aria-selected="${this.activeSection === item.id ? "true" : "false"}"
+          <button class="settings-nav-item focusable"
+                  data-zone="nav" role="tab" aria-selected="false"
                   data-nav-index="${index}"
                   data-focus-key="nav:${item.id}"
                   data-section="${item.id}">
@@ -340,6 +342,15 @@ export function createSettingsScreenMethods01() {
         `
         )
         .join("");
+    },
+    syncNavSelection(navSlot) {
+      navSlot?.querySelectorAll?.(".settings-nav-item").forEach((node) => {
+        const selected = node.dataset.section === this.activeSection;
+        if (node.classList.contains("selected") !== selected) {
+          node.classList.toggle("selected", selected);
+          node.setAttribute("aria-selected", selected ? "true" : "false");
+        }
+      });
     },
     renderSectionHeader(section) {
       const copy = translateSectionCopy(section);
