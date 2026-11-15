@@ -185,3 +185,62 @@ test("TV without an image worker or IntersectionObserver keeps the native image 
   context.document = { body: { nodeType: 1 } };
   assert.equal(context.api.startTvArtworkLazyLoader(), false);
 });
+
+
+test("constrained TV hydrates third-party posters only after visibility", () => {
+  const { context, pending } = buildContext({ rescaler: false, constrained: true });
+  const sourceUrl = "https://addon.example/assets/poster.jpg";
+  const image = makeImage(sourceUrl);
+  image.getBoundingClientRect = () => ({ top: 2000, bottom: 2338, left: 0, right: 220, width: 220, height: 338 });
+  const frames = [];
+  context.requestAnimationFrame = (callback) => { frames.push(callback); return frames.length; };
+  context.cancelAnimationFrame = () => {};
+  context.innerWidth = 1920;
+  context.innerHeight = 1080;
+  context.IntersectionObserver = class {
+    constructor(callback) { context.artworkObserver = this; this.callback = callback; }
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  };
+  context.MutationObserver = class { observe() {} disconnect() {} };
+  context.document = { body: { nodeType: 1, querySelectorAll: () => [image], closest: () => null } };
+  assert.equal(context.api.startTvArtworkLazyLoader(), true);
+  assert.equal(image.src, TRANSPARENT_PIXEL);
+  context.artworkObserver.callback([{ target: image, isIntersecting: true }]);
+  assert.equal(image.src, TRANSPARENT_PIXEL, "decode dispatch must wait for the frame budget");
+  frames.shift()();
+  assert.equal(image.src, sourceUrl, "third-party image must load via native IMG");
+  assert.equal(pending.length, 0, "no CORS-requiring worker path for arbitrary hosts");
+  context.api.stopTvArtworkLazyLoader();
+});
+test("legacy poster visibility bursts are paced to five images per frame", () => {
+  const { context } = buildContext({ rescaler: false, constrained: true });
+  const images = Array.from({ length: 13 }, (_, index) => makeImage("https://addon.example/" + index + ".jpg"));
+  images.forEach((image) => {
+    image.getBoundingClientRect = () => ({ top: 2200, bottom: 2538, left: 0, right: 220, width: 220, height: 338 });
+  });
+  const frames = [];
+  context.requestAnimationFrame = (callback) => { frames.push(callback); return frames.length; };
+  context.cancelAnimationFrame = () => {};
+  context.IntersectionObserver = class {
+    constructor(callback) { context.artworkObserver = this; this.callback = callback; }
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  };
+  context.MutationObserver = class { observe() {} disconnect() {} };
+  context.document = { body: { nodeType: 1, querySelectorAll: () => images, closest: () => null } };
+  assert.equal(context.api.startTvArtworkLazyLoader(), true);
+  context.artworkObserver.callback(images.map((image) => ({ target: image, isIntersecting: true })));
+  assert.equal(frames.length, 1);
+  const hydrated = () => images.filter((image) => image.src !== TRANSPARENT_PIXEL).length;
+  assert.equal(hydrated(), 0);
+  frames.shift()();
+  assert.equal(hydrated(), 5);
+  frames.shift()();
+  assert.equal(hydrated(), 10);
+  frames.shift()();
+  assert.equal(hydrated(), 13);
+  context.api.stopTvArtworkLazyLoader();
+});
