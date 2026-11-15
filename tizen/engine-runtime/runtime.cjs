@@ -6,7 +6,13 @@ var usbCache = require('./usb-cache.cjs');
 var networkPolicy = require('./network-policy.cjs'), net = require('net');
 var MAX_CACHE = 48 * 1024 * 1024, MAX_PIECE = 32 * 1024 * 1024;
 var MAX_FILES = 1024, MAX_PIECES = 65536, MAX_TORRENT_BYTES = 1024 * 1024 * 1024 * 1024;
-var MAX_MEDIA_STREAMS = 4;
+var MAX_MEDIA_STREAMS = 4, MAX_MEDIA_READ_CHUNK = 256 * 1024;
+function mediaReadLength(position, end, pieceLength, torrentLength) {
+  // A large AVPlay range must not queue an entire 32 MiB torrent piece as
+  // one HTTP buffer. Keep reads bounded even for multi-gigabyte video files.
+  var offset = position % pieceLength;
+  return Math.min(MAX_MEDIA_READ_CHUNK, pieceLength - offset, torrentLength - position, end - position + 1);
+}
 var PROBE = new Buffer('starlit-range-probe-v1');
 function validateTorrent(t) {
   if (!t || !Array.isArray(t.files) || !Array.isArray(t.pieces) || !t.files.length || !t.pieces.length) {
@@ -77,7 +83,7 @@ function start(options, callback) {
           trackers.push(tracker);
         });
       } catch (err) { return json(res, 400, { error: err.message }); }
-      var entry = { hash: hash, tickets: Object.create(null), pending: [res], ready: false, streams: [], timer: null, engine: null, cache: null };
+      var entry = { hash: hash, tickets: Object.create(null), pending: [res], ready: false, streams: [], timer: null, engine: null, cache: null, cacheReadRetries: 0 };
       var invalidate = function (index) { if (entry.engine && entry.engine.invalidate) entry.engine.invalidate(index); };
       var cache = usbProfile ? usbCache.create(usbProfile, invalidate, function () { usbProfile = null; }) :
         createCache(Math.min(options.cacheBytes || MAX_CACHE, MAX_CACHE), invalidate);
@@ -127,7 +133,7 @@ function start(options, callback) {
     var r = headers(res, req, file.length, mime[extension && extension[1].toLowerCase()] || 'application/octet-stream');
     if (!r) return;
     if (req.method === 'HEAD') return res.end();
-    var engine = entry.engine, position = file.offset + r.start, end = file.offset + r.end, waiting = false, selected = -1, dead = false;
+    var engine = entry.engine, position = file.offset + r.start, end = file.offset + r.end, waiting = false, reading = false, selected = -1, dead = false;
     var stream = new Readable(); entry.streams.push(stream);
     function detach() {
       var index = entry.streams.indexOf(stream);
@@ -135,24 +141,34 @@ function start(options, callback) {
     }
     function deselect() { if (selected >= 0) { engine.deselect(selected, selected, true, notify); selected = -1; } }
     function notify() {
-      if (dead || !waiting || selected < 0 || !engine.bitfield.get(selected)) return;
-      var piece = selected; waiting = false;
+      if (dead || !waiting || reading || selected < 0 || !engine.bitfield.get(selected)) return;
+      var piece = selected;
       var pieceStart = piece * engine.torrent.pieceLength;
       var offset = position - pieceStart;
-      var pieceBytes = Math.min(engine.torrent.pieceLength, engine.torrent.length - pieceStart);
-      var count = Math.min(pieceBytes - offset, end - position + 1);
+      var count = mediaReadLength(position, end, engine.torrent.pieceLength, engine.torrent.length);
       if (offset < 0 || count <= 0) return stream.destroy();
-      // A small AVPlay HTTP range should not read a whole large cached piece
-      // from removable storage. The torrent engine has already verified it.
+      // Preserve backpressure and event-loop responsiveness: read at most
+      // 256 KiB per pull, never a whole 32 MiB piece for an open-ended range.
+      // Keep the pending state until the asynchronous cache read completes.
+      reading = true;
       engine.store.get(piece, { offset: offset, length: count }, function (err, buffer) {
+        reading = false;
         if (dead) return;
         if (err || !buffer || buffer.length !== count) {
+          entry.cacheReadRetries++;
+          // A cache eviction can race an AVPlay seek. Drop the old selection
+          // before retrying so the torrent scheduler does not accumulate
+          // duplicate high-priority selections during repeated cache misses.
+          deselect();
           engine.invalidate(piece);
-          waiting = true;
-          return engine.select(piece, piece, true, notify);
+          selected = piece;
+          engine.select(piece, piece, true, notify);
+          notify();
+          return;
         }
         deselect();
-        position += count; stream.push(buffer);
+        position += count; waiting = false;
+        stream.push(buffer);
         if (position > end) stream.push(null);
       });
     }
@@ -258,6 +274,8 @@ function start(options, callback) {
         downloaded: active.engine.swarm.downloaded,
         downloadSpeed: active.engine.swarm.downloadSpeed(),
         activeRanges: active.streams.length,
+        cacheReadRetries: active.cacheReadRetries,
+        pieceLengthBytes: active.engine.torrent.pieceLength,
         cache: active.cache.stats,
         memory: { rssBytes: usage.rss, heapUsedBytes: usage.heapUsed, heapTotalBytes: usage.heapTotal },
         uptimeSeconds: process.uptime()
@@ -273,4 +291,4 @@ function start(options, callback) {
   server.listen(port, '127.0.0.1', callback);
   return { server: server, stop: function (cb) { stopping = true; remove(function () { sockets.slice().forEach(function (s) { s.destroy(); }); server.close(cb); }); } };
 }
-module.exports = { start: start, validateTorrent: validateTorrent, version: 'starlit-torrent-1' };
+module.exports = { start: start, validateTorrent: validateTorrent, mediaReadLength: mediaReadLength, version: 'starlit-torrent-1' };
