@@ -2,7 +2,7 @@
 
 Starlit has a separately identified LG webOS TV package built from the shared Starlit TV client. The service implementation is fetched from the exact GPLv3-licensed [NuvioTVSmart revision](../UPSTREAM.json), never from a mutable upstream branch. Services and app identities use the `app.starlit.webos` namespace; they do not overwrite Nuvio TV.
 
-**Status: developer build, not physically verified.** The CI-produced IPK must not be advertised as a supported release until its exact checksum passes the [physical-device gate](../release/webos-acceptance.json). The target is LG webOS 5 (2020) or newer; this is not proof of support for every TV or codec.
+**Status: developer build, not physically verified.** Each tagged normal release automatically produces a separate developer prerelease with its matching IPK, not a supported stable TV download. Supported-release promotion still requires its exact checksum to pass the [physical-device gate](../release/webos-acceptance.json). The target is LG webOS 5 (2020) or newer; this is not proof of support for every TV or codec.
 
 ## Build a webOS package
 
@@ -20,7 +20,7 @@ npm run verify:package:webos
 
 The `fetch:webos` step downloads the license-preserving upstream service at the pinned commit, verifies the Git SHA, and caches it in the ignored `.cache/webos-upstream/` folder. The service includes a prebuilt bundled media runtime and LGPL FFmpeg/WebAssembly files. Review their security and license notices before distribution. Account sync is configured for Starlit, never Nuvio's login or cloud identity.
 
-The result is `artifacts/Starlit-WebOS-<version>.ipk`. The CI artifact is marked **NOT DEVICE-VERIFIED**. Publishing to stable GitHub Releases is blocked pending physical-TV acceptance.
+The result is `artifacts/Starlit-WebOS-<version>.ipk`. It is marked **NOT DEVICE-VERIFIED** in the corresponding `tv-preview-v<version>` prerelease. Advertising it as stable or device-supported remains blocked pending physical-TV acceptance.
 
 ## Install on an LG TV
 
@@ -36,7 +36,7 @@ ares-launch --device <name> app.starlit.webos
 
 Replace the example TV name and package version. You can also use the [Starlit TV Installer](../../tv-installer/README.md) to pair and install a local IPK once its desktop build is available.
 
-**Updates:** Prefer installing a newer IPK under the same app ID in place. Uninstalling may erase TV-local data; sideloaded IPKs are not silently auto-updated by webOS. The desktop installer can fetch a checksum-verified package only after an accepted stable release includes a matching webOS asset.
+**Updates:** Prefer installing a newer IPK under the same app ID in place. Uninstalling may erase TV-local data; sideloaded IPKs are not silently auto-updated by webOS. Unaccepted preview packages must be selected locally; the desktop installer's automatic stable-release download intentionally excludes them.
 
 ## Hardware acceptance
 

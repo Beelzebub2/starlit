@@ -353,8 +353,27 @@ jobs:
       STARLIT_OFFICIAL_SUPABASE_URL: ${{ secrets.STARLIT_OFFICIAL_SUPABASE_URL }}
       STARLIT_OFFICIAL_SUPABASE_ANON_KEY: ${{ secrets.STARLIT_OFFICIAL_SUPABASE_ANON_KEY }}
 
+  tizen-preview:
+    # Unsigned developer package, published separately from stable downloads.
+    uses: ./.github/workflows/tizen.yml
+    with:
+      release_tag: ${{ inputs.release_tag || github.ref_name }}
+
+  webos-preview:
+    # Developer-mode webOS package; device acceptance is a separate gate.
+    uses: ./.github/workflows/webos.yml
+    with:
+      release_tag: ${{ inputs.release_tag || github.ref_name }}
+
+  tv-installer-preview:
+    # Electron preview stays outside the stable Windows setup and stable
+    # release assets while upstream advisories and device testing remain open.
+    uses: ./.github/workflows/webos-installer.yml
+    with:
+      release_tag: ${{ inputs.release_tag || github.ref_name }}
+
   publish:
-    needs: [windows, android-sign, linux]
+    needs: [windows, android-sign, linux, tizen-preview, webos-preview, tv-installer-preview]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -375,6 +394,13 @@ jobs:
           pattern: starlit-*-release
           path: release
           merge-multiple: true
+      - uses: actions/download-artifact@v8
+        with:
+          # TV preview artifacts never share the stable release directory or
+          # checksum list, preventing automatic stable-client discovery.
+          pattern: starlit-*-preview
+          path: preview
+          merge-multiple: true
       - name: Attest the exact release packages
         uses: actions/attest-build-provenance@v3
         with:
@@ -386,6 +412,9 @@ jobs:
             release/*.AppImage
             release/*.AppImage.zsync
             release/*.flatpak
+            preview/*.wgt
+            preview/*.ipk
+            preview/*.exe
       - name: Publish the release after every build passed
         run: |
           version="${RELEASE_TAG#v}"
@@ -393,12 +422,17 @@ jobs:
             echo "::error::This release already exists; do not overwrite published installers."; exit 1
           fi
           node .github/release-notes.mjs extract docs/RELEASE-NOTES.md "$RELEASE_TAG" "$RUNNER_TEMP/current-release-notes.md"
+          printf '\n### TV developer preview builds\n\nMatching Tizen, webOS and Windows TV installer developer previews are published separately at https://github.com/%s/releases/tag/tv-preview-%s. They are not device-accepted stable packages.\n' "$GITHUB_REPOSITORY" "$RELEASE_TAG" >> "$RUNNER_TEMP/current-release-notes.md"
           gh api "repos/$GITHUB_REPOSITORY/releases?per_page=100" --paginate --slurp > "$RUNNER_TEMP/published-releases.json"
           previous=$(node .github/release-notes.mjs previous "$RUNNER_TEMP/published-releases.json" "$RELEASE_TAG")
           cd release
           { tr -d '\r' < SHA256SUMS.txt; cat SHA256SUMS-android.txt SHA256SUMS-tv.txt SHA256SUMS-linux-*.txt; } > SHA256SUMS-all.txt
           mv SHA256SUMS-all.txt SHA256SUMS.txt
           sha256sum --check SHA256SUMS.txt
+          cd ../preview
+          { cat SHA256SUMS-Tizen SHA256SUMS-WebOS; tr -d '\r' < SHA256SUMS-TV-Installer; } > SHA256SUMS.txt
+          sha256sum --check SHA256SUMS.txt
+          cd ../release
           args=(release create "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --verify-tag --title "Starlit $version"
             --notes-file "$RUNNER_TEMP/current-release-notes.md")
           # With no published predecessor, publish only the authored notes: automatic tag inference can select failed tags.
@@ -412,3 +446,16 @@ jobs:
             "Starlit-Linux-x86_64-$version.AppImage" "Starlit-Linux-x86_64-$version.AppImage.zsync" \
             "Starlit-Linux-x86_64-$version.flatpak" \
             SHA256SUMS.txt
+          # A separate prerelease tag prevents stable release tools, auto-updaters
+          # and stable-asset discovery from treating unsigned TV builds as accepted.
+          cd ../preview
+          preview_tag="tv-preview-$RELEASE_TAG"
+          if gh release view "$preview_tag" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            echo "::error::The TV developer preview already exists; do not overwrite it."; exit 1
+          fi
+          gh release create "$preview_tag" --repo "$GITHUB_REPOSITORY" --target "$(git -C .. rev-parse HEAD)" \
+            --prerelease --latest=false --title "Starlit TV $version — Developer Preview" \
+            --notes-file ../docs/TV-DEVELOPER-PREVIEW-NOTICE.md \
+            "Starlit-Tizen-$version.wgt" "Starlit-WebOS-$version.ipk" \
+            "Starlit-TV-Installer-Setup-Windows-$version.exe" "Starlit-TV-Installer-Windows-$version.exe" \
+            apps2samsung-feed.json SHA256SUMS.txt

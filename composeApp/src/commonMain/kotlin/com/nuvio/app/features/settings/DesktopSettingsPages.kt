@@ -205,7 +205,7 @@ internal fun LazyListScope.desktopUpdatesContent(
                         if (!TvInstallerPlatform.launch()) {
                             runCatching {
                                 uriHandler.openUri(
-                                    "https://github.com/Beelzebub2/starlit/actions/workflows/webos-installer.yml",
+                                    "https://github.com/Beelzebub2/starlit/releases",
                                 )
                             }
                         }

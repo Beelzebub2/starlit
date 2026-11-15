@@ -8,8 +8,8 @@ Windows desktop installer for managing **Starlit TV on both Samsung Tizen and LG
 
 The desktop app exposes **Settings → Updates → Starlit TV Installer** on Windows. If the
 companion was selected during Windows setup, this opens the bundled, unpacked Electron
-application without the portable EXE extraction delay. Otherwise it opens the GitHub
-Actions preview-build page in the browser; it does not automatically download, install,
+application without the portable EXE extraction delay. Otherwise it opens GitHub's
+release list, where the matching TV developer prerelease can be downloaded; it does not automatically download, install,
 pair, sign or execute a remote binary.
 
 The Windows setup page shows the optional TV Installer (developer preview) component
@@ -20,12 +20,18 @@ require `--with-tv-installer` to opt in. The companion is not installed as a sep
 Windows service, does not add its own autorun entry, and is removed when the desktop
 app is uninstalled.
 
-Release CI rebuilds the TV installer for each tagged Starlit version and publishes an
-**unverified** workflow artifact. The desktop release may bundle the unpacked
+Release CI rebuilds the TV installer for each tagged Starlit version and publishes
+the separately labeled **developer-preview** Setup and portable executables in
+the matching `tv-preview-vMAJOR.MINOR.PATCH` prerelease, linked from the normal
+release notes, with a matching SHA-256 checksum.
+This does not mean the installer has passed hardware or dependency-security
+acceptance. The desktop release may bundle the unpacked
 `tv-installer/dist/win-unpacked` folder only when the repository variable
 `STARLIT_TV_INSTALLER_PREVIEW_APPROVED=true` is explicitly set following security
 review and real-device acceptance. A successful CI run alone must not flip this gate.
-This keeps unverified TV tools out of ordinary stable Windows downloads.
+This keeps the unverified TV tool out of **stable download assets and the
+normal desktop installer payload**, even though its optional preview can be
+downloaded separately.
 
 ## Run
 
