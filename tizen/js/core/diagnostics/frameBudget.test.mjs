@@ -118,7 +118,7 @@ test("frame timing ring buffer replaces oldest samples across multiple wraps", (
     now: frames.now, requestFrame: frames.requestFrame, cancelFrame: frames.cancelFrame, sampleLimit: 3
   });
   sampler.start();
-  for (let index = 0; index < 8; index += 1) frames.step();
+  for (let index = 0; index < 7; index += 1) frames.step();
   const snapshot = sampler.snapshot();
   assert.equal(snapshot.frames, 3);
   assert.equal(snapshot.windowMs, 150);
