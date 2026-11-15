@@ -252,14 +252,15 @@ test("constrained TV paces initially visible posters to five per frame", () => {
   const images = Array.from({ length: 12 }, (_, index) =>
     makeImage("https://addon.example/visible-" + index + ".jpg"));
   const frames = [];
+  const observed = new Set();
   context.requestAnimationFrame = (callback) => { frames.push(callback); return frames.length; };
   context.cancelAnimationFrame = () => {};
   context.innerWidth = 1920;
   context.innerHeight = 1080;
   context.IntersectionObserver = class {
-    observe() {}
-    unobserve() {}
-    disconnect() {}
+    observe(image) { observed.add(image); }
+    unobserve(image) { observed.delete(image); }
+    disconnect() { observed.clear(); }
   };
   context.MutationObserver = class { observe() {} disconnect() {} };
   context.document = {
@@ -268,6 +269,7 @@ test("constrained TV paces initially visible posters to five per frame", () => {
   assert.equal(context.api.startTvArtworkLazyLoader(), true);
   const hydrated = () => images.filter((image) => image.src !== TRANSPARENT_PIXEL).length;
   assert.equal(frames.length, 1, "visible images should share one scheduled frame");
+  assert.equal(observed.size, 0, "visible images should not remain observed for duplicate callbacks");
   assert.equal(hydrated(), 0, "initial render should not decode all visible artwork");
   frames.shift()();
   assert.equal(hydrated(), 5);
