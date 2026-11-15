@@ -101,6 +101,7 @@ internal fun PcControllerScreen(onClose: () -> Unit) {
     var tab by rememberSaveable { mutableStateOf(PcControllerTab.Remote) }
     // Until a PC is paired, the useful page is finding one, so that is where the tabs start.
     var offlineTab by rememberSaveable { mutableStateOf(PcControllerTab.Pcs) }
+    var wasPcConnected by remember { mutableStateOf(connected) }
     val tvControllerRequested by StarlitTvPlayback.openTvTabOnController.collectAsState()
     LaunchedEffect(tvControllerRequested) {
         if (tvControllerRequested) {
@@ -110,7 +111,14 @@ internal fun PcControllerScreen(onClose: () -> Unit) {
         }
     }
     LaunchedEffect(connected) {
-        if (!connected) offlineTab = if (tab == PcControllerTab.Tv) PcControllerTab.Tv else PcControllerTab.Pcs
+        if (connected && !wasPcConnected) {
+            // A successful PC connection should open its controls, even if the
+            // user was previously on the TV tab while looking for a PC.
+            tab = PcControllerTab.Remote
+        } else if (!connected) {
+            offlineTab = if (tab == PcControllerTab.Tv) PcControllerTab.Tv else PcControllerTab.Pcs
+        }
+        wasPcConnected = connected
     }
     val shownTab = if (connected) tab else offlineTab
     val disconnectedStatus = stringResource(Res.string.remote_disconnected_status)
