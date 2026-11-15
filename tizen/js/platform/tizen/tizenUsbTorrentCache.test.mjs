@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { detectTizenUsbStorage } from "./tizenUsbTorrentCache.js";
+import { detectTizenUsbStorage, TizenUsbTorrentCache } from "./tizenUsbTorrentCache.js";
 
 function withMock(api, run) {
   const previous = globalThis.tizen;
@@ -63,7 +63,8 @@ test("multiple storages reserve using conservative capacity", async () => {
 });
 test("ignore USB with no safe capacity mapping or writable native path", async () => {
   await withMock(mock([], [{ type: "EXTERNAL", state: "MOUNTED", label: "A" }]), async () => {
-    assert.equal((await detectTizenUsbStorage()).drives.length, 0);
+    const result = await detectTizenUsbStorage();
+    assert.equal(result.drives.length, 0, "A drive without a safe native path is not eligible");
   });
   await withMock(mock(
     [{ type: "USB_HOST", capacity: 4 * GiB, availableCapacity: 3 * GiB, isRemovable: true }],
@@ -71,6 +72,33 @@ test("ignore USB with no safe capacity mapping or writable native path", async (
     { A: "virtualRoot" }
   ), async () => {
     assert.equal((await detectTizenUsbStorage()).drives.length, 0);
+  });
+});
+test("detect mounted USB even when SystemInfo has no removable unit", async () => {
+  await withMock(mock(
+    [{ type: "INTERNAL", capacity: 8 * GiB, availableCapacity: 4 * GiB }],
+    [{ type: "EXTERNAL", state: "MOUNTED", label: "removable2" }],
+    { removable2: "/opt/storage/usb0" }
+  ), async () => {
+    const result = await detectTizenUsbStorage();
+    assert.equal(result.drives.length, 1);
+    assert.equal(result.drives[0].root, "/opt/storage/usb0");
+    assert.equal(result.drives[0].freeBytes, null, "Never borrow internal capacity for USB");
+    assert.match(result.reason, /USB connected/);
+  });
+});
+test("USB enumeration is independent from unsupported or failing STORAGE property", async () => {
+  const api = mock([], [{ type: "EXTERNAL", state: "MOUNTED", label: "B" }],
+    { B: "/opt/storage/usb1" });
+  delete api.systeminfo;
+  await withMock(api, async () => {
+    const result = await detectTizenUsbStorage();
+    assert.equal(result.drives.length, 1);
+    assert.equal(result.drives[0].totalBytes, null);
+  });
+  api.systeminfo = { getPropertyValue: (_, good, bad) => bad(new Error("NotSupportedError")) };
+  await withMock(api, async () => {
+    assert.equal((await detectTizenUsbStorage()).drives.length, 1);
   });
 });
 test("physical file URI is decoded; virtual paths and unsafe file URIs are rejected", async () => {
@@ -91,5 +119,28 @@ test("unsupported Tizen API leaves torrent playback on RAM", async () => {
   await withMock({}, async () => {
     const result = await detectTizenUsbStorage();
     assert.equal(result.drives.length, 0);
+  });
+});
+test("USB notifications are available before a cache opt-in and can be unsubscribed", async () => {
+  let storageHandler;
+  let registrations = 0;
+  const seen = [];
+  await withMock({
+    filesystem: {
+      addStorageStateChangeListener(handler) {
+        registrations++;
+        storageHandler = handler;
+        return 1;
+      }
+    }
+  }, async () => {
+    const unsubscribe = TizenUsbTorrentCache.subscribeStorageChanges((storage) => seen.push(storage.label));
+    assert.equal(registrations, 1);
+    storageHandler({ type: "INTERNAL", label: "system", state: "MOUNTED" });
+    storageHandler({ type: "EXTERNAL", label: "usb-1", state: "MOUNTED" });
+    assert.deepEqual(seen, ["usb-1"]);
+    unsubscribe();
+    storageHandler({ type: "EXTERNAL", label: "usb-2", state: "MOUNTED" });
+    assert.deepEqual(seen, ["usb-1"], "disposed UI must not keep receiving events");
   });
 });

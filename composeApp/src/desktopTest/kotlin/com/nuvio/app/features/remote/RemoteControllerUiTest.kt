@@ -44,6 +44,7 @@ class RemoteControllerUiTest {
         DesktopRemote.remotePlayback.value = RemotePlayback()
         DesktopRemote.desktops.value = emptyList()
         DesktopRemote.bluetoothDesktops.value = emptyList()
+        DesktopRemote.pairedBluetoothDesktops.value = emptyList()
         DesktopRemote.accountChanged(null)
     }
 
@@ -148,6 +149,36 @@ class RemoteControllerUiTest {
         onNodeWithText("Can't find your PC?").performScrollTo().assertIsDisplayed()
         capture("pc-controller-find-bottom")
     }
+
+    @Test
+    fun tvControllerTabIsReachableWithoutAnyPairedPc() =
+        runDesktopComposeUiTest(width = 412, height = 900) {
+            DesktopRemote.connected.value = false
+            DesktopRemote.desktops.value = emptyList()
+            show(desktopLayout = false)
+            onNodeWithTag("pc-controller-screen").assertIsDisplayed()
+            onNodeWithText("TV").assertIsDisplayed().performClick()
+            // Desktop deliberately has no TV transport; the tab must still be
+            // reachable instead of silently redirecting to PC discovery.
+            onNodeWithText("TV remote control is currently available on Android phones.")
+                .assertIsDisplayed()
+            onNodeWithText("Find your Starlit PC").assertDoesNotExist()
+        }
+
+    @Test
+    fun osPairedBluetoothPcsDoNotAppearAsNearbyOrDoubleUp() =
+        runDesktopComposeUiTest(width = 412, height = 900) {
+            val paired = RemoteDesktop("12:34:56:78:9A:BC", 0, "Paired workstation", bluetooth = true)
+            val nearby = RemoteDesktop("AA:BB:CC:DD:EE:FF", 0, "Nearby laptop", bluetooth = true)
+            DesktopRemote.pairedBluetoothDesktops.value = listOf(paired, nearby)
+            DesktopRemote.bluetoothDesktops.value = listOf(nearby)
+            show(desktopLayout = false)
+            onNodeWithText("Nearby Bluetooth PCs".uppercase()).performScrollTo().assertIsDisplayed()
+            onNodeWithText("Paired Bluetooth PCs (may be offline)".uppercase())
+                .performScrollTo().assertIsDisplayed()
+            onNodeWithText("Paired workstation").performScrollTo().assertIsDisplayed()
+            onAllNodesWithText("Nearby laptop").assertCountEquals(1)
+        }
 
     @Test
     fun savedVpnUsesConnectNotWakeAndPrivateEndpointRemainsEditable() = runDesktopComposeUiTest(width = 412, height = 900) {
@@ -270,8 +301,9 @@ class RemoteControllerUiTest {
         onNodeWithText("Now playing on your PC".uppercase()).assertIsDisplayed()
         onNodeWithText("Severance · S2 E3 · Who Is Alive?").assertIsDisplayed()
         onNodeWithContentDescription("Pause").assertIsDisplayed()
-        onNodeWithTag("remote-toggle-fullscreen").performScrollTo().assertIsEnabled()
+        onNodeWithTag("remote-toggle-fullscreen").performScrollTo().assertIsEnabled().assertIsOff()
         onNodeWithText("Fullscreen on PC").performScrollTo().assertIsDisplayed()
+        onNodeWithText("Starlit is in a window").assertIsDisplayed()
         onNodeWithTag("remote-skip-interval").performScrollTo().assertIsEnabled()
         onNodeWithText("Skip intro").performScrollTo().assertIsDisplayed()
         capture("pc-controller-remote")
@@ -292,12 +324,54 @@ class RemoteControllerUiTest {
             DesktopRemote.remotePlayback.value = DesktopRemote.remotePlayback.value.copy(skip = false)
         }
         onNodeWithTag("remote-skip-interval").assertDoesNotExist()
-        onNodeWithText("Exit fullscreen on PC").performScrollTo().assertIsDisplayed()
+        // Fullscreen is a switch that shows what the PC window is doing.
+        onNodeWithTag("remote-toggle-fullscreen").performScrollTo().assertIsOn()
+        onNodeWithText("Starlit is fullscreen").assertIsDisplayed()
         onNodeWithText("Downloads").performClick()
         onNodeWithText("Open the same profile on your PC and phone to manage its downloads.").assertIsDisplayed()
         onNodeWithText("PCs").performClick()
         onNodeWithText("Disconnect").assertIsDisplayed()
         capture("pc-controller-pcs-connected")
+    }
+
+    @Test
+    fun downloadsTabCountsActivePcDownloadsAndStripesTheirProgress() = runDesktopComposeUiTest(width = 412, height = 900) {
+        DesktopRemote.connected.value = true
+        DesktopRemote.remotePlayback.value = RemotePlayback(
+            downloadProfileId = com.nuvio.app.features.profiles.ProfileRepository.activeProfileId,
+            downloads = listOf(
+                RemoteDownloadStatus("a", "First film", com.nuvio.app.features.downloads.DownloadStatus.Downloading, 400, 1_000),
+                RemoteDownloadStatus("b", "Second film", com.nuvio.app.features.downloads.DownloadStatus.Paused, 200, 1_000),
+            ),
+        )
+        show(desktopLayout = false)
+        // Only the running download counts toward the tab badge.
+        onNodeWithContentDescription("1 active").assertIsDisplayed()
+        onNodeWithText("Downloads").performClick()
+        onNodeWithText("First film").assertIsDisplayed()
+        onNodeWithContentDescription("Pause on PC").assertIsDisplayed()
+        onNodeWithContentDescription("Resume on PC").assertIsDisplayed()
+        capture("pc-controller-downloads")
+    }
+
+    @Test
+    fun choiceSheetMarksTheNewPickAtOnce() = runDesktopComposeUiTest(width = 412, height = 900) {
+        DesktopRemote.connected.value = true
+        DesktopRemote.remotePlayback.value = RemotePlayback(
+            playbackId = "subtitle-session",
+            title = "Playback",
+            subtitles = listOf(RemoteChoice("en", "English", selected = true), RemoteChoice("pt", "Português")),
+        )
+        show(desktopLayout = false)
+        onNodeWithText("English").performScrollTo().performClick()
+        onNode(hasText("English") and isSelectable()).assertIsSelected()
+        val portuguese = onNode(hasText("Português") and isSelectable()).assertIsNotSelected()
+        // The sheet closes itself a moment after a pick; hold the clock to see the new mark first.
+        mainClock.autoAdvance = false
+        portuguese.performClick()
+        mainClock.advanceTimeBy(100)
+        portuguese.assertIsSelected()
+        mainClock.autoAdvance = true
     }
 
     @Test
@@ -413,13 +487,15 @@ class RemoteControllerUiTest {
     @Test
     fun fullscreenWorksWhenConnectedPcIsIdle() = runDesktopComposeUiTest(width = 412, height = 900) {
         DesktopRemote.connected.value = true
+        DesktopRemote.activeDesktop.value = RemoteDesktop("192.168.1.45", REMOTE_LAN_PORT, "Office PC")
         DesktopRemote.remotePlayback.value = RemotePlayback(fullscreenSupported = true, fullscreen = true)
         show(desktopLayout = false)
-        onNodeWithTag("remote-toggle-fullscreen").assertIsEnabled()
-        onNodeWithText("Exit fullscreen on PC").assertIsDisplayed()
+        onNodeWithTag("remote-toggle-fullscreen").performScrollTo().assertIsEnabled().assertIsOn()
+        onNodeWithText("Starlit is fullscreen").assertIsDisplayed()
         onNodeWithTag("remote-skip-interval").assertDoesNotExist()
         onNodeWithContentDescription("Next episode").assertDoesNotExist()
-        onNodeWithText("Nothing playing yet").assertIsDisplayed()
+        onNodeWithText("Nothing playing yet").performScrollTo().assertIsDisplayed()
+        onNodeWithText("Waiting for playback on Office PC").performScrollTo().assertIsDisplayed()
         capture("pc-controller-idle")
         capture("pc-controller-idle-fullscreen")
     }

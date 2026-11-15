@@ -30,7 +30,7 @@ import { preloadStreamBadgeImages } from "./ui/screens/stream/streamScreen.js";
 import { warmStreamingLibs } from "./runtime/loadStreamingLibs.js";
 import { runAfterFirstHomePaint } from "./runtime/startupScheduler.js";
 import { Platform } from "./platform/index.js";
-import { TizenCapabilities } from "./platform/tizen/tizenCapabilities.js";
+import { TizenCapabilities, isTizen5PluginPreviewEnabled } from "./platform/tizen/tizenCapabilities.js";
 import { PluginServiceClient } from "./platform/pluginServiceClient.js";
 import { getTvRuntimePerformanceProfile } from "./platform/tvRuntimePerformance.js";
 import { LocalStore } from "./core/storage/localStore.js";
@@ -38,6 +38,7 @@ import { I18n } from "./i18n/index.js";
 import { getLatestAppUpdateWithRetry } from "./core/update/appUpdateService.js";
 import { shouldShowUpdate } from "./core/update/updateBannerPolicy.js";
 import { showAppUpdatePrompt } from "./ui/components/appUpdatePrompt.js";
+import { startTizenUsbCacheOffers } from "./ui/components/tizenUsbCacheOffer.js";
 import { resolveExperienceRoute } from "./core/profile/experienceModeRouting.js";
 import { PluginRuntime } from "./core/player/pluginRuntime.js";
 import { installPartyEffects } from "./ui/screens/party/partyEffects.js";
@@ -587,7 +588,7 @@ function setupPluginRuntimeLifecycle() {
   document.addEventListener("nuvio:beforeExitApp", cancel);
 }
 function setupPluginServiceLifecycle() {
-  if (!Platform.isTizen() || shouldDisableTizenPluginSupport()) {
+  if (!Platform.isTizen() || shouldDisableTizenPluginSupport() || isTizen5PluginPreviewEnabled()) {
     return;
   }
   // The service only serves plugins, so its watchdog probe is skipped while
@@ -635,7 +636,9 @@ async function bootstrapApp() {
   installLocalServiceFetch();
   setupPluginServiceLifecycle();
   if (shouldDisableTizenPluginSupport()) {
-    markBootStage("PluginService disabled on Tizen below 6.0");
+    markBootStage("PluginService disabled on unsupported Tizen runtime");
+  } else if (isTizen5PluginPreviewEnabled()) {
+    markBootStage("Tizen 5 plugin preview uses HTTPS/CORS without background service");
   } else {
     // PluginService is optional and only serves installed plugins. It used to
     // be launched here, which spawned the Node process during Home render on
@@ -651,6 +654,11 @@ async function bootstrapApp() {
   await I18n.init();
   markBootStage("Initializing navigation");
   Router.init();
+  if (Platform.isTizen() && TizenCapabilities.canUseP2p()) {
+    // Listen even when USB caching is off so a newly plugged-in drive can
+    // offer the opt-in setting. The first inventory runs after boot settles.
+    startTizenUsbCacheOffers();
+  }
   PlayerController.init();
   installCustomPosterFallback();
   preloadMaterialIconFont();

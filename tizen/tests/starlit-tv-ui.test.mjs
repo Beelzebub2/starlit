@@ -188,8 +188,15 @@ test("add-on rows escape manifest text and fall back to the host", () => {
   assert.match(bare, /tv-addon-row is-disabled/);
   assert.match(bare, /<span class="tv-addon-name">stream-host.example<\/span>/);
   assert.match(bare, /<span>SH<\/span>/);
-  assert.match(bare, /Manifest not loaded yet/);
+  assert.doesNotMatch(bare, /Manifest not loaded yet/, "uncached manifests should not introduce untranslated status copy");
   assert.match(bare, />Enable</);
+});
+
+test("the redesigned add-on screen retains translated phone management", async () => {
+  const source = await readFile(new URL("../js/ui/screens/plugin/pluginScreen.js", import.meta.url), "utf8");
+  assert.match(source, /\["phone", label\("tv_phone_manage_title"/);
+  assert.match(source, /if\(action==="phone"\) return Router\.navigate\("tvPhoneSetup"\)/);
+  assert.match(source, /label\("addon_installed_section"/);
 });
 
 // ---- Stylesheet guard ---------------------------------------------------------

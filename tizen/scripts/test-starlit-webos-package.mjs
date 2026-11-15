@@ -26,7 +26,7 @@ test("webOS service IDs and installer match Starlit", async () => {
   assert.match(plugin, /app\.starlit\.webos\.plugin\.service/);
   assert.match(packageScript, /const appId = "app\.starlit\.webos"/);
   assert.equal(config.webos.appId, "app.starlit.webos");
-  assert.equal(config.githubRepo, "Beelzebub2/nuvio-native");
+  assert.equal(config.githubRepo, "Beelzebub2/starlit");
 });
 
 test("webOS packaging tools are locked for clean installs", async () => {
