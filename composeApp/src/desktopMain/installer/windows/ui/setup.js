@@ -36,6 +36,8 @@
     dir: '',
     startMenu: true,
     desktop: true,
+    tvInstaller: false,
+    tvInstallerAvailable: false,
     required: 0,
     free: 0,
     running: false,
@@ -210,6 +212,11 @@
     hint.textContent = state.problem || `Needs ${mb(state.required)}. ${size(state.free)} free on this drive.`;
     setSwitch($('opt-start'), state.startMenu);
     setSwitch($('opt-desktop'), state.desktop);
+    setSwitch($('opt-tv-installer'), state.tvInstaller);
+    $('opt-tv-installer').disabled = !state.tvInstallerAvailable;
+    $('tv-installer-description').textContent = state.tvInstallerAvailable
+      ? 'Optional tool for Samsung Tizen and LG webOS. Requires TV developer mode; not yet hardware-verified.'
+      : 'Not included in this build. Developer-preview builds may be available on GitHub.';
     $('options-install').textContent = state.mode === 'update' ? 'Update' : 'Install';
     $('options-install').disabled = Boolean(state.problem);
   }
@@ -299,7 +306,8 @@
     $('progress-file').textContent = '';
     show('progress');
     if (state.mode === 'uninstall') send('uninstall', state.removeData ? '1' : '0');
-    else send('install', state.dir, state.startMenu ? '1' : '0', state.desktop ? '1' : '0');
+    else send('install', state.dir, state.startMenu ? '1' : '0', state.desktop ? '1' : '0',
+      state.tvInstallerAvailable && state.tvInstaller ? '1' : '0');
   }
 
   async function onDone() {
@@ -387,9 +395,11 @@
   $('minimize').addEventListener('click', () => send('minimize'));
   $('close').addEventListener('click', () => send('close'));
 
-  const toggles = { 'opt-start': 'startMenu', 'opt-desktop': 'desktop', 'opt-data': 'removeData' };
+  const toggles = { 'opt-start': 'startMenu', 'opt-desktop': 'desktop',
+    'opt-tv-installer': 'tvInstaller', 'opt-data': 'removeData' };
   for (const [id, key] of Object.entries(toggles)) {
     $(id).addEventListener('click', () => {
+      if ($(id).disabled) return;
       state[key] = !state[key];
       setSwitch($(id), state[key]);
     });
@@ -445,6 +455,8 @@
     dir: 'C:\\Users\\you\\AppData\\Local\\Starlit',
     startMenu: true,
     desktop: true,
+    tvInstaller: false,
+    tvInstallerAvailable: params.has('tv-installer'),
     required: 282e6,
     free: 128e9,
     running: params.has('running'),

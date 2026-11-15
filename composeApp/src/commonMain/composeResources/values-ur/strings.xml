@@ -2639,4 +2639,6 @@
     <string name="remote_tv_up">اوپر</string>
     <string name="remote_tv_volume_down">والیوم کم</string>
     <string name="remote_tv_volume_up">والیوم اپ</string>
+    <string name="settings_desktop_tv_installer_ready">Samsung Tizen اور LG webOS ٹی وی کے لیے شامل انسٹالر کھولیں (ڈویلپر پیش نظارہ)۔</string>
+    <string name="settings_desktop_tv_installer_missing">ٹی وی انسٹالر نصب نہیں ہے۔ GitHub پر پیش نظارہ بلڈز دیکھیں۔</string>
 </resources>

@@ -2,7 +2,7 @@
 // window and drives setup_engine for installs, updates and uninstalls.
 //
 //   setup.exe                         interactive install or update
-//   setup.exe --silent [--dir <path>] [--no-desktop-shortcut] [--no-start-menu-shortcut] [--launch]
+//   setup.exe --silent [--dir <path>] [--no-desktop-shortcut] [--no-start-menu-shortcut] [--with-tv-installer] [--launch]
 //   setup.exe --uninstall [--silent] [--remove-data]
 //   --sandbox [--legacy-upgrade-code <guid>]   separate test identity, see setup_engine.h
 //   --devtools                        enable WebView2 DevTools and reload keys
@@ -35,7 +35,7 @@ constexpr wchar_t kWindowClass[] = L"StarlitSetupWindow";
 constexpr wchar_t kUiOrigin[] = L"https://setup.nuvio/";
 constexpr wchar_t kWebView2Download[] = L"https://go.microsoft.com/fwlink/p/?LinkId=2124703";
 constexpr int kWidth = 760;
-constexpr int kHeight = 480;
+constexpr int kHeight = 530;
 constexpr UINT kFinishedMessage = WM_APP + 1;
 constexpr UINT kDragMessage = WM_APP + 2;
 constexpr UINT_PTR kProgressTimer = 1;
@@ -52,6 +52,7 @@ struct Args {
     bool removeData = false;
     bool noDesktop = false;
     bool noStartMenu = false;
+    bool withTvInstaller = false;
     std::wstring dir;
     std::wstring legacyUpgradeCode;
 };
@@ -167,6 +168,8 @@ void sendInit() {
              .str(L"dir", gDir)
              .flag(L"startMenu", existing.startMenu)
              .flag(L"desktop", existing.desktop)
+             .flag(L"tvInstallerAvailable", gEngine->hasTvInstaller())
+             .flag(L"tvInstaller", existing.tvInstaller && gEngine->hasTvInstaller())
              .number(L"required", static_cast<double>(gEngine->source().index.totalRaw))
              .number(L"free", static_cast<double>(freeBytesFor(gDir)))
              .flag(L"running", gEngine->isAppRunning(gDir))
@@ -202,7 +205,7 @@ void sendProgress(bool force) {
 // ---------------------------------------------------------------------------
 // Actions from the page
 
-void startWork(bool uninstall, bool startMenu, bool desktop, bool removeData) {
+void startWork(bool uninstall, bool startMenu, bool desktop, bool removeData, bool tvInstaller = false) {
     if (gBusy) return;
     if (gWorker.joinable()) gWorker.join();
     gBusy = true;
@@ -211,7 +214,7 @@ void startWork(bool uninstall, bool startMenu, bool desktop, bool removeData) {
     const std::wstring dir = gDir;
     gWorker = std::thread([=]() {
         CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
-        bool ok = uninstall ? gEngine->uninstall(dir, removeData) : gEngine->install({dir, startMenu, desktop});
+        bool ok = uninstall ? gEngine->uninstall(dir, removeData) : gEngine->install({dir, startMenu, desktop, tvInstaller});
         CoUninitialize();
         PostMessageW(gWindow, kFinishedMessage, ok ? 1 : 0, 0);
     });
@@ -286,7 +289,7 @@ void handleMessage(const std::wstring& message) {
         if (!gBusy) browseForFolder();
     } else if (command == L"install") {
         gDir = normalizeDir(arg(1));
-        startWork(false, arg(2) == L"1", arg(3) == L"1", false);
+        startWork(false, arg(2) == L"1", arg(3) == L"1", false, arg(4) == L"1");
     } else if (command == L"uninstall") {
         startWork(true, false, false, arg(1) == L"1");
     } else if (command == L"launch") {
@@ -579,6 +582,7 @@ void parseArgs() {
         else if (arg == L"--remove-data") gArgs.removeData = true;
         else if (arg == L"--no-desktop-shortcut") gArgs.noDesktop = true;
         else if (arg == L"--no-start-menu-shortcut") gArgs.noStartMenu = true;
+        else if (arg == L"--with-tv-installer") gArgs.withTvInstaller = true;
         else if (arg == L"--legacy-upgrade-code" && i + 1 < count) gArgs.legacyUpgradeCode = argv[++i];
         else if (arg == L"--dir" && i + 1 < count) gArgs.dir = argv[++i];
         else if (arg.rfind(L"--dir=", 0) == 0) gArgs.dir = arg.substr(6);
@@ -657,7 +661,9 @@ int runSilent(bool uninstall) {
         ok = gEngine->uninstall(gDir, gArgs.removeData);
         gUninstalled = ok;
     } else {
-        InstallRequest request{gDir, existing.startMenu && !gArgs.noStartMenu, existing.desktop && !gArgs.noDesktop};
+        InstallRequest request{gDir, existing.startMenu && !gArgs.noStartMenu,
+                               existing.desktop && !gArgs.noDesktop,
+                               gArgs.withTvInstaller || (existing.tvInstaller && gEngine->hasTvInstaller())};
         ok = gEngine->install(request);
         if (ok && gArgs.launch) launchApp(gEngine->identity(), gDir);
     }

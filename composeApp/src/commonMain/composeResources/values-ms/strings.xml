@@ -3348,4 +3348,6 @@ Had permintaan</string>
     <string name="remote_tv_up">Atas</string>
     <string name="remote_tv_volume_down">Kelantangan turun</string>
     <string name="remote_tv_volume_up">Naikkan kelantangan</string>
+    <string name="settings_desktop_tv_installer_ready">Buka pemasang yang disertakan untuk TV Samsung Tizen dan LG webOS (pratonton pembangun).</string>
+    <string name="settings_desktop_tv_installer_missing">Pemasang TV belum dipasang. Lihat binaan pratonton pembangun di GitHub.</string>
 </resources>

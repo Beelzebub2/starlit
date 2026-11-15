@@ -2671,4 +2671,6 @@
     <string name="remote_tv_up">উপরে</string>
     <string name="remote_tv_volume_down">ভলিউম কম</string>
     <string name="remote_tv_volume_up">ভলিউম আপ</string>
+    <string name="settings_desktop_tv_installer_ready">Samsung Tizen ও LG webOS টিভির জন্য অন্তর্ভুক্ত ইনস্টলার খুলুন (ডেভেলপার প্রিভিউ)।</string>
+    <string name="settings_desktop_tv_installer_missing">টিভি ইনস্টলার ইনস্টল করা নেই। GitHub-এ ডেভেলপার প্রিভিউ বিল্ড দেখুন।</string>
 </resources>

@@ -2665,4 +2665,6 @@
     <string name="remote_tv_up">Lên</string>
     <string name="remote_tv_volume_down">Giảm âm lượng</string>
     <string name="remote_tv_volume_up">Tăng âm lượng</string>
+    <string name="settings_desktop_tv_installer_ready">Mở trình cài đặt đi kèm cho TV Samsung Tizen và LG webOS (bản xem trước cho nhà phát triển).</string>
+    <string name="settings_desktop_tv_installer_missing">Chưa cài đặt trình cài đặt TV. Xem bản dùng thử dành cho nhà phát triển trên GitHub.</string>
 </resources>

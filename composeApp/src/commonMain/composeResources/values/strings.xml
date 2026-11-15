@@ -3130,4 +3130,6 @@
     <string name="remote_tv_up">Up</string>
     <string name="remote_tv_volume_down">Volume down</string>
     <string name="remote_tv_volume_up">Volume up</string>
+    <string name="settings_desktop_tv_installer_ready">Open the bundled installer for Samsung Tizen and LG webOS TVs (developer preview).</string>
+    <string name="settings_desktop_tv_installer_missing">TV installer not installed. View developer preview builds on GitHub.</string>
 </resources>

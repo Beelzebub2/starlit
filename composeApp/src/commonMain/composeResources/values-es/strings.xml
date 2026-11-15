@@ -2603,4 +2603,6 @@ Utilizas esta función bajo tu propia responsabilidad. P2P se puede desactivar e
     <string name="remote_tv_up">Arriba</string>
     <string name="remote_tv_volume_down">Bajar volumen</string>
     <string name="remote_tv_volume_up">Subir volumen</string>
+    <string name="settings_desktop_tv_installer_ready">Abrir el instalador incluido para televisores Samsung Tizen y LG webOS (versión preliminar).</string>
+    <string name="settings_desktop_tv_installer_missing">El instalador de TV no está instalado. Ver versiones preliminares en GitHub.</string>
 </resources>

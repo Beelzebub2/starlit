@@ -21,6 +21,7 @@ import androidx.compose.material.icons.rounded.Gavel
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.Policy
 import androidx.compose.material.icons.rounded.SystemUpdateAlt
+import androidx.compose.material.icons.rounded.Devices
 import androidx.compose.material3.Icon
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -177,6 +178,7 @@ internal fun LazyListScope.desktopUpdatesContent(
         }
     }
     item(key = "desktop-updates-options") {
+        val uriHandler = LocalUriHandler.current
         SettingsGroup(isTablet = true) {
             if (!AppUpdaterPlatform.hasSingleUpdateChannel) {
                 UpdateChannelSettingsRow(isTablet = true)
@@ -189,6 +191,27 @@ internal fun LazyListScope.desktopUpdatesContent(
                 isTablet = true,
                 onClick = onChangelogClick,
             )
+            if (TvInstallerPlatform.supported) {
+                SettingsGroupDivider(isTablet = true)
+                SettingsNavigationRow(
+                    title = "Starlit TV Installer",
+                    description = stringResource(
+                        if (TvInstallerPlatform.isInstalled()) Res.string.settings_desktop_tv_installer_ready
+                        else Res.string.settings_desktop_tv_installer_missing,
+                    ),
+                    icon = Icons.Rounded.Devices,
+                    isTablet = true,
+                    onClick = {
+                        if (!TvInstallerPlatform.launch()) {
+                            runCatching {
+                                uriHandler.openUri(
+                                    "https://github.com/Beelzebub2/starlit/actions/workflows/webos-installer.yml",
+                                )
+                            }
+                        }
+                    },
+                )
+            }
             if (onTestUpdateBannerClick != null) {
                 SettingsGroupDivider(isTablet = true)
                 SettingsNavigationRow(

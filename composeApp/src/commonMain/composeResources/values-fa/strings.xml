@@ -3310,4 +3310,6 @@
     <string name="remote_tv_up">بالا</string>
     <string name="remote_tv_volume_down">کاهش صدا</string>
     <string name="remote_tv_volume_up">افزایش صدا</string>
+    <string name="settings_desktop_tv_installer_ready">نصب‌کننده همراه برای تلویزیون‌های Samsung Tizen و LG webOS را باز کنید (پیش‌نمایش توسعه‌دهندگان).</string>
+    <string name="settings_desktop_tv_installer_missing">نصب‌کننده تلویزیون نصب نشده است. نسخه‌های پیش‌نمایش را در GitHub ببینید.</string>
 </resources>

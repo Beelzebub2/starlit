@@ -3333,4 +3333,6 @@
     <string name="remote_tv_up">ขึ้น</string>
     <string name="remote_tv_volume_down">ลดระดับเสียง</string>
     <string name="remote_tv_volume_up">เพิ่มระดับเสียง</string>
+    <string name="settings_desktop_tv_installer_ready">เปิดตัวติดตั้งที่รวมมาสำหรับทีวี Samsung Tizen และ LG webOS (รุ่นตัวอย่างสำหรับนักพัฒนา)</string>
+    <string name="settings_desktop_tv_installer_missing">ยังไม่ได้ติดตั้งตัวติดตั้งทีวี ดูรุ่นตัวอย่างสำหรับนักพัฒนาบน GitHub</string>
 </resources>

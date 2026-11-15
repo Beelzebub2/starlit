@@ -3306,4 +3306,6 @@
     <string name="remote_tv_up">Ylös</string>
     <string name="remote_tv_volume_down">Vähennä äänenvoimakkuutta</string>
     <string name="remote_tv_volume_up">Lisää äänenvoimakkuutta</string>
+    <string name="settings_desktop_tv_installer_ready">Avaa mukana tuleva Samsung Tizen- ja LG webOS -televisioiden asennustyökalu (kehittäjäversio).</string>
+    <string name="settings_desktop_tv_installer_missing">TV-asennustyökalua ei ole asennettu. Katso kehittäjäversiot GitHubista.</string>
 </resources>

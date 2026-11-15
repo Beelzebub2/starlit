@@ -12,6 +12,7 @@
 
 #include <algorithm>
 #include <cstdarg>
+#include <cstring>
 #include <cstdio>
 #include <cwctype>
 #include <functional>
@@ -509,6 +510,7 @@ Existing detectExisting(const Identity& identity) {
         DWORD value = 0;
         if (regDword(HKEY_CURRENT_USER, key, L"NuvioStartMenuShortcut", value)) existing.startMenu = value != 0;
         if (regDword(HKEY_CURRENT_USER, key, L"NuvioDesktopShortcut", value)) existing.desktop = value != 0;
+        existing.tvInstaller = fileExists(existing.location + L"\\tools\\Starlit TV Installer\\Starlit TV Installer.exe");
         log(L"Found %s %s in %s", identity.displayName().c_str(), existing.version.c_str(), existing.location.c_str());
     }
 
@@ -656,6 +658,12 @@ bool Engine::closeRunning(const std::vector<std::wstring>& dirs) {
     return processesUnder(dirs, identity_.uninstallerFileName()).empty();
 }
 
+bool Engine::hasTvInstaller() const {
+    return std::any_of(source_.index.files.begin(), source_.index.files.end(), [](const auto& file) {
+        return _stricmp(file.path.c_str(), "tools\\Starlit TV Installer\\Starlit TV Installer.exe") == 0;
+    });
+}
+
 bool Engine::install(const InstallRequest& request) {
     const std::wstring dir = normalizeDir(request.dir);
     log(L"Install %s %s to %s (start menu %d, desktop %d, sandbox %d)", identity_.product.name.c_str(),
@@ -666,6 +674,10 @@ bool Engine::install(const InstallRequest& request) {
     }
     if (auto problem = validateDir(dir); !problem.empty()) {
         fail(problem);
+        return false;
+    }
+    if (request.tvInstaller && !hasTvInstaller()) {
+        fail(L"The optional TV installer isn't in this package. Re-run setup without that option.");
         return false;
     }
 
@@ -693,6 +705,16 @@ bool Engine::install(const InstallRequest& request) {
         deleteTree(staging);
         return false;
     }
+    // A release may bundle the separate, preview-only TV tool. It must never
+    // install unless explicitly selected, even during a silent install.
+    if (!request.tvInstaller && hasTvInstaller()) {
+        const std::wstring optionalDir = staging + L"\\tools\\Starlit TV Installer";
+        if (dirExists(optionalDir) && !deleteTree(optionalDir)) {
+            fail(L"Setup couldn't remove the unselected TV installer from the staging area.");
+            deleteTree(staging);
+            return false;
+        }
+    }
 
     progress = kExtractEnd;
     // The MSI must go first only when its files share the target folder (it
@@ -709,7 +731,7 @@ bool Engine::install(const InstallRequest& request) {
     progress = kLegacyEnd;
 
     phase = Phase::Finishing;
-    if (!swapInto(staging, dir)) {
+    if (!swapInto(staging, dir, request.tvInstaller)) {
         deleteTree(staging);
         return false;
     }
@@ -869,7 +891,7 @@ void Engine::removeLegacyMsi() {
     log(L"MSI removal finished with %u (%s)", result, systemMessage(result).c_str());
 }
 
-bool Engine::swapInto(const std::wstring& staging, const std::wstring& dir) {
+bool Engine::swapInto(const std::wstring& staging, const std::wstring& dir, bool withTvInstaller) {
     const std::wstring old = dir + L".setup-old";
     if (dirExists(old)) deleteTree(old);
     bool movedOld = false;
@@ -879,7 +901,7 @@ bool Engine::swapInto(const std::wstring& staging, const std::wstring& dir) {
             // an Explorer window); its files can usually be replaced anyway.
             log(L"Couldn't move %s aside (%s); replacing its files one by one", dir.c_str(),
                 systemMessage(GetLastError()).c_str());
-            return mergeInto(staging, dir);
+            return mergeInto(staging, dir, withTvInstaller);
         }
         movedOld = true;
     }
@@ -894,9 +916,16 @@ bool Engine::swapInto(const std::wstring& staging, const std::wstring& dir) {
     return true;
 }
 
-bool Engine::mergeInto(const std::wstring& staging, const std::wstring& dir) {
+bool Engine::mergeInto(const std::wstring& staging, const std::wstring& dir, bool withTvInstaller) {
     std::vector<std::wstring> shipped;
-    for (const auto& file : source_.index.files) shipped.push_back(utf16(file.path));
+    constexpr char kTvInstallerPrefix[] = "tools\\Starlit TV Installer\\";
+    for (const auto& file : source_.index.files) {
+        // Only the deliberately excluded component may be absent from staging.
+        // All other payload files must still fail the merge if missing.
+        if (!withTvInstaller &&
+            _strnicmp(file.path.c_str(), kTvInstallerPrefix, sizeof(kTvInstallerPrefix) - 1) == 0) continue;
+        shipped.push_back(utf16(file.path));
+    }
     shipped.push_back(identity_.uninstallerFileName());
     for (const auto& relative : shipped) {
         const std::wstring from = staging + L"\\" + relative;

@@ -2216,4 +2216,6 @@
     <string name="remote_tv_volume_up">Creștere volum</string>
     <string name="settings_tracking_anime_id_subtitle">Alege ID-ul extern folosit ca identificator principal pentru intrările anime.</string>
     <string name="settings_tracking_anime_id_title">ID anime preferat</string>
+    <string name="settings_desktop_tv_installer_ready">Deschide programul inclus pentru instalare pe televizoare Samsung Tizen și LG webOS (versiune de test).</string>
+    <string name="settings_desktop_tv_installer_missing">Programul de instalare TV nu este instalat. Vezi versiunile de test pe GitHub.</string>
 </resources>

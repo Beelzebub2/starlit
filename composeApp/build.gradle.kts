@@ -1839,6 +1839,12 @@ fun registerWindowsInstallerTask(name: String, distributableTask: String, distri
                 addAll(listOf("-WebView2Root", windowsWebView2Root.absolutePath))
                 addAll(listOf("-ProductName", desktopPackageName, "-Publisher", desktopVendor))
                 addAll(listOf("-LegacyUpgradeCode", windowsMsiUpgradeUuid, "-Arch", windowsPlayerBridgeArch))
+                providers.gradleProperty("nuvio.windows.tvInstallerDir").orNull
+                    ?.takeIf { it.isNotBlank() }
+                    ?.let {
+                        inputs.dir(it)
+                        addAll(listOf("-TvInstallerDir", it))
+                    }
                 windowsVcvarsPath?.let { addAll(listOf("-Vcvars", it)) }
             },
         )
