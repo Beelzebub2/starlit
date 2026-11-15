@@ -63,7 +63,7 @@ function getRange(start, end, expected) {
   });
 }
 function delay(ms) { return new Promise(function (resolve) { setTimeout(resolve, ms); }); }
-var ticket = '', seededRequests = 0;
+var ticket = '', seededRequests = 0, headSelections = 0, headSelectionsBeforeRanges = 0;
 seed = net.createServer(function (socket) {
   sockets.push(socket);
   var wire = new Wire();
@@ -113,7 +113,14 @@ seed.listen(0, '127.0.0.1', function () {
   service = runtime.start({
     port: 0, controlToken: secret, dht: false, allowPrivatePeers: true,
     metadataTimeout: 12000,
-    onEngine: function (engine) { engine.connect('127.0.0.1:' + peerPort); }
+    onEngine: function (engine) {
+      var originalSelect = engine.select;
+      engine.select = function (from, to, priority) {
+        if (from === 0 && to === 0 && priority === true) headSelections++;
+        return originalSelect.apply(this, arguments);
+      };
+      engine.connect('127.0.0.1:' + peerPort);
+    }
   }, function () {
     port = service.server.address().port;
     var creating = request('/' + hash + '/create', 'POST',
@@ -136,8 +143,12 @@ seed.listen(0, '127.0.0.1', function () {
       ticket = result.playbackTicket;
       assert(/^[a-f0-9]{64}$/.test(ticket));
       assert.equal(seededRequests, 0, 'Metadata resolution must not preload video');
+      // Three HTTP chunks from the same 16 MiB piece must not each create
+      // a new high-priority torrent selection: that would cause cache thrash
+      // when AVPlay concurrently requests distant ranges.
+      headSelectionsBeforeRanges = headSelections;
       var ranges = Promise.all([
-        getRange(0, 65535, head.slice(0, 65536)),
+        getRange(0, 3 * 256 * 1024 - 1, head.slice(0, 3 * 256 * 1024)),
         getRange(middleIndex * pieceLength, middleIndex * pieceLength + 65535, middle.slice(0, 65536)),
         getRange(total - 65536, total - 1, tail.slice(pieceLength - 65536))
       ]);
@@ -149,6 +160,8 @@ seed.listen(0, '127.0.0.1', function () {
         return ranges;
       });
     }).then(function () {
+      assert.equal(headSelections - headSelectionsBeforeRanges, 1,
+        'Multiple HTTP chunks in one piece must retain a single scheduler selection');
       assert(mediaPieces[0] && mediaPieces[middleIndex] && mediaPieces[pieceCount - 1], 'Head, middle and tail must be downloaded');
       return stats(true);
     }).then(function (res) {
