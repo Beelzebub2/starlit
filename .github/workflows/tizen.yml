@@ -16,6 +16,9 @@ concurrency:
   cancel-in-progress: true
 jobs:
   build:
+    # Developer-preview releases distribute separate, explicitly unverified assets.
+    # They do not run the stable vMAJOR.MINOR.PATCH package or acceptance jobs.
+    if: github.event_name != 'release' || !github.event.release.prerelease
     runs-on: ubuntu-latest
     env:
       TRAKT_CLIENT_ID: ${{ vars.TRAKT_CLIENT_ID }}
