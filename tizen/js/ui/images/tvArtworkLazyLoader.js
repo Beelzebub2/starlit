@@ -11,6 +11,7 @@ import {
   getTvRuntimePerformanceProfile
 } from "../../platform/tvRuntimePerformance.js";
 import { registerSessionTeardownHandler } from "../../core/auth/sessionLifecycle.js";
+import { normalizeTmdbPosterUrl } from "../../core/tmdb/tmdbImageUrl.js";
 // Poster surfaces outside Home. Home already has its own bounded hydrator, so
 // these are only the screens that used to decode at the source size.
 const ARTWORK_SELECTOR = [
@@ -194,7 +195,9 @@ function prepareImage(image) {
   // They load through IMG directly (no cross-origin worker fetch required).
   if (!canRescaleArtworkHost(source) && !getTvRuntimePerformanceProfile().isPerformanceConstrained) return;
   image.dataset.artworkLazy = "1";
-  image.dataset.artworkSrc = source;
+  // Reuse the proven per-TV poster source size even when a catalog provides
+  // an oversized TMDB URL directly. Leave third-party URLs byte-for-byte.
+  image.dataset.artworkSrc = normalizeTmdbPosterUrl(source);
   image.src = TRANSPARENT_PIXEL;
   observeOrHydrate(image);
 }
