@@ -117,7 +117,9 @@ fun <T> NuvioSegmentedControl(
             ) {
                 Text(
                     text = segment.label,
-                    modifier = Modifier.weight(1f, fill = false),
+                    // A non-stretching segment may be inside a horizontal scroller with
+                    // unbounded width. Weighting its label there collapses it to 0 dp.
+                    modifier = if (fillWidth) Modifier.weight(1f, fill = false) else Modifier,
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.Medium,
                     color = if (isSelected) colors.textPrimary else colors.textSecondary,
