@@ -43,7 +43,7 @@ export async function run(env = process.env) {
   };
   async function pollSource(key, label, task) {
     const state = states[key];
-    if (Date.now() < state.nextAt) return;
+    if (state.blocked || Date.now() < state.nextAt) return;
     try {
       await task();
       if (state.failures) console.info(label + ' recovered');
@@ -51,6 +51,13 @@ export async function run(env = process.env) {
       state.nextAt = 0;
       state.lastWarningAt = 0;
     } catch (error) {
+      if (error?.code === 'AUTH_AUDIT_CURSOR_UNCERTAIN') {
+        // Do not replay an already acknowledged batch. Keep the other source
+        // alive; an operator must reconcile this cursor before restarting.
+        state.blocked = true;
+        console.error(label + ' halted: delivered batch has uncertain cursor checkpoint');
+        return;
+      }
       // Never advance a failed cursor. Avoid retry storms and log flooding.
       state.failures = Math.min(8, state.failures + 1);
       const now = Date.now();
