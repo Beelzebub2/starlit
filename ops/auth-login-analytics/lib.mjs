@@ -155,78 +155,124 @@ export class AuthAuditReporter {
   }
 }
 
+// A PostgreSQL cursor row lock prevents concurrent exporter instances from
+// sending the same batch. If the sink acknowledged a batch but the durable
+// cursor commit failed, do not retry automatically: that is an ambiguous
+// delivery and repeated retries can amplify one login thousands of times.
+function uncertainCheckpoint() {
+  const error = new Error('Auth audit cursor checkpoint uncertain after accepted delivery');
+  error.code = 'AUTH_AUDIT_CURSOR_UNCERTAIN';
+  return error;
+}
+
+async function withCursorCheckpoint(db, source, task) {
+  const transactional = typeof db.connect === 'function';
+  const client = transactional ? await db.connect() : db;
+  let transactionStarted = false;
+  let accepted = false;
+  try {
+    if (transactional) {
+      await client.query('BEGIN');
+      transactionStarted = true;
+      const lock = await client.query(
+        'SELECT source FROM starlit_analytics.export_cursor WHERE source=$1 FOR UPDATE', [source]);
+      if (lock.rowCount !== 1) throw new Error('Missing auth audit cursor lock');
+    }
+    const value = await task(client, () => { accepted = true; });
+    if (transactional) await client.query('COMMIT');
+    return value;
+  } catch (error) {
+    if (transactionStarted) {
+      try { await client.query('ROLLBACK'); } catch { /* Preserve original failure. */ }
+    }
+    if (accepted) throw uncertainCheckpoint();
+    throw error;
+  } finally {
+    if (transactional) client.release();
+  }
+}
+
 export async function exportSuccessfulLogins(db, reporter, geoLookup = () => null, now = Date.now()) {
-  const state = (await db.query(
-    `SELECT to_char(cursor_time AT TIME ZONE 'UTC',
-                    'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS cursor_time, cursor_id
-     FROM starlit_analytics.export_cursor WHERE source='success'`,
-  )).rows[0];
-  if (!state) throw new Error('Missing success audit cursor');
-  const rows = (await db.query(
-    // node-postgres converts TIMESTAMPTZ to a JavaScript Date, losing its
-    // microseconds. Preserve the exact database timestamp for the cursor.
-    `SELECT event_id,
-            to_char(login_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS login_at,
-            login_method, ip_address
-     FROM starlit_analytics.login_successes($1,$2,$3)`,
-    [state.cursor_time, state.cursor_id || ZERO_UUID, 100],
-  )).rows;
-  if (!rows.length) return 0;
-  const records = rows.map(row => successfulLogin(row, geoLookup, now)).filter(Boolean);
-  // Never advance the cursor if OpenObserve fails or accepts only part of a batch.
-  await reporter.send(records);
-  const last = rows.at(-1);
-  await db.query(
-    "UPDATE starlit_analytics.export_cursor SET cursor_time=$1,cursor_id=$2,updated_at=now() WHERE source='success'",
-    [last.login_at, last.event_id],
-  );
-  return records.length;
+  return withCursorCheckpoint(db, 'success', async (client, markAccepted) => {
+    const state = (await client.query(
+      `SELECT to_char(cursor_time AT TIME ZONE 'UTC',
+                      'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS cursor_time, cursor_id
+       FROM starlit_analytics.export_cursor WHERE source='success'`,
+    )).rows[0];
+    if (!state) throw new Error('Missing success audit cursor');
+    const rows = (await client.query(
+      // node-postgres converts TIMESTAMPTZ to a JavaScript Date, losing its
+      // microseconds. Preserve the exact database timestamp for the cursor.
+      `SELECT event_id,
+              to_char(login_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS login_at,
+              login_method, ip_address
+       FROM starlit_analytics.login_successes($1,$2,$3)`,
+      [state.cursor_time, state.cursor_id || ZERO_UUID, 100],
+    )).rows;
+    if (!rows.length) return 0;
+    const records = rows.map(row => successfulLogin(row, geoLookup, now)).filter(Boolean);
+    // Never checkpoint a failed or partially acknowledged upstream batch.
+    await reporter.send(records);
+    if (records.length) markAccepted();
+    const last = rows.at(-1);
+    const result = await client.query(
+      "UPDATE starlit_analytics.export_cursor SET cursor_time=$1,cursor_id=$2,updated_at=now() WHERE source='success'",
+      [last.login_at, last.event_id],
+    );
+    if (result.rowCount !== 1) throw new Error('Success audit cursor was not updated');
+    return records.length;
+  });
 }
 
 export async function exportFailedLogins(db, reporter, path, geoLookup = () => null,
   now = Date.now(), open = openFile) {
-  const state = (await db.query(
-    "SELECT file_inode,file_offset FROM starlit_analytics.export_cursor WHERE source='failure'",
-  )).rows[0];
-  if (!state) throw new Error('Missing failure audit cursor');
-  const handle = await open(path, 'r');
-  try {
-    const st = await handle.stat();
-    const inode = String(st.dev) + ':' + String(st.ino);
-    const oldOffset = Number(state.file_offset || 0);
-    const offset = state.file_inode === inode && oldOffset <= st.size ? oldOffset : 0;
-    const count = Math.min(MAX_LOG_READ, Math.max(0, st.size - offset));
-    if (count === 0) {
-      if (state.file_inode !== inode || oldOffset !== offset) {
-        await db.query(
-          "UPDATE starlit_analytics.export_cursor SET file_inode=$1,file_offset=$2,updated_at=now() WHERE source='failure'",
-          [inode, offset],
-        );
+  return withCursorCheckpoint(db, 'failure', async (client, markAccepted) => {
+    const state = (await client.query(
+      "SELECT file_inode,file_offset FROM starlit_analytics.export_cursor WHERE source='failure'",
+    )).rows[0];
+    if (!state) throw new Error('Missing failure audit cursor');
+    const handle = await open(path, 'r');
+    try {
+      const st = await handle.stat();
+      const inode = String(st.dev) + ':' + String(st.ino);
+      const oldOffset = Number(state.file_offset || 0);
+      const offset = state.file_inode === inode && oldOffset <= st.size ? oldOffset : 0;
+      const count = Math.min(MAX_LOG_READ, Math.max(0, st.size - offset));
+      if (count === 0) {
+        if (state.file_inode !== inode || oldOffset !== offset) {
+          const result = await client.query(
+            "UPDATE starlit_analytics.export_cursor SET file_inode=$1,file_offset=$2,updated_at=now() WHERE source='failure'",
+            [inode, offset],
+          );
+          if (result.rowCount !== 1) throw new Error('Failure audit cursor was not updated');
+        }
+        return 0;
       }
-      return 0;
+      const data = Buffer.alloc(count);
+      const { bytesRead } = await handle.read(data, 0, count, offset);
+      const lastBreak = data.lastIndexOf(10, bytesRead - 1);
+      if (lastBreak < 0) {
+        if (bytesRead >= MAX_LOG_READ) throw new Error('Overlong gateway audit record');
+        return 0;
+      }
+      const records = [];
+      for (const line of data.subarray(0, lastBreak + 1).toString('utf8').split('\n')) {
+        if (!line.trim()) continue;
+        let parsed;
+        try { parsed = JSON.parse(line); } catch { continue; }
+        const record = failedLogin(parsed, geoLookup, now);
+        if (record) records.push(record);
+      }
+      await reporter.send(records);
+      if (records.length) markAccepted();
+      const result = await client.query(
+        "UPDATE starlit_analytics.export_cursor SET file_inode=$1,file_offset=$2,updated_at=now() WHERE source='failure'",
+        [inode, offset + lastBreak + 1],
+      );
+      if (result.rowCount !== 1) throw new Error('Failure audit cursor was not updated');
+      return records.length;
+    } finally {
+      await handle.close();
     }
-    const data = Buffer.alloc(count);
-    const { bytesRead } = await handle.read(data, 0, count, offset);
-    const lastBreak = data.lastIndexOf(10, bytesRead - 1);
-    if (lastBreak < 0) {
-      if (bytesRead >= MAX_LOG_READ) throw new Error('Overlong gateway audit record');
-      return 0;
-    }
-    const records = [];
-    for (const line of data.subarray(0, lastBreak + 1).toString('utf8').split('\n')) {
-      if (!line.trim()) continue;
-      let parsed;
-      try { parsed = JSON.parse(line); } catch { continue; }
-      const record = failedLogin(parsed, geoLookup, now);
-      if (record) records.push(record);
-    }
-    await reporter.send(records);
-    await db.query(
-      "UPDATE starlit_analytics.export_cursor SET file_inode=$1,file_offset=$2,updated_at=now() WHERE source='failure'",
-      [inode, offset + lastBreak + 1],
-    );
-    return records.length;
-  } finally {
-    await handle.close();
-  }
+  });
 }
