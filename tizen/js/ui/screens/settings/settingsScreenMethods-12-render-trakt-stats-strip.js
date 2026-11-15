@@ -249,9 +249,14 @@ export function createSettingsScreenMethods12() {
         rootSidebarSlot.innerHTML = rootSidebarHtml;
       }
       const navHtml = this.renderNav();
-      if (navSlot && navSlot.innerHTML !== navHtml) {
+      // Compare with what this slot was last given: its live innerHTML always
+      // differs (focus classes, indexes, the glider), which rebuilt the whole
+      // section list on every render.
+      if (navSlot && navSlot.settingsNavHtml !== navHtml) {
         navSlot.innerHTML = navHtml;
+        navSlot.settingsNavHtml = navHtml;
       }
+      this.syncNavSelection(navSlot);
       if (navSlot && this.railScrollNode !== navSlot) {
         if (this.railScrollNode && this.handleRailScrollBound) {
           this.railScrollNode.removeEventListener("scroll", this.handleRailScrollBound);
