@@ -2,6 +2,7 @@
 
 ### TV packaging and release reliability
 
+- **Release recovery:** The v1.27.0 tag was superseded before stable installers were published after a webOS packaging-check regression was found. This patch carries forward its merged improvements with the corrected TV verification.
 - **LG webOS developer package:** Correct the release-repository identity verification after the GitHub migration, allowing the existing LG packaging pipeline to validate the canonical Starlit source.
 - **TV installer and phone-to-TV features:** Rebuild the merged v1.27.0 improvements with the current Windows TV installer runtime and unchanged Samsung/LG application identities.
 
