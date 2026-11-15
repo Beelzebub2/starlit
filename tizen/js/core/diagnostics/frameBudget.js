@@ -14,14 +14,19 @@ export function createFrameBudgetSampler({
 } = {}) {
   const limit = Math.max(1, Math.trunc(Number(sampleLimit) || DEFAULT_SAMPLE_LIMIT));
   const samples = [];
+  let nextSample = 0;
   let frameId = null;
   let lastAt = null;
   let startedAt = 0;
   const tick = (timestamp) => {
     const at = Number.isFinite(Number(timestamp)) ? Number(timestamp) : now();
     if (lastAt !== null) {
-      samples.push(Math.max(0, at - lastAt));
-      if (samples.length > limit) samples.shift();
+      const interval = Math.max(0, at - lastAt);
+      // A fixed ring avoids Array.shift() copying the whole measurement
+      // window on each sampled TV frame.
+      if (samples.length < limit) samples.push(interval);
+      else samples[nextSample] = interval;
+      nextSample = (nextSample + 1) % limit;
     } else {
       startedAt = at;
     }
@@ -32,6 +37,7 @@ export function createFrameBudgetSampler({
     start() {
       if (frameId !== null) return false;
       samples.length = 0;
+      nextSample = 0;
       lastAt = null;
       startedAt = now();
       frameId = requestFrame(tick);
@@ -46,6 +52,7 @@ export function createFrameBudgetSampler({
     },
     reset() {
       samples.length = 0;
+      nextSample = 0;
       lastAt = null;
       startedAt = now();
     },
