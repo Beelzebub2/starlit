@@ -421,6 +421,9 @@ jobs:
           if gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
             echo "::error::This release already exists; do not overwrite published installers."; exit 1
           fi
+          if gh release view "tv-preview-$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            echo "::error::The matching TV developer preview already exists; do not publish half a release."; exit 1
+          fi
           node .github/release-notes.mjs extract docs/RELEASE-NOTES.md "$RELEASE_TAG" "$RUNNER_TEMP/current-release-notes.md"
           printf '\n### TV developer preview builds\n\nMatching Tizen, webOS and Windows TV installer developer previews are published separately at https://github.com/%s/releases/tag/tv-preview-%s. They are not device-accepted stable packages.\n' "$GITHUB_REPOSITORY" "$RELEASE_TAG" >> "$RUNNER_TEMP/current-release-notes.md"
           gh api "repos/$GITHUB_REPOSITORY/releases?per_page=100" --paginate --slurp > "$RUNNER_TEMP/published-releases.json"
@@ -450,9 +453,6 @@ jobs:
           # and stable-asset discovery from treating unsigned TV builds as accepted.
           cd ../preview
           preview_tag="tv-preview-$RELEASE_TAG"
-          if gh release view "$preview_tag" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
-            echo "::error::The TV developer preview already exists; do not overwrite it."; exit 1
-          fi
           gh release create "$preview_tag" --repo "$GITHUB_REPOSITORY" --target "$(git -C .. rev-parse HEAD)" \
             --prerelease --latest=false --title "Starlit TV $version — Developer Preview" \
             --notes-file ../docs/TV-DEVELOPER-PREVIEW-NOTICE.md \
