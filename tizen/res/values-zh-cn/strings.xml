@@ -3468,4 +3468,9 @@
     <string name="tv_phone_verify_code">请核对手机上的此代码：</string>
     <string name="tv_phone_verify_title">批准手机连接？</string>
     <string name="tv_phone_waiting">等待手机连接</string>
+
+    <!-- Optional, privacy-limited reliability diagnostics (TV). -->
+    <string name="diagnostics_consent_usage">匿名诊断</string>
+    <string name="diagnostics_consent_usage_detail">应用启动；按应用版本和平台统计技术错误、警告、播放及下载结果。不记录页面访问或永久设备标识。</string>
+    <string name="diagnostics_consent_privacy">不收集片名、搜索词、账号、网址或原始日志。临时令牌仅用于防滥用；数据最多保留30天。</string>
 </resources>

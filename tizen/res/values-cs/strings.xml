@@ -3465,4 +3465,9 @@
     <string name="tv_phone_verify_code">Porovnejte tento kód s kódem v telefonu:</string>
     <string name="tv_phone_verify_title">Schválit telefon?</string>
     <string name="tv_phone_waiting">Čekání na telefon</string>
+
+    <!-- Optional, privacy-limited reliability diagnostics (TV). -->
+    <string name="diagnostics_consent_usage">Anonymní diagnostika</string>
+    <string name="diagnostics_consent_usage_detail">Spuštění aplikace; Technické chyby, varování a výsledky přehrávání/stahování podle verze aplikace a platformy. Žádné návštěvy obrazovky nebo trvalé ID zařízení.</string>
+    <string name="diagnostics_consent_privacy">Žádné názvy, vyhledávání, účty, adresy URL nebo nezpracované protokoly. Dočasný náhodný token omezuje zneužití; záznamy jsou uchovávány po dobu 30 dnů.</string>
 </resources>

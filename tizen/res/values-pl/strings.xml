@@ -3473,4 +3473,9 @@
     <string name="tv_phone_verify_code">Sprawdź ten kod na telefonie:</string>
     <string name="tv_phone_verify_title">Zatwierdzić telefon?</string>
     <string name="tv_phone_waiting">Oczekiwanie na telefon</string>
+
+    <!-- Optional, privacy-limited reliability diagnostics (TV). -->
+    <string name="diagnostics_consent_usage">Diagnostyka anonimowa</string>
+    <string name="diagnostics_consent_usage_detail">Aplikacja zostaje uruchomiona; Błędy techniczne, ostrzeżenia i wyniki odtwarzania/pobierania według wersji aplikacji i platformy. Żadnych wizyt na ekranie ani stałego identyfikatora urządzenia.</string>
+    <string name="diagnostics_consent_privacy">Brak tytułów, wyszukiwań, kont, adresów URL i nieprzetworzonych logów. Tymczasowy losowy token ogranicza nadużycia; ewidencja przechowywana jest do 30 dni.</string>
 </resources>

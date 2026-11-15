@@ -3745,4 +3745,9 @@
     <string name="tv_phone_verify_code">Krahaso këtë kod në telefon:</string>
     <string name="tv_phone_verify_title">Të miratohet telefoni?</string>
     <string name="tv_phone_waiting">Në pritje të telefonit</string>
+
+    <!-- Optional, privacy-limited reliability diagnostics (TV). -->
+    <string name="diagnostics_consent_usage">Diagnostikim anonim</string>
+    <string name="diagnostics_consent_usage_detail">Nisjet e aplikacionit, gabimet teknike, paralajmërimet dhe rezultatet e riprodhimit sipas versionit dhe platformës. Pa gjurmim të ekraneve të vizituara ose identifikues të përhershëm pajisjeje.</string>
+    <string name="diagnostics_consent_privacy">Pa tituj, kërkime, llogari, URL ose regjistra të papërpunuar. Një kod i rastësishëm i përkohshëm kufizon abuzimin; të dhënat ruhen deri në 30 ditë.</string>
 </resources>
