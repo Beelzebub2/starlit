@@ -39,6 +39,45 @@ export function canRescaleArtworkHost(source) {
 let started = false;
 let observer = null;
 let mutations = null;
+const HYDRATIONS_PER_FRAME = 5;
+const queuedHydrations = new Set();
+let hydrationFrame = null;
+let hydrationFrameUsesTimeout = false;
+function cancelQueuedHydrations() {
+  if (hydrationFrame !== null) {
+    if (hydrationFrameUsesTimeout) clearTimeout(hydrationFrame);
+    else globalThis.cancelAnimationFrame?.(hydrationFrame);
+  }
+  hydrationFrame = null;
+  queuedHydrations.clear();
+}
+function flushHydrationBatch() {
+  hydrationFrame = null;
+  let remaining = HYDRATIONS_PER_FRAME;
+  for (const image of queuedHydrations) {
+    if (remaining-- <= 0) break;
+    queuedHydrations.delete(image);
+    hydrate(image);
+  }
+  if (queuedHydrations.size) scheduleHydrationFrame();
+}
+function scheduleHydrationFrame() {
+  if (hydrationFrame !== null) return;
+  hydrationFrameUsesTimeout = typeof globalThis.requestAnimationFrame !== "function";
+  hydrationFrame = hydrationFrameUsesTimeout
+    ? setTimeout(flushHydrationBatch, 16)
+    : globalThis.requestAnimationFrame(flushHydrationBatch);
+}
+function scheduleHydration(image) {
+  if (!getTvRuntimePerformanceProfile().isPerformanceConstrained) {
+    hydrate(image);
+    return;
+  }
+  // Decode a handful of images per paint rather than dispatching a wall of
+  // native IMG loads in the same IntersectionObserver callback on old TVs.
+  queuedHydrations.add(image);
+  scheduleHydrationFrame();
+}
 function isHttpSource(value) {
   return /^https?:\/\//i.test(String(value || "").trim());
 }
@@ -55,6 +94,7 @@ function releaseImage(image) {
     delete image.dataset.artworkObjectUrl;
   }
   observer?.unobserve?.(image);
+  queuedHydrations.delete(image);
 }
 function setArtworkSource(image, source) {
   const previous = image.dataset.artworkObjectUrl;
@@ -80,7 +120,7 @@ function hydrate(image) {
   // Tizen 5 / Chromium 63 has IntersectionObserver but no OffscreenCanvas.
   // Still defer offscreen posters instead of downloading and decoding every
   // result on screen mount. Never run the main-thread canvas fallback.
-  if (!shouldRescaleHomeArtwork()) {
+  if (!shouldRescaleHomeArtwork() || !canRescaleArtworkHost(source)) {
     finish();
     setArtworkSource(image, source);
     return;
@@ -149,7 +189,9 @@ function prepareImage(image) {
   if (image.hasAttribute("data-src")) return;
   const source = image.getAttribute("src");
   if (!isHttpSource(source)) return;
-  if (!canRescaleArtworkHost(source)) return;
+  // Legacy TVs still need a visibility gate for third-party poster hosts.
+  // They load through IMG directly (no cross-origin worker fetch required).
+  if (!canRescaleArtworkHost(source) && !getTvRuntimePerformanceProfile().isPerformanceConstrained) return;
   image.dataset.artworkLazy = "1";
   image.dataset.artworkSrc = source;
   image.src = TRANSPARENT_PIXEL;
@@ -181,7 +223,7 @@ function onIntersect(entries) {
   for (const entry of entries) {
     if (!entry.isIntersecting) continue;
     observer?.unobserve?.(entry.target);
-    hydrate(entry.target);
+    scheduleHydration(entry.target);
   }
 }
 function onMutations(records) {
@@ -216,6 +258,7 @@ export function startTvArtworkLazyLoader() {
   return true;
 }
 export function stopTvArtworkLazyLoader() {
+  cancelQueuedHydrations();
   observer?.disconnect?.();
   mutations?.disconnect?.();
   observer = null;
