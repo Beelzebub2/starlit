@@ -4,7 +4,21 @@ contextBridge.exposeInMainWorld("starlitTV", Object.freeze({
   operate: request => ipcRenderer.invoke("tv:operate", request),
   choosePackage: platform => ipcRenderer.invoke("tv:choose-package", platform),
   localIps: () => ipcRenderer.invoke("tv:local-ips"),
-  discoverTvs: () => ipcRenderer.invoke("tv:discover"),
+  discoverTvs: request => ipcRenderer.invoke("tv:discover", request),
+  onDiscovered: callback => {
+    const handler = (_event, info) => {
+      if (Number.isSafeInteger(info?.scanId) && info.device) callback(info);
+    };
+    ipcRenderer.on("tv:discovered", handler);
+    return () => ipcRenderer.removeListener("tv:discovered", handler);
+  },
+  onScanStatus: callback => {
+    const handler = (_event, info) => {
+      if (Number.isSafeInteger(info?.scanId) && typeof info.message === "string") callback(info);
+    };
+    ipcRenderer.on("tv:scan-status", handler);
+    return () => ipcRenderer.removeListener("tv:scan-status", handler);
+  },
   openSamsungSignIn: () => ipcRenderer.invoke("tv:open-samsung-sign-in"),
   onAuth: callback => {
     const handler = (_event, info) => {

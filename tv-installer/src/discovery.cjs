@@ -12,6 +12,8 @@ const SSDP_PORT = 1900;
 const SEARCH_TARGETS = ["ssdp:all", "urn:schemas-upnp-org:device:Basic:1"];
 const MAX_CANDIDATES = 24;
 const MAX_DESCRIPTION_BYTES = 32768;
+const SAMSUNG_PROBE_TIMEOUT_MS = 400;
+const SAMSUNG_SCAN_DURATION_MS = 1900;
 
 function safeLabel(value, fallback = "", limit = 80) {
   const cleaned = String(value == null ? "" : value)
@@ -39,13 +41,22 @@ async function discoverSamsung({
   ensureTool = ensureSamsungCli,
   run = runSamsungCli,
   toolsDir,
-  onStatus = () => {}
+  onStatus = () => {},
+  onDevice = () => {},
+  deepScan = false,
+  ...lanOptions
 } = {}) {
+  if (!deepScan) {
+    onStatus("Checking nearby Samsung TVs");
+    return discoverSamsungLan({ ...lanOptions, onDevice });
+  }
   const executable = await ensureTool({ toolsDir, onStatus });
-  onStatus("Scanning for Samsung TVs using Apps2Samsung");
+  onStatus("Running extended Samsung scan using Apps2Samsung");
   const scan = await run(executable, ["scan"], { timeoutMs: 90000 });
+  const devices = normalizeSamsungScan(scan);
+  for (const device of devices) onDevice(device);
   return {
-    devices: normalizeSamsungScan(scan),
+    devices,
     blocked: scan.blockedByOs === true
   };
 }
@@ -102,19 +113,26 @@ function lgHeaderHint(headers) {
   );
 }
 
-function requestDescription(url, { httpGet = http.get, timeoutMs = 1500 } = {}) {
+function requestDescription(url, {
+  httpGet = http.get, timeoutMs = 1500, accept = "text/xml, application/xml"
+} = {}) {
   return new Promise(resolve => {
     let finished = false;
     let request;
+    const timer = setTimeout(() => {
+      try { request?.destroy(); } catch { /* already closed */ }
+      done(null);
+    }, timeoutMs);
     function done(value) {
       if (finished) return;
       finished = true;
+      clearTimeout(timer);
       resolve(value);
     }
     try {
       request = httpGet(url, {
         timeout: timeoutMs,
-        headers: { Accept: "text/xml, application/xml" }
+        headers: { Accept: accept }
       }, response => {
         if (response.statusCode !== 200) {
           response.resume();
@@ -152,9 +170,125 @@ function privateInterfaceIps(interfaces = os.networkInterfaces()) {
   ).map(info => info.address))];
 }
 
+// Virtual LAN adapters add unrelated subnets and increase scan latency.
+function scanInterfaceIps(interfaces = os.networkInterfaces()) {
+  const entries = Object.entries(interfaces).flatMap(([name, addresses]) =>
+    (addresses || []).filter(info => info &&
+      (info.family === "IPv4" || info.family === 4) &&
+      !info.internal && isLanIPv4(info.address)
+    ).map(info => ({ name, ip: info.address }))
+  );
+  const physical = entries.filter(entry =>
+    !/vEthernet|VMware|VMnet|VirtualBox|Hyper-V|Docker|WSL|Tailscale|ZeroTier|VPN/i.test(entry.name)
+  );
+  return [...new Set((physical.length ? physical : entries).map(entry => entry.ip))].slice(0, 2);
+}
+
+function samsungApiDevice(body, ip) {
+  if (!isLanIPv4(ip) || typeof body !== "string" || body.length > MAX_DESCRIPTION_BYTES) return null;
+  try {
+    const data = JSON.parse(body);
+    const device = data?.device;
+    if (!device || !/^Samsung(?:\s+Smart)?\s*TV$/i.test(String(device.type || ""))) return null;
+    return {
+      platform: "tizen", ip,
+      name: safeLabel(device.name, "Samsung TV"),
+      model: safeLabel(device.modelName || device.model),
+      ready: false,
+      detail: "TV detected. Check Developer Mode and Host PC IP before installing"
+    };
+  } catch {
+    return null;
+  }
+}
+
+function samsungDescriptionDevice(xml, ip) {
+  if (!isLanIPv4(ip) || typeof xml !== "string" || xml.length > MAX_DESCRIPTION_BYTES ||
+      !/^Samsung(?:\s+Electronics)?\b/i.test(xmlField(xml, "manufacturer"))) return null;
+  return {
+    platform: "tizen", ip,
+    name: xmlField(xml, "friendlyName") || "Samsung TV",
+    model: xmlField(xml, "modelName") || xmlField(xml, "modelNumber"),
+    ready: false,
+    detail: "TV detected. Check Developer Mode and Host PC IP before installing"
+  };
+}
+
+function queueWithLimit(limit) {
+  const waiting = [];
+  let running = 0;
+  function pump() {
+    while (running < limit && waiting.length) {
+      const { task, resolve } = waiting.shift();
+      running++;
+      Promise.resolve().then(task).then(resolve, () => resolve(null)).finally(() => {
+        running--;
+        pump();
+      });
+    }
+  }
+  return task => new Promise(resolve => {
+    waiting.push({ task, resolve });
+    pump();
+  });
+}
+
+// SSDP supplies early devices. A bounded /24 HTTP check also finds Samsung
+// TVs on LANs that filter multicast, without the 90-second CLI-wide scan.
+async function discoverSamsungLan({
+  interfaces = os.networkInterfaces(),
+  socketFactory = dgram.createSocket,
+  readDescription = requestDescription,
+  probeApi = async ip => samsungApiDevice(await requestDescription(
+    new URL("http://" + ip + ":8001/api/v2/"),
+    { timeoutMs: SAMSUNG_PROBE_TIMEOUT_MS, accept: "application/json" }
+  ), ip),
+  durationMs = SAMSUNG_SCAN_DURATION_MS,
+  onDevice = () => {}
+} = {}) {
+  const ips = scanInterfaceIps(interfaces);
+  if (!ips.length) return { devices: [], noLan: true };
+  const found = new Map();
+  const candidates = new Map();
+  const descriptorTasks = [];
+  const checkedDescriptors = new Set();
+  const enqueueDescription = queueWithLimit(4);
+  const report = device => {
+    if (!device || device.platform !== "tizen" || !isLanIPv4(device.ip) || found.has(device.ip)) return;
+    found.set(device.ip, device);
+    onDevice(device);
+  };
+  const ssdp = ips.map(ip => listenOnInterface(ip, candidates, {
+    socketFactory, durationMs,
+    onCandidate: entry => {
+      if (checkedDescriptors.has(entry.ip)) return;
+      checkedDescriptors.add(entry.ip);
+      descriptorTasks.push(enqueueDescription(async () => {
+        const xml = await readDescription(entry.url, { timeoutMs: 800 });
+        report(samsungDescriptionDevice(xml, entry.ip));
+      }));
+    }
+  }));
+  const prefixes = [...new Set(ips.map(ip => ip.split(".").slice(0, 3).join(".")))];
+  const hosts = prefixes.flatMap(prefix =>
+    Array.from({ length: 254 }, (_, index) => prefix + "." + (index + 1))
+  ).filter(ip => !ips.includes(ip));
+  let cursor = 0;
+  const workers = Array.from({ length: 32 }, async () => {
+    while (cursor < hosts.length) {
+      const ip = hosts[cursor++];
+      try { report(await probeApi(ip)); } catch { /* unreachable host */ }
+    }
+  });
+  await Promise.all([...ssdp, ...workers]);
+  await Promise.all(descriptorTasks);
+  return { devices: [...found.values()], noLan: false };
+}
+
 function listenOnInterface(interfaceIp, candidates, {
   socketFactory = dgram.createSocket,
-  durationMs = 3200
+  durationMs = 3200,
+  onCandidate = () => {}
 } = {}) {
   return new Promise(resolve => {
     let socket;
@@ -178,7 +312,9 @@ function listenOnInterface(interfaceIp, candidates, {
         const previous = candidates.get(sender.address);
         const hinted = lgHeaderHint(headers);
         if (!previous || (!previous.hinted && hinted)) {
-          candidates.set(sender.address, { ip: sender.address, url: descriptionUrl, hinted });
+          const entry = { ip: sender.address, url: descriptionUrl, hinted };
+          candidates.set(sender.address, entry);
+          onCandidate(entry);
         }
       });
       timer = setTimeout(finish, durationMs + 200);
@@ -208,29 +344,32 @@ async function discoverLg({
   socketFactory = dgram.createSocket,
   readDescription = requestDescription,
   listSavedDevices = savedWebosDevices,
-  durationMs = 3200
+  durationMs = 2500,
+  onDevice = () => {}
 } = {}) {
-  const ips = privateInterfaceIps(interfaces);
+  const ips = scanInterfaceIps(interfaces);
   if (!ips.length) return { devices: [], noLan: true };
   const candidates = new Map();
-  await Promise.all(ips.map(ip => listenOnInterface(ip, candidates, { socketFactory, durationMs })));
-  const devices = [];
-  let saved = [];
-  try {
-    const entries = await listSavedDevices();
-    if (Array.isArray(entries)) saved = entries;
-  } catch { /* saved pairing is optional; discovery still works */ }
-  const entries = [...candidates.values()].slice(0, MAX_CANDIDATES);
-  for (let offset = 0; offset < entries.length; offset += 4) {
-    const batch = await Promise.all(entries.slice(offset, offset + 4).map(async entry => {
+  const devices = new Map();
+  const scheduled = new Set();
+  const tasks = [];
+  const enqueueDescription = queueWithLimit(4);
+  const savedPromise = Promise.resolve().then(listSavedDevices).then(
+    entries => Array.isArray(entries) ? entries : [], () => []
+  );
+  const onCandidate = entry => {
+    if (scheduled.has(entry.ip)) return;
+    scheduled.add(entry.ip);
+    tasks.push(enqueueDescription(async () => {
       let description = null;
       try { description = parseLgDescription(await readDescription(entry.url)); } catch { /* unreachable */ }
       // Some webOS firmwares announce their identity but block the descriptor.
       // A strong, TV-specific SSDP signature is still useful for manual selection.
-      if (!description && !entry.hinted) return null;
+      if (!description && !candidates.get(entry.ip)?.hinted) return;
+      const saved = await savedPromise;
       const previous = saved.find(item => item && item.host === entry.ip &&
         /^[a-zA-Z0-9][a-zA-Z0-9._-]{0,49}$/.test(item.name));
-      return {
+      const device = {
         platform: "webos",
         ip: entry.ip,
         name: safeLabel(description?.name, "LG webOS TV"),
@@ -240,10 +379,15 @@ async function discoverLg({
         detail: previous ? "Saved LG developer device found; verify the connection" :
           "Enable Developer Mode and Key Server to pair"
       };
+      if (!devices.has(device.ip)) {
+        devices.set(device.ip, device);
+        onDevice(device);
+      }
     }));
-    devices.push(...batch.filter(Boolean));
-  }
-  return { devices, noLan: false };
+  };
+  await Promise.all(ips.map(ip => listenOnInterface(ip, candidates, { socketFactory, durationMs, onCandidate })));
+  await Promise.all(tasks);
+  return { devices: [...devices.values()], noLan: false };
 }
 
 function mergeDevices(groups) {
@@ -261,33 +405,29 @@ function mergeDevices(groups) {
 }
 
 async function discoverTvs({
-  samsung = discoverSamsung, lg = discoverLg,
-  samsungOptions = {}, lgOptions = {}, onStatus = () => {}
+  platform, samsung = discoverSamsung, lg = discoverLg,
+  samsungOptions = {}, lgOptions = {}, onStatus = () => {}, onDevice = () => {}
 } = {}) {
-  onStatus("Searching the local network for Samsung and LG TVs");
-  const results = await Promise.allSettled([
-    samsung({ ...samsungOptions, onStatus }),
-    lg(lgOptions)
-  ]);
+  if (!["tizen", "webos"].includes(platform)) throw new Error("Choose Samsung or LG before scanning");
+  onStatus("Searching the local network for " + (platform === "tizen" ? "Samsung" : "LG") + " TVs");
   const warnings = [];
-  const groups = [];
-  if (results[0].status === "fulfilled") {
-    groups.push(results[0].value.devices);
-    if (results[0].value.blocked) warnings.push("Samsung scan was blocked by Windows network permissions.");
-  } else {
-    warnings.push("Samsung discovery unavailable: " + safeLabel(results[0].reason?.message, "Scanner error", 180));
+  try {
+    const result = platform === "tizen"
+      ? await samsung({ ...samsungOptions, onStatus, onDevice })
+      : await lg({ ...lgOptions, onDevice });
+    if (result.blocked) warnings.push("Samsung scan was blocked by Windows network permissions.");
+    if (result.noLan) warnings.push("No private LAN interface available for TV discovery.");
+    return { devices: mergeDevices([result.devices]), warnings };
+  } catch (error) {
+    warnings.push((platform === "tizen" ? "Samsung" : "LG") +
+      " discovery unavailable: " + safeLabel(error?.message, "Scanner error", 180));
+    return { devices: [], warnings };
   }
-  if (results[1].status === "fulfilled") {
-    groups.push(results[1].value.devices);
-    if (results[1].value.noLan) warnings.push("No private LAN interface available for LG discovery.");
-  } else {
-    warnings.push("LG discovery unavailable: " + safeLabel(results[1].reason?.message, "Network error", 180));
-  }
-  return { devices: mergeDevices(groups), warnings };
 }
 
 module.exports = {
-  safeLabel, normalizeSamsungScan, discoverSamsung, parseSsdpResponse,
+  safeLabel, normalizeSamsungScan, discoverSamsung, discoverSamsungLan,
+  samsungApiDevice, samsungDescriptionDevice, scanInterfaceIps, parseSsdpResponse,
   safeDescriptionUrl, parseLgDescription, requestDescription, privateInterfaceIps,
   listenOnInterface, discoverLg, mergeDevices, discoverTvs
 };

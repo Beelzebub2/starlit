@@ -4,7 +4,9 @@ const assert = require("node:assert/strict");
 const { EventEmitter } = require("node:events");
 const {
   normalizeSamsungScan, discoverSamsung, parseSsdpResponse, safeDescriptionUrl,
-  parseLgDescription, discoverLg, privateInterfaceIps, mergeDevices, discoverTvs
+  parseLgDescription, discoverLg, privateInterfaceIps, mergeDevices, discoverTvs,
+  discoverSamsungLan, samsungApiDevice, samsungDescriptionDevice, scanInterfaceIps,
+  requestDescription
 } = require("../src/discovery.cjs");
 
 const LG_XML = [
@@ -18,7 +20,10 @@ const LG_XML = [
 
 test("Samsung scan uses the installed, verified Apps2Samsung command and keeps readiness details", async () => {
   const calls = [];
+  const streamed = [];
   const result = await discoverSamsung({
+    deepScan: true,
+    onDevice: device => streamed.push(device),
     ensureTool: async () => "/tmp/verified-cli",
     run: async (exe, args, options) => {
       calls.push([exe, args, options.timeoutMs]);
@@ -39,6 +44,7 @@ test("Samsung scan uses the installed, verified Apps2Samsung command and keeps r
   assert.deepEqual(result.devices.map(tv => tv.ip), ["192.168.1.24", "10.0.0.42"]);
   assert.equal(result.devices[0].ready, true);
   assert.equal(result.devices[1].ready, false);
+  assert.deepEqual(streamed, result.devices);
   assert.match(result.devices[1].detail, /Host PC IP/);
   assert.throws(() => normalizeSamsungScan({ ok: true, tvs: {} }), /valid device list/);
 });
@@ -133,12 +139,132 @@ test("Private adapter selection excludes public and loopback interfaces", () => 
   ]).map(tv => tv.name), ["LG TV"]);
 });
 
-test("A failed Samsung scanner does not hide available LG TVs", async () => {
+test("A selected LG scan never starts Samsung, even when Samsung is unavailable", async () => {
+  const streamed = [];
   const result = await discoverTvs({
+    platform: "webos",
     samsung: async () => { throw new Error("Unavailable"); },
-    lg: async () => ({ devices: [{ platform: "webos", ip: "192.168.1.55", name: "LG TV" }] })
+    lg: async ({ onDevice }) => {
+      const device = { platform: "webos", ip: "192.168.1.55", name: "LG TV" };
+      onDevice(device);
+      return { devices: [device] };
+    },
+    onDevice: device => streamed.push(device)
   });
   assert.equal(result.devices.length, 1);
   assert.equal(result.devices[0].platform, "webos");
+  assert.deepEqual(streamed, result.devices);
+  assert.deepEqual(result.warnings, []);
+});
+
+test("Samsung-only scans skip LG and warn on scanner failure", async () => {
+  const result = await discoverTvs({
+    platform: "tizen",
+    samsung: async () => { throw new Error("Unavailable"); },
+    lg: async () => { throw new Error("LG must not run"); }
+  });
+  assert.deepEqual(result.devices, []);
   assert.match(result.warnings[0], /Samsung discovery unavailable/);
+  await assert.rejects(() => discoverTvs({ platform: "both" }), /Choose Samsung or LG/);
+});
+
+test("Samsung HTTP and SSDP responses require Samsung identity", () => {
+  const body = JSON.stringify({ device: {
+    type: "Samsung SmartTV", name: "Living Room", modelName: "TEST-SERIES"
+  } });
+  assert.deepEqual(samsungApiDevice(body, "192.168.1.85"), {
+    platform: "tizen", ip: "192.168.1.85",
+    name: "Living Room", model: "TEST-SERIES",
+    ready: false,
+    detail: "TV detected. Check Developer Mode and Host PC IP before installing"
+  });
+  assert.equal(samsungApiDevice(body.replace("Samsung SmartTV", "Generic TV"), "192.168.1.85"), null);
+  assert.equal(samsungApiDevice(body, "8.8.8.8"), null);
+  const xml = LG_XML.replace("LG Electronics", "Samsung Electronics");
+  assert.equal(samsungDescriptionDevice(xml, "192.168.1.85").platform, "tizen");
+  assert.equal(samsungDescriptionDevice(LG_XML, "192.168.1.85"), null);
+});
+
+test("Fast Samsung discovery uses real LAN adapters, bounded probes and streams devices", async () => {
+  const interfaces = {
+    Ethernet: [{ family: "IPv4", address: "192.168.1.40", internal: false }],
+    "VMware Network Adapter VMnet8": [{ family: "IPv4", address: "192.168.33.1", internal: false }],
+    "vEthernet (WSL)": [{ family: "IPv4", address: "172.24.18.1", internal: false }]
+  };
+  assert.deepEqual(scanInterfaceIps(interfaces), ["192.168.1.40"]);
+  const reported = [];
+  let finished = false;
+  const socketFactory = () => {
+    const socket = new EventEmitter();
+    socket.bind = (_port, _ip, callback) => queueMicrotask(callback);
+    socket.setMulticastInterface = () => {};
+    socket.send = () => queueMicrotask(() => socket.emit("message", Buffer.from(
+      "HTTP/1.1 200 OK\r\nLOCATION: http://192.168.1.85:9197/desc.xml\r\n" +
+      "SERVER: Samsung-Linux/4.1 UPnP/1.0\r\n\r\n"
+    ), { address: "192.168.1.85" }));
+    socket.close = () => {};
+    return socket;
+  };
+  let probes = 0;
+  const scan = discoverSamsungLan({
+    interfaces, socketFactory, durationMs: 75,
+    readDescription: async () => LG_XML.replace("LG Electronics", "Samsung Electronics"),
+    probeApi: async ip => {
+      probes++;
+      return ip === "192.168.1.80"
+        ? samsungApiDevice(JSON.stringify({ device: { type: "Samsung SmartTV", name: "Second TV" } }), ip)
+        : null;
+    },
+    onDevice: device => {
+      assert.equal(finished, false, "A device must be available before the scan ends");
+      reported.push(device.ip);
+    }
+  });
+  const result = await scan;
+  finished = true;
+  assert.equal(probes, 253);
+  assert.deepEqual(reported.sort(), ["192.168.1.80", "192.168.1.85"]);
+  assert.equal(result.devices.length, 2);
+  assert.equal(result.noLan, false);
+});
+
+test("LG reports discovered devices before all SSDP sockets close", async () => {
+  const seen = [];
+  const factory = () => {
+    const socket = new EventEmitter();
+    socket.bind = (_port, _ip, callback) => queueMicrotask(callback);
+    socket.setMulticastInterface = () => {};
+    socket.send = () => queueMicrotask(() => socket.emit("message", Buffer.from(
+      "HTTP/1.1 200 OK\r\nLOCATION: http://192.168.1.55:3000/desc.xml\r\n" +
+      "SERVER: webOS/6.0 UPnP/1.0\r\n\r\n"
+    ), { address: "192.168.1.55" }));
+    socket.close = () => {};
+    return socket;
+  };
+  let completed = false;
+  const result = await discoverLg({
+    interfaces: { Ethernet: [{ family: "IPv4", address: "192.168.1.50", internal: false }] },
+    socketFactory: factory, durationMs: 75,
+    readDescription: async () => LG_XML, listSavedDevices: async () => [],
+    onDevice: device => {
+      assert.equal(completed, false);
+      seen.push(device.ip);
+    }
+  });
+  completed = true;
+  assert.deepEqual(seen, ["192.168.1.55"]);
+  assert.deepEqual(result.devices.map(device => device.ip), seen);
+});
+
+test("HTTP device info probing enforces wall-clock timeouts", async () => {
+  let destroyed = false;
+  const body = await requestDescription(new URL("http://192.168.1.80:8001/api/v2/"), {
+    timeoutMs: 15, httpGet: () => {
+      const request = new EventEmitter();
+      request.destroy = () => { destroyed = true; };
+      return request;
+    }
+  });
+  assert.equal(body, null);
+  assert.equal(destroyed, true);
 });

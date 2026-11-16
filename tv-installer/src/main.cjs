@@ -32,16 +32,30 @@ app.whenReady().then(async () => {
     if (event.sender !== mainWindow?.webContents) throw new Error("Untrusted window");
     return localLanIps();
   });
-  ipcMain.handle("tv:discover", async event => {
+  ipcMain.handle("tv:discover", async (event, request) => {
     if (event.sender !== mainWindow?.webContents) return { ok: false, error: "Untrusted window" };
     if (scanning) return { ok: false, error: "A TV scan is already running" };
+    const platform = request?.platform;
+    if (platform !== "tizen" && platform !== "webos") {
+      return { ok: false, error: "Choose Samsung or LG before scanning" };
+    }
+    const scanId = Number.isSafeInteger(request?.scanId) ? request.scanId : 0;
     scanning = true;
     try {
       const { discoverTvs } = require("./discovery.cjs");
       const result = await discoverTvs({
-        samsungOptions: { toolsDir: path.join(app.getPath("userData"), "tools") },
+        platform,
+        samsungOptions: {
+          toolsDir: path.join(app.getPath("userData"), "tools"),
+          deepScan: platform === "tizen" && request.deepScan === true
+        },
+        onDevice: device => {
+          if (!event.sender.isDestroyed()) event.sender.send("tv:discovered", { scanId, device });
+        },
         onStatus: message => {
-          if (!event.sender.isDestroyed()) event.sender.send("tv:log", String(message).slice(0, 500));
+          if (!event.sender.isDestroyed()) {
+            event.sender.send("tv:scan-status", { scanId, message: String(message).slice(0, 500) });
+          }
         }
       });
       return { ok: true, result };
