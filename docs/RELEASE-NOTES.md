@@ -1,3 +1,24 @@
+## Starlit 1.29.0
+
+### Phone and desktop improvements
+
+- **PC controller tab selection:** Open the Remote controls when a PC connection becomes active, even after browsing the TV tab. An intentional TV selection while already connected is preserved.
+- **Mobile startup responsiveness:** Defer download-store initialization and nonessential UI label work so Android navigation does not wait on these operations.
+- **Compact controls:** Keep labels visible in scrollable segmented controls on small screens.
+
+### Samsung TV and Windows installer development previews
+
+- **Older Samsung TV performance:** Bound media range buffering and retry selection, pace initial artwork and navigation work, and reduce resource pressure during HLS playback on constrained Tizen devices. Physical large-video first-frame and memory acceptance are still outstanding.
+- **Optional Windows TV companion:** Windows setup supports a TV installer option behind the existing distribution gate, with a launcher in desktop Settings. The release pipeline now builds matching-version Tizen WGT, LG webOS IPK and Windows TV installer developer previews separately from stable installers.
+- **Diagnostics reliability:** Improve server-side authentication event export checkpoint recovery to prevent repeated event exports after an uncertain checkpoint.
+
+### Compatibility and release scope
+
+- This compatible minor update preserves existing account, library, add-on, device-pairing and playback data formats. No migration is required.
+- Stable Windows, signed Android phone and Android TV, and Linux packages publish only after the tagged CI build, signing, security, checksums and provenance checks pass.
+- Samsung Tizen WGT, LG webOS IPK and the Windows TV installer remain **unverified developer previews** in a separately labeled prerelease, not in stable downloads or automatic update channels. Physical Samsung/LG playback, remote and USB acceptance, per-device signing and upstream TV installer dependency security advisories remain open. The optional bundled Windows TV companion is approval-gated.
+- No iOS App Store release or automatic backend deployment is included. Existing supported UI translations are retained.
+
 ## Starlit 1.28.0
 
 ### Phone-to-TV controller
