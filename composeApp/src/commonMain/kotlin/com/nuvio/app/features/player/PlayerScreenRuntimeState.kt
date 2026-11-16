@@ -200,6 +200,8 @@ internal class PlayerScreenRuntime(
     var initialSeekApplied by mutableStateOf(
         initialPositionMs <= 0L && ((initialProgressFraction ?: 0f) <= 0f),
     )
+    // Accepting a resume seek does not mean the decoded player has reached it.
+    var initialResumePositionConfirmed by mutableStateOf(initialSeekApplied)
     var lastProgressPersistEpochMs by mutableStateOf(0L)
     var previousIsPlaying by mutableStateOf(false)
     var hasRequestedScrobbleStartForCurrentItem by mutableStateOf(false)

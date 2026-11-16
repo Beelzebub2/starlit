@@ -1544,7 +1544,8 @@ static void setMpvOptionString(mpv_handle *mpv, const char *name, const char *va
         setMpvOptionString(_mpv, "cache-pause-initial", "yes");
         setMpvOptionString(_mpv, "cache-pause-wait", "8");
     }
-    setMpvOptionString(_mpv, "hr-seek", "no");
+    // Keep absolute resume seeks accurate without slowing relative keyframe jumps.
+    setMpvOptionString(_mpv, "hr-seek", "absolute");
 
     if (headerLines.count > 0) {
         NSMutableArray *escaped = [NSMutableArray arrayWithCapacity:headerLines.count];
@@ -1925,7 +1926,7 @@ static void setMpvOptionString(mpv_handle *mpv, const char *name, const char *va
 - (void)seekToMilliseconds:(long long)positionMs {
     if (!_mpv) return;
     std::string seconds = std::to_string((double)positionMs / 1000.0);
-    const char *command[] = {"seek", seconds.c_str(), "absolute+keyframes", NULL};
+    const char *command[] = {"seek", seconds.c_str(), "absolute+exact", NULL};
     mpv_command(_mpv, command);
     _cachedPositionSeconds.store(fmax((double)positionMs / 1000.0, 0.0));
 }
