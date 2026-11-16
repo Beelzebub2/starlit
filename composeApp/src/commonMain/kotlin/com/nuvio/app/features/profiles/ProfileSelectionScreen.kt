@@ -466,6 +466,12 @@ private fun ProfileAvatarCard(
                         modifier = Modifier.size(100.dp).clip(CircleShape),
                         contentScale = ContentScale.Crop,
                     )
+                } else if (avatarItem != null && isBuiltInAvatar(avatarItem.id)) {
+                    BuiltInAvatarIcon(
+                        avatarId = avatarItem.id,
+                        modifier = Modifier.fillMaxSize(0.62f),
+                        contentDescription = avatarItem.displayName,
+                    )
                 } else if (profile.name.isNotBlank()) {
                     Text(
                         text = profile.name.take(1).uppercase(),
