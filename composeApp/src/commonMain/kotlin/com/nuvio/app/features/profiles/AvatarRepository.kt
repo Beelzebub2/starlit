@@ -63,7 +63,7 @@ internal fun availableAvatarCatalog(
     memberCatalog: List<AvatarCatalogItem>,
     hasMemberAccess: Boolean,
 ): List<AvatarCatalogItem> = builtInAvatarCatalog + standardCatalog.filterNot { isBuiltInAvatar(it.id) } +
-    if (hasMemberAccess) memberCatalog else emptyList()
+    (if (hasMemberAccess) memberCatalog else emptyList())
 
 object AvatarRepository {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
