@@ -1,3 +1,17 @@
+## Starlit 1.30.3
+
+### Desktop player controls
+
+- **Back button now auto-hides:** The desktop player's Back button fades out with the other playback controls instead of remaining visible over the video. While hidden, it no longer intercepts pointer input; it returns with the player controls.
+- **Consistent overlay behavior:** Playback error overlays also hide the standalone Back button, and native window resizing avoids unnecessary visibility-transition delays.
+- **Regression coverage:** Automated desktop player checks verify the shipped control markup, visibility-state wiring, pointer-input behavior and normal button styling.
+
+### Compatibility and release scope
+
+- This patch changes desktop player chrome styling only. No migration is required for accounts, libraries, profiles, downloads, add-ons or device pairings.
+- The stable release continues to produce Windows, signed Android phone and Android TV, and Linux packages subject to CI, signing and checksum verification. Samsung Tizen, LG webOS and the Windows TV installer remain separately published as matching-version developer previews under `tv-preview-v1.30.3`.
+- The TV packages remain developer previews, pending device-specific signing, hardware acceptance and dependency-security review. This release does not include an iOS App Store update or backend deployment. No localized app strings were changed.
+
 ## Starlit 1.30.2
 
 ### Windows TV Installer detection
