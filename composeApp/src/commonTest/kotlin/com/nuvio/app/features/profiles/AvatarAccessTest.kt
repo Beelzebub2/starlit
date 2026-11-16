@@ -16,13 +16,22 @@ class AvatarAccessTest {
         )
 
         assertEquals(
-            listOf(standard),
+            builtInAvatarCatalog + listOf(standard),
             availableAvatarCatalog(listOf(standard), listOf(supporter), hasMemberAccess = false),
         )
         assertEquals(
-            listOf(standard, supporter),
+            builtInAvatarCatalog + listOf(standard, supporter),
             availableAvatarCatalog(listOf(standard), listOf(supporter), hasMemberAccess = true),
         )
+    }
+
+    @Test
+    fun bundledAvatarsRemainSelectableWhenRemoteCatalogIsEmpty() {
+        val available = availableAvatarCatalog(emptyList(), emptyList(), hasMemberAccess = false)
+        assertEquals(8, available.size)
+        assertEquals(available.map { it.id }.distinct(), available.map { it.id })
+        assertEquals(true, isBuiltInAvatar(available.first().id))
+        assertNull(avatarImageUrl(available.first()))
     }
 
     @Test

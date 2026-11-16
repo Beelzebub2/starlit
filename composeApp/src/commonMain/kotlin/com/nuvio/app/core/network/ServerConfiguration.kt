@@ -24,8 +24,8 @@ data class ServerConfiguration(
     val isPublicHost: Boolean
         get() = isPublicServerHost(backendUrl)
 
-    // The built-in Starlit server implements sync, not Nuvio's membership,
-    // remote cosmetic catalogs, profile PINs or account-management functions.
+    // The built-in Starlit server supports account sync and profile PINs,
+    // but not Nuvio membership, remote cosmetics or legacy account-management APIs.
     val supportsNuvioAccountFeatures: Boolean
         get() = !isStarlitBackend(backendUrl)
 
