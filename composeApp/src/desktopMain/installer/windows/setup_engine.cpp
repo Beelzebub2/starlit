@@ -625,7 +625,10 @@ std::wstring Engine::validateDir(const std::wstring& raw, bool withTvInstaller) 
     if (!identity_.ownsLegacy() && existing_.legacy && samePath(dir, existing_.legacyLocation)) {
         return L"Sandbox runs can't use the folder of the real install.";
     }
-    const uint64_t preview = withTvInstaller && !hasTvInstaller() ? tvdownload::kMaxPortableBytes : 0;
+    // The verified ZIP is unpacked into the install image once, not on every launch.
+    // Account for the compressed archive and extracted runtime coexisting in
+    // staging (the current runtime is ~440 MB before compression).
+    const uint64_t preview = withTvInstaller && !hasTvInstaller() ? 768ull * 1024 * 1024 : 0;
     const uint64_t needed = source_.index.totalRaw + 64ull * 1024 * 1024 + preview;
     if (source_.present && freeBytesFor(dir) < needed) {
         return L"There isn't enough space on this drive. " + identity_.product.name + L" needs " + megabytes(needed) + L".";
@@ -705,15 +708,69 @@ bool Engine::install(const InstallRequest& request) {
         progress = 0.02;
         setFile(L"Starlit TV Installer");
         std::wstring downloadError;
-        const bool downloaded = tvdownload::downloadPortableInstaller(
-            identity_.product.version, tools + L"\\Starlit TV Installer.exe",
+        const std::wstring archive = staging + L"\\starlit-tv-runtime.zip";
+        const bool downloaded = tvdownload::downloadUnpackedInstaller(
+            identity_.product.version, archive,
             [&](uint64_t done, uint64_t total) {
                 progress = 0.02 + 0.08 * static_cast<double>(done) /
-                    static_cast<double>(total ? total : tvdownload::kMaxPortableBytes);
+                    static_cast<double>(total ? total : tvdownload::kMaxUnpackedArchiveBytes);
                 setFile(L"TV installer: " + megabytes(done) + (total ? L" / " + megabytes(total) : L""));
             }, downloadError);
         if (!downloaded) {
             fail(downloadError);
+            deleteTree(staging);
+            return false;
+        }
+        // PowerShell's ZIP extraction handles the Electron runtime's deeply
+        // nested files (Windows bsdtar rejects some entries in this archive).
+        // The download is SHA-256 verified; no downloaded binary runs in setup.
+        wchar_t systemDir[MAX_PATH]{};
+        const UINT systemLen = GetSystemDirectoryW(systemDir, MAX_PATH);
+        if (!systemLen || systemLen >= MAX_PATH) {
+            fail(L"Couldn't locate the Windows archive extraction tool.");
+            deleteTree(staging);
+            return false;
+        }
+        const std::wstring powershell = std::wstring(systemDir) +
+            L"\\WindowsPowerShell\\v1.0\\powershell.exe";
+        // Windows filenames cannot contain double quotes. Single-quote the
+        // PowerShell literals and double embedded apostrophes to avoid treating
+        // the installation path as script source.
+        const auto psQuote = [](const std::wstring& path) {
+            std::wstring quoted = L"'";
+            for (const wchar_t ch : path) {
+                if (ch == L'\'') quoted += L"''";
+                else quoted += ch;
+            }
+            return quoted + L"'";
+        };
+        const std::wstring script = L"Expand-Archive -LiteralPath " + psQuote(archive) +
+            L" -DestinationPath " + psQuote(tools) + L" -Force -ErrorAction Stop";
+        std::wstring command = L"\"" + powershell +
+            L"\" -NoProfile -NonInteractive -Command \"" + script + L"\"";
+        STARTUPINFOW startup{};
+        startup.cb = sizeof startup;
+        PROCESS_INFORMATION process{};
+        if (!CreateProcessW(powershell.c_str(), command.data(), nullptr, nullptr, FALSE,
+                            CREATE_NO_WINDOW, nullptr, nullptr, &startup, &process)) {
+            fail(L"Couldn't start Windows archive extraction.");
+            deleteTree(staging);
+            return false;
+        }
+        CloseHandle(process.hThread);
+        const DWORD wait = WaitForSingleObject(process.hProcess, 120000);
+        DWORD exitCode = 1;
+        if (wait != WAIT_OBJECT_0) {
+            TerminateProcess(process.hProcess, 1);
+            WaitForSingleObject(process.hProcess, INFINITE);
+        } else {
+            GetExitCodeProcess(process.hProcess, &exitCode);
+        }
+        CloseHandle(process.hProcess);
+        DeleteFileW(archive.c_str());
+        if (wait != WAIT_OBJECT_0 || exitCode != 0 ||
+            !fileExists(tools + L"\\Starlit TV Installer.exe")) {
+            fail(L"The verified TV installer runtime couldn't be extracted. Try the installation again.");
             deleteTree(staging);
             return false;
         }
@@ -962,10 +1019,14 @@ bool Engine::mergeInto(const std::wstring& staging, const std::wstring& dir, boo
             _strnicmp(file.path.c_str(), kTvInstallerPrefix, sizeof(kTvInstallerPrefix) - 1) == 0) continue;
         shipped.push_back(utf16(file.path));
     }
-    // The downloaded component is not in the original payload index. Preserve
-    // it in the in-place merge fallback too, not just on an atomic directory swap.
+    // Preserve every extracted runtime file in the in-place merge fallback,
+    // including Electron resources and native DLLs, not only the launcher.
     if (withTvInstaller && !hasTvInstaller()) {
-        shipped.push_back(L"tools\\Starlit TV Installer\\Starlit TV Installer.exe");
+        std::vector<std::wstring> tvFiles;
+        listFiles(staging + L"\\tools\\Starlit TV Installer", L"", tvFiles);
+        for (const auto& relative : tvFiles) {
+            shipped.push_back(L"tools\\Starlit TV Installer\\" + relative);
+        }
     }
     shipped.push_back(identity_.uninstallerFileName());
     for (const auto& relative : shipped) {

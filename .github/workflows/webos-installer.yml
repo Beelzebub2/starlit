@@ -48,6 +48,14 @@ jobs:
             "Starlit-TV-Installer-Setup-Windows-$version.exe",
             "Starlit-TV-Installer-Windows-$version.exe"
           )
+          $unpacked = Join-Path dist 'win-unpacked'
+          if (-not (Test-Path -LiteralPath (Join-Path $unpacked 'Starlit TV Installer.exe'))) {
+            throw 'Unpacked TV installer executable is missing.'
+          }
+          $archiveName = "Starlit-TV-Installer-Unpacked-Windows-$version.zip"
+          $archive = Join-Path dist $archiveName
+          Compress-Archive -Path (Join-Path $unpacked '*') -DestinationPath $archive -CompressionLevel Optimal
+          $assetNames += $archiveName
           New-Item -ItemType Directory -Path dist/release -Force | Out-Null
           $checksums = foreach ($asset in $assetNames) {
             $source = Join-Path dist $asset
