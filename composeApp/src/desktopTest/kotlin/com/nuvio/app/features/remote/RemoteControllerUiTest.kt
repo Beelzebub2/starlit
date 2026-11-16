@@ -45,6 +45,7 @@ class RemoteControllerUiTest {
         DesktopRemote.desktops.value = emptyList()
         DesktopRemote.bluetoothDesktops.value = emptyList()
         DesktopRemote.pairedBluetoothDesktops.value = emptyList()
+        StarlitTvPlayback.openTvTabOnController.value = false
         DesktopRemote.accountChanged(null)
     }
 
@@ -163,6 +164,43 @@ class RemoteControllerUiTest {
             onNodeWithText("TV remote control is currently available on Android phones.")
                 .assertIsDisplayed()
             onNodeWithText("Find your Starlit PC").assertDoesNotExist()
+        }
+
+    @Test
+    fun connectingToPcFromTvTabSwitchesToRemoteControls() =
+        runDesktopComposeUiTest(width = 412, height = 900) {
+            show(desktopLayout = false)
+            onNodeWithText("TV").performClick()
+            onNodeWithText("TV remote control is currently available on Android phones.").assertIsDisplayed()
+
+            runOnIdle {
+                DesktopRemote.activeDesktop.value = RemoteDesktop("192.168.1.50", REMOTE_LAN_PORT, "Test PC")
+                DesktopRemote.remotePlayback.value = RemotePlayback(playbackId = "pc-session", title = "Test playback")
+                DesktopRemote.connected.value = true
+            }
+
+            onNode(hasText("Remote") and isSelectable()).assertIsSelected()
+            onNode(hasText("TV") and isSelectable()).assertIsNotSelected()
+            onNodeWithText("Now playing on your PC".uppercase()).assertIsDisplayed()
+            onNodeWithText("TV remote control is currently available on Android phones.").assertDoesNotExist()
+
+            // An explicit TV selection after pairing is still respected.
+            onNodeWithText("TV").performClick()
+            onNode(hasText("TV") and isSelectable()).assertIsSelected()
+            onNodeWithText("TV remote control is currently available on Android phones.").assertIsDisplayed()
+            runOnIdle { DesktopRemote.remotePlayback.value = RemotePlayback(playbackId = "updated-pc-session") }
+            onNode(hasText("TV") and isSelectable()).assertIsSelected()
+        }
+
+    @Test
+    fun explicitTvControllerRequestIsRespectedWhenPcAlreadyConnected() =
+        runDesktopComposeUiTest(width = 412, height = 900) {
+            DesktopRemote.connected.value = true
+            StarlitTvPlayback.openTvTabOnController.value = true
+            show(desktopLayout = false)
+
+            onNode(hasText("TV") and isSelectable()).assertIsSelected()
+            onNodeWithText("TV remote control is currently available on Android phones.").assertIsDisplayed()
         }
 
     @Test
