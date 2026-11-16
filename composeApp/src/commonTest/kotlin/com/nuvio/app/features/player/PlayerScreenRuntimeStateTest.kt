@@ -304,7 +304,7 @@ class PlayerScreenRuntimeStateTest {
 
         runtime.initialSeekApplied = true
         runtime.updatePlaybackSnapshot(
-            PlayerPlaybackSnapshot(isPlaying = true, positionMs = 442_000L, durationMs = 1_200_000L),
+            PlayerPlaybackSnapshot(isLoading = false, isPlaying = true, positionMs = 442_000L, durationMs = 1_200_000L),
         )
 
         assertEquals(442_000L, runtime.currentLaunch(testPlayerLaunch()).initialPositionMs)
