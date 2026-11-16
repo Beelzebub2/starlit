@@ -39,6 +39,22 @@ internal fun PlayerScreenRuntime.updatePlaybackSnapshot(
     }
     playbackSnapshotKey = playbackKey
     hasPlaybackStarted = playbackHasStarted(hasPlaybackStarted, playbackSnapshot)
+    if (initialSeekApplied && !initialResumePositionConfirmed &&
+        !playbackSnapshot.isLoading && !playbackSnapshot.isEnded
+    ) {
+        val expectedResumeMs = when {
+            activeInitialPositionMs > 0L -> activeInitialPositionMs
+            activeInitialProgressFraction != null && playbackSnapshot.durationMs > 0L ->
+                (playbackSnapshot.durationMs.toDouble() *
+                    activeInitialProgressFraction!!.coerceIn(0f, 1f).toDouble()).toLong()
+            else -> 0L
+        }
+        if (expectedResumeMs <= 0L ||
+            playbackSnapshot.positionMs >= (expectedResumeMs - 2_000L).coerceAtLeast(expectedResumeMs / 2L)
+        ) {
+            initialResumePositionConfirmed = true
+        }
+    }
     val targetPositionMs = scrubbingPositionMs ?: return true
     if (!isScrubbingTimeline && (
             !snapshot.isLoading || snapshot.isEnded ||
@@ -62,6 +78,12 @@ internal val PlayerScreenRuntime.activePlaybackKey: PlaybackKey
         seasonNumber = activeSeasonNumber,
         episodeNumber = activeEpisodeNumber,
     )
+
+/** Do not replace saved progress with the player position from before resume. */
+internal fun PlayerScreenRuntime.canPersistPlaybackProgress(): Boolean =
+    initialSeekApplied && initialResumePositionConfirmed &&
+        playbackSnapshotKey == activePlaybackKey && !playbackSnapshot.isLoading &&
+        !p2pRecoveryInProgress
 
 internal val PlayerScreenRuntime.playbackSession: WatchProgressPlaybackSession
     get() = WatchProgressPlaybackSession(
@@ -94,7 +116,7 @@ internal val PlayerScreenRuntime.playbackSession: WatchProgressPlaybackSession
 
 internal fun PlayerScreenRuntime.currentLaunch(launch: PlayerLaunch): PlayerLaunch {
     val positionMs = playbackSnapshot.positionMs.takeIf {
-        it > 0L && initialSeekApplied && playbackSnapshotKey == activePlaybackKey
+        it > 0L && canPersistPlaybackProgress()
     }
     return launch.copy(
         sourceUrl = activeSourceUrl,
@@ -133,6 +155,7 @@ internal fun PlayerScreenRuntime.resetIdentityStateIfNeeded() {
         isHoldToSpeedGestureActive = false
         initialSeekApplied = activeInitialPositionMs <= 0L &&
             (activeInitialProgressFraction == null || activeInitialProgressFraction!! <= 0f)
+        initialResumePositionConfirmed = initialSeekApplied
         lastProgressPersistEpochMs = 0L
         previousIsPlaying = false
         pendingSeekScrobbleRestart = false
@@ -209,7 +232,7 @@ internal fun PlayerScreenRuntime.currentTrackingMedia(): TrackingMediaReference 
     snapshotTrackingScrobbleItemInputs().buildMedia()
 
 internal fun PlayerScreenRuntime.emitTrackingScrobbleStart() {
-    if (privatePlayback) return
+    if (privatePlayback || !canPersistPlaybackProgress()) return
     if (isShortPlaceholderDuration(playbackSnapshot.durationMs)) return
     if (hasRequestedScrobbleStartForCurrentItem) return
     hasRequestedScrobbleStartForCurrentItem = true
@@ -371,7 +394,7 @@ internal suspend fun PlayerScreenRuntime.resolveParentalGuideImdbId(): String? {
 internal fun PlayerScreenRuntime.flushWatchProgress(
     scrobbleAction: TrackingScrobbleAction = TrackingScrobbleAction.STOP,
 ) {
-    if (privatePlayback) return
+    if (privatePlayback || !canPersistPlaybackProgress()) return
     when (scrobbleAction) {
         TrackingScrobbleAction.PAUSE -> emitTrackingScrobblePause()
         TrackingScrobbleAction.STOP -> emitStopScrobbleForCurrentProgress()
@@ -390,7 +413,7 @@ internal fun PlayerScreenRuntime.scheduleProgressSyncAfterSeek() {
     val sessionPrivatePlayback = privatePlayback
     seekProgressSyncJob = scope.launch {
         delay(PlayerSeekProgressSyncDebounceMs)
-        if (isShortPlaceholderDuration(playbackSnapshot.durationMs)) return@launch
+        if (!canPersistPlaybackProgress() || isShortPlaceholderDuration(playbackSnapshot.durationMs)) return@launch
         WatchProgressRepository.upsertPlaybackProgress(
             session = playbackSession,
             snapshot = playbackSnapshot,
@@ -441,7 +464,7 @@ internal fun PlayerScreenRuntime.scheduleProgressSyncAfterSeek() {
 }
 
 internal fun PlayerScreenRuntime.persistPlaybackProgressTick() {
-    if (privatePlayback) return
+    if (privatePlayback || !canPersistPlaybackProgress()) return
     val now = WatchProgressClock.nowEpochMs()
     if (now - lastProgressPersistEpochMs < PlaybackProgressPersistIntervalMs) return
     lastProgressPersistEpochMs = now

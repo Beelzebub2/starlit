@@ -508,14 +508,16 @@ private fun PlayerScreenRuntime.BindPlayerUiVisibilityEffects() {
             flushWatchProgress(TrackingScrobbleAction.PAUSE)
         }
 
-        if (playbackSnapshot.isPlaying && pendingSeekScrobbleRestart) {
+        if (playbackSnapshot.isPlaying && canPersistPlaybackProgress() && pendingSeekScrobbleRestart) {
             pendingSeekScrobbleRestart = false
             if (hasRequestedScrobbleStartForCurrentItem) {
                 emitTrackingSeekScrobbleStart()
             } else {
                 emitTrackingScrobbleStart()
             }
-        } else if (!previousIsPlaying && playbackSnapshot.isPlaying) {
+        } else if (playbackSnapshot.isPlaying && canPersistPlaybackProgress() &&
+            !hasRequestedScrobbleStartForCurrentItem
+        ) {
             emitTrackingScrobbleStart()
         }
 
