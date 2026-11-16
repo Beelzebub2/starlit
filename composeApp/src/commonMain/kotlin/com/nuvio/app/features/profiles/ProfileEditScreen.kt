@@ -68,6 +68,7 @@ fun ProfileEditScreen(
     val isNew = profile == null
     val scope = rememberCoroutineScope()
     val profileState by ProfileRepository.state.collectAsStateWithLifecycle()
+    val authState by AuthRepository.state.collectAsStateWithLifecycle()
     val currentProfile = remember(profile?.profileIndex, profileState.profiles, profile) {
         profile?.let { snapshot ->
             profileState.profiles.find { it.profileIndex == snapshot.profileIndex } ?: snapshot
@@ -240,7 +241,7 @@ fun ProfileEditScreen(
             }
         }
 
-        if (!isNew && ServerConfigurationRepository.active.value.supportsNuvioAccountFeatures) {
+        if (!isNew && (authState as? AuthState.Authenticated)?.isAnonymous == false) {
             item {
                 NuvioSurfaceCard {
                     Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
@@ -437,6 +438,12 @@ private fun ProfileIdentityCard(
                             contentDescription = name,
                             modifier = Modifier.size(88.dp).clip(CircleShape),
                             contentScale = ContentScale.Crop,
+                        )
+                    } else if (selectedAvatar != null && isBuiltInAvatar(selectedAvatar.id)) {
+                        BuiltInAvatarIcon(
+                            avatarId = selectedAvatar.id,
+                            contentDescription = selectedAvatar.displayName,
+                            modifier = Modifier.fillMaxSize(0.64f),
                         )
                     } else if (selectedAvatar != null) {
                         AsyncImage(
