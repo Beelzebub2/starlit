@@ -59,10 +59,10 @@ Switch between Samsung and LG in the same window. Each platform supports a valid
 
 ## Find TVs automatically
 
-Select **Find TVs** in the installer to discover Samsung Tizen and LG webOS televisions connected to your private LAN. Select a TV from the list to fill in its address and switch to the correct platform automatically. Multiple TVs are listed separately and nothing is paired, installed or removed during discovery.
+Choose **Samsung** or **LG**, then select **Find TVs**. Only the selected TV platform is scanned. Devices appear as they are verified rather than waiting for the whole scan to end, so you can select a TV immediately to fill in its address. Multiple TVs are listed separately and nothing is paired, installed or removed during discovery.
 
-- **Samsung:** Uses the checksum-pinned Apps2Samsung CLI `scan --json`, including Developer Mode / Host PC IP readiness diagnostics. The verified CLI is downloaded on first Samsung use if needed; it may take longer than the LG scan.
-- **LG:** Uses local SSDP/UPnP discovery and checks TV identity against the device description. This does not require a webOS account or grant installation permissions.
+- **Samsung:** Uses SSDP identity checks alongside bounded HTTP probes of the local /24 on Samsung's device-info endpoint. Non-Samsung responses are rejected; virtual network adapters are excluded when a physical LAN is available. This fast, read-only scan does not download any CLI or assume Developer Mode readiness. If no TV is found, **Try extended Samsung scan** runs the official checksum-pinned Apps2Samsung CLI with its full Developer Mode / Host PC IP diagnostics; that optional scan can take substantially longer.
+- **LG:** Uses local SSDP/UPnP discovery with bounded, concurrent description checks. Verified LG results appear during discovery, not after the entire SSDP window. This does not require a webOS account or grant installation permissions.
 - **Fallback:** Keep the TV switched on and the PC on the same LAN. If the TV does not appear, allow local network discovery through your Windows firewall/router, check Wi-Fi client isolation, or enter its private IPv4 address manually. VPN and guest networks can interfere with discovery.
 
 Discovery is read-only. **Samsung Developer Mode with a matching Host PC IP** and **LG Developer Mode / Key Server pairing** remain necessary before sideloading Starlit. Selecting a result does not auto-pair, skip certificate validation or remove existing apps.

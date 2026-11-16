@@ -35,6 +35,10 @@ const state = { webos: { ip: "", name: "starlit-lg-tv" }, tizen: { ip: "", name:
 let filePath = "";
 let busy = false;
 let connectedPlatform = "";
+let scanning = false;
+let scanSequence = 0;
+let scanPlatform = "";
+let scanSelectionMade = false;
 
 function currentPlatform() {
   return document.querySelector('input[name="platform"]:checked').value;
@@ -194,6 +198,15 @@ function switchPlatform(name) {
   $("confirm-title").textContent = "Uninstall Starlit from your " + info.brand + " TV?";
   $("platform-lg").classList.toggle("selected", name === "webos");
   $("platform-samsung").classList.toggle("selected", name === "tizen");
+  $("discovery-copy").textContent = "Search for " + info.brand +
+    " TVs on your local network. Select one to fill in its address.";
+  if (scanPlatform && scanPlatform !== name) {
+    $("discovery-results").replaceChildren();
+    $("discovery-results").hidden = true;
+    $("discovery-status").textContent = "Or enter your TV's address manually below.";
+    $("btn-deep-scan").hidden = true;
+    scanPlatform = "";
+  }
   $("step-install").classList.remove("is-done");
   resetConnectionStatus();
   showIdleStage();
@@ -324,6 +337,7 @@ async function perform(action) {
 
 function useDiscoveredTv(tv) {
   if (busy || !tv || !platforms[tv.platform]) return;
+  scanSelectionMade = true;
   const platform = tv.platform;
   const previousIp = state[platform].ip;
   if (platform === "webos" && previousIp !== tv.ip) {
@@ -378,38 +392,75 @@ function showDiscoveredTvs(devices) {
   list.hidden = !list.children.length;
 }
 
-async function scanForTvs() {
-  if (busy) return;
+async function scanForTvs(deepScan = false) {
+  if (busy || scanning) return;
   if (!api?.discoverTvs) {
     $("discovery-status").textContent = "Network discovery is unavailable. Enter the IP address below.";
     addLog("The installer cannot start TV discovery.", "error");
     return;
   }
-  setBusy(true);
-  setStage("busy", "Finding nearby TVs", "Scanning your private network.");
-  $("discovery-status").textContent = "Scanning your private network for Samsung and LG TVs...";
+  const platform = currentPlatform();
+  const brand = platforms[platform].brand;
+  const scanId = ++scanSequence;
+  const discovered = new Map();
+  scanPlatform = platform;
+  scanSelectionMade = false;
+  scanning = true;
+  $("btn-discover").disabled = true;
+  $("btn-deep-scan").hidden = true;
+  for (const radio of document.querySelectorAll('input[name="platform"]')) radio.disabled = true;
+  setStage("busy", "Finding " + brand + " TVs", "Scanning your private network.");
+  $("discovery-status").textContent = deepScan
+    ? "Running extended Samsung scan. Detected TVs will appear below..."
+    : "Scanning your private network for " + brand + " TVs...";
   $("discovery-results").replaceChildren();
   $("discovery-results").hidden = true;
+  const offDevice = api.onDiscovered?.(info => {
+    const tv = info?.device;
+    if (info.scanId !== scanId || tv?.platform !== platform || !isLanIPv4(tv.ip)) return;
+    if (!discovered.has(tv.ip) && discovered.size >= 32) return;
+    discovered.set(tv.ip, tv);
+    showDiscoveredTvs([...discovered.values()]);
+    if (!scanSelectionMade) {
+      $("discovery-status").textContent = "Found " + discovered.size + " " + brand +
+        " TV" + (discovered.size === 1 ? "" : "s") + ". You can select one now; scanning continues...";
+    }
+  }) || (() => {});
+  const offStatus = api.onScanStatus?.(info => {
+    if (info?.scanId !== scanId) return;
+    addLog(info.message, "muted");
+    if (!busy && !scanSelectionMade) $("caption-detail").textContent = info.message;
+  }) || (() => {});
   try {
-    const response = await api.discoverTvs();
+    const response = await api.discoverTvs({ platform, scanId, deepScan });
     if (!response?.ok) throw new Error(response?.error || "Discovery failed");
     const devices = Array.isArray(response.result?.devices) ? response.result.devices : [];
     const warnings = Array.isArray(response.result?.warnings) ? response.result.warnings : [];
-    setBusy(false);
-    showDiscoveredTvs(devices);
-    $("discovery-status").textContent = devices.length
-      ? "Found " + devices.length + " TV" + (devices.length === 1 ? "" : "s") +
-        ". Choose one below; installation still requires Developer Mode."
-      : "No compatible TVs found. Make sure your TV is on and connected to the same LAN, or enter its IP below.";
+    for (const tv of devices) {
+      if (tv?.platform === platform && isLanIPv4(tv.ip)) discovered.set(tv.ip, tv);
+    }
+    showDiscoveredTvs([...discovered.values()]);
+    if (!scanSelectionMade) {
+      $("discovery-status").textContent = discovered.size
+        ? "Found " + discovered.size + " " + brand + " TV" + (discovered.size === 1 ? "" : "s") +
+          ". Choose one below; installation still requires Developer Mode."
+        : "No " + brand + " TVs found. Check the local network, or enter the TV IP manually.";
+    }
+    $("btn-deep-scan").hidden = platform !== "tizen" || deepScan || discovered.size > 0;
     for (const warning of warnings) addLog(warning, "error");
-    addLog("TV scan finished: " + devices.length + " compatible device" +
-      (devices.length === 1 ? "" : "s") + " found.", devices.length ? "success" : "muted");
-    showIdleStage();
+    addLog(brand + " scan finished: " + discovered.size + " compatible device" +
+      (discovered.size === 1 ? "" : "s") + " found.", discovered.size ? "success" : "muted");
+    if (!busy) showIdleStage();
   } catch (error) {
     $("discovery-status").textContent = "Could not complete the scan. Check network access or enter the TV IP manually.";
     addLog("TV discovery failed: " + (error.message || String(error)), "error");
-    setBusy(false);
-    setStage("error", "TV scan failed", "Use manual IP entry or try the scan again.");
+    if (!busy) setStage("error", "TV scan failed", "Use manual IP entry or try the scan again.");
+  } finally {
+    offDevice();
+    offStatus();
+    scanning = false;
+    $("btn-discover").disabled = busy;
+    for (const radio of document.querySelectorAll('input[name="platform"]')) radio.disabled = busy;
   }
 }
 
@@ -428,7 +479,8 @@ $("tv-name").addEventListener("input", () => {
   state.webos.name = $("tv-name").value;
   clearConnection();
 });
-$("btn-discover").addEventListener("click", scanForTvs);
+$("btn-discover").addEventListener("click", () => scanForTvs());
+$("btn-deep-scan").addEventListener("click", () => scanForTvs(true));
 $("btn-pair").addEventListener("click", () => perform("pair"));
 $("btn-install").addEventListener("click", () => perform("install"));
 $("btn-launch").addEventListener("click", () => perform("launch"));
