@@ -87,7 +87,7 @@ object AvatarRepository {
 
     suspend fun fetchAvatars() {
         if (!com.nuvio.app.core.network.ServerConfigurationRepository.active.value.supportsNuvioAccountFeatures) {
-            publishCatalog()
+            _avatars.value = builtInAvatarCatalog
             return
         }
         hydrateFromCacheIfNeeded()
@@ -101,7 +101,7 @@ object AvatarRepository {
 
     suspend fun refreshAvatars(force: Boolean = false) {
         if (!com.nuvio.app.core.network.ServerConfigurationRepository.active.value.supportsNuvioAccountFeatures) {
-            publishCatalog()
+            _avatars.value = builtInAvatarCatalog
             return
         }
         hydrateFromCacheIfNeeded()
