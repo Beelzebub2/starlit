@@ -1,3 +1,21 @@
+## Starlit 1.30.5
+
+### Profile PIN protection and avatar choices
+
+- **Profile security restored:** Existing signed-in profiles now show the PIN lock controls in Edit Profile. PIN creation and removal use explicit account-server success and lockout responses, avoiding false confirmation when the current PIN was rejected.
+- **Avatars available without a network catalog:** Eight selectable bundled avatars appear immediately, with their own colors and icons. Selected avatars remain visible in the profile editor, selection screen and navigation. Custom avatar URLs and supported remote catalogs remain available.
+
+### TV installer discovery
+
+- **Scan only the chosen platform:** Samsung and LG scans now respect the selected television type instead of scanning both brands together.
+- **Show devices as they appear:** Verified results are streamed to the installer while scanning continues. Local discovery is bounded, with an explicit extended scan and manual IP fallback.
+
+### Compatibility and release scope
+
+- Existing profiles, PINs, libraries, account sessions and custom avatar URLs are preserved; no data migration or backend deployment is required for this client update. Security locks remain account-scoped UI gates, not replacements for sign-in.
+- No new application localization keys were introduced. Stable Windows, Android phone and Android TV, and Linux packages remain subject to the release signing, build and checksum gates.
+- Samsung Tizen, LG webOS and the Windows TV installer continue to be distributed only through the matching `tv-preview-v1.30.5` developer prerelease, pending physical-device and dependency-security acceptance. No iOS App Store publication is included.
+
 ## Starlit 1.30.4
 
 ### Windows installer experience
