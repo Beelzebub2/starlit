@@ -241,7 +241,7 @@ fun ProfileEditScreen(
             }
         }
 
-        if (!isNew && (authState as? AuthState.Authenticated)?.isAnonymous == false) {
+        if (canManageProfilePin(isNew, authState)) {
             item {
                 NuvioSurfaceCard {
                     Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
