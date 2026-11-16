@@ -97,5 +97,21 @@ class AvatarPickerTest {
         compose.runOnIdle { assertEquals("0", selectedId) }
     }
 
+    @Test
+    fun bundledAvatarArtworkIsVisibleAndSelectableWithoutARemoteCatalog() {
+        var selectedId: String? = null
+        compose.setContent {
+            NuvioTheme {
+                AvatarPicker(
+                    avatars = availableAvatarCatalog(emptyList(), emptyList(), hasMemberAccess = false),
+                    selectedAvatarId = null,
+                    onAvatarSelected = { selectedId = it.id },
+                )
+            }
+        }
+        compose.onNodeWithContentDescription("Nova").performClick()
+        compose.runOnIdle { assertEquals("starlit:avatar:nova", selectedId) }
+    }
+
     private data class GridSize(val width: Int, val density: Float, val columns: Int)
 }
