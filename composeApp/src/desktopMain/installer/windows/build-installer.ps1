@@ -87,7 +87,7 @@ while ($numeric.Count -lt 4) { $numeric += 0 }
 ) | Set-Content -LiteralPath (Join-Path $WorkDir 'setup_version.h') -Encoding ASCII
 
 $flags = '/nologo /EHsc /std:c++17 /O2 /MT /W3 /DUNICODE /D_UNICODE /DNOMINMAX /DWIN32_LEAN_AND_MEAN /D_CRT_SECURE_NO_WARNINGS'
-$libs = 'Ole32.lib User32.lib Gdi32.lib Dwmapi.lib Shell32.lib Shlwapi.lib Advapi32.lib Cabinet.lib Msi.lib Shcore.lib Version.lib'
+$libs = 'Ole32.lib User32.lib Gdi32.lib Dwmapi.lib Shell32.lib Shlwapi.lib Advapi32.lib Winhttp.lib Cabinet.lib Msi.lib Shcore.lib Version.lib'
 # Setup runs from Downloads or %TEMP%, where a planted DLL could shadow a system
 # one: load static imports from System32 only, and delay-load the DLLs that are
 # not KnownDLLs so they resolve after SetDefaultDllDirectories in wWinMain.
@@ -101,7 +101,7 @@ $bat = Join-Path $WorkDir 'build-installer.bat'
     "rc /nologo /i `"$WorkDir`" /fo `"$WorkDir\setup.res`" setup.rc"
     'if errorlevel 1 exit /b %errorlevel%'
     "cd /d `"$WorkDir`""
-    "cl $flags /I`"$webView2Include`" `"$source\setup.cpp`" `"$source\setup_engine.cpp`" setup.res /Fesetup.exe /link /SUBSYSTEM:WINDOWS /MANIFEST:NO $dllSafety `"$webView2Loader`" $libs"
+    "cl $flags /I`"$webView2Include`" `"$source\setup.cpp`" `"$source\setup_engine.cpp`" `"$source\tv_installer_download.cpp`" setup.res /Fesetup.exe /link /SUBSYSTEM:WINDOWS /MANIFEST:NO $dllSafety `"$webView2Loader`" $libs"
     'if errorlevel 1 exit /b %errorlevel%'
     "cl $flags `"$source\pack.cpp`" /Fepack.exe /link Cabinet.lib"
     'exit /b %errorlevel%'

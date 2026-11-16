@@ -142,6 +142,7 @@ void post(const Json& message) {
 const wchar_t* phaseName(Phase phase) {
     switch (phase) {
         case Phase::Closing: return L"closing";
+        case Phase::Downloading: return L"downloading";
         case Phase::Extracting: return L"extracting";
         case Phase::Legacy: return L"legacy";
         case Phase::Finishing: return L"finishing";
@@ -168,8 +169,9 @@ void sendInit() {
              .str(L"dir", gDir)
              .flag(L"startMenu", existing.startMenu)
              .flag(L"desktop", existing.desktop)
-             .flag(L"tvInstallerAvailable", gEngine->hasTvInstaller())
-             .flag(L"tvInstaller", existing.tvInstaller && gEngine->hasTvInstaller())
+             .flag(L"tvInstallerAvailable", gEngine->hasTvInstaller() || gEngine->canDownloadTvInstaller())
+             .flag(L"tvInstallerBundled", gEngine->hasTvInstaller())
+             .flag(L"tvInstaller", existing.tvInstaller)
              .number(L"required", static_cast<double>(gEngine->source().index.totalRaw))
              .number(L"free", static_cast<double>(freeBytesFor(gDir)))
              .flag(L"running", gEngine->isAppRunning(gDir))
@@ -663,7 +665,7 @@ int runSilent(bool uninstall) {
     } else {
         InstallRequest request{gDir, existing.startMenu && !gArgs.noStartMenu,
                                existing.desktop && !gArgs.noDesktop,
-                               gArgs.withTvInstaller || (existing.tvInstaller && gEngine->hasTvInstaller())};
+                               gArgs.withTvInstaller || existing.tvInstaller};
         ok = gEngine->install(request);
         if (ok && gArgs.launch) launchApp(gEngine->identity(), gDir);
     }

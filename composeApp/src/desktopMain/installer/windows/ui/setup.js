@@ -18,6 +18,7 @@
   };
 
   const PHASES = {
+    downloading: 'Downloading the TV Installer from GitHub...',
     idle: 'Getting ready…',
     closing: 'Closing the app…',
     extracting: 'Unpacking files…',
@@ -38,6 +39,7 @@
     desktop: true,
     tvInstaller: false,
     tvInstallerAvailable: false,
+    tvInstallerBundled: false,
     required: 0,
     free: 0,
     running: false,
@@ -209,16 +211,21 @@
     path.title = state.dir;
     const hint = $('space-hint');
     hint.classList.toggle('is-problem', Boolean(state.problem));
-    hint.textContent = state.problem || `Needs ${mb(state.required)}. ${size(state.free)} free on this drive.`;
+    const downloadReserve = state.tvInstaller && !state.tvInstallerBundled ? 256 * 1048576 : 0;
+    const noSpace = !state.problem && state.free < state.required + downloadReserve + 64 * 1048576;
+    hint.textContent = state.problem || (noSpace ? 'Not enough space for the selected TV Installer.' :
+      `Needs up to ${mb(state.required + downloadReserve)}. ${size(state.free)} free on this drive.`);
     setSwitch($('opt-start'), state.startMenu);
     setSwitch($('opt-desktop'), state.desktop);
     setSwitch($('opt-tv-installer'), state.tvInstaller);
     $('opt-tv-installer').disabled = !state.tvInstallerAvailable;
-    $('tv-installer-description').textContent = state.tvInstallerAvailable
-      ? 'Optional tool for Samsung Tizen and LG webOS. Requires TV developer mode; not yet hardware-verified.'
-      : 'Not included in this build. Developer-preview builds may be available on GitHub.';
+    $('tv-installer-description').textContent = state.tvInstallerBundled
+      ? 'Optional Samsung/LG TV tool included in this package. Developer preview, not hardware-verified.'
+      : state.tvInstallerAvailable
+        ? 'Downloads verified Samsung/LG TV preview from GitHub (~120 MB). Internet and TV developer mode required.'
+        : 'This build cannot download a matching TV developer preview.';
     $('options-install').textContent = state.mode === 'update' ? 'Update' : 'Install';
-    $('options-install').disabled = Boolean(state.problem);
+    $('options-install').disabled = Boolean(state.problem) || noSpace;
   }
 
   function renderConfirm() {
@@ -291,7 +298,8 @@
     progress.done = message.done;
     progress.total = message.total;
     $('progress-status').textContent = message.phase === 'closing' ? `Closing ${state.name}…` : PHASES[message.phase] || PHASES.idle;
-    $('progress-file').textContent = message.phase === 'extracting' ? message.file : '';
+    $('progress-file').textContent = message.phase === 'extracting' || message.phase === 'downloading'
+      ? message.file : '';
     animateProgress();
   }
 
@@ -329,6 +337,7 @@
     $('error-title').textContent = fatal ? "This installer can't run" : titles[state.mode];
     $('error-message').textContent = message;
     $('error-retry').hidden = fatal;
+    $('error-options').hidden = fatal || state.mode === 'uninstall';
     $('error-close').className = fatal ? 'button primary' : 'button secondary';
     show('error');
   }
@@ -390,6 +399,7 @@
   $('done-launch').addEventListener('click', () => send('launch'));
   $('done-close').addEventListener('click', () => send('close'));
   $('error-close').addEventListener('click', () => send('close'));
+  $('error-options').addEventListener('click', () => show('options', -1));
   $('error-retry').addEventListener('click', begin);
   $('error-log').addEventListener('click', () => send('log'));
   $('minimize').addEventListener('click', () => send('minimize'));
@@ -402,6 +412,7 @@
       if ($(id).disabled) return;
       state[key] = !state[key];
       setSwitch($(id), state[key]);
+      if (key === 'tvInstaller') renderOptions();
     });
   }
 
@@ -455,8 +466,9 @@
     dir: 'C:\\Users\\you\\AppData\\Local\\Starlit',
     startMenu: true,
     desktop: true,
-    tvInstaller: false,
-    tvInstallerAvailable: params.has('tv-installer'),
+    tvInstaller: params.has('tv-opted'),
+    tvInstallerAvailable: true,
+    tvInstallerBundled: params.has('tv-bundled'),
     required: 282e6,
     free: 128e9,
     running: params.has('running'),
