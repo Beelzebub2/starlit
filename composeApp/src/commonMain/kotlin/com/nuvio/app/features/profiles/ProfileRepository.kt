@@ -4,6 +4,7 @@ import co.touchlab.kermit.Logger
 import com.nuvio.app.core.auth.AuthRepository
 import com.nuvio.app.core.auth.AuthState
 import com.nuvio.app.core.auth.isAnonymous
+import com.nuvio.app.core.network.ServerConfigurationRepository
 import com.nuvio.app.core.network.SupabaseProvider
 import com.nuvio.app.core.poster.CustomPosterUrlRepository
 import com.nuvio.app.core.sync.ProfileSettingsSync
@@ -409,19 +410,43 @@ object ProfileRepository {
         }
     }
 
+    private suspend fun pinMutationFailure(result: ProfilePinMutationResult, fallback: StringResource): PinVerifyResult =
+        PinVerifyResult(
+            unlocked = false,
+            retryAfterSeconds = result.retryAfterSeconds,
+            message = if (result.retryAfterSeconds > 0) {
+                getString(Res.string.pin_locked_try_again, result.retryAfterSeconds)
+            } else {
+                getString(fallback)
+            },
+        )
+
     suspend fun setPin(profileIndex: Int, pin: String, currentPin: String? = null): PinVerifyResult {
         if (AuthRepository.state.value !is AuthState.Authenticated) {
             return PinVerifyResult(unlocked = false, message = getString(Res.string.profile_pin_set_requires_internet))
         }
-
         return runCatching {
-            val params = buildJsonObject {
-                put("p_profile_id", profileIndex)
-                put("p_pin", pin)
-                currentPin?.let { put("p_current_pin", it) }
+            if (!ServerConfigurationRepository.active.value.supportsNuvioAccountFeatures) {
+                val params = buildJsonObject {
+                    put("p_profile_id", profileIndex)
+                    put("p_new_pin", pin)
+                    currentPin?.let { put("p_current_pin", it) }
+                }
+                val mutation = SupabaseProvider.client.postgrest
+                    .rpc("account_change_pin", params).decodeAs<ProfilePinMutationResult>()
+                if (!mutation.ok) return@runCatching pinMutationFailure(mutation, Res.string.profile_pin_set_failed)
+            } else {
+                val params = buildJsonObject {
+                    put("p_profile_id", profileIndex)
+                    put("p_pin", pin)
+                    currentPin?.let { put("p_current_pin", it) }
+                }
+                SupabaseProvider.client.postgrest.rpc("set_profile_pin", params)
             }
-            SupabaseProvider.client.postgrest.rpc("set_profile_pin", params)
             pullProfiles()
+            if (_state.value.profiles.none { it.profileIndex == profileIndex && it.pinEnabled }) {
+                return@runCatching PinVerifyResult(unlocked = false, message = getString(Res.string.profile_pin_set_failed))
+            }
             rememberVerifiedPin(profileIndex = profileIndex, pin = pin)
             PinVerifyResult(unlocked = true)
         }.onFailure { e ->
@@ -435,14 +460,26 @@ object ProfileRepository {
         if (AuthRepository.state.value !is AuthState.Authenticated) {
             return PinVerifyResult(unlocked = false, message = getString(Res.string.profile_pin_clear_requires_internet))
         }
-
         return runCatching {
-            val params = buildJsonObject {
-                put("p_profile_id", profileIndex)
-                currentPin?.let { put("p_current_pin", it) }
+            if (!ServerConfigurationRepository.active.value.supportsNuvioAccountFeatures) {
+                val params = buildJsonObject {
+                    put("p_profile_id", profileIndex)
+                    currentPin?.let { put("p_current_pin", it) }
+                }
+                val mutation = SupabaseProvider.client.postgrest
+                    .rpc("account_remove_pin", params).decodeAs<ProfilePinMutationResult>()
+                if (!mutation.ok) return@runCatching pinMutationFailure(mutation, Res.string.profile_pin_clear_failed)
+            } else {
+                val params = buildJsonObject {
+                    put("p_profile_id", profileIndex)
+                    currentPin?.let { put("p_current_pin", it) }
+                }
+                SupabaseProvider.client.postgrest.rpc("clear_profile_pin", params)
             }
-            SupabaseProvider.client.postgrest.rpc("clear_profile_pin", params)
             pullProfiles()
+            if (_state.value.profiles.any { it.profileIndex == profileIndex && it.pinEnabled }) {
+                return@runCatching PinVerifyResult(unlocked = false, message = getString(Res.string.profile_pin_clear_failed))
+            }
             ProfilePinCacheStorage.removePayload(profileIndex)
             PinVerifyResult(unlocked = true)
         }.onFailure { e ->
