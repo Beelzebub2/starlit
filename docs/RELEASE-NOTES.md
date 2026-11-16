@@ -1,3 +1,17 @@
+## Starlit 1.30.2
+
+### Windows TV Installer detection
+
+- **Recognize the installed TV companion:** Fix Settings > Updates incorrectly reporting the optional Starlit TV Installer as missing after it was downloaded by Windows setup. Find the installed executable through the packaged Starlit launcher or bundled runtime when the optional `compose.application.home` property is unavailable.
+- **Keep launch paths local and safe:** Look only in the trusted Starlit installation directory, not unrelated Java installations, Downloads or the system PATH. The already-installed companion remains available to launch directly from Settings, without another download.
+- **Verified regression coverage:** Desktop path-detection tests cover the packaged launcher, bundled-runtime fallback and rejection of unrelated paths.
+
+### Compatibility and release scope
+
+- This patch preserves existing accounts, profiles, media libraries, add-ons, downloads, device pairings and optional TV Installer files. No migration, automatic TV installation or backend deployment is included.
+- The standard tagged release still publishes Windows, signed Android and Android TV, and Linux packages subject to CI checks, signing and checksum verification. Samsung Tizen, LG webOS and Windows TV Installer developer builds continue to publish separately in the matching `tv-preview-v1.30.2` prerelease.
+- Samsung and LG TV packages remain unverified developer previews pending physical-device and dependency-security acceptance. No iOS App Store release is included. No localized app text was changed.
+
 ## Starlit 1.30.1
 
 ### Samsung and LG TV installer downloads
