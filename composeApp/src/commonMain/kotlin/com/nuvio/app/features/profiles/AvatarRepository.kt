@@ -62,14 +62,15 @@ internal fun availableAvatarCatalog(
     standardCatalog: List<AvatarCatalogItem>,
     memberCatalog: List<AvatarCatalogItem>,
     hasMemberAccess: Boolean,
-): List<AvatarCatalogItem> = standardCatalog + if (hasMemberAccess) memberCatalog else emptyList()
+): List<AvatarCatalogItem> = builtInAvatarCatalog + standardCatalog.filterNot { isBuiltInAvatar(it.id) } +
+    if (hasMemberAccess) memberCatalog else emptyList()
 
 object AvatarRepository {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val log = Logger.withTag("AvatarRepository")
     private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
 
-    private val _avatars = MutableStateFlow<List<AvatarCatalogItem>>(emptyList())
+    private val _avatars = MutableStateFlow<List<AvatarCatalogItem>>(builtInAvatarCatalog)
     val avatars: StateFlow<List<AvatarCatalogItem>> = _avatars.asStateFlow()
 
     private var standardCatalog = emptyList<AvatarCatalogItem>()
@@ -86,7 +87,7 @@ object AvatarRepository {
 
     suspend fun fetchAvatars() {
         if (!com.nuvio.app.core.network.ServerConfigurationRepository.active.value.supportsNuvioAccountFeatures) {
-            _avatars.value = emptyList()
+            publishCatalog()
             return
         }
         hydrateFromCacheIfNeeded()
@@ -100,7 +101,7 @@ object AvatarRepository {
 
     suspend fun refreshAvatars(force: Boolean = false) {
         if (!com.nuvio.app.core.network.ServerConfigurationRepository.active.value.supportsNuvioAccountFeatures) {
-            _avatars.value = emptyList()
+            publishCatalog()
             return
         }
         hydrateFromCacheIfNeeded()
