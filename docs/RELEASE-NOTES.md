@@ -1,3 +1,18 @@
+## Starlit 1.30.0
+
+### Optional TV installer in Windows setup
+
+- **Download the TV companion when selected:** The optional Starlit TV Installer switch is available in regular Windows setup even when the separate developer-preview executable is not embedded. The option remains off by default and downloads the matching-version portable TV installer from GitHub only after explicit selection.
+- **Safer downloads and updates:** Setup retrieves the official TV developer-preview SHA-256 manifest over HTTPS, validates the selected executable before installing it, limits download size and time, and reports progress and required disk space. If the preview is unavailable or verification fails, the existing Starlit installation is preserved and setup offers retry or a return to Options.
+- **Launch from Settings:** The downloaded companion is kept in the Starlit installation and can be launched from Windows Settings > Updates. Setup never automatically runs the downloaded preview, and unselected installs do not require an internet connection.
+
+### Compatibility and release scope
+
+- This is a compatible minor update with no changes to user accounts, media libraries, profiles, installed add-ons or device pairing data. Existing desktop installations retain their TV installer choice on update.
+- Windows, signed Android phone and Android TV, and Linux release assets publish only after tagged build, signing, provenance and checksum validation. The corresponding Samsung Tizen WGT, LG webOS IPK and Windows TV installer Setup/portable executables are published separately under the matching `tv-preview-v1.30.0` developer prerelease.
+- Samsung and LG packages and the Windows TV companion are **unverified developer previews**, not stable TV or automatic-update releases. Physical device signing/pairing, playback and USB validation remain outstanding, and upstream TV-installer dependency advisories still need review.
+- No iOS App Store release or backend deployment is included. The change affects the English-only Windows setup UI; supported app localization catalogs are unchanged.
+
 ## Starlit 1.29.0
 
 ### Phone and desktop improvements
