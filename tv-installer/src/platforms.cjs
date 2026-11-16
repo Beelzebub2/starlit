@@ -3,8 +3,8 @@ const { isIP } = require("node:net");
 const os = require("node:os");
 
 const PLATFORMS = Object.freeze({
-  webos: Object.freeze({ label: "LG webOS", extension: ".ipk", appId: "app.starlit.webos", filePrefix: "Starlit-WebOS", checksumFile: "SHA256SUMS-WebOS" }),
-  tizen: Object.freeze({ label: "Samsung Tizen", extension: ".wgt", appId: "StarlitTV1.StarlitTV", filePrefix: "Starlit-Tizen", checksumFile: "SHA256SUMS-Tizen" })
+  webos: Object.freeze({ label: "LG webOS", extension: ".ipk", appId: "app.starlit.webos", filePrefix: "Starlit-WebOS", checksumFile: "SHA256SUMS.txt" }),
+  tizen: Object.freeze({ label: "Samsung Tizen", extension: ".wgt", appId: "StarlitTV1.StarlitTV", filePrefix: "Starlit-Tizen", checksumFile: "SHA256SUMS.txt" })
 });
 function platformInfo(name) {
   if (!Object.prototype.hasOwnProperty.call(PLATFORMS, name)) throw new Error("Choose LG webOS or Samsung Tizen");

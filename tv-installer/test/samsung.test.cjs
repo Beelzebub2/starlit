@@ -200,29 +200,42 @@ test("Samsung CLI download fails closed when upstream archive checksum is invali
     await fs.rm(dir, { recursive: true, force: true });
   }
 });
-test("Stable Tizen release verification checks the exact WGT and independent checksum", async () => {
+test("Tizen preview verification checks the stable version, exact WGT and published checksum", async () => {
   const wgt = await createWgt();
   const hash = createHash("sha256").update(wgt).digest("hex");
-  const tag = "v1.24.0", name = "Starlit-Tizen-1.24.0.wgt";
-  const base = "https://github.com/Beelzebub2/nuvio-native/releases/download/" + tag + "/";
+  const stableTag = "v1.24.0", tag = "tv-preview-" + stableTag, name = "Starlit-Tizen-1.24.0.wgt";
+  const base = "https://github.com/Beelzebub2/starlit/releases/download/" + tag + "/";
   const release = {
-    tag_name: tag, prerelease: false, draft: false,
+    tag_name: tag, prerelease: true, draft: false,
     assets: [{ name, browser_download_url: base + name }, {
-      name: "SHA256SUMS-Tizen", browser_download_url: base + "SHA256SUMS-Tizen"
+      name: "SHA256SUMS.txt", browser_download_url: base + "SHA256SUMS.txt"
     }]
   };
-  const assets = expectedReleaseAssets(release, "tizen");
+  const assets = expectedReleaseAssets(release, "tizen", stableTag);
   assert.equal(assets.filename, name);
   assert.throws(() => expectedReleaseAssets({
     ...release, assets: [{ name, browser_download_url: base + name }]
-  }, "tizen"), /accepted Samsung Tizen/);
-  const responses = [Buffer.from(JSON.stringify(release)), Buffer.from(hash + "  " + name + "\n"), wgt];
-  const fetchImpl = async () => {
-    const body = responses.shift();
+  }, "tizen"), /verified Samsung Tizen/);
+  const latestUrl = "https://api.github.com/repos/Beelzebub2/starlit/releases/latest";
+  const previewUrl = "https://api.github.com/repos/Beelzebub2/starlit/releases/tags/" + tag;
+  const payloads = new Map([
+    [latestUrl, Buffer.from(JSON.stringify({ tag_name: stableTag, prerelease: false, draft: false }))],
+    [previewUrl, Buffer.from(JSON.stringify(release))],
+    [base + "SHA256SUMS.txt", Buffer.from(hash + "  " + name + "\n")],
+    [base + name, wgt]
+  ]);
+  const calls = [];
+  const fetchImpl = async url => {
+    calls.push(url);
+    const body = payloads.get(url);
+    if (!body) return { ok: false, status: 404 };
     return { ok: true, status: 200, headers: { get: () => String(body.length) }, body: Readable.from([body]) };
   };
   const verified = await fetchVerifiedRelease({ platform: "tizen", fetchImpl });
   assert.equal(verified.manifest.appId, "StarlitTV1.StarlitTV");
   assert.equal(verified.sha256, hash);
   assert.equal(verified.filename, name);
+  assert.deepEqual(calls, [latestUrl, previewUrl, base + "SHA256SUMS.txt", base + name]);
+  payloads.set(base + "SHA256SUMS.txt", Buffer.from("f".repeat(64) + "  " + name + "\n"));
+  await assert.rejects(fetchVerifiedRelease({ platform: "tizen", fetchImpl }), /SHA-256 verification failed/);
 });

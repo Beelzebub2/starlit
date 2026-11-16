@@ -54,7 +54,7 @@ Requires Node.js 24 and a Windows PC on the same private LAN as the TV. Run from
 
 `npm start` and `npm run dist:win` first copy Starlit's JetBrains Sans fonts from `composeApp` into `src/fonts` (ignored by Git), so run them from a full Starlit checkout.
 
-Switch between Samsung and LG in the same window. Each platform supports a validated local package or a checksum-verified official Starlit release asset; launching and uninstalling target only Starlit. Installing an update does not first uninstall the existing version.
+Switch between Samsung and LG in the same window. Each platform supports a validated local package or a checksum-verified official Starlit TV developer-preview asset; launching and uninstalling target only Starlit. Installing an update does not first uninstall the existing version.
 
 ## Find TVs automatically
 
@@ -88,7 +88,7 @@ LG uses the official pinned webOS CLI. Starlit does not save the Key Server pass
 
 ## Downloading and updating
 
-LG uses **Starlit-WebOS-version.ipk** with **SHA256SUMS-WebOS**; Samsung uses **Starlit-Tizen-version.wgt** with **SHA256SUMS-Tizen**. The selected stable release must contain both the correctly named package and its matching SHA-256 file, be hosted by an allowed official Starlit repository URL and match Starlit's app identity and version. Otherwise the installer refuses to install and lets the user choose a local developer package.
+The installer reads the latest stable Starlit version, then fetches that exact version's separate **`tv-preview-vMAJOR.MINOR.PATCH` developer prerelease**. It uses **Starlit-WebOS-version.ipk** for LG or **Starlit-Tizen-version.wgt** for Samsung, together with the preview's **SHA256SUMS.txt**. The package must match its expected filename, SHA-256, trusted official Starlit release URL, app identity and stable release version. If the matching preview is missing or fails verification, nothing is installed; a local developer package may be selected instead. Preview packages remain subject to real-device and dependency-security acceptance.
 
 Updates are **manual** in the desktop installer. LG sideloads do not automatically update. Samsung Store auto-update metadata applies only after Seller Office distribution; it does not silently update Developer Mode sideloads. **Uninstall** requires explicit confirmation and may erase local app data.
 
