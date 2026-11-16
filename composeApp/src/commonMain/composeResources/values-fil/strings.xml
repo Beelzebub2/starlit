@@ -3360,4 +3360,19 @@ Nagbalik ang</string>
     <string name="profile_kids_content_filter">Filter ng content para sa bata</string>
     <string name="profile_kids_content_filter_description">Itinatago ang horror, marahas at pang-adultong content batay sa metadata. Hindi ito parental lock.</string>
     <string name="profile_kids_content_blocked">Nakatago ang pamagat na ito sa filter para sa bata.</string>
+    <string name="settings_desktop_overview">Pangkalahatang-tanaw</string>
+    <string name="settings_desktop_overview_summary">Ang iyong account, mga nakakonektang serbisyo at ang mga setting na madalas mong baguhin.</string>
+    <string name="settings_desktop_quick_settings">Mabilisang setting</string>
+    <string name="settings_desktop_manage_account">Pamahalaan ang account</string>
+    <string name="settings_desktop_posters_previews">Mga poster at preview</string>
+    <string name="settings_desktop_posters_previews_summary">Ang itsura ng mga poster card, at ang nangyayari kapag itinapat mo ang pointer sa isa.</string>
+    <string name="settings_desktop_metadata_ratings">Metadata at mga rating</string>
+    <string name="settings_desktop_metadata_ratings_summary">Mga larawan, cast at isinaling detalye mula sa TMDB, at mga rating sa pamamagitan ng MDBList.</string>
+    <string name="settings_playback_tab_player">Player</string>
+    <string name="settings_playback_tab_subtitles_audio">Mga subtitle at audio</string>
+    <string name="settings_playback_tab_streams">Mga stream at auto-play</string>
+    <string name="settings_playback_tab_next_episode">Susunod na episode at mga skip</string>
+    <string name="settings_playback_tab_video">Video</string>
+    <string name="settings_playback_tab_video_p2p">Video at P2P</string>
+    <string name="settings_desktop_subtitle_language">Wika ng subtitle</string>
 </resources>

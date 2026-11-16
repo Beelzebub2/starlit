@@ -2681,4 +2681,19 @@
     <string name="profile_kids_content_filter">শিশুদের কনটেন্ট ফিল্টার</string>
     <string name="profile_kids_content_filter_description">তথ্য থাকলে ভৌতিক, সহিংস ও প্রাপ্তবয়স্কদের কনটেন্ট লুকায়। এটি অভিভাবকীয় লক নয়।</string>
     <string name="profile_kids_content_blocked">এই শিরোনামটি শিশুদের ফিল্টারে লুকানো।</string>
+    <string name="settings_desktop_overview">সংক্ষিপ্ত বিবরণ</string>
+    <string name="settings_desktop_overview_summary">আপনার অ্যাকাউন্ট, সংযুক্ত পরিষেবা এবং যে সেটিংস আপনি সবচেয়ে বেশি বদলান।</string>
+    <string name="settings_desktop_quick_settings">দ্রুত সেটিংস</string>
+    <string name="settings_desktop_manage_account">অ্যাকাউন্ট পরিচালনা</string>
+    <string name="settings_desktop_posters_previews">পোস্টার ও প্রিভিউ</string>
+    <string name="settings_desktop_posters_previews_summary">পোস্টার কার্ড দেখতে কেমন, এবং কোনোটির ওপর পয়েন্টার রাখলে কী হয়।</string>
+    <string name="settings_desktop_metadata_ratings">মেটাডেটা ও রেটিং</string>
+    <string name="settings_desktop_metadata_ratings_summary">TMDB থেকে ছবি, কলাকুশলী ও অনূদিত বিবরণ, এবং MDBList-এর মাধ্যমে রেটিং।</string>
+    <string name="settings_playback_tab_player">প্লেয়ার</string>
+    <string name="settings_playback_tab_subtitles_audio">সাবটাইটেল ও অডিও</string>
+    <string name="settings_playback_tab_streams">স্ট্রিম ও অটো-প্লে</string>
+    <string name="settings_playback_tab_next_episode">পরের পর্ব ও স্কিপ</string>
+    <string name="settings_playback_tab_video">ভিডিও</string>
+    <string name="settings_playback_tab_video_p2p">ভিডিও ও P2P</string>
+    <string name="settings_desktop_subtitle_language">সাবটাইটেলের ভাষা</string>
 </resources>

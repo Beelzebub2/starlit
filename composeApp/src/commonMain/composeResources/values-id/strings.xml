@@ -1748,4 +1748,19 @@
     <string name="profile_kids_content_filter">Filter konten anak</string>
     <string name="profile_kids_content_filter_description">Menyembunyikan horor, kekerasan dan konten dewasa berdasarkan metadata. Bukan kunci orang tua.</string>
     <string name="profile_kids_content_blocked">Judul ini disembunyikan oleh filter anak.</string>
+    <string name="settings_desktop_overview">Ringkasan</string>
+    <string name="settings_desktop_overview_summary">Akun Anda, layanan yang terhubung, dan pengaturan yang paling sering Anda ubah.</string>
+    <string name="settings_desktop_quick_settings">Pengaturan cepat</string>
+    <string name="settings_desktop_manage_account">Kelola akun</string>
+    <string name="settings_desktop_posters_previews">Poster &amp; pratinjau</string>
+    <string name="settings_desktop_posters_previews_summary">Tampilan kartu poster, dan apa yang terjadi saat penunjuk berhenti di atasnya.</string>
+    <string name="settings_desktop_metadata_ratings">Metadata &amp; rating</string>
+    <string name="settings_desktop_metadata_ratings_summary">Gambar, pemeran, dan detail terjemahan dari TMDB, serta rating melalui MDBList.</string>
+    <string name="settings_playback_tab_player">Pemutar</string>
+    <string name="settings_playback_tab_subtitles_audio">Subtitel &amp; audio</string>
+    <string name="settings_playback_tab_streams">Stream &amp; putar otomatis</string>
+    <string name="settings_playback_tab_next_episode">Episode berikutnya &amp; lewati</string>
+    <string name="settings_playback_tab_video">Video</string>
+    <string name="settings_playback_tab_video_p2p">Video &amp; P2P</string>
+    <string name="settings_desktop_subtitle_language">Bahasa subtitel</string>
 </resources>

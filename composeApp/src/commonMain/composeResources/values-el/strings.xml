@@ -2644,4 +2644,19 @@
     <string name="profile_kids_content_filter">Φίλτρο παιδικού περιεχομένου</string>
     <string name="profile_kids_content_filter_description">Κρύβει τρόμο, βία και περιεχόμενο ενηλίκων βάσει μεταδεδομένων. Δεν είναι γονικό κλείδωμα.</string>
     <string name="profile_kids_content_blocked">Αυτός ο τίτλος κρύβεται από το φίλτρο παιδιών.</string>
+    <string name="settings_desktop_overview">Επισκόπηση</string>
+    <string name="settings_desktop_overview_summary">Ο λογαριασμός σας, οι συνδεδεμένες υπηρεσίες και οι ρυθμίσεις που αλλάζετε συχνότερα.</string>
+    <string name="settings_desktop_quick_settings">Γρήγορες ρυθμίσεις</string>
+    <string name="settings_desktop_manage_account">Διαχείριση λογαριασμού</string>
+    <string name="settings_desktop_posters_previews">Αφίσες και προεπισκοπήσεις</string>
+    <string name="settings_desktop_posters_previews_summary">Πώς εμφανίζονται οι κάρτες αφισών και τι συμβαίνει όταν αφήνετε τον δείκτη πάνω σε μία.</string>
+    <string name="settings_desktop_metadata_ratings">Μεταδεδομένα και βαθμολογίες</string>
+    <string name="settings_desktop_metadata_ratings_summary">Εικόνες, ηθοποιοί και μεταφρασμένες λεπτομέρειες από το TMDB, και βαθμολογίες μέσω MDBList.</string>
+    <string name="settings_playback_tab_player">Αναπαραγωγέας</string>
+    <string name="settings_playback_tab_subtitles_audio">Υπότιτλοι και ήχος</string>
+    <string name="settings_playback_tab_streams">Ροές και αυτόματη αναπαραγωγή</string>
+    <string name="settings_playback_tab_next_episode">Επόμενο επεισόδιο και παραλείψεις</string>
+    <string name="settings_playback_tab_video">Βίντεο</string>
+    <string name="settings_playback_tab_video_p2p">Βίντεο και P2P</string>
+    <string name="settings_desktop_subtitle_language">Γλώσσα υποτίτλων</string>
 </resources>

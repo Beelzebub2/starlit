@@ -1039,4 +1039,19 @@
     <string name="profile_kids_content_filter">סינון תוכן לילדים</string>
     <string name="profile_kids_content_filter_description">מסתיר אימה, אלימות ותוכן למבוגרים לפי נתוני סיווג. זו אינה נעילת הורים.</string>
     <string name="profile_kids_content_blocked">הכותרת הוסתרה על ידי סינון הילדים.</string>
+    <string name="settings_desktop_overview">סקירה כללית</string>
+    <string name="settings_desktop_overview_summary">החשבון שלך, השירותים המחוברים וההגדרות שאתה משנה הכי הרבה.</string>
+    <string name="settings_desktop_quick_settings">הגדרות מהירות</string>
+    <string name="settings_desktop_manage_account">ניהול חשבון</string>
+    <string name="settings_desktop_posters_previews">פוסטרים ותצוגות מקדימות</string>
+    <string name="settings_desktop_posters_previews_summary">איך כרטיסי הפוסטרים נראים ומה קורה כשמשאירים את הסמן על אחד מהם.</string>
+    <string name="settings_desktop_metadata_ratings">מטא-נתונים ודירוגים</string>
+    <string name="settings_desktop_metadata_ratings_summary">תמונות, שחקנים ופרטים מתורגמים מ-TMDB, ודירוגים דרך MDBList.</string>
+    <string name="settings_playback_tab_player">נגן</string>
+    <string name="settings_playback_tab_subtitles_audio">כתוביות ושמע</string>
+    <string name="settings_playback_tab_streams">סטרימים והפעלה אוטומטית</string>
+    <string name="settings_playback_tab_next_episode">הפרק הבא ודילוגים</string>
+    <string name="settings_playback_tab_video">וידאו</string>
+    <string name="settings_playback_tab_video_p2p">וידאו ו-P2P</string>
+    <string name="settings_desktop_subtitle_language">שפת כתוביות</string>
 </resources>

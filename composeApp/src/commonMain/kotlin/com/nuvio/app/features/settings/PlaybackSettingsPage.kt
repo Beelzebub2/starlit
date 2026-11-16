@@ -116,6 +116,7 @@ internal fun LazyListScope.playbackSettingsContent(
     tunnelingEnabled: Boolean,
     useLibass: Boolean,
     libassRenderType: String,
+    desktopTab: PlaybackSettingsTab? = null,
 ) {
     item {
         PlaybackSettingsSection(
@@ -139,6 +140,7 @@ internal fun LazyListScope.playbackSettingsContent(
             tunnelingEnabled = tunnelingEnabled,
             useLibass = useLibass,
             libassRenderType = libassRenderType,
+            desktopTab = desktopTab,
         )
     }
 }
@@ -293,7 +295,10 @@ private fun PlaybackSettingsSection(
     tunnelingEnabled: Boolean,
     useLibass: Boolean,
     libassRenderType: String,
+    desktopTab: PlaybackSettingsTab? = null,
 ) {
+    // Desktop splits the page into tabs; every other layout shows all sections.
+    fun showTab(tab: PlaybackSettingsTab): Boolean = desktopTab == null || desktopTab == tab
     var showPreferredAudioDialog by remember { mutableStateOf(false) }
     var showSecondaryAudioDialog by remember { mutableStateOf(false) }
     var showPreferredSubtitleDialog by remember { mutableStateOf(false) }
@@ -355,7 +360,7 @@ private fun PlaybackSettingsSection(
     Column(
         verticalArrangement = Arrangement.spacedBy(sectionSpacing),
     ) {
-        SettingsSection(
+        if (showTab(PlaybackSettingsTab.Player)) SettingsSection(
             title = stringResource(Res.string.settings_playback_section_player),
             isTablet = isTablet,
         ) {
@@ -480,7 +485,7 @@ private fun PlaybackSettingsSection(
             }
         }
 
-        SettingsSection(
+        if (showTab(PlaybackSettingsTab.Player)) SettingsSection(
             title = stringResource(Res.string.settings_playback_section_seek),
             isTablet = isTablet,
         ) {
@@ -517,7 +522,7 @@ private fun PlaybackSettingsSection(
             }
         }
 
-        SettingsSection(
+        if (showTab(PlaybackSettingsTab.SubtitlesAudio)) SettingsSection(
             title = stringResource(Res.string.settings_playback_section_subtitle_audio),
             isTablet = isTablet,
         ) {
@@ -620,7 +625,7 @@ private fun PlaybackSettingsSection(
             }
         }
 
-        SettingsSection(
+        if (showTab(PlaybackSettingsTab.SubtitlesAudio)) SettingsSection(
             title = stringResource(Res.string.settings_playback_section_subtitle_rendering),
             isTablet = isTablet,
         ) {
@@ -725,7 +730,7 @@ private fun PlaybackSettingsSection(
             }
         }
 
-        if (P2pSettingsRepository.isVisible) {
+        if (P2pSettingsRepository.isVisible && showTab(PlaybackSettingsTab.Video)) {
             SettingsSection(
                 title = stringResource(Res.string.settings_playback_section_p2p),
                 isTablet = isTablet,
@@ -808,7 +813,7 @@ private fun PlaybackSettingsSection(
             }
         }
 
-        SettingsSection(
+        if (showTab(PlaybackSettingsTab.Streams)) SettingsSection(
             title = stringResource(Res.string.settings_playback_section_stream_selection),
             isTablet = isTablet,
         ) {
@@ -832,7 +837,7 @@ private fun PlaybackSettingsSection(
             }
         }
 
-        SettingsSection(
+        if (showTab(PlaybackSettingsTab.Streams)) SettingsSection(
             title = stringResource(Res.string.settings_playback_section_stream_auto_play),
             isTablet = isTablet,
         ) {
@@ -956,7 +961,7 @@ private fun PlaybackSettingsSection(
             }
         }
 
-        if (!isIos) {
+        if (!isIos && showTab(PlaybackSettingsTab.Video)) {
             val decoderEnabled = !autoPlayPlayerSettings.externalPlayerEnabled
             val exoOptionsEnabled = decoderEnabled && (isDesktop || androidPlaybackEngine != AndroidPlaybackEngine.Libmpv)
             val libmpvOptionsVisible = !isDesktop && androidPlaybackEngine != AndroidPlaybackEngine.ExoPlayer
@@ -1037,7 +1042,7 @@ private fun PlaybackSettingsSection(
             }
         }
 
-        if (SurroundUpmixSettings.isSupported) {
+        if (SurroundUpmixSettings.isSupported && showTab(PlaybackSettingsTab.SubtitlesAudio)) {
             val automaticSurroundEnabled by SurroundUpmixSettings.automaticEnabled.collectAsStateWithLifecycle()
             val surroundEnabled by SurroundUpmixSettings.enabled.collectAsStateWithLifecycle()
             val virtualHeadsetEnabled by SurroundUpmixSettings.headsetEnabled.collectAsStateWithLifecycle()
@@ -1082,7 +1087,7 @@ private fun PlaybackSettingsSection(
             }
         }
 
-        if (isWindows) {
+        if (isWindows && showTab(PlaybackSettingsTab.Video)) {
             var rtxEnvironment by remember { mutableStateOf<NvidiaRtxVideoEnvironment?>(null) }
             var rtxAppOpenFailed by remember { mutableStateOf(false) }
             LaunchedEffect(Unit) {
@@ -1165,7 +1170,7 @@ private fun PlaybackSettingsSection(
             }
         }
 
-        if (isIos) {
+        if (isIos && showTab(PlaybackSettingsTab.Video)) {
             SettingsSection(
                 title = stringResource(Res.string.settings_playback_ios_audio_output_section),
                 isTablet = isTablet,
@@ -1225,7 +1230,7 @@ private fun PlaybackSettingsSection(
             }
         }
 
-        SettingsSection(
+        if (showTab(PlaybackSettingsTab.NextEpisode)) SettingsSection(
             title = stringResource(Res.string.settings_playback_section_skip_segments),
             isTablet = isTablet,
         ) {
@@ -1308,7 +1313,7 @@ private fun PlaybackSettingsSection(
             }
         }
 
-        SettingsSection(
+        if (showTab(PlaybackSettingsTab.NextEpisode)) SettingsSection(
             title = stringResource(Res.string.settings_playback_section_next_episode),
             isTablet = isTablet,
         ) {

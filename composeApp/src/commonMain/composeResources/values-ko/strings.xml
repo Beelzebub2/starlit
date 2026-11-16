@@ -3316,4 +3316,19 @@
     <string name="profile_kids_content_filter">어린이 콘텐츠 필터</string>
     <string name="profile_kids_content_filter_description">메타데이터를 기준으로 공포, 폭력 및 성인용 작품을 숨깁니다. 보호자 잠금은 아닙니다.</string>
     <string name="profile_kids_content_blocked">이 작품은 어린이 필터로 숨겨졌습니다.</string>
+    <string name="settings_desktop_overview">개요</string>
+    <string name="settings_desktop_overview_summary">내 계정, 연결된 서비스, 가장 자주 바꾸는 설정입니다.</string>
+    <string name="settings_desktop_quick_settings">빠른 설정</string>
+    <string name="settings_desktop_manage_account">계정 관리</string>
+    <string name="settings_desktop_posters_previews">포스터 및 미리보기</string>
+    <string name="settings_desktop_posters_previews_summary">포스터 카드의 모양과 포인터를 올려 두었을 때의 동작입니다.</string>
+    <string name="settings_desktop_metadata_ratings">메타데이터 및 평점</string>
+    <string name="settings_desktop_metadata_ratings_summary">TMDB의 이미지, 출연진, 번역된 세부 정보와 MDBList를 통한 평점입니다.</string>
+    <string name="settings_playback_tab_player">플레이어</string>
+    <string name="settings_playback_tab_subtitles_audio">자막 및 오디오</string>
+    <string name="settings_playback_tab_streams">스트림 및 자동 재생</string>
+    <string name="settings_playback_tab_next_episode">다음 에피소드 및 건너뛰기</string>
+    <string name="settings_playback_tab_video">동영상</string>
+    <string name="settings_playback_tab_video_p2p">동영상 및 P2P</string>
+    <string name="settings_desktop_subtitle_language">자막 언어</string>
 </resources>

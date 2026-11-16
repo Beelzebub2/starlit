@@ -3343,4 +3343,19 @@
     <string name="profile_kids_content_filter">ตัวกรองเนื้อหาสำหรับเด็ก</string>
     <string name="profile_kids_content_filter_description">ซ่อนเนื้อหาสยองขวัญ ความรุนแรง และเนื้อหาผู้ใหญ่ตามข้อมูลกำกับ ไม่ใช่ระบบล็อกผู้ปกครอง</string>
     <string name="profile_kids_content_blocked">เรื่องนี้ถูกซ่อนโดยตัวกรองสำหรับเด็ก</string>
+    <string name="settings_desktop_overview">ภาพรวม</string>
+    <string name="settings_desktop_overview_summary">บัญชีของคุณ บริการที่เชื่อมต่อ และการตั้งค่าที่คุณเปลี่ยนบ่อยที่สุด</string>
+    <string name="settings_desktop_quick_settings">การตั้งค่าด่วน</string>
+    <string name="settings_desktop_manage_account">จัดการบัญชี</string>
+    <string name="settings_desktop_posters_previews">โปสเตอร์และตัวอย่าง</string>
+    <string name="settings_desktop_posters_previews_summary">ลักษณะของการ์ดโปสเตอร์ และสิ่งที่เกิดขึ้นเมื่อวางตัวชี้ไว้บนการ์ด</string>
+    <string name="settings_desktop_metadata_ratings">ข้อมูลเมตาและคะแนน</string>
+    <string name="settings_desktop_metadata_ratings_summary">ภาพ นักแสดง และรายละเอียดที่แปลแล้วจาก TMDB รวมถึงคะแนนผ่าน MDBList</string>
+    <string name="settings_playback_tab_player">เครื่องเล่น</string>
+    <string name="settings_playback_tab_subtitles_audio">คำบรรยายและเสียง</string>
+    <string name="settings_playback_tab_streams">สตรีมและเล่นอัตโนมัติ</string>
+    <string name="settings_playback_tab_next_episode">ตอนถัดไปและการข้าม</string>
+    <string name="settings_playback_tab_video">วิดีโอ</string>
+    <string name="settings_playback_tab_video_p2p">วิดีโอและ P2P</string>
+    <string name="settings_desktop_subtitle_language">ภาษาคำบรรยาย</string>
 </resources>

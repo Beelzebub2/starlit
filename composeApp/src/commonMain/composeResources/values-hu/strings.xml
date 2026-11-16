@@ -2426,4 +2426,19 @@
     <string name="profile_kids_content_filter">Gyermekbarát tartalomszűrő</string>
     <string name="profile_kids_content_filter_description">Elrejti a horrort, az erőszakot és a felnőtt tartalmakat a metaadatok alapján. Nem szülői zárolás.</string>
     <string name="profile_kids_content_blocked">Ezt a címet a gyermekszűrő rejti el.</string>
+    <string name="settings_desktop_overview">Áttekintés</string>
+    <string name="settings_desktop_overview_summary">A fiókod, a csatlakoztatott szolgáltatások és a leggyakrabban módosított beállítások.</string>
+    <string name="settings_desktop_quick_settings">Gyorsbeállítások</string>
+    <string name="settings_desktop_manage_account">Fiók kezelése</string>
+    <string name="settings_desktop_posters_previews">Poszterek és előnézetek</string>
+    <string name="settings_desktop_posters_previews_summary">Hogyan néznek ki a poszterkártyák, és mi történik, ha a mutatót az egyiken tartod.</string>
+    <string name="settings_desktop_metadata_ratings">Metaadatok és értékelések</string>
+    <string name="settings_desktop_metadata_ratings_summary">Képek, szereplők és lefordított részletek a TMDB-ből, valamint értékelések az MDBListen keresztül.</string>
+    <string name="settings_playback_tab_player">Lejátszó</string>
+    <string name="settings_playback_tab_subtitles_audio">Feliratok és hang</string>
+    <string name="settings_playback_tab_streams">Streamek és automatikus lejátszás</string>
+    <string name="settings_playback_tab_next_episode">Következő rész és átugrások</string>
+    <string name="settings_playback_tab_video">Videó</string>
+    <string name="settings_playback_tab_video_p2p">Videó és P2P</string>
+    <string name="settings_desktop_subtitle_language">Felirat nyelve</string>
 </resources>

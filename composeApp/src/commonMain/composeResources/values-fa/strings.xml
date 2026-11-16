@@ -3320,4 +3320,19 @@
     <string name="profile_kids_content_filter">فیلتر محتوای کودکان</string>
     <string name="profile_kids_content_filter_description">محتوای ترسناک، خشن و بزرگسالان را با فراداده پنهان می‌کند. قفل والدین نیست.</string>
     <string name="profile_kids_content_blocked">این عنوان توسط فیلتر کودکان پنهان شده است.</string>
+    <string name="settings_desktop_overview">نمای کلی</string>
+    <string name="settings_desktop_overview_summary">حساب شما، سرویس‌های متصل و تنظیماتی که بیشتر از همه تغییر می‌دهید.</string>
+    <string name="settings_desktop_quick_settings">تنظیمات سریع</string>
+    <string name="settings_desktop_manage_account">مدیریت حساب</string>
+    <string name="settings_desktop_posters_previews">پوسترها و پیش‌نمایش‌ها</string>
+    <string name="settings_desktop_posters_previews_summary">ظاهر کارت‌های پوستر و اینکه وقتی نشانگر را روی یکی نگه می‌دارید چه اتفاقی می‌افتد.</string>
+    <string name="settings_desktop_metadata_ratings">فراداده و امتیازها</string>
+    <string name="settings_desktop_metadata_ratings_summary">تصاویر، بازیگران و جزئیات ترجمه‌شده از TMDB، و امتیازها از طریق MDBList.</string>
+    <string name="settings_playback_tab_player">پخش‌کننده</string>
+    <string name="settings_playback_tab_subtitles_audio">زیرنویس و صدا</string>
+    <string name="settings_playback_tab_streams">استریم‌ها و پخش خودکار</string>
+    <string name="settings_playback_tab_next_episode">قسمت بعدی و رد کردن</string>
+    <string name="settings_playback_tab_video">ویدیو</string>
+    <string name="settings_playback_tab_video_p2p">ویدیو و P2P</string>
+    <string name="settings_desktop_subtitle_language">زبان زیرنویس</string>
 </resources>

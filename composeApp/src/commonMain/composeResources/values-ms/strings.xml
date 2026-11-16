@@ -3358,4 +3358,19 @@ Had permintaan</string>
     <string name="profile_kids_content_filter">Penapis kandungan kanak-kanak</string>
     <string name="profile_kids_content_filter_description">Sembunyikan seram, keganasan dan kandungan dewasa berdasarkan metadata. Bukan kunci ibu bapa.</string>
     <string name="profile_kids_content_blocked">Tajuk ini disembunyikan oleh penapis kanak-kanak.</string>
+    <string name="settings_desktop_overview">Gambaran keseluruhan</string>
+    <string name="settings_desktop_overview_summary">Akaun anda, perkhidmatan yang disambungkan dan tetapan yang paling kerap anda ubah.</string>
+    <string name="settings_desktop_quick_settings">Tetapan pantas</string>
+    <string name="settings_desktop_manage_account">Urus akaun</string>
+    <string name="settings_desktop_posters_previews">Poster &amp; pratonton</string>
+    <string name="settings_desktop_posters_previews_summary">Rupa kad poster, dan apa yang berlaku apabila penuding berhenti di atasnya.</string>
+    <string name="settings_desktop_metadata_ratings">Metadata &amp; penarafan</string>
+    <string name="settings_desktop_metadata_ratings_summary">Imej, pelakon dan butiran terjemahan daripada TMDB, serta penarafan melalui MDBList.</string>
+    <string name="settings_playback_tab_player">Pemain</string>
+    <string name="settings_playback_tab_subtitles_audio">Sari kata &amp; audio</string>
+    <string name="settings_playback_tab_streams">Strim &amp; main automatik</string>
+    <string name="settings_playback_tab_next_episode">Episod seterusnya &amp; langkau</string>
+    <string name="settings_playback_tab_video">Video</string>
+    <string name="settings_playback_tab_video_p2p">Video &amp; P2P</string>
+    <string name="settings_desktop_subtitle_language">Bahasa sari kata</string>
 </resources>

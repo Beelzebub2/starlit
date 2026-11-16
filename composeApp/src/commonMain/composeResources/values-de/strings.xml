@@ -1528,4 +1528,19 @@
     <string name="profile_kids_content_filter">Inhaltsfilter für Kinder</string>
     <string name="profile_kids_content_filter_description">Blendet Horror, Gewalt und Erwachseneninhalt anhand der Metadaten aus. Kein Elternschloss.</string>
     <string name="profile_kids_content_blocked">Dieser Titel wird durch den Kinderfilter ausgeblendet.</string>
+    <string name="settings_desktop_overview">Übersicht</string>
+    <string name="settings_desktop_overview_summary">Dein Konto, verbundene Dienste und die Einstellungen, die du am häufigsten änderst.</string>
+    <string name="settings_desktop_quick_settings">Schnelleinstellungen</string>
+    <string name="settings_desktop_manage_account">Konto verwalten</string>
+    <string name="settings_desktop_posters_previews">Poster &amp; Vorschauen</string>
+    <string name="settings_desktop_posters_previews_summary">Wie Posterkarten aussehen und was passiert, wenn der Mauszeiger auf einer ruht.</string>
+    <string name="settings_desktop_metadata_ratings">Metadaten &amp; Bewertungen</string>
+    <string name="settings_desktop_metadata_ratings_summary">Bilder, Besetzung und übersetzte Details von TMDB sowie Bewertungen über MDBList.</string>
+    <string name="settings_playback_tab_player">Player</string>
+    <string name="settings_playback_tab_subtitles_audio">Untertitel &amp; Audio</string>
+    <string name="settings_playback_tab_streams">Streams &amp; automatische Wiedergabe</string>
+    <string name="settings_playback_tab_next_episode">Nächste Folge &amp; Überspringen</string>
+    <string name="settings_playback_tab_video">Video</string>
+    <string name="settings_playback_tab_video_p2p">Video &amp; P2P</string>
+    <string name="settings_desktop_subtitle_language">Untertitelsprache</string>
 </resources>

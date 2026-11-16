@@ -26,12 +26,10 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Article
-import androidx.compose.material.icons.automirrored.rounded.ViewList
 import androidx.compose.material.icons.rounded.AccountCircle
-import androidx.compose.material.icons.rounded.ArrowOutward
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Cloud
-import androidx.compose.material.icons.rounded.CollectionsBookmark
+import androidx.compose.material.icons.rounded.Dashboard
 import androidx.compose.material.icons.rounded.Extension
 import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.Info
@@ -39,10 +37,8 @@ import androidx.compose.material.icons.rounded.Movie
 import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.PlayCircle
-import androidx.compose.material.icons.rounded.Preview
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.SpaceDashboard
-import androidx.compose.material.icons.rounded.Stars
 import androidx.compose.material.icons.rounded.Style
 import androidx.compose.material.icons.rounded.SwapHoriz
 import androidx.compose.material.icons.rounded.Sync
@@ -61,6 +57,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
@@ -86,7 +84,6 @@ import com.nuvio.app.features.profiles.ActiveProfileMiniAvatar
 import com.nuvio.app.features.profiles.AvatarRepository
 import com.nuvio.app.features.profiles.ProfileRepository
 import nuvio.composeapp.generated.resources.Res
-import nuvio.composeapp.generated.resources.collections_header
 import nuvio.composeapp.generated.resources.compose_nav_profile
 import nuvio.composeapp.generated.resources.compose_search_clear
 import nuvio.composeapp.generated.resources.compose_settings_page_account
@@ -113,22 +110,17 @@ import nuvio.composeapp.generated.resources.settings_desktop_details_page
 import nuvio.composeapp.generated.resources.settings_desktop_details_page_summary
 import nuvio.composeapp.generated.resources.settings_desktop_home_screen
 import nuvio.composeapp.generated.resources.settings_desktop_home_screen_summary
-import nuvio.composeapp.generated.resources.settings_desktop_hover_previews
-import nuvio.composeapp.generated.resources.settings_desktop_hover_previews_summary
-import nuvio.composeapp.generated.resources.settings_desktop_mdblist
-import nuvio.composeapp.generated.resources.settings_desktop_mdblist_summary
+import nuvio.composeapp.generated.resources.settings_desktop_metadata_ratings
+import nuvio.composeapp.generated.resources.settings_desktop_metadata_ratings_summary
+import nuvio.composeapp.generated.resources.settings_desktop_overview
+import nuvio.composeapp.generated.resources.settings_desktop_overview_summary
 import nuvio.composeapp.generated.resources.settings_desktop_playback_summary
 import nuvio.composeapp.generated.resources.settings_desktop_plugins_summary
-import nuvio.composeapp.generated.resources.settings_desktop_poster_cards
-import nuvio.composeapp.generated.resources.settings_desktop_poster_cards_summary
-import nuvio.composeapp.generated.resources.settings_desktop_source_list
-import nuvio.composeapp.generated.resources.settings_desktop_source_list_summary
+import nuvio.composeapp.generated.resources.settings_desktop_posters_previews
+import nuvio.composeapp.generated.resources.settings_desktop_posters_previews_summary
 import nuvio.composeapp.generated.resources.settings_desktop_switch_profile
-import nuvio.composeapp.generated.resources.settings_desktop_tmdb
-import nuvio.composeapp.generated.resources.settings_desktop_tmdb_summary
 import nuvio.composeapp.generated.resources.settings_desktop_updates
 import nuvio.composeapp.generated.resources.settings_desktop_updates_summary
-import nuvio.composeapp.generated.resources.settings_group_integrations
 import nuvio.composeapp.generated.resources.settings_group_look_and_feel
 import nuvio.composeapp.generated.resources.settings_group_sources
 import nuvio.composeapp.generated.resources.settings_group_system
@@ -139,8 +131,8 @@ import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
 /**
- * One item in the desktop settings sidebar. Most open a [SettingsPage]; Collections opens its own
- * editor, and Updates and About are desktop-only screens with no page of their own.
+ * One item in the desktop settings sidebar. Most open a [SettingsPage]; Overview, Updates and About
+ * are desktop-only screens with no page of their own.
  */
 internal enum class DesktopSettingsEntry(
     val labelRes: StringResource,
@@ -148,6 +140,7 @@ internal enum class DesktopSettingsEntry(
     val page: SettingsPage? = null,
     val summaryRes: StringResource? = null,
 ) {
+    Overview(Res.string.settings_desktop_overview, Icons.Rounded.Dashboard, summaryRes = Res.string.settings_desktop_overview_summary),
     Account(Res.string.compose_settings_page_account, Icons.Rounded.AccountCircle, SettingsPage.Account, Res.string.settings_desktop_account_summary),
     Tracking(Res.string.compose_settings_page_tracking, Icons.Rounded.Sync, SettingsPage.TraktAuthentication, Res.string.compose_settings_root_tracking_description),
     Playback(Res.string.compose_settings_page_playback, Icons.Rounded.PlayCircle, SettingsPage.Playback, Res.string.settings_desktop_playback_summary),
@@ -155,16 +148,12 @@ internal enum class DesktopSettingsEntry(
     Notifications(Res.string.compose_settings_page_notifications, Icons.Rounded.Notifications, SettingsPage.Notifications, Res.string.compose_settings_root_notifications_description),
     Appearance(Res.string.settings_desktop_appearance, Icons.Rounded.Palette, SettingsPage.Appearance, Res.string.settings_desktop_appearance_summary),
     HomeScreen(Res.string.settings_desktop_home_screen, Icons.Rounded.SpaceDashboard, SettingsPage.Homescreen, Res.string.settings_desktop_home_screen_summary),
-    Collections(Res.string.collections_header, Icons.Rounded.CollectionsBookmark),
+    PostersAndPreviews(Res.string.settings_desktop_posters_previews, Icons.Rounded.Style, SettingsPage.PosterCustomization, Res.string.settings_desktop_posters_previews_summary),
     DetailsPage(Res.string.settings_desktop_details_page, Icons.AutoMirrored.Rounded.Article, SettingsPage.MetaScreen, Res.string.settings_desktop_details_page_summary),
-    PosterCards(Res.string.settings_desktop_poster_cards, Icons.Rounded.Style, SettingsPage.PosterCustomization, Res.string.settings_desktop_poster_cards_summary),
-    HoverPreviews(Res.string.settings_desktop_hover_previews, Icons.Rounded.Preview, SettingsPage.HoverPreview, Res.string.settings_desktop_hover_previews_summary),
     Addons(Res.string.settings_desktop_addons, Icons.Rounded.Extension, SettingsPage.Addons, Res.string.settings_desktop_addons_summary),
-    Plugins(Res.string.compose_settings_page_plugins, Icons.Rounded.Widgets, SettingsPage.Plugins, Res.string.settings_desktop_plugins_summary),
     Debrid(Res.string.settings_desktop_debrid, Icons.Rounded.Cloud, SettingsPage.Debrid, Res.string.settings_desktop_debrid_summary),
-    SourceList(Res.string.settings_desktop_source_list, Icons.AutoMirrored.Rounded.ViewList, SettingsPage.Streams, Res.string.settings_desktop_source_list_summary),
-    Tmdb(Res.string.settings_desktop_tmdb, Icons.Rounded.Movie, SettingsPage.TmdbEnrichment, Res.string.settings_desktop_tmdb_summary),
-    MdbList(Res.string.settings_desktop_mdblist, Icons.Rounded.Stars, SettingsPage.MdbListRatings, Res.string.settings_desktop_mdblist_summary),
+    Plugins(Res.string.compose_settings_page_plugins, Icons.Rounded.Widgets, SettingsPage.Plugins, Res.string.settings_desktop_plugins_summary),
+    MetadataAndRatings(Res.string.settings_desktop_metadata_ratings, Icons.Rounded.Movie, SettingsPage.TmdbEnrichment, Res.string.settings_desktop_metadata_ratings_summary),
     Advanced(Res.string.compose_settings_page_advanced, Icons.Rounded.Tune, SettingsPage.Advanced, Res.string.settings_desktop_advanced_summary),
     Updates(Res.string.settings_desktop_updates, Icons.Rounded.SystemUpdateAlt, summaryRes = Res.string.settings_desktop_updates_summary),
     About(Res.string.settings_desktop_about, Icons.Rounded.Info, summaryRes = Res.string.settings_desktop_about_summary),
@@ -172,14 +161,18 @@ internal enum class DesktopSettingsEntry(
 
 /** Desktop-only screens shown while the settings page itself is [SettingsPage.Root]. */
 internal val DesktopSettingsEntry.isRootScreen: Boolean
-    get() = this == DesktopSettingsEntry.Updates || this == DesktopSettingsEntry.About
+    get() = this == DesktopSettingsEntry.Overview ||
+        this == DesktopSettingsEntry.Updates ||
+        this == DesktopSettingsEntry.About
 
+/** A sidebar group. The first group, holding Overview, has no label. */
 internal data class DesktopSettingsGroup(
-    val labelRes: StringResource,
+    val labelRes: StringResource?,
     val entries: List<DesktopSettingsEntry>,
 )
 
 internal fun desktopSettingsGroups(updatesAvailable: Boolean = true): List<DesktopSettingsGroup> = listOf(
+    DesktopSettingsGroup(null, listOf(DesktopSettingsEntry.Overview)),
     DesktopSettingsGroup(
         Res.string.settings_group_you,
         listOf(DesktopSettingsEntry.Account, DesktopSettingsEntry.Tracking),
@@ -197,24 +190,18 @@ internal fun desktopSettingsGroups(updatesAvailable: Boolean = true): List<Deskt
         listOf(
             DesktopSettingsEntry.Appearance,
             DesktopSettingsEntry.HomeScreen,
-            DesktopSettingsEntry.Collections,
+            DesktopSettingsEntry.PostersAndPreviews,
             DesktopSettingsEntry.DetailsPage,
-            DesktopSettingsEntry.PosterCards,
-            DesktopSettingsEntry.HoverPreviews,
         ),
     ),
     DesktopSettingsGroup(
         Res.string.settings_group_sources,
         buildList {
             add(DesktopSettingsEntry.Addons)
-            if (AppFeaturePolicy.pluginsEnabled) add(DesktopSettingsEntry.Plugins)
             add(DesktopSettingsEntry.Debrid)
-            add(DesktopSettingsEntry.SourceList)
+            if (AppFeaturePolicy.pluginsEnabled) add(DesktopSettingsEntry.Plugins)
+            add(DesktopSettingsEntry.MetadataAndRatings)
         },
-    ),
-    DesktopSettingsGroup(
-        Res.string.settings_group_integrations,
-        listOf(DesktopSettingsEntry.Tmdb, DesktopSettingsEntry.MdbList),
     ),
     DesktopSettingsGroup(
         Res.string.settings_group_system,
@@ -230,12 +217,16 @@ internal fun desktopSettingsGroups(updatesAvailable: Boolean = true): List<Deskt
 internal fun SettingsPage.desktopEntry(): DesktopSettingsEntry? = when (this) {
     // Opened from About, so About stays highlighted.
     SettingsPage.SupportersContributors, SettingsPage.LicensesAttributions -> DesktopSettingsEntry.About
+    // Pages shown as a tab of another sidebar entry.
+    SettingsPage.Streams -> DesktopSettingsEntry.Playback
+    SettingsPage.HoverPreview -> DesktopSettingsEntry.PostersAndPreviews
+    SettingsPage.MdbListRatings -> DesktopSettingsEntry.MetadataAndRatings
     else -> DesktopSettingsEntry.entries.firstOrNull { it.page == this }
 }
 
 /** Name used for [this] page on desktop: the sidebar label when the page has one. */
 internal fun SettingsPage.desktopTitleRes(): StringResource =
-    DesktopSettingsEntry.entries.firstOrNull { it.page == this }?.labelRes ?: titleRes
+    desktopEntry()?.takeUnless { it == DesktopSettingsEntry.About }?.labelRes ?: titleRes
 
 /** Sidebar group of [entry], used as the page breadcrumb. */
 internal fun desktopGroupLabelFor(entry: DesktopSettingsEntry): StringResource? =
@@ -243,8 +234,7 @@ internal fun desktopGroupLabelFor(entry: DesktopSettingsEntry): StringResource? 
 
 /** Group for pages reached from a hub rather than listed in the sidebar themselves. */
 internal fun SettingsPage.desktopHubGroupLabel(): StringResource? = when (this) {
-    SettingsPage.Integrations -> Res.string.settings_group_integrations
-    SettingsPage.ContentDiscovery -> Res.string.settings_group_sources
+    SettingsPage.Integrations, SettingsPage.ContentDiscovery -> Res.string.settings_group_sources
     else -> null
 }
 
@@ -259,6 +249,7 @@ internal fun DesktopSettingsSidebar(
     startPadding: Dp,
     onSwitchProfile: (() -> Unit)?,
     modifier: Modifier = Modifier,
+    searchFocusRequester: FocusRequester? = null,
 ) {
     val scrollState = rememberScrollState()
     Column(
@@ -270,7 +261,7 @@ internal fun DesktopSettingsSidebar(
             SidebarProfileCard(onSwitchProfile = onSwitchProfile)
             Spacer(Modifier.height(12.dp))
         }
-        SettingsSearchField(query = query, onQueryChange = onQueryChange)
+        SettingsSearchField(query = query, onQueryChange = onQueryChange, focusRequester = searchFocusRequester)
         Spacer(Modifier.height(10.dp))
         Box(modifier = Modifier.fillMaxWidth().weight(1f)) {
             Column(
@@ -283,13 +274,15 @@ internal fun DesktopSettingsSidebar(
                 val addonCount by AddonRepository.uiState.collectAsStateWithLifecycle()
                 groups.forEach { group ->
                     Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
-                        Text(
-                            text = stringResource(group.labelRes),
-                            modifier = Modifier.padding(start = 10.dp, bottom = 5.dp),
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Medium,
-                            color = MaterialTheme.nuvio.colors.textMuted,
-                        )
+                        group.labelRes?.let { label ->
+                            Text(
+                                text = stringResource(label),
+                                modifier = Modifier.padding(start = 10.dp, bottom = 5.dp),
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.nuvio.colors.textMuted,
+                            )
+                        }
                         group.entries.forEach { entry ->
                             SidebarLink(
                                 entry = entry,
@@ -371,7 +364,11 @@ private fun SidebarProfileCard(onSwitchProfile: () -> Unit) {
 }
 
 @Composable
-private fun SettingsSearchField(query: String, onQueryChange: (String) -> Unit) {
+private fun SettingsSearchField(
+    query: String,
+    onQueryChange: (String) -> Unit,
+    focusRequester: FocusRequester?,
+) {
     val tokens = MaterialTheme.nuvio
     val shape = RoundedCornerShape(NuvioTokens.Radius.lg)
     val placeholder = stringResource(Res.string.settings_search_placeholder)
@@ -403,6 +400,7 @@ private fun SettingsSearchField(query: String, onQueryChange: (String) -> Unit) 
                 onValueChange = onQueryChange,
                 modifier = Modifier
                     .fillMaxWidth()
+                    .then(if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier)
                     .semantics { contentDescription = placeholder }
                     .onPreviewKeyEvent { event ->
                         if (event.type == KeyEventType.KeyDown && event.key == Key.Escape && query.isNotEmpty()) {
@@ -418,6 +416,9 @@ private fun SettingsSearchField(query: String, onQueryChange: (String) -> Unit) 
                 cursorBrush = SolidColor(tokens.colors.textPrimary),
             )
         }
+        if (query.isEmpty() && !focused && focusRequester != null) {
+            SettingsShortcutHint(text = settingsSearchShortcutLabel())
+        }
         if (query.isNotEmpty()) {
             val clearLabel = stringResource(Res.string.compose_search_clear)
             Box(
@@ -432,6 +433,24 @@ private fun SettingsSearchField(query: String, onQueryChange: (String) -> Unit) 
             }
         }
     }
+}
+
+/** Keyboard shortcut chip shown in the search field while it is empty and unfocused. */
+@Composable
+private fun SettingsShortcutHint(text: String) {
+    val tokens = MaterialTheme.nuvio
+    val shape = RoundedCornerShape(NuvioTokens.Radius.sm)
+    Text(
+        text = text,
+        modifier = Modifier
+            .padding(end = 4.dp)
+            .clip(shape)
+            .border(NuvioTokens.Border.thin, tokens.colors.borderSubtle, shape)
+            .padding(horizontal = 6.dp, vertical = 1.dp),
+        style = MaterialTheme.typography.labelSmall,
+        color = tokens.colors.textMuted,
+        maxLines = 1,
+    )
 }
 
 @Composable
@@ -490,19 +509,12 @@ private fun SidebarLink(
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
-        when {
-            badge != null -> Text(
+        if (badge != null) {
+            Text(
                 text = badge,
                 modifier = Modifier.widthIn(min = 16.dp),
                 style = MaterialTheme.typography.labelSmall,
                 color = tokens.colors.textMuted,
-            )
-            // Collections opens its own editor rather than a page here.
-            entry == DesktopSettingsEntry.Collections -> Icon(
-                imageVector = Icons.Rounded.ArrowOutward,
-                contentDescription = null,
-                tint = tokens.colors.textMuted,
-                modifier = Modifier.size(14.dp),
             )
         }
     }

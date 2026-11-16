@@ -3323,4 +3323,19 @@
     <string name="profile_kids_content_filter">குழந்தைகள் உள்ளடக்க வடிகட்டி</string>
     <string name="profile_kids_content_filter_description">தரவின் அடிப்படையில் திகில், வன்முறை, வயதுவந்தோர் உள்ளடக்கத்தை மறைக்கும். இது பெற்றோர் பூட்டு அல்ல.</string>
     <string name="profile_kids_content_blocked">இந்தத் தலைப்பு குழந்தைகள் வடிகட்டியால் மறைக்கப்பட்டது.</string>
+    <string name="settings_desktop_overview">மேலோட்டம்</string>
+    <string name="settings_desktop_overview_summary">உங்கள் கணக்கு, இணைக்கப்பட்ட சேவைகள் மற்றும் நீங்கள் அடிக்கடி மாற்றும் அமைப்புகள்.</string>
+    <string name="settings_desktop_quick_settings">விரைவு அமைப்புகள்</string>
+    <string name="settings_desktop_manage_account">கணக்கை நிர்வகி</string>
+    <string name="settings_desktop_posters_previews">போஸ்டர்கள் &amp; முன்னோட்டங்கள்</string>
+    <string name="settings_desktop_posters_previews_summary">போஸ்டர் அட்டைகள் எப்படித் தோன்றும், ஒன்றின் மேல் சுட்டியை வைத்தால் என்ன நடக்கும்.</string>
+    <string name="settings_desktop_metadata_ratings">மெட்டாடேட்டா &amp; மதிப்பீடுகள்</string>
+    <string name="settings_desktop_metadata_ratings_summary">TMDB இலிருந்து படங்கள், நடிகர்கள் மற்றும் மொழிபெயர்க்கப்பட்ட விவரங்கள், MDBList வழியாக மதிப்பீடுகள்.</string>
+    <string name="settings_playback_tab_player">பிளேயர்</string>
+    <string name="settings_playback_tab_subtitles_audio">வசனங்கள் &amp; ஆடியோ</string>
+    <string name="settings_playback_tab_streams">ஸ்ட்ரீம்கள் &amp; தானியங்கு இயக்கம்</string>
+    <string name="settings_playback_tab_next_episode">அடுத்த எபிசோட் &amp; தவிர்த்தல்</string>
+    <string name="settings_playback_tab_video">வீடியோ</string>
+    <string name="settings_playback_tab_video_p2p">வீடியோ &amp; P2P</string>
+    <string name="settings_desktop_subtitle_language">வசன மொழி</string>
 </resources>

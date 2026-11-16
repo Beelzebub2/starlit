@@ -2552,4 +2552,19 @@
     <string name="profile_kids_content_filter">Filtr obsahu pro děti</string>
     <string name="profile_kids_content_filter_description">Skryje horory, násilí a obsah pro dospělé podle metadat. Nejde o rodičovský zámek.</string>
     <string name="profile_kids_content_blocked">Tento titul je skryt dětským filtrem.</string>
+    <string name="settings_desktop_overview">Přehled</string>
+    <string name="settings_desktop_overview_summary">Váš účet, připojené služby a nastavení, která měníte nejčastěji.</string>
+    <string name="settings_desktop_quick_settings">Rychlá nastavení</string>
+    <string name="settings_desktop_manage_account">Spravovat účet</string>
+    <string name="settings_desktop_posters_previews">Plakáty a náhledy</string>
+    <string name="settings_desktop_posters_previews_summary">Jak vypadají karty s plakáty a co se stane, když na některé necháte ukazatel.</string>
+    <string name="settings_desktop_metadata_ratings">Metadata a hodnocení</string>
+    <string name="settings_desktop_metadata_ratings_summary">Obrázky, obsazení a přeložené podrobnosti z TMDB a hodnocení přes MDBList.</string>
+    <string name="settings_playback_tab_player">Přehrávač</string>
+    <string name="settings_playback_tab_subtitles_audio">Titulky a zvuk</string>
+    <string name="settings_playback_tab_streams">Streamy a automatické přehrávání</string>
+    <string name="settings_playback_tab_next_episode">Další díl a přeskakování</string>
+    <string name="settings_playback_tab_video">Video</string>
+    <string name="settings_playback_tab_video_p2p">Video a P2P</string>
+    <string name="settings_desktop_subtitle_language">Jazyk titulků</string>
 </resources>

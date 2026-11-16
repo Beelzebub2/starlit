@@ -3356,4 +3356,19 @@
     <string name="profile_kids_content_filter">Фільтр дитячого вмісту</string>
     <string name="profile_kids_content_filter_description">Приховує жахи, насильство та вміст для дорослих за метаданими. Це не батьківське блокування.</string>
     <string name="profile_kids_content_blocked">Цю назву приховано дитячим фільтром.</string>
+    <string name="settings_desktop_overview">Огляд</string>
+    <string name="settings_desktop_overview_summary">Ваш обліковий запис, підключені сервіси та налаштування, які ви змінюєте найчастіше.</string>
+    <string name="settings_desktop_quick_settings">Швидкі налаштування</string>
+    <string name="settings_desktop_manage_account">Керувати обліковим записом</string>
+    <string name="settings_desktop_posters_previews">Постери та попередній перегляд</string>
+    <string name="settings_desktop_posters_previews_summary">Як виглядають картки постерів і що відбувається, коли вказівник затримується на одній з них.</string>
+    <string name="settings_desktop_metadata_ratings">Метадані та рейтинги</string>
+    <string name="settings_desktop_metadata_ratings_summary">Зображення, акторський склад і перекладені відомості з TMDB, а також рейтинги через MDBList.</string>
+    <string name="settings_playback_tab_player">Плеєр</string>
+    <string name="settings_playback_tab_subtitles_audio">Субтитри та звук</string>
+    <string name="settings_playback_tab_streams">Потоки та автовідтворення</string>
+    <string name="settings_playback_tab_next_episode">Наступна серія та пропуски</string>
+    <string name="settings_playback_tab_video">Відео</string>
+    <string name="settings_playback_tab_video_p2p">Відео та P2P</string>
+    <string name="settings_desktop_subtitle_language">Мова субтитрів</string>
 </resources>

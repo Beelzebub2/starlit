@@ -3316,4 +3316,19 @@
     <string name="profile_kids_content_filter">Lasten sisältösuodatin</string>
     <string name="profile_kids_content_filter_description">Piilottaa kauhua, väkivaltaa ja aikuissisältöä metatietojen perusteella. Ei ole lapsilukko.</string>
     <string name="profile_kids_content_blocked">Lasten suodatin piilottaa tämän nimikkeen.</string>
+    <string name="settings_desktop_overview">Yleiskatsaus</string>
+    <string name="settings_desktop_overview_summary">Tilisi, yhdistetyt palvelut ja asetukset, joita muutat useimmin.</string>
+    <string name="settings_desktop_quick_settings">Pika-asetukset</string>
+    <string name="settings_desktop_manage_account">Hallitse tiliä</string>
+    <string name="settings_desktop_posters_previews">Julisteet ja esikatselut</string>
+    <string name="settings_desktop_posters_previews_summary">Miltä julistekortit näyttävät ja mitä tapahtuu, kun osoitin pysähtyy kortin päälle.</string>
+    <string name="settings_desktop_metadata_ratings">Metatiedot ja arviot</string>
+    <string name="settings_desktop_metadata_ratings_summary">Kuvat, näyttelijät ja käännetyt tiedot TMDB:stä sekä arviot MDBListin kautta.</string>
+    <string name="settings_playback_tab_player">Soitin</string>
+    <string name="settings_playback_tab_subtitles_audio">Tekstitykset ja ääni</string>
+    <string name="settings_playback_tab_streams">Striimit ja automaattinen toisto</string>
+    <string name="settings_playback_tab_next_episode">Seuraava jakso ja ohitukset</string>
+    <string name="settings_playback_tab_video">Video</string>
+    <string name="settings_playback_tab_video_p2p">Video ja P2P</string>
+    <string name="settings_desktop_subtitle_language">Tekstityskieli</string>
 </resources>

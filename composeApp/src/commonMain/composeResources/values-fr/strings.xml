@@ -2268,4 +2268,19 @@
     <string name="profile_kids_content_filter">Filtre de contenu pour enfants</string>
     <string name="profile_kids_content_filter_description">Masque horreur, violence et contenu adulte selon les métadonnées. Ce n’est pas un verrou parental.</string>
     <string name="profile_kids_content_blocked">Ce titre est masqué par le filtre pour enfants.</string>
+    <string name="settings_desktop_overview">Vue d\'ensemble</string>
+    <string name="settings_desktop_overview_summary">Votre compte, les services connectés et les réglages que vous modifiez le plus.</string>
+    <string name="settings_desktop_quick_settings">Réglages rapides</string>
+    <string name="settings_desktop_manage_account">Gérer le compte</string>
+    <string name="settings_desktop_posters_previews">Affiches et aperçus</string>
+    <string name="settings_desktop_posters_previews_summary">L\'apparence des cartes d\'affiche et ce qui se passe lorsque le pointeur s\'arrête sur l\'une d\'elles.</string>
+    <string name="settings_desktop_metadata_ratings">Métadonnées et notes</string>
+    <string name="settings_desktop_metadata_ratings_summary">Images, distribution et informations traduites de TMDB, et notes via MDBList.</string>
+    <string name="settings_playback_tab_player">Lecteur</string>
+    <string name="settings_playback_tab_subtitles_audio">Sous-titres et audio</string>
+    <string name="settings_playback_tab_streams">Flux et lecture automatique</string>
+    <string name="settings_playback_tab_next_episode">Épisode suivant et sauts</string>
+    <string name="settings_playback_tab_video">Vidéo</string>
+    <string name="settings_playback_tab_video_p2p">Vidéo et P2P</string>
+    <string name="settings_desktop_subtitle_language">Langue des sous-titres</string>
 </resources>

@@ -2476,4 +2476,19 @@
     <string name="profile_kids_content_filter">Filtro de conteúdos infantis</string>
     <string name="profile_kids_content_filter_description">Oculta terror, violência e conteúdos para adultos com base nos metadados. Não é um bloqueio parental.</string>
     <string name="profile_kids_content_blocked">Este título está oculto pelo filtro infantil.</string>
+    <string name="settings_desktop_overview">Visão geral</string>
+    <string name="settings_desktop_overview_summary">A sua conta, os serviços ligados e as definições que mais altera.</string>
+    <string name="settings_desktop_quick_settings">Definições rápidas</string>
+    <string name="settings_desktop_manage_account">Gerir conta</string>
+    <string name="settings_desktop_posters_previews">Pósteres e pré-visualizações</string>
+    <string name="settings_desktop_posters_previews_summary">O aspeto dos cartões de póster e o que acontece quando o ponteiro fica sobre um.</string>
+    <string name="settings_desktop_metadata_ratings">Metadados e classificações</string>
+    <string name="settings_desktop_metadata_ratings_summary">Imagens, elenco e detalhes traduzidos do TMDB, e classificações através do MDBList.</string>
+    <string name="settings_playback_tab_player">Leitor</string>
+    <string name="settings_playback_tab_subtitles_audio">Legendas e áudio</string>
+    <string name="settings_playback_tab_streams">Streams e reprodução automática</string>
+    <string name="settings_playback_tab_next_episode">Próximo episódio e saltos</string>
+    <string name="settings_playback_tab_video">Vídeo</string>
+    <string name="settings_playback_tab_video_p2p">Vídeo e P2P</string>
+    <string name="settings_desktop_subtitle_language">Idioma das legendas</string>
 </resources>
