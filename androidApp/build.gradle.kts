@@ -183,6 +183,11 @@ dependencies {
     debugImplementation(libs.compose.uiTooling)
     androidTestImplementation("androidx.test:runner:1.7.0")
     androidTestImplementation("androidx.test:core:1.7.0")
+    // The engine AAR is an implementation-only dependency of composeApp, so its
+    // native smoke test needs a direct compile/runtime test dependency.
+    androidTestImplementation(
+        fileTree(mapOf("dir" to "../composeApp/libs", "include" to listOf("lib-nuvio-engine-android-*.aar")))
+    )
     androidTestImplementation(libs.androidx.testExt.junit)
     androidTestImplementation(libs.androidx.activity.compose)
     androidTestImplementation("androidx.compose.ui:ui-test-junit4:${libs.versions.composeMultiplatform.get()}")
