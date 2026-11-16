@@ -3343,4 +3343,19 @@
     <string name="profile_kids_content_filter">兒童內容篩選器</string>
     <string name="profile_kids_content_filter_description">依據中繼資料隱藏恐怖、暴力及成人內容。這不是家長鎖定。</string>
     <string name="profile_kids_content_blocked">此內容已被兒童篩選器隱藏。</string>
+    <string name="settings_desktop_overview">總覽</string>
+    <string name="settings_desktop_overview_summary">你的帳戶、已連結的服務，以及你最常變更的設定。</string>
+    <string name="settings_desktop_quick_settings">快速設定</string>
+    <string name="settings_desktop_manage_account">管理帳戶</string>
+    <string name="settings_desktop_posters_previews">海報與預覽</string>
+    <string name="settings_desktop_posters_previews_summary">海報卡片的外觀，以及游標停在卡片上時的行為。</string>
+    <string name="settings_desktop_metadata_ratings">中繼資料與評分</string>
+    <string name="settings_desktop_metadata_ratings_summary">來自 TMDB 的圖片、演員與翻譯後的詳細資料，以及透過 MDBList 取得的評分。</string>
+    <string name="settings_playback_tab_player">播放器</string>
+    <string name="settings_playback_tab_subtitles_audio">字幕與音訊</string>
+    <string name="settings_playback_tab_streams">串流與自動播放</string>
+    <string name="settings_playback_tab_next_episode">下一集與略過</string>
+    <string name="settings_playback_tab_video">影片</string>
+    <string name="settings_playback_tab_video_p2p">影片與 P2P</string>
+    <string name="settings_desktop_subtitle_language">字幕語言</string>
 </resources>

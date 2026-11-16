@@ -3343,4 +3343,19 @@
     <string name="profile_kids_content_filter">儿童内容过滤器</string>
     <string name="profile_kids_content_filter_description">根据元数据隐藏恐怖、暴力和成人内容。这不是家长锁。</string>
     <string name="profile_kids_content_blocked">此内容已被儿童过滤器隐藏。</string>
+    <string name="settings_desktop_overview">概览</string>
+    <string name="settings_desktop_overview_summary">你的账户、已连接的服务，以及你最常更改的设置。</string>
+    <string name="settings_desktop_quick_settings">快速设置</string>
+    <string name="settings_desktop_manage_account">管理账户</string>
+    <string name="settings_desktop_posters_previews">海报与预览</string>
+    <string name="settings_desktop_posters_previews_summary">海报卡的外观，以及指针停留在海报上时的行为。</string>
+    <string name="settings_desktop_metadata_ratings">元数据与评分</string>
+    <string name="settings_desktop_metadata_ratings_summary">来自 TMDB 的图片、演职员和翻译后的详细信息，以及通过 MDBList 获取的评分。</string>
+    <string name="settings_playback_tab_player">播放器</string>
+    <string name="settings_playback_tab_subtitles_audio">字幕与音频</string>
+    <string name="settings_playback_tab_streams">流与自动播放</string>
+    <string name="settings_playback_tab_next_episode">下一集与跳过</string>
+    <string name="settings_playback_tab_video">视频</string>
+    <string name="settings_playback_tab_video_p2p">视频与 P2P</string>
+    <string name="settings_desktop_subtitle_language">字幕语言</string>
 </resources>

@@ -3320,4 +3320,19 @@
     <string name="profile_kids_content_filter">పిల్లల కంటెంట్ ఫిల్టర్</string>
     <string name="profile_kids_content_filter_description">సమాచారం ఆధారంగా భయానక, హింస మరియు పెద్దల కంటెంట్‌ను దాచుతుంది. ఇది తల్లిదండ్రుల లాక్ కాదు.</string>
     <string name="profile_kids_content_blocked">ఈ శీర్షిక పిల్లల ఫిల్టర్ ద్వారా దాచబడింది.</string>
+    <string name="settings_desktop_overview">అవలోకనం</string>
+    <string name="settings_desktop_overview_summary">మీ ఖాతా, కనెక్ట్ చేసిన సేవలు మరియు మీరు ఎక్కువగా మార్చే సెట్టింగ్‌లు.</string>
+    <string name="settings_desktop_quick_settings">త్వరిత సెట్టింగ్‌లు</string>
+    <string name="settings_desktop_manage_account">ఖాతాను నిర్వహించండి</string>
+    <string name="settings_desktop_posters_previews">పోస్టర్‌లు &amp; ప్రివ్యూలు</string>
+    <string name="settings_desktop_posters_previews_summary">పోస్టర్ కార్డ్‌లు ఎలా కనిపిస్తాయి, ఒకదానిపై పాయింటర్ ఉంచినప్పుడు ఏమి జరుగుతుంది.</string>
+    <string name="settings_desktop_metadata_ratings">మెటాడేటా &amp; రేటింగ్‌లు</string>
+    <string name="settings_desktop_metadata_ratings_summary">TMDB నుండి చిత్రాలు, నటీనటులు మరియు అనువదించిన వివరాలు, MDBList ద్వారా రేటింగ్‌లు.</string>
+    <string name="settings_playback_tab_player">ప్లేయర్</string>
+    <string name="settings_playback_tab_subtitles_audio">ఉపశీర్షికలు &amp; ఆడియో</string>
+    <string name="settings_playback_tab_streams">స్ట్రీమ్‌లు &amp; ఆటో-ప్లే</string>
+    <string name="settings_playback_tab_next_episode">తదుపరి ఎపిసోడ్ &amp; స్కిప్‌లు</string>
+    <string name="settings_playback_tab_video">వీడియో</string>
+    <string name="settings_playback_tab_video_p2p">వీడియో &amp; P2P</string>
+    <string name="settings_desktop_subtitle_language">ఉపశీర్షిక భాష</string>
 </resources>

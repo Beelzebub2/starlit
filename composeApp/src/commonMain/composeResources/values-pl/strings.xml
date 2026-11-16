@@ -2596,4 +2596,19 @@
     <string name="profile_kids_content_filter">Filtr treści dla dzieci</string>
     <string name="profile_kids_content_filter_description">Ukrywa horrory, przemoc i treści dla dorosłych na podstawie metadanych. Nie jest blokadą rodzicielską.</string>
     <string name="profile_kids_content_blocked">Ten tytuł ukryto filtrem dziecięcym.</string>
+    <string name="settings_desktop_overview">Przegląd</string>
+    <string name="settings_desktop_overview_summary">Twoje konto, połączone usługi i ustawienia, które zmieniasz najczęściej.</string>
+    <string name="settings_desktop_quick_settings">Szybkie ustawienia</string>
+    <string name="settings_desktop_manage_account">Zarządzaj kontem</string>
+    <string name="settings_desktop_posters_previews">Plakaty i podglądy</string>
+    <string name="settings_desktop_posters_previews_summary">Jak wyglądają karty plakatów i co się dzieje, gdy wskaźnik zatrzyma się na jednej z nich.</string>
+    <string name="settings_desktop_metadata_ratings">Metadane i oceny</string>
+    <string name="settings_desktop_metadata_ratings_summary">Grafiki, obsada i przetłumaczone szczegóły z TMDB oraz oceny z MDBList.</string>
+    <string name="settings_playback_tab_player">Odtwarzacz</string>
+    <string name="settings_playback_tab_subtitles_audio">Napisy i dźwięk</string>
+    <string name="settings_playback_tab_streams">Strumienie i autoodtwarzanie</string>
+    <string name="settings_playback_tab_next_episode">Następny odcinek i pomijanie</string>
+    <string name="settings_playback_tab_video">Wideo</string>
+    <string name="settings_playback_tab_video_p2p">Wideo i P2P</string>
+    <string name="settings_desktop_subtitle_language">Język napisów</string>
 </resources>

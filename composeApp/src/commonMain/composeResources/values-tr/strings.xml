@@ -2449,4 +2449,19 @@ Bu özelliği tamamen kendi sorumluluğunuzda kullanırsınız. P2P istediğiniz
     <string name="profile_kids_content_filter">Çocuk içerik filtresi</string>
     <string name="profile_kids_content_filter_description">Üst verilere göre korku, şiddet ve yetişkin içeriklerini gizler. Ebeveyn kilidi değildir.</string>
     <string name="profile_kids_content_blocked">Bu başlık çocuk filtresi tarafından gizlendi.</string>
+    <string name="settings_desktop_overview">Genel bakış</string>
+    <string name="settings_desktop_overview_summary">Hesabın, bağlı hizmetler ve en sık değiştirdiğin ayarlar.</string>
+    <string name="settings_desktop_quick_settings">Hızlı ayarlar</string>
+    <string name="settings_desktop_manage_account">Hesabı yönet</string>
+    <string name="settings_desktop_posters_previews">Posterler ve önizlemeler</string>
+    <string name="settings_desktop_posters_previews_summary">Poster kartlarının nasıl göründüğü ve imleç birinin üzerinde durduğunda ne olduğu.</string>
+    <string name="settings_desktop_metadata_ratings">Meta veriler ve puanlar</string>
+    <string name="settings_desktop_metadata_ratings_summary">TMDB\'den görseller, oyuncular ve çevrilmiş ayrıntılar ile MDBList üzerinden puanlar.</string>
+    <string name="settings_playback_tab_player">Oynatıcı</string>
+    <string name="settings_playback_tab_subtitles_audio">Altyazılar ve ses</string>
+    <string name="settings_playback_tab_streams">Akışlar ve otomatik oynatma</string>
+    <string name="settings_playback_tab_next_episode">Sonraki bölüm ve atlamalar</string>
+    <string name="settings_playback_tab_video">Video</string>
+    <string name="settings_playback_tab_video_p2p">Video ve P2P</string>
+    <string name="settings_desktop_subtitle_language">Altyazı dili</string>
 </resources>

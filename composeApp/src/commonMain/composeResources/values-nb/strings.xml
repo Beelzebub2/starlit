@@ -2606,4 +2606,19 @@ Du bruker denne funksjonen helt på eget ansvar. P2P kan deaktiveres når som he
     <string name="profile_kids_content_filter">Innholdsfilter for barn</string>
     <string name="profile_kids_content_filter_description">Skjuler skrekk, vold og vokseninnhold basert på metadata. Ikke en foreldrelås.</string>
     <string name="profile_kids_content_blocked">Denne tittelen skjules av barnefilteret.</string>
+    <string name="settings_desktop_overview">Oversikt</string>
+    <string name="settings_desktop_overview_summary">Kontoen din, tilkoblede tjenester og innstillingene du endrer oftest.</string>
+    <string name="settings_desktop_quick_settings">Hurtiginnstillinger</string>
+    <string name="settings_desktop_manage_account">Administrer konto</string>
+    <string name="settings_desktop_posters_previews">Plakater og forhåndsvisninger</string>
+    <string name="settings_desktop_posters_previews_summary">Hvordan plakatkortene ser ut, og hva som skjer når pekeren hviler på et av dem.</string>
+    <string name="settings_desktop_metadata_ratings">Metadata og vurderinger</string>
+    <string name="settings_desktop_metadata_ratings_summary">Bilder, rolleliste og oversatte detaljer fra TMDB, og vurderinger via MDBList.</string>
+    <string name="settings_playback_tab_player">Spiller</string>
+    <string name="settings_playback_tab_subtitles_audio">Undertekster og lyd</string>
+    <string name="settings_playback_tab_streams">Strømmer og autoavspilling</string>
+    <string name="settings_playback_tab_next_episode">Neste episode og hopp</string>
+    <string name="settings_playback_tab_video">Video</string>
+    <string name="settings_playback_tab_video_p2p">Video og P2P</string>
+    <string name="settings_desktop_subtitle_language">Undertekstspråk</string>
 </resources>

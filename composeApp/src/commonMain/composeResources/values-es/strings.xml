@@ -2613,4 +2613,19 @@ Utilizas esta función bajo tu propia responsabilidad. P2P se puede desactivar e
     <string name="profile_kids_content_filter">Filtro de contenido infantil</string>
     <string name="profile_kids_content_filter_description">Oculta terror, violencia y contenido adulto según los metadatos. No es un bloqueo parental.</string>
     <string name="profile_kids_content_blocked">Este título está oculto por el filtro infantil.</string>
+    <string name="settings_desktop_overview">Resumen</string>
+    <string name="settings_desktop_overview_summary">Tu cuenta, los servicios conectados y los ajustes que más cambias.</string>
+    <string name="settings_desktop_quick_settings">Ajustes rápidos</string>
+    <string name="settings_desktop_manage_account">Administrar cuenta</string>
+    <string name="settings_desktop_posters_previews">Pósteres y vistas previas</string>
+    <string name="settings_desktop_posters_previews_summary">Cómo se ven las tarjetas de póster y qué pasa al dejar el puntero sobre una.</string>
+    <string name="settings_desktop_metadata_ratings">Metadatos y valoraciones</string>
+    <string name="settings_desktop_metadata_ratings_summary">Imágenes, reparto y detalles traducidos de TMDB, y valoraciones a través de MDBList.</string>
+    <string name="settings_playback_tab_player">Reproductor</string>
+    <string name="settings_playback_tab_subtitles_audio">Subtítulos y audio</string>
+    <string name="settings_playback_tab_streams">Streams y reproducción automática</string>
+    <string name="settings_playback_tab_next_episode">Siguiente episodio y saltos</string>
+    <string name="settings_playback_tab_video">Vídeo</string>
+    <string name="settings_playback_tab_video_p2p">Vídeo y P2P</string>
+    <string name="settings_desktop_subtitle_language">Idioma de los subtítulos</string>
 </resources>

@@ -3316,4 +3316,19 @@
     <string name="profile_kids_content_filter">Kichujio cha maudhui ya watoto</string>
     <string name="profile_kids_content_filter_description">Huficha maudhui ya kutisha, vurugu na watu wazima kwa metadata. Si kufuli ya wazazi.</string>
     <string name="profile_kids_content_blocked">Kichwa hiki kimefichwa na kichujio cha watoto.</string>
+    <string name="settings_desktop_overview">Muhtasari</string>
+    <string name="settings_desktop_overview_summary">Akaunti yako, huduma zilizounganishwa na mipangilio unayobadilisha zaidi.</string>
+    <string name="settings_desktop_quick_settings">Mipangilio ya haraka</string>
+    <string name="settings_desktop_manage_account">Dhibiti akaunti</string>
+    <string name="settings_desktop_posters_previews">Mabango na onyesho la kukagua</string>
+    <string name="settings_desktop_posters_previews_summary">Jinsi kadi za mabango zinavyoonekana, na kinachotokea unapoacha kielekezi juu ya moja.</string>
+    <string name="settings_desktop_metadata_ratings">Metadata na ukadiriaji</string>
+    <string name="settings_desktop_metadata_ratings_summary">Picha, waigizaji na maelezo yaliyotafsiriwa kutoka TMDB, pamoja na ukadiriaji kupitia MDBList.</string>
+    <string name="settings_playback_tab_player">Kicheza</string>
+    <string name="settings_playback_tab_subtitles_audio">Manukuu na sauti</string>
+    <string name="settings_playback_tab_streams">Mitiririko na kucheza kiotomatiki</string>
+    <string name="settings_playback_tab_next_episode">Kipindi kijacho na kurukaruka</string>
+    <string name="settings_playback_tab_video">Video</string>
+    <string name="settings_playback_tab_video_p2p">Video na P2P</string>
+    <string name="settings_desktop_subtitle_language">Lugha ya manukuu</string>
 </resources>

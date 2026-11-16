@@ -2226,4 +2226,19 @@
     <string name="profile_kids_content_filter">Filtru de conținut pentru copii</string>
     <string name="profile_kids_content_filter_description">Ascunde groaza, violența și conținutul pentru adulți pe baza metadatelor. Nu este blocare parentală.</string>
     <string name="profile_kids_content_blocked">Acest titlu este ascuns de filtrul pentru copii.</string>
+    <string name="settings_desktop_overview">Prezentare generală</string>
+    <string name="settings_desktop_overview_summary">Contul tău, serviciile conectate și setările pe care le schimbi cel mai des.</string>
+    <string name="settings_desktop_quick_settings">Setări rapide</string>
+    <string name="settings_desktop_manage_account">Gestionează contul</string>
+    <string name="settings_desktop_posters_previews">Postere și previzualizări</string>
+    <string name="settings_desktop_posters_previews_summary">Cum arată cardurile de poster și ce se întâmplă când lași cursorul pe unul.</string>
+    <string name="settings_desktop_metadata_ratings">Metadate și evaluări</string>
+    <string name="settings_desktop_metadata_ratings_summary">Imagini, distribuție și detalii traduse din TMDB, plus evaluări prin MDBList.</string>
+    <string name="settings_playback_tab_player">Player</string>
+    <string name="settings_playback_tab_subtitles_audio">Subtitrări și audio</string>
+    <string name="settings_playback_tab_streams">Fluxuri și redare automată</string>
+    <string name="settings_playback_tab_next_episode">Episodul următor și omiteri</string>
+    <string name="settings_playback_tab_video">Video</string>
+    <string name="settings_playback_tab_video_p2p">Video și P2P</string>
+    <string name="settings_desktop_subtitle_language">Limba subtitrărilor</string>
 </resources>

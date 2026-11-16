@@ -2675,4 +2675,19 @@
     <string name="profile_kids_content_filter">Bộ lọc nội dung trẻ em</string>
     <string name="profile_kids_content_filter_description">Ẩn nội dung kinh dị, bạo lực và người lớn theo siêu dữ liệu. Không phải khóa phụ huynh.</string>
     <string name="profile_kids_content_blocked">Tựa đề này bị ẩn bởi bộ lọc trẻ em.</string>
+    <string name="settings_desktop_overview">Tổng quan</string>
+    <string name="settings_desktop_overview_summary">Tài khoản của bạn, các dịch vụ đã kết nối và những cài đặt bạn thay đổi nhiều nhất.</string>
+    <string name="settings_desktop_quick_settings">Cài đặt nhanh</string>
+    <string name="settings_desktop_manage_account">Quản lý tài khoản</string>
+    <string name="settings_desktop_posters_previews">Áp phích &amp; xem trước</string>
+    <string name="settings_desktop_posters_previews_summary">Giao diện thẻ áp phích và điều xảy ra khi bạn để con trỏ trên một thẻ.</string>
+    <string name="settings_desktop_metadata_ratings">Siêu dữ liệu &amp; xếp hạng</string>
+    <string name="settings_desktop_metadata_ratings_summary">Hình ảnh, diễn viên và thông tin đã dịch từ TMDB, cùng xếp hạng qua MDBList.</string>
+    <string name="settings_playback_tab_player">Trình phát</string>
+    <string name="settings_playback_tab_subtitles_audio">Phụ đề &amp; âm thanh</string>
+    <string name="settings_playback_tab_streams">Luồng &amp; tự động phát</string>
+    <string name="settings_playback_tab_next_episode">Tập tiếp theo &amp; bỏ qua</string>
+    <string name="settings_playback_tab_video">Video</string>
+    <string name="settings_playback_tab_video_p2p">Video &amp; P2P</string>
+    <string name="settings_desktop_subtitle_language">Ngôn ngữ phụ đề</string>
 </resources>

@@ -3316,4 +3316,19 @@
     <string name="profile_kids_content_filter">Innehållsfilter för barn</string>
     <string name="profile_kids_content_filter_description">Döljer skräck, våld och vuxeninnehåll med hjälp av metadata. Det är inte ett föräldralås.</string>
     <string name="profile_kids_content_blocked">Den här titeln döljs av barnfiltret.</string>
+    <string name="settings_desktop_overview">Översikt</string>
+    <string name="settings_desktop_overview_summary">Ditt konto, anslutna tjänster och de inställningar du ändrar oftast.</string>
+    <string name="settings_desktop_quick_settings">Snabbinställningar</string>
+    <string name="settings_desktop_manage_account">Hantera konto</string>
+    <string name="settings_desktop_posters_previews">Affischer och förhandsvisningar</string>
+    <string name="settings_desktop_posters_previews_summary">Hur affischkorten ser ut och vad som händer när pekaren vilar på ett av dem.</string>
+    <string name="settings_desktop_metadata_ratings">Metadata och betyg</string>
+    <string name="settings_desktop_metadata_ratings_summary">Bilder, rollista och översatta detaljer från TMDB, och betyg via MDBList.</string>
+    <string name="settings_playback_tab_player">Spelare</string>
+    <string name="settings_playback_tab_subtitles_audio">Undertexter och ljud</string>
+    <string name="settings_playback_tab_streams">Strömmar och automatisk uppspelning</string>
+    <string name="settings_playback_tab_next_episode">Nästa avsnitt och överhopp</string>
+    <string name="settings_playback_tab_video">Video</string>
+    <string name="settings_playback_tab_video_p2p">Video och P2P</string>
+    <string name="settings_desktop_subtitle_language">Undertextspråk</string>
 </resources>

@@ -2420,4 +2420,19 @@
     <string name="profile_kids_content_filter">فلتر محتوى الأطفال</string>
     <string name="profile_kids_content_filter_description">إخفاء محتوى الرعب والعنف والبالغين عند توفر بيانات التصنيف. ليس قفلاً أبوياً.</string>
     <string name="profile_kids_content_blocked">هذا العنوان مخفي بفلتر الأطفال.</string>
+    <string name="settings_desktop_overview">نظرة عامة</string>
+    <string name="settings_desktop_overview_summary">حسابك والخدمات المتصلة والإعدادات التي تغيّرها أكثر من غيرها.</string>
+    <string name="settings_desktop_quick_settings">إعدادات سريعة</string>
+    <string name="settings_desktop_manage_account">إدارة الحساب</string>
+    <string name="settings_desktop_posters_previews">الملصقات والمعاينات</string>
+    <string name="settings_desktop_posters_previews_summary">شكل بطاقات الملصقات، وما يحدث عند إبقاء المؤشر فوق إحداها.</string>
+    <string name="settings_desktop_metadata_ratings">البيانات الوصفية والتقييمات</string>
+    <string name="settings_desktop_metadata_ratings_summary">الصور وطاقم العمل والتفاصيل المترجمة من TMDB، والتقييمات عبر MDBList.</string>
+    <string name="settings_playback_tab_player">المشغّل</string>
+    <string name="settings_playback_tab_subtitles_audio">الترجمة والصوت</string>
+    <string name="settings_playback_tab_streams">المصادر والتشغيل التلقائي</string>
+    <string name="settings_playback_tab_next_episode">الحلقة التالية والتخطي</string>
+    <string name="settings_playback_tab_video">الفيديو</string>
+    <string name="settings_playback_tab_video_p2p">الفيديو وP2P</string>
+    <string name="settings_desktop_subtitle_language">لغة الترجمة</string>
 </resources>

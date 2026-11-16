@@ -2530,4 +2530,19 @@
     <string name="profile_kids_content_filter">Филтър за детско съдържание</string>
     <string name="profile_kids_content_filter_description">Скрива ужаси, насилие и съдържание за възрастни според метаданните. Не е родителска ключалка.</string>
     <string name="profile_kids_content_blocked">Това заглавие е скрито от детския филтър.</string>
+    <string name="settings_desktop_overview">Общ преглед</string>
+    <string name="settings_desktop_overview_summary">Вашият акаунт, свързаните услуги и настройките, които променяте най-често.</string>
+    <string name="settings_desktop_quick_settings">Бързи настройки</string>
+    <string name="settings_desktop_manage_account">Управление на акаунта</string>
+    <string name="settings_desktop_posters_previews">Постери и прегледи</string>
+    <string name="settings_desktop_posters_previews_summary">Как изглеждат картите с постери и какво става, когато задържите показалеца върху някоя.</string>
+    <string name="settings_desktop_metadata_ratings">Метаданни и оценки</string>
+    <string name="settings_desktop_metadata_ratings_summary">Изображения, актьорски състав и преведени подробности от TMDB, както и оценки чрез MDBList.</string>
+    <string name="settings_playback_tab_player">Плейър</string>
+    <string name="settings_playback_tab_subtitles_audio">Субтитри и аудио</string>
+    <string name="settings_playback_tab_streams">Потоци и автоматично възпроизвеждане</string>
+    <string name="settings_playback_tab_next_episode">Следващ епизод и пропускане</string>
+    <string name="settings_playback_tab_video">Видео</string>
+    <string name="settings_playback_tab_video_p2p">Видео и P2P</string>
+    <string name="settings_desktop_subtitle_language">Език на субтитрите</string>
 </resources>

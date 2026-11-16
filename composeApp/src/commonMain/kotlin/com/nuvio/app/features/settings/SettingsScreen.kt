@@ -7,6 +7,20 @@ import com.nuvio.app.core.ui.desktopPageHorizontalPaddingForWidth
 import com.nuvio.app.core.ui.nuvio
 import nuvio.composeapp.generated.resources.settings_desktop_search_summary
 import nuvio.composeapp.generated.resources.settings_desktop_search_title
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.ArrowOutward
+import androidx.compose.material.icons.rounded.CollectionsBookmark
+import androidx.compose.material3.Icon
+import androidx.compose.ui.focus.FocusRequester
+import com.nuvio.app.features.p2p.P2pSettingsRepository
+import nuvio.composeapp.generated.resources.collections_header
+import nuvio.composeapp.generated.resources.settings_content_discovery_collections_description
+import nuvio.composeapp.generated.resources.settings_desktop_hover_previews
+import nuvio.composeapp.generated.resources.settings_desktop_mdblist
+import nuvio.composeapp.generated.resources.settings_desktop_poster_cards
+import nuvio.composeapp.generated.resources.settings_desktop_tmdb
 
 import com.nuvio.app.AppScreenTab
 import com.nuvio.app.core.build.AppFeaturePolicy
@@ -423,6 +437,7 @@ fun SettingsScreen(
                 onChangelogClick = { showChangelog = true },
                 onTestUpdateBannerClick = onTestUpdateBannerClick,
                 onCollectionsClick = onCollectionsClick,
+                searchShortcutEnabled = screenActive && isSelectedTab,
             )
         } else {
             MobileSettingsScreen(
@@ -979,6 +994,7 @@ private fun TabletSettingsScreen(
     onChangelogClick: () -> Unit = {},
     onTestUpdateBannerClick: (() -> Unit)? = null,
     onCollectionsClick: () -> Unit = {},
+    searchShortcutEnabled: Boolean = false,
 ) {
     var selectedCategory by rememberSaveable { mutableStateOf(SettingsCategory.General.name) }
     val activeCategory = SettingsCategory.valueOf(selectedCategory)
@@ -1001,30 +1017,43 @@ private fun TabletSettingsScreen(
 
     val saveableStateHolder = rememberSaveableStateHolder()
     var settingsSearchQuery by rememberSaveable { mutableStateOf("") }
-    // Desktop: Updates and About are screens of the root page, and an empty root lands on Account.
+    // Desktop: Overview, Updates and About are screens of the root page; an empty root lands on Overview.
     var desktopRootScreenName by rememberSaveable { mutableStateOf<String?>(null) }
     // Desktop: the page open before a search started, reopened when the search is cleared.
     var desktopPageBeforeSearch by rememberSaveable { mutableStateOf<String?>(null) }
+    // Desktop: the open Playback tab. Source list (the Streams page) is shown as its Streams tab.
+    var desktopPlaybackTabName by rememberSaveable { mutableStateOf(PlaybackSettingsTab.Default.name) }
+    val desktopPlaybackTab = PlaybackSettingsTab.fromName(desktopPlaybackTabName)
     val desktopSearching = isDesktop && page == SettingsPage.Root && settingsSearchQuery.isNotBlank()
-    val desktopRootScreen = desktopRootScreenName
-        ?.let { name -> DesktopSettingsEntry.entries.firstOrNull { it.name == name } }
-        ?.takeIf { it.isRootScreen && (it != DesktopSettingsEntry.Updates || onCheckForUpdatesClick != null) }
-    val effectivePage = if (isDesktop && page == SettingsPage.Root && !desktopSearching && desktopRootScreen == null) {
-        SettingsPage.Account
+    val desktopRootScreen = if (isDesktop) {
+        desktopRootScreenName
+            ?.let { name -> DesktopSettingsEntry.entries.firstOrNull { it.name == name } }
+            ?.takeIf { it.isRootScreen && (it != DesktopSettingsEntry.Updates || onCheckForUpdatesClick != null) }
+            ?: DesktopSettingsEntry.Overview
     } else {
-        page
+        null
     }
+    val effectivePage = if (isDesktop && page == SettingsPage.Streams) SettingsPage.Playback else page
     val desktopSelectedEntry = when {
         !isDesktop || desktopSearching -> null
         effectivePage == SettingsPage.Root -> desktopRootScreen
         else -> effectivePage.desktopEntry()
+    }
+    LaunchedEffect(page) {
+        if (isDesktop && page == SettingsPage.Streams) {
+            desktopPlaybackTabName = PlaybackSettingsTab.Streams.name
+            onPageChange(SettingsPage.Playback)
+        }
+    }
+    val desktopSearchFocus = remember { FocusRequester() }
+    SettingsSearchShortcutEffect(enabled = isDesktop && searchShortcutEnabled) {
+        runCatching { desktopSearchFocus.requestFocus() }
     }
 
     fun openDesktopEntry(entry: DesktopSettingsEntry) {
         settingsSearchQuery = ""
         desktopPageBeforeSearch = null
         when {
-            entry == DesktopSettingsEntry.Collections -> onCollectionsClick()
             entry.isRootScreen -> {
                 desktopRootScreenName = entry.name
                 if (page != SettingsPage.Root) onPageChange(SettingsPage.Root)
@@ -1085,6 +1114,7 @@ private fun TabletSettingsScreen(
                     topPadding = effectiveTopOffset,
                     startPadding = desktopInset,
                     onSwitchProfile = onSwitchProfile,
+                    searchFocusRequester = desktopSearchFocus,
                 )
             } else Column(
                 modifier = Modifier
@@ -1126,14 +1156,15 @@ private fun TabletSettingsScreen(
             val contentStateKey = when {
                 !isDesktop -> page.name
                 desktopSearching -> "${SettingsPage.Root.name}/search"
-                page == SettingsPage.Root -> "${SettingsPage.Root.name}/${desktopRootScreen?.name ?: SettingsPage.Account.name}"
-                else -> page.name
+                page == SettingsPage.Root -> "${SettingsPage.Root.name}/${desktopRootScreen?.name}"
+                else -> effectivePage.name
             }
             saveableStateHolder.SaveableStateProvider(contentStateKey) {
                 var rootSearchVisible by rememberSaveable { mutableStateOf(false) }
                 var rootSearchRevealAnimating by rememberSaveable { mutableStateOf(false) }
                 val hapticFeedback = LocalHapticFeedback.current
                 val hapticScope = rememberCoroutineScope()
+                val tabScope = rememberCoroutineScope()
                 val searchEntries: @Composable () -> List<SettingsSearchEntry> = {
                     settingsSearchEntries(
                         isTablet = true,
@@ -1154,8 +1185,22 @@ private fun TabletSettingsScreen(
                     when (target) {
                         is SettingsSearchTarget.Page -> {
                             if (target.page.isEnabledByPolicy()) {
+                                // Desktop shows the Streams page as the Streams tab of Playback.
+                                val destination = if (isDesktop && target.page == SettingsPage.Streams) {
+                                    SettingsPage.Playback
+                                } else {
+                                    target.page
+                                }
+                                if (isDesktop) {
+                                    when (target.page) {
+                                        SettingsPage.Streams -> desktopPlaybackTabName = PlaybackSettingsTab.Streams.name
+                                        SettingsPage.Playback -> playbackTabForSearchKey(target.focusKey)
+                                            ?.let { desktopPlaybackTabName = it.name }
+                                        else -> Unit
+                                    }
+                                }
                                 if (target.focusKey != null && target.focusTitle != null) {
-                                    SettingsSearchFocus.request(target.page, target.focusKey, target.focusTitle)
+                                    SettingsSearchFocus.request(destination, target.focusKey, target.focusTitle)
                                 } else {
                                     SettingsSearchFocus.clear()
                                 }
@@ -1165,7 +1210,7 @@ private fun TabletSettingsScreen(
                                     desktopPageBeforeSearch = null
                                     desktopRootScreenName = null
                                 }
-                                openInlinePage(target.page)
+                                openInlinePage(destination)
                             }
                         }
                         SettingsSearchTarget.Collections -> onCollectionsClick()
@@ -1247,6 +1292,19 @@ private fun TabletSettingsScreen(
                                         rootScreen = desktopRootScreen,
                                         onOpenAbout = { openDesktopEntry(DesktopSettingsEntry.About) },
                                     )
+                                    DesktopSettingsPageTabs(
+                                        page = effectivePage,
+                                        playbackTab = desktopPlaybackTab,
+                                        onPlaybackTabSelected = { tab ->
+                                            if (tab != desktopPlaybackTab) {
+                                                desktopPlaybackTabName = tab.name
+                                                tabScope.launch { listState.scrollToItem(0) }
+                                            }
+                                        },
+                                        onPageSelected = { target ->
+                                            if (target != effectivePage) openInlinePage(target)
+                                        },
+                                    )
                                 } else {
                                     val previousPage = page.previousPage()
                                     TabletPageHeader(
@@ -1282,6 +1340,26 @@ private fun TabletSettingsScreen(
                                         onCheckForUpdatesClick = { onCheckForUpdatesClick?.invoke() },
                                         onChangelogClick = onChangelogClick,
                                         onTestUpdateBannerClick = onTestUpdateBannerClick,
+                                    )
+                                    desktopRootScreen == DesktopSettingsEntry.Overview -> desktopOverviewContent(
+                                        debridSettings = debridSettings,
+                                        traktConnected = traktAuthUiState.mode == TraktConnectionMode.CONNECTED,
+                                        simklConnected = simklAuthUiState.mode == SimklConnectionMode.CONNECTED,
+                                        preferredSubtitleLanguage = preferredSubtitleLanguage,
+                                        streamReuseLastLinkEnabled = streamReuseLastLinkEnabled,
+                                        updatesAvailable = onCheckForUpdatesClick != null,
+                                        onSwitchProfile = onSwitchProfile,
+                                        onOpenEntry = ::openDesktopEntry,
+                                        onOpenPreferredSubtitles = { title ->
+                                            desktopPlaybackTabName = PlaybackSettingsTab.SubtitlesAudio.name
+                                            desktopRootScreenName = null
+                                            SettingsSearchFocus.request(
+                                                SettingsPage.Playback,
+                                                "playback-preferred-subtitles",
+                                                title,
+                                            )
+                                            openInlinePage(SettingsPage.Playback)
+                                        },
                                     )
                                     else -> desktopAboutContent(
                                         showSupporters = AppFeaturePolicy.supportersContributorsPageEnabled,
@@ -1339,28 +1417,34 @@ private fun TabletSettingsScreen(
                             SettingsPage.LicensesAttributions -> licensesAttributionsContent(
                                 isTablet = true,
                             )
-                            SettingsPage.Playback -> playbackSettingsContent(
-                                isTablet = true,
-                                showLoadingOverlay = showLoadingOverlay,
-                                holdToSpeedEnabled = holdToSpeedEnabled,
-                                holdToSpeedValue = holdToSpeedValue,
-                                touchGesturesEnabled = touchGesturesEnabled,
-                                preferredAudioLanguage = preferredAudioLanguage,
-                                secondaryPreferredAudioLanguage = secondaryPreferredAudioLanguage,
-                                preferredSubtitleLanguage = preferredSubtitleLanguage,
-                                secondaryPreferredSubtitleLanguage = secondaryPreferredSubtitleLanguage,
-                                streamReuseLastLinkEnabled = streamReuseLastLinkEnabled,
-                                streamReuseLastLinkCacheHours = streamReuseLastLinkCacheHours,
-                                androidPlaybackEngine = androidPlaybackEngine,
-                                androidLibmpvVideoOutput = androidLibmpvVideoOutput,
-                                androidLibmpvHardwareDecodingEnabled = androidLibmpvHardwareDecodingEnabled,
-                                androidLibmpvYuv420pEnabled = androidLibmpvYuv420pEnabled,
-                                decoderPriority = decoderPriority,
-                                mapDV7ToHevc = mapDV7ToHevc,
-                                tunnelingEnabled = tunnelingEnabled,
-                                useLibass = useLibass,
-                                libassRenderType = libassRenderType,
-                            )
+                            SettingsPage.Playback -> {
+                                playbackSettingsContent(
+                                    isTablet = true,
+                                    showLoadingOverlay = showLoadingOverlay,
+                                    holdToSpeedEnabled = holdToSpeedEnabled,
+                                    holdToSpeedValue = holdToSpeedValue,
+                                    touchGesturesEnabled = touchGesturesEnabled,
+                                    preferredAudioLanguage = preferredAudioLanguage,
+                                    secondaryPreferredAudioLanguage = secondaryPreferredAudioLanguage,
+                                    preferredSubtitleLanguage = preferredSubtitleLanguage,
+                                    secondaryPreferredSubtitleLanguage = secondaryPreferredSubtitleLanguage,
+                                    streamReuseLastLinkEnabled = streamReuseLastLinkEnabled,
+                                    streamReuseLastLinkCacheHours = streamReuseLastLinkCacheHours,
+                                    androidPlaybackEngine = androidPlaybackEngine,
+                                    androidLibmpvVideoOutput = androidLibmpvVideoOutput,
+                                    androidLibmpvHardwareDecodingEnabled = androidLibmpvHardwareDecodingEnabled,
+                                    androidLibmpvYuv420pEnabled = androidLibmpvYuv420pEnabled,
+                                    decoderPriority = decoderPriority,
+                                    mapDV7ToHevc = mapDV7ToHevc,
+                                    tunnelingEnabled = tunnelingEnabled,
+                                    useLibass = useLibass,
+                                    libassRenderType = libassRenderType,
+                                    desktopTab = if (isDesktop) desktopPlaybackTab else null,
+                                )
+                                if (isDesktop && desktopPlaybackTab == PlaybackSettingsTab.Streams) {
+                                    streamsSettingsContent(isTablet = true)
+                                }
+                            }
                             SettingsPage.Streams -> streamsSettingsContent(
                                 isTablet = true,
                             )
@@ -1429,16 +1513,19 @@ private fun TabletSettingsScreen(
                             )
                             SettingsPage.Addons -> addonsSettingsContent()
                             SettingsPage.Plugins -> if (AppFeaturePolicy.pluginsEnabled) pluginsSettingsContent() else addonsSettingsContent()
-                            SettingsPage.Homescreen -> homescreenSettingsContent(
-                                isTablet = true,
-                                heroEnabled = homescreenHeroEnabled,
-                                showCatalogType = homescreenShowCatalogType,
-                                hideUnreleasedContent = homescreenHideUnreleasedContent,
-                                showBuiltInAiring = homescreenShowBuiltInAiring,
-                                items = homescreenItems,
-                                isCatalogLoading = homescreenCatalogLoading,
-                                catalogErrorMessage = homescreenCatalogErrorMessage,
-                            )
+                            SettingsPage.Homescreen -> {
+                                if (isDesktop) desktopHomeCollectionsLink(onCollectionsClick)
+                                homescreenSettingsContent(
+                                    isTablet = true,
+                                    heroEnabled = homescreenHeroEnabled,
+                                    showCatalogType = homescreenShowCatalogType,
+                                    hideUnreleasedContent = homescreenHideUnreleasedContent,
+                                    showBuiltInAiring = homescreenShowBuiltInAiring,
+                                    items = homescreenItems,
+                                    isCatalogLoading = homescreenCatalogLoading,
+                                    catalogErrorMessage = homescreenCatalogErrorMessage,
+                                )
+                            }
                             SettingsPage.MetaScreen -> metaScreenSettingsContent(
                                 isTablet = true,
                                 uiState = metaScreenSettingsUiState,
@@ -1529,6 +1616,73 @@ private fun DesktopSettingsHeaderFor(
                     summary = null,
                 )
             }
+        }
+    }
+}
+
+/** Tabs under the header of desktop pages that combine several settings pages. */
+@Composable
+private fun DesktopSettingsPageTabs(
+    page: SettingsPage,
+    playbackTab: PlaybackSettingsTab,
+    onPlaybackTabSelected: (PlaybackSettingsTab) -> Unit,
+    onPageSelected: (SettingsPage) -> Unit,
+) {
+    when (page) {
+        SettingsPage.Playback -> {
+            val p2pVisible = P2pSettingsRepository.isVisible
+            val tabs = PlaybackSettingsTab.entries.map { tab ->
+                DesktopSettingsTab(tab.name, stringResource(tab.labelRes(p2pVisible)))
+            }
+            DesktopSettingsTabRow(
+                tabs = tabs,
+                selectedId = playbackTab.name,
+                onSelect = { id -> onPlaybackTabSelected(PlaybackSettingsTab.fromName(id)) },
+                modifier = Modifier.padding(top = 14.dp),
+            )
+        }
+        SettingsPage.PosterCustomization, SettingsPage.HoverPreview -> DesktopSettingsTabRow(
+            tabs = listOf(
+                DesktopSettingsTab(SettingsPage.PosterCustomization.name, stringResource(Res.string.settings_desktop_poster_cards)),
+                DesktopSettingsTab(SettingsPage.HoverPreview.name, stringResource(Res.string.settings_desktop_hover_previews)),
+            ),
+            selectedId = page.name,
+            onSelect = { id -> onPageSelected(SettingsPage.valueOf(id)) },
+            modifier = Modifier.padding(top = 14.dp),
+        )
+        SettingsPage.TmdbEnrichment, SettingsPage.MdbListRatings -> DesktopSettingsTabRow(
+            tabs = listOf(
+                DesktopSettingsTab(SettingsPage.TmdbEnrichment.name, stringResource(Res.string.settings_desktop_tmdb)),
+                DesktopSettingsTab(SettingsPage.MdbListRatings.name, stringResource(Res.string.settings_desktop_mdblist)),
+            ),
+            selectedId = page.name,
+            onSelect = { id -> onPageSelected(SettingsPage.valueOf(id)) },
+            modifier = Modifier.padding(top = 14.dp),
+        )
+        else -> Unit
+    }
+}
+
+/** Collections are rows of the Home screen, so desktop opens their editor from that page. */
+private fun LazyListScope.desktopHomeCollectionsLink(onCollectionsClick: () -> Unit) {
+    item(key = "desktop-home-collections") {
+        SettingsGroup(isTablet = true) {
+            SettingsNavigationRow(
+                title = stringResource(Res.string.collections_header),
+                description = stringResource(Res.string.settings_content_discovery_collections_description),
+                icon = Icons.Rounded.CollectionsBookmark,
+                isTablet = true,
+                searchKey = "collections",
+                trailingContent = {
+                    Icon(
+                        imageVector = Icons.Rounded.ArrowOutward,
+                        contentDescription = null,
+                        tint = MaterialTheme.nuvio.colors.textMuted,
+                        modifier = Modifier.size(16.dp),
+                    )
+                },
+                onClick = onCollectionsClick,
+            )
         }
     }
 }
