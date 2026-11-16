@@ -17,6 +17,10 @@ int wmain(int argc, wchar_t** argv) {
     }
 
     assert(portableAssetName(L"1.29.1") == L"Starlit-TV-Installer-Windows-1.29.1.exe");
+    assert(unpackedAssetName(L"1.29.1") == L"Starlit-TV-Installer-Unpacked-Windows-1.29.1.zip");
+    assert(unpackedAssetName(L"v1.29.1").empty());
+    assert(releaseAssetPath(L"1.29.1", unpackedAssetName(L"1.29.1")) ==
+           L"/Beelzebub2/starlit/releases/download/tv-preview-v1.29.1/Starlit-TV-Installer-Unpacked-Windows-1.29.1.zip");
     assert(portableAssetName(L"v1.29.1").empty());
     assert(releaseAssetPath(L"1.29.1", L"SHA256SUMS.txt") ==
            L"/Beelzebub2/starlit/releases/download/tv-preview-v1.29.1/SHA256SUMS.txt");

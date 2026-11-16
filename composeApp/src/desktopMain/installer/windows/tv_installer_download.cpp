@@ -180,6 +180,10 @@ std::wstring portableAssetName(const std::wstring& version) {
     return validReleaseVersion(version) ? L"Starlit-TV-Installer-Windows-" + version + L".exe" : L"";
 }
 
+std::wstring unpackedAssetName(const std::wstring& version) {
+    return validReleaseVersion(version) ? L"Starlit-TV-Installer-Unpacked-Windows-" + version + L".zip" : L"";
+}
+
 std::wstring releaseAssetPath(const std::wstring& version, const std::wstring& file) {
     if (!validReleaseVersion(version) || file.empty() ||
         file.find_first_not_of(L"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.-_") != std::wstring::npos ||
@@ -211,10 +215,10 @@ std::string checksumForAsset(const std::string& checksums, const std::string& as
     return found;
 }
 
-bool downloadPortableInstaller(const std::wstring& version, const std::wstring& destination,
-                               const std::function<void(uint64_t, uint64_t)>& onProgress,
-                               std::wstring& error) {
-    const std::wstring asset = portableAssetName(version);
+static bool downloadVerifiedInstallerAsset(const std::wstring& version, const std::wstring& asset,
+                                           const std::wstring& destination, uint64_t maxBytes,
+                                           const std::function<void(uint64_t, uint64_t)>& onProgress,
+                                           std::wstring& error) {
     const std::wstring manifestPath = releaseAssetPath(version, L"SHA256SUMS.txt");
     const std::wstring assetPath = releaseAssetPath(version, asset);
     if (asset.empty() || manifestPath.empty() || assetPath.empty()) {
@@ -249,7 +253,7 @@ bool downloadPortableInstaller(const std::wstring& version, const std::wstring& 
         error = L"Windows couldn't initialize SHA-256 verification.";
         return false;
     }
-    const bool downloaded = httpsGet(assetPath, kMaxPortableBytes,
+    const bool downloaded = httpsGet(assetPath, maxBytes,
                                       [&](const uint8_t* data, DWORD length, uint64_t done, uint64_t total) {
                                           DWORD written = 0;
                                           if (!WriteFile(file.handle, data, length, &written, nullptr) ||
@@ -267,6 +271,20 @@ bool downloadPortableInstaller(const std::wstring& version, const std::wstring& 
         return false;
     }
     return true;
+}
+
+bool downloadPortableInstaller(const std::wstring& version, const std::wstring& destination,
+                               const std::function<void(uint64_t, uint64_t)>& onProgress,
+                               std::wstring& error) {
+    return downloadVerifiedInstallerAsset(version, portableAssetName(version),
+                                          destination, kMaxPortableBytes, onProgress, error);
+}
+
+bool downloadUnpackedInstaller(const std::wstring& version, const std::wstring& destination,
+                               const std::function<void(uint64_t, uint64_t)>& onProgress,
+                               std::wstring& error) {
+    return downloadVerifiedInstallerAsset(version, unpackedAssetName(version),
+                                          destination, kMaxUnpackedArchiveBytes, onProgress, error);
 }
 
 }  // namespace setup::tvdownload

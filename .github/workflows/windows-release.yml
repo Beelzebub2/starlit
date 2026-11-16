@@ -457,5 +457,6 @@ jobs:
             --prerelease --latest=false --title "Starlit TV $version — Developer Preview" \
             --notes-file ../docs/TV-DEVELOPER-PREVIEW-NOTICE.md \
             "Starlit-Tizen-$version.wgt" "Starlit-WebOS-$version.ipk" \
-            "Starlit-TV-Installer-Setup-Windows-$version.exe" "Starlit-TV-Installer-Windows-$version.exe" \
+              "Starlit-TV-Installer-Setup-Windows-$version.exe" "Starlit-TV-Installer-Windows-$version.exe" \
+              "Starlit-TV-Installer-Unpacked-Windows-$version.zip" \
             apps2samsung-feed.json SHA256SUMS.txt

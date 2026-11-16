@@ -8,16 +8,16 @@ Windows desktop installer for managing **Starlit TV on both Samsung Tizen and LG
 
 The desktop app exposes **Settings → Updates → Starlit TV Installer** on Windows.
 If the companion was selected during Windows setup, this opens the local tool.
-Release builds use an on-demand download of the version-matched portable
-developer preview, while an explicitly approved bundled build can launch its
-unpacked Electron app without the portable extraction delay. Setup **never runs
-the downloaded executable**. Otherwise Settings opens GitHub's release list
+Release builds download and verify a version-matched ZIP of the unpacked
+developer-preview app, extracting it once during installation. Settings launches
+the installed executable directly without unpacking Electron on every launch.
+Setup **never runs the downloaded executable**. Otherwise Settings opens GitHub's release list
 for manual installation; it does not automatically pair or sign a TV.
 
 The Windows setup page enables the optional TV Installer (developer preview)
 component whenever the package carries a version suitable for matching release
-downloads. It remains **off by default**; selecting it downloads the portable
-executable from the matching `tv-preview-vMAJOR.MINOR.PATCH` release over HTTPS
+downloads. It remains **off by default**; selecting it downloads the unpacked
+application archive from the matching `tv-preview-vMAJOR.MINOR.PATCH` release over HTTPS
 and checks its SHA-256 against the release's `SHA256SUMS.txt`, with strict size
 and time limits. The downloaded component is retained inside the Starlit
 installation and can be opened from Settings. Failed or missing downloads
@@ -30,7 +30,8 @@ Windows service, does not add its own autorun entry, and is removed when the
 desktop app is uninstalled.
 
 Release CI rebuilds the TV installer for each tagged Starlit version and publishes
-the separately labeled **developer-preview** Setup and portable executables in
+the separately labeled **developer-preview** Setup and portable executables, plus
+the SHA-256-verified unpacked-runtime ZIP used by the desktop installer, in
 the matching `tv-preview-vMAJOR.MINOR.PATCH` prerelease, linked from the normal
 release notes, with a matching SHA-256 checksum.
 This does not mean the installer has passed hardware or dependency-security
