@@ -1,0 +1,101 @@
+name: Start verified Starlit release
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Stable tag to create (vMAJOR.MINOR.PATCH)
+        required: true
+        type: string
+      expected_dev_sha:
+        description: Full verified Dev commit SHA
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: starlit-tag-start-${{ inputs.release_tag }}
+  cancel-in-progress: false
+
+jobs:
+  create-tag-and-start-publisher:
+    if: github.ref == 'refs/heads/Dev'
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: Dev
+          fetch-depth: 0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+      - name: Validate exact release source and release policy
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
+          EXPECTED_DEV_SHA: ${{ inputs.expected_dev_sha }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if [[ ! "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Release tag must be vMAJOR.MINOR.PATCH."
+            exit 1
+          fi
+          if [[ ! "$EXPECTED_DEV_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::Expected Dev SHA must be a full commit SHA."
+            exit 1
+          fi
+          checked_out="$(git rev-parse HEAD)"
+          remote_dev="$(git ls-remote origin refs/heads/Dev | cut -f1)"
+          if [[ "$checked_out" != "$EXPECTED_DEV_SHA" || "$remote_dev" != "$EXPECTED_DEV_SHA" ]]; then
+            echo "::error::Dev moved or checkout does not match the verified commit."
+            exit 1
+          fi
+          node .github/release-policy.mjs verify "$RELEASE_TAG"
+          if gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "::error::A GitHub release for this tag already exists."
+            exit 1
+          fi
+          raw_tag="$(git ls-remote --tags origin "refs/tags/$RELEASE_TAG" | cut -f1)"
+          peeled_tag="$(git ls-remote --tags origin "refs/tags/$RELEASE_TAG^{}" | cut -f1)"
+          if [[ -n "$raw_tag" && "$peeled_tag" != "$EXPECTED_DEV_SHA" ]]; then
+            echo "::error::Tag already exists but does not peel to the expected commit."
+            exit 1
+          fi
+      - name: Create and verify annotated tag
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
+          EXPECTED_DEV_SHA: ${{ inputs.expected_dev_sha }}
+        run: |
+          set -euo pipefail
+          existing="$(git ls-remote --tags origin "refs/tags/$RELEASE_TAG^{}" | cut -f1)"
+          if [[ -z "$existing" ]]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git tag -a "$RELEASE_TAG" "$EXPECTED_DEV_SHA" -m "Starlit ${RELEASE_TAG#v}"
+            git push origin "refs/tags/$RELEASE_TAG"
+          fi
+          actual="$(git ls-remote --tags origin "refs/tags/$RELEASE_TAG^{}" | cut -f1)"
+          if [[ "$actual" != "$EXPECTED_DEV_SHA" ]]; then
+            echo "::error::Remote annotated tag does not point to the verified commit."
+            exit 1
+          fi
+          echo "Verified $RELEASE_TAG on $actual"
+      - name: Dispatch existing release publisher
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          set -euo pipefail
+          # GitHub Actions suppresses push-triggered workflows when using GITHUB_TOKEN.
+          # Explicit workflow_dispatch preserves the established build/sign/publish gates.
+          gh workflow run windows-release.yml --repo "$GITHUB_REPOSITORY" --ref Dev \
+            --field "release_tag=$RELEASE_TAG"
+          echo "Dispatched the existing tagged release publisher for $RELEASE_TAG"
