@@ -178,6 +178,7 @@ button:disabled {
 .player.native-resizing .skip-prompt,
 .player.native-resizing .next-episode-card,
 .player.native-resizing .header-actions,
+.player.native-resizing .back-button,
 .player.native-resizing .center-controls,
 .player.native-resizing .progress,
 .player.native-resizing .modal-layer,
@@ -189,6 +190,7 @@ button:disabled {
 .player.chrome-hidden .bottom-gradient,
 .player.chrome-hidden .metadata,
 .player.chrome-hidden .header-actions,
+.player.chrome-hidden .back-button,
 .player.chrome-hidden .center-controls,
 .player.chrome-hidden .progress {
   opacity: 0;
@@ -216,6 +218,7 @@ button:disabled {
 .player.error-active .skip-prompt,
 .player.error-active .next-episode-card,
 .player.error-active .header-actions,
+.player.error-active .back-button,
 .player.error-active .center-controls,
 .player.error-active .progress,
 .player.error-active .modal-layer {
