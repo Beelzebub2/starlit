@@ -43,6 +43,12 @@ data class ProfilePushPayload(
 )
 
 @Serializable
+internal data class ProfilePinMutationResult(
+    val ok: Boolean = false,
+    @SerialName("retry_after_seconds") val retryAfterSeconds: Int = 0,
+)
+
+@Serializable
 data class PinVerifyResult(
     val unlocked: Boolean = false,
     @SerialName("retry_after_seconds") val retryAfterSeconds: Int = 0,
