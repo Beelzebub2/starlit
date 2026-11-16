@@ -1405,7 +1405,7 @@ public:
         std::lock_guard<std::mutex> lock(mpvMutex);
         if (!mpv) return;
         std::string seconds = std::to_string((double)positionMs / 1000.0);
-        const char *command[] = {"seek", seconds.c_str(), "absolute+keyframes", nullptr};
+        const char *command[] = {"seek", seconds.c_str(), "absolute+exact", nullptr};
         mpvApi().command(mpv, command);
     }
 
@@ -2398,7 +2398,8 @@ private:
                 setMpvOptionStringLocked("cache-pause-initial", "yes");
                 setMpvOptionStringLocked("cache-pause-wait", "8");
             }
-            setMpvOptionStringLocked("hr-seek", "no");
+            // Resume and intro skips must land at the requested point, not a prior keyframe.
+            setMpvOptionStringLocked("hr-seek", "absolute");
 
             int64_t wid = (int64_t)(intptr_t)containerHwnd;
             int widResult = api.setOption(mpv, "wid", MPV_FORMAT_INT64, &wid);
