@@ -12,6 +12,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.nuvio.app.core.ui.NuvioTheme
 import org.junit.Rule
@@ -113,5 +114,60 @@ class MalListUiTest {
         compose.waitUntil(5_000) { sent.isNotEmpty() }
         assertEquals(listOf(MalListPatch(status = MalStatus.COMPLETED, score = 9, watchedEpisodes = 12)), sent)
         compose.onNodeWithText("12 / 12").assertIsDisplayed()
+    }
+
+    private val listStats = MalAnimeStatistics(
+        watching = 10, completed = 689, onHold = 0, dropped = 180, planToWatch = 33, total = 912,
+    )
+
+    private fun showToolbar(width: Dp) {
+        compose.setContent {
+            NuvioTheme {
+                Surface {
+                    Box(Modifier.width(width)) {
+                        val selected = remember { mutableStateOf<MalStatus?>(null) }
+                        MalListToolbar(
+                            selected = selected.value,
+                            onSelect = { selected.value = it },
+                            stats = listStats,
+                            sort = MalListSort.UPDATED,
+                            onSort = {},
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    private fun assertEveryStatusTabIsLabelled() {
+        listOf(
+            "All" to "912", "Watching" to "10", "Completed" to "689",
+            "On Hold" to "0", "Dropped" to "180", "Plan to Watch" to "33",
+        ).forEach { (label, count) ->
+            // The tab merges its texts, so check the label's own node: a zero-width label still
+            // leaves the merged tab visible through its count.
+            compose.onNodeWithText(label, useUnmergedTree = true)
+                .assertIsDisplayed()
+                .assertWidthIsAtLeast(16.dp)
+            compose.onNodeWithText(count, useUnmergedTree = true).assertIsDisplayed()
+        }
+    }
+
+    @Test fun wideToolbarLabelsEveryStatusBesideItsCount() {
+        showToolbar(1280.dp)
+        assertEveryStatusTabIsLabelled()
+    }
+
+    @Test fun narrowToolbarLabelsEveryStatusBesideItsCount() {
+        showToolbar(720.dp)
+        compose.onNodeWithText("Completed", useUnmergedTree = true).assertWidthIsAtLeast(16.dp)
+        compose.onNodeWithText("Watching", useUnmergedTree = true).assertWidthIsAtLeast(16.dp)
+        compose.onNodeWithTag("mal-filter-PLAN_TO_WATCH")
+            .performScrollTo()
+            .performClick()
+            .assertIsSelected()
+        compose.onNodeWithText("Plan to Watch", useUnmergedTree = true)
+            .assertIsDisplayed()
+            .assertWidthIsAtLeast(16.dp)
     }
 }
