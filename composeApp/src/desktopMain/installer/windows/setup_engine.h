@@ -77,7 +77,7 @@ struct PayloadSource {
     std::wstring problem;
 };
 
-enum class Phase { Idle, Closing, Extracting, Legacy, Finishing, Removing, Done };
+enum class Phase { Idle, Downloading, Closing, Extracting, Legacy, Finishing, Removing, Done };
 
 struct InstallRequest {
     std::wstring dir;
@@ -94,10 +94,11 @@ public:
     const PayloadSource& source() const { return source_; }
     const Existing& existing() const { return existing_; }
     bool hasTvInstaller() const;
+    bool canDownloadTvInstaller() const;
 
     std::wstring defaultDir() const;
     // Empty when the folder can take the install, otherwise a sentence for the UI.
-    std::wstring validateDir(const std::wstring& dir) const;
+    std::wstring validateDir(const std::wstring& dir, bool withTvInstaller = false) const;
     bool isAppRunning(const std::wstring& dir) const;
 
     bool install(const InstallRequest& request);
@@ -110,7 +111,7 @@ public:
     std::wstring currentFile() const;
 
 private:
-    bool extract(const std::wstring& staging);
+    bool extract(const std::wstring& staging, double startProgress);
     bool writeUninstaller(const std::wstring& dir);
     void removeLegacyMsi();
     bool swapInto(const std::wstring& staging, const std::wstring& dir, bool withTvInstaller);

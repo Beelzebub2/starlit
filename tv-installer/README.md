@@ -6,19 +6,28 @@ Windows desktop installer for managing **Starlit TV on both Samsung Tizen and LG
 
 ## Optional Windows desktop integration
 
-The desktop app exposes **Settings → Updates → Starlit TV Installer** on Windows. If the
-companion was selected during Windows setup, this opens the bundled, unpacked Electron
-application without the portable EXE extraction delay. Otherwise it opens GitHub's
-release list, where the matching TV developer prerelease can be downloaded; it does not automatically download, install,
-pair, sign or execute a remote binary.
+The desktop app exposes **Settings → Updates → Starlit TV Installer** on Windows.
+If the companion was selected during Windows setup, this opens the local tool.
+Release builds use an on-demand download of the version-matched portable
+developer preview, while an explicitly approved bundled build can launch its
+unpacked Electron app without the portable extraction delay. Setup **never runs
+the downloaded executable**. Otherwise Settings opens GitHub's release list
+for manual installation; it does not automatically pair or sign a TV.
 
-The Windows setup page shows the optional TV Installer (developer preview) component
-but keeps it disabled unless the payload contains the companion app. The component is
-**off by default**; users must select it explicitly. Updating an existing installation
-retains that choice, including via silent desktop updates. Silent *new* installations
-require `--with-tv-installer` to opt in. The companion is not installed as a separate
-Windows service, does not add its own autorun entry, and is removed when the desktop
-app is uninstalled.
+The Windows setup page enables the optional TV Installer (developer preview)
+component whenever the package carries a version suitable for matching release
+downloads. It remains **off by default**; selecting it downloads the portable
+executable from the matching `tv-preview-vMAJOR.MINOR.PATCH` release over HTTPS
+and checks its SHA-256 against the release's `SHA256SUMS.txt`, with strict size
+and time limits. The downloaded component is retained inside the Starlit
+installation and can be opened from Settings. Failed or missing downloads
+prevent replacing an existing installation; the setup screen offers retry or
+the option can be deselected. Internet is required for the download.
+Updating an existing installation retains the opt-in choice, including via
+silent desktop updates. Silent *new* installations require
+`--with-tv-installer` to opt in. The companion is not installed as a separate
+Windows service, does not add its own autorun entry, and is removed when the
+desktop app is uninstalled.
 
 Release CI rebuilds the TV installer for each tagged Starlit version and publishes
 the separately labeled **developer-preview** Setup and portable executables in
@@ -29,9 +38,10 @@ acceptance. The desktop release may bundle the unpacked
 `tv-installer/dist/win-unpacked` folder only when the repository variable
 `STARLIT_TV_INSTALLER_PREVIEW_APPROVED=true` is explicitly set following security
 review and real-device acceptance. A successful CI run alone must not flip this gate.
-This keeps the unverified TV tool out of **stable download assets and the
-normal desktop installer payload**, even though its optional preview can be
-downloaded separately.
+The on-demand option keeps the unverified TV tool out of **stable download
+assets and the normal desktop installer payload**, while making an explicitly
+selected preview available from its separate prerelease. The TV installer is
+still **not** a hardware-accepted stable component.
 
 ## Run
 

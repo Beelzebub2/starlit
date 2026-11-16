@@ -1,0 +1,54 @@
+name: Check Windows TV installer download
+
+on:
+  pull_request:
+    paths:
+      - 'composeApp/src/desktopMain/installer/windows/**'
+      - 'tv-installer/README.md'
+      - '.github/workflows/windows-tv-installer-download.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  native-download:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+      - name: Validate setup UI JavaScript
+        run: node --check composeApp/src/desktopMain/installer/windows/ui/setup.js
+      - name: Install pinned WebView2 SDK for setup compilation
+        shell: pwsh
+        run: |
+          nuget install Microsoft.Web.WebView2 -Version 1.0.4078.44 -OutputDirectory "$env:RUNNER_TEMP\nuget" -DirectDownload -NonInteractive -NoCache
+          if ($LASTEXITCODE -ne 0) { throw 'WebView2 SDK download failed.' }
+      - name: Build and run native release-download tests
+        shell: pwsh
+        run: |
+          $source = Join-Path $env:GITHUB_WORKSPACE 'composeApp\src\desktopMain\installer\windows'
+          $include = Join-Path $env:RUNNER_TEMP 'nuget\Microsoft.Web.WebView2.1.0.4078.44\build\native\include'
+          if (-not (Test-Path (Join-Path $include 'WebView2.h'))) { throw 'Pinned WebView2 header not found.' }
+          $vswhere = 'C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe'
+          $vcvars = & $vswhere -latest -products '*' -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -find 'VC\Auxiliary\Build\vcvars64.bat' | Select-Object -First 1
+          if (-not $vcvars) { throw 'MSVC Build Tools not found.' }
+          $batch = Join-Path $env:RUNNER_TEMP 'test-tv-download.bat'
+          $binary = Join-Path $env:RUNNER_TEMP 'test-tv-download.exe'
+          @(
+            '@echo off'
+            "call `"$vcvars`" >nul"
+            'if errorlevel 1 exit /b %errorlevel%'
+            "cd /d `"$env:RUNNER_TEMP`""
+            "cl /nologo /EHsc /std:c++17 /W4 /DUNICODE /D_UNICODE /DWIN32_LEAN_AND_MEAN /DNOMINMAX `"$source\tv_installer_download.cpp`" `"$source\tests\tv_installer_download_test.cpp`" /Fe:`"$binary`" /link Winhttp.lib Advapi32.lib"
+            'if errorlevel 1 exit /b %errorlevel%'
+            "cl /nologo /EHsc /std:c++17 /W3 /DUNICODE /D_UNICODE /DNOMINMAX /DWIN32_LEAN_AND_MEAN /D_CRT_SECURE_NO_WARNINGS /c `"$source\setup_engine.cpp`" /Fo:setup_engine.obj"
+            'if errorlevel 1 exit /b %errorlevel%'
+            "cl /nologo /EHsc /std:c++17 /W3 /DUNICODE /D_UNICODE /DNOMINMAX /DWIN32_LEAN_AND_MEAN /D_CRT_SECURE_NO_WARNINGS /I`"$include`" /c `"$source\setup.cpp`" /Fo:setup_ui.obj"
+            'exit /b %errorlevel%'
+          ) | Set-Content -LiteralPath $batch -Encoding ASCII
+          & cmd.exe /d /c "`"$batch`""
+          if ($LASTEXITCODE -ne 0) { throw 'Native download test compilation failed.' }
+          & $binary
+          if ($LASTEXITCODE -ne 0) { throw 'Native download tests failed.' }

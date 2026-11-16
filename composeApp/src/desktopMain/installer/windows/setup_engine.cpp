@@ -1,4 +1,5 @@
 #include "setup_engine.h"
+#include "tv_installer_download.h"
 
 #include <compressapi.h>
 #include <knownfolders.h>
@@ -609,7 +610,7 @@ std::wstring Engine::defaultDir() const {
     return identity_.defaultInstallDir();
 }
 
-std::wstring Engine::validateDir(const std::wstring& raw) const {
+std::wstring Engine::validateDir(const std::wstring& raw, bool withTvInstaller) const {
     const std::wstring dir = normalizeDir(raw);
     if (dir.size() < 3 || PathIsRelativeW(dir.c_str())) {
         return L"Enter a full folder path, such as " + identity_.defaultInstallDir() + L".";
@@ -624,7 +625,8 @@ std::wstring Engine::validateDir(const std::wstring& raw) const {
     if (!identity_.ownsLegacy() && existing_.legacy && samePath(dir, existing_.legacyLocation)) {
         return L"Sandbox runs can't use the folder of the real install.";
     }
-    const uint64_t needed = source_.index.totalRaw + 64ull * 1024 * 1024;
+    const uint64_t preview = withTvInstaller && !hasTvInstaller() ? tvdownload::kMaxPortableBytes : 0;
+    const uint64_t needed = source_.index.totalRaw + 64ull * 1024 * 1024 + preview;
     if (source_.present && freeBytesFor(dir) < needed) {
         return L"There isn't enough space on this drive. " + identity_.product.name + L" needs " + megabytes(needed) + L".";
     }
@@ -664,6 +666,10 @@ bool Engine::hasTvInstaller() const {
     });
 }
 
+bool Engine::canDownloadTvInstaller() const {
+    return source_.present && tvdownload::validReleaseVersion(identity_.product.version);
+}
+
 bool Engine::install(const InstallRequest& request) {
     const std::wstring dir = normalizeDir(request.dir);
     log(L"Install %s %s to %s (start menu %d, desktop %d, sandbox %d)", identity_.product.name.c_str(),
@@ -672,36 +678,66 @@ bool Engine::install(const InstallRequest& request) {
         fail(source_.problem.empty() ? L"This installer doesn't contain the app. Download it again." : source_.problem);
         return false;
     }
-    if (auto problem = validateDir(dir); !problem.empty()) {
+    if (auto problem = validateDir(dir, request.tvInstaller); !problem.empty()) {
         fail(problem);
         return false;
     }
-    if (request.tvInstaller && !hasTvInstaller()) {
-        fail(L"The optional TV installer isn't in this package. Re-run setup without that option.");
+    if (request.tvInstaller && !hasTvInstaller() && !canDownloadTvInstaller()) {
+        fail(L"This setup doesn't have a matching TV developer-preview version.");
         return false;
     }
 
+    // Fetch and verify an explicitly selected preview before closing the
+    // running app. A bad download must never disturb an existing installation.
+    const bool downloadTv = request.tvInstaller && !hasTvInstaller();
+    const std::wstring staging = dir + L".setup-new";
+    if (dirExists(staging) && !deleteTree(staging)) {
+        fail(L"Setup couldn't clear " + staging + L". Delete that folder, then select Try again.");
+        return false;
+    }
+    if (downloadTv) {
+        const std::wstring tools = staging + L"\\tools\\Starlit TV Installer";
+        if (!ensureDir(tools)) {
+            fail(L"Setup couldn't create the optional TV installer download folder.");
+            return false;
+        }
+        phase = Phase::Downloading;
+        progress = 0.02;
+        setFile(L"Starlit TV Installer");
+        std::wstring downloadError;
+        const bool downloaded = tvdownload::downloadPortableInstaller(
+            identity_.product.version, tools + L"\\Starlit TV Installer.exe",
+            [&](uint64_t done, uint64_t total) {
+                progress = 0.02 + 0.08 * static_cast<double>(done) /
+                    static_cast<double>(total ? total : tvdownload::kMaxPortableBytes);
+                setFile(L"TV installer: " + megabytes(done) + (total ? L" / " + megabytes(total) : L""));
+            }, downloadError);
+        if (!downloaded) {
+            fail(downloadError);
+            deleteTree(staging);
+            return false;
+        }
+        progress = 0.10;
+    }
+
     phase = Phase::Closing;
-    progress = 0.0;
+    if (!downloadTv) progress = 0.0;
     std::vector<std::wstring> runningDirs{dir};
     if (existing_.ours && !samePath(existing_.location, dir)) runningDirs.push_back(existing_.location);
     if (existing_.legacy && identity_.ownsLegacy() && !existing_.legacyLocation.empty()) runningDirs.push_back(existing_.legacyLocation);
     if (!closeRunning(runningDirs)) {
         fail(identity_.product.name + L" is still running and couldn't be closed. Close it, then select Try again.");
+        deleteTree(staging);
         return false;
     }
 
     // Unpack next to the target first so a failed or cancelled run never
     // leaves a half-written app behind; the old version is only touched once
     // every new file is on disk.
-    const std::wstring staging = dir + L".setup-new";
-    if (dirExists(staging) && !deleteTree(staging)) {
-        fail(L"Setup couldn't clear " + staging + L". Delete that folder, then select Try again.");
-        return false;
-    }
     phase = Phase::Extracting;
-    progress = kExtractStart;
-    if (!extract(staging) || !writeUninstaller(staging)) {
+    const double extractStart = downloadTv ? 0.10 : kExtractStart;
+    progress = extractStart;
+    if (!extract(staging, extractStart) || !writeUninstaller(staging)) {
         deleteTree(staging);
         return false;
     }
@@ -762,7 +798,7 @@ bool Engine::install(const InstallRequest& request) {
     return true;
 }
 
-bool Engine::extract(const std::wstring& staging) {
+bool Engine::extract(const std::wstring& staging, double startProgress) {
     const auto& index = source_.index;
     if (!ensureDir(staging)) {
         DWORD code = GetLastError();
@@ -851,7 +887,7 @@ bool Engine::extract(const std::wstring& staging) {
             remaining -= chunk;
             done += chunk;
             doneBytes = done;
-            progress = kExtractStart + (kExtractEnd - kExtractStart) * static_cast<double>(done) /
+            progress = startProgress + (kExtractEnd - startProgress) * static_cast<double>(done) /
                 static_cast<double>(std::max<uint64_t>(1, index.totalRaw));
         }
         if (!ok) break;
@@ -925,6 +961,11 @@ bool Engine::mergeInto(const std::wstring& staging, const std::wstring& dir, boo
         if (!withTvInstaller &&
             _strnicmp(file.path.c_str(), kTvInstallerPrefix, sizeof(kTvInstallerPrefix) - 1) == 0) continue;
         shipped.push_back(utf16(file.path));
+    }
+    // The downloaded component is not in the original payload index. Preserve
+    // it in the in-place merge fallback too, not just on an atomic directory swap.
+    if (withTvInstaller && !hasTvInstaller()) {
+        shipped.push_back(L"tools\\Starlit TV Installer\\Starlit TV Installer.exe");
     }
     shipped.push_back(identity_.uninstallerFileName());
     for (const auto& relative : shipped) {
