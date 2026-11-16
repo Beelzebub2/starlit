@@ -1,3 +1,18 @@
+## Starlit 1.30.1
+
+### Samsung and LG TV installer downloads
+
+- **Find the matching TV package:** The Windows TV installer now downloads Samsung Tizen and LG webOS developer packages from the `tv-preview-v1.30.1` prerelease associated with the current stable Starlit version, rather than looking for unsigned TV assets in the stable release.
+- **Keep package verification strict:** Use the preview's published `SHA256SUMS.txt`, require an exact matching version and Starlit application identity, and refuse a missing or mismatched download before installation. Local developer packages remain available as an explicit fallback.
+- **Clarify developer-preview status:** Package selection now identifies TV packages as developer previews rather than accepted stable TV releases.
+
+### Compatibility and release scope
+
+- This compatible patch release changes only TV installer package discovery and supporting UI text. Existing accounts, profiles, libraries, add-ons, device pairings and installation settings require no migration.
+- Windows, signed Android phone and Android TV, and Linux packages remain covered by the normal tagged release, signing and checksum checks. Tizen WGT, webOS IPK and the Windows TV installer Setup/portable executables remain separately published under `tv-preview-v1.30.1`.
+- Samsung and LG TV packages and their Windows installer are **developer previews** that still require TV-specific signing or pairing, physical-device acceptance and dependency-security review. The optional bundled TV companion remains approval-gated.
+- No iOS App Store release or backend deployment is included. The UI wording change is confined to the English-only TV installer; supported app localization catalogs are unchanged.
+
 ## Starlit 1.30.0
 
 ### Optional TV installer in Windows setup
