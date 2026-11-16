@@ -2412,4 +2412,7 @@
     <string name="remote_tv_volume_up">رفع مستوى الصوت</string>
     <string name="settings_desktop_tv_installer_ready">افتح المثبت المرفق لأجهزة Samsung Tizen وLG webOS (معاينة للمطورين).</string>
     <string name="settings_desktop_tv_installer_missing">مثبت التلفاز غير مثبت. اعرض إصدارات المعاينة للمطورين على GitHub.</string>
+    <string name="profile_kids_content_filter">فلتر محتوى الأطفال</string>
+    <string name="profile_kids_content_filter_description">إخفاء محتوى الرعب والعنف والبالغين عند توفر بيانات التصنيف. ليس قفلاً أبوياً.</string>
+    <string name="profile_kids_content_blocked">هذا العنوان مخفي بفلتر الأطفال.</string>
 </resources>

@@ -3315,4 +3315,7 @@
     <string name="remote_tv_volume_up">வால்யூம் அப்</string>
     <string name="settings_desktop_tv_installer_ready">Samsung Tizen மற்றும் LG webOS டிவிகளுக்கான இணைக்கப்பட்ட நிறுவியைத் திறக்கவும் (உருவாக்குநர் முன்னோட்டம்).</string>
     <string name="settings_desktop_tv_installer_missing">டிவி நிறுவி நிறுவப்படவில்லை. GitHub-இல் முன்னோட்டப் பதிப்புகளைப் பார்க்கவும்.</string>
+    <string name="profile_kids_content_filter">குழந்தைகள் உள்ளடக்க வடிகட்டி</string>
+    <string name="profile_kids_content_filter_description">தரவின் அடிப்படையில் திகில், வன்முறை, வயதுவந்தோர் உள்ளடக்கத்தை மறைக்கும். இது பெற்றோர் பூட்டு அல்ல.</string>
+    <string name="profile_kids_content_blocked">இந்தத் தலைப்பு குழந்தைகள் வடிகட்டியால் மறைக்கப்பட்டது.</string>
 </resources>

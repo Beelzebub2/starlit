@@ -22,6 +22,7 @@ import com.nuvio.app.features.home.MetaPreview
 import com.nuvio.app.features.home.filterReleasedItems
 import com.nuvio.app.core.poster.withCustomPosterUrls
 import com.nuvio.app.features.watchprogress.CurrentDateProvider
+import com.nuvio.app.features.profiles.KidsContentPolicy
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -86,6 +87,7 @@ object SearchRepository {
         val hasPendingAddonManifests = enabledAddons.hasPendingEnabledManifests()
         val addonManifestErrorMessage = enabledAddons.firstEnabledManifestError()
         val activeAddons = enabledAddons.filter { it.manifest != null }
+            .filterNot { KidsContentPolicy.isEnabled() && it.manifest?.behaviorHints?.adult == true }
         if (activeAddons.isEmpty()) {
             activeJob?.cancel()
             lastRequestKey = null
@@ -119,6 +121,8 @@ object SearchRepository {
             append(normalizedQuery.lowercase())
             append('|')
             append(HomeCatalogSettingsRepository.snapshot().hideUnreleasedContent)
+            append('|')
+            append(KidsContentPolicy.isEnabled())
             append('|')
             append(hasPendingAddonManifests)
             append('|')
@@ -225,6 +229,7 @@ object SearchRepository {
         val hasPendingAddonManifests = enabledAddons.hasPendingEnabledManifests()
         val addonManifestErrorMessage = enabledAddons.firstEnabledManifestError()
         val activeAddons = enabledAddons.filter { it.manifest != null }
+            .filterNot { KidsContentPolicy.isEnabled() && it.manifest?.behaviorHints?.adult == true }
         if (activeAddons.isEmpty()) {
             activeDiscoverJob?.cancel()
             discoverSources = emptyList()
@@ -601,8 +606,11 @@ private fun Array<IndexedSearchResult?>.orderedSections(): List<HomeCatalogSecti
     mapNotNull { result -> result?.section }
 
 private fun CatalogPage.withUnreleasedFilter(): CatalogPage {
-    if (!HomeCatalogSettingsRepository.snapshot().hideUnreleasedContent) return this
-    val filteredItems = items.filterReleasedItems(CurrentDateProvider.todayIsoDate())
+    val filteredItems = KidsContentPolicy.filter(
+        if (HomeCatalogSettingsRepository.snapshot().hideUnreleasedContent) {
+            items.filterReleasedItems(CurrentDateProvider.todayIsoDate())
+        } else items,
+    )
     return if (filteredItems.size == items.size) this else copy(items = filteredItems)
 }
 

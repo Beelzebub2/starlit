@@ -2441,4 +2441,7 @@ Bu özelliği tamamen kendi sorumluluğunuzda kullanırsınız. P2P istediğiniz
     <string name="remote_tv_volume_up">Sesi artır</string>
     <string name="settings_desktop_tv_installer_ready">Samsung Tizen ve LG webOS TV için birlikte gelen yükleyiciyi aç (geliştirici önizlemesi).</string>
     <string name="settings_desktop_tv_installer_missing">TV yükleyicisi yüklü değil. GitHub üzerinde önizleme sürümlerini görüntüle.</string>
+    <string name="profile_kids_content_filter">Çocuk içerik filtresi</string>
+    <string name="profile_kids_content_filter_description">Üst verilere göre korku, şiddet ve yetişkin içeriklerini gizler. Ebeveyn kilidi değildir.</string>
+    <string name="profile_kids_content_blocked">Bu başlık çocuk filtresi tarafından gizlendi.</string>
 </resources>

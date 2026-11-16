@@ -3335,4 +3335,7 @@
     <string name="remote_tv_volume_up">เพิ่มระดับเสียง</string>
     <string name="settings_desktop_tv_installer_ready">เปิดตัวติดตั้งที่รวมมาสำหรับทีวี Samsung Tizen และ LG webOS (รุ่นตัวอย่างสำหรับนักพัฒนา)</string>
     <string name="settings_desktop_tv_installer_missing">ยังไม่ได้ติดตั้งตัวติดตั้งทีวี ดูรุ่นตัวอย่างสำหรับนักพัฒนาบน GitHub</string>
+    <string name="profile_kids_content_filter">ตัวกรองเนื้อหาสำหรับเด็ก</string>
+    <string name="profile_kids_content_filter_description">ซ่อนเนื้อหาสยองขวัญ ความรุนแรง และเนื้อหาผู้ใหญ่ตามข้อมูลกำกับ ไม่ใช่ระบบล็อกผู้ปกครอง</string>
+    <string name="profile_kids_content_blocked">เรื่องนี้ถูกซ่อนโดยตัวกรองสำหรับเด็ก</string>
 </resources>

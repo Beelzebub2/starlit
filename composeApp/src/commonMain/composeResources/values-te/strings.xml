@@ -3312,4 +3312,7 @@
     <string name="remote_tv_volume_up">వాల్యూమ్ అప్</string>
     <string name="settings_desktop_tv_installer_ready">Samsung Tizen, LG webOS టీవీల కోసం చేర్చిన ఇన్‌స్టాలర్‌ను తెరవండి (డెవలపర్ ప్రివ్యూ).</string>
     <string name="settings_desktop_tv_installer_missing">టీవీ ఇన్‌స్టాలర్ ఇన్‌స్టాల్ కాలేదు. GitHubలో ప్రివ్యూ బిల్డ్‌లను చూడండి.</string>
+    <string name="profile_kids_content_filter">పిల్లల కంటెంట్ ఫిల్టర్</string>
+    <string name="profile_kids_content_filter_description">సమాచారం ఆధారంగా భయానక, హింస మరియు పెద్దల కంటెంట్‌ను దాచుతుంది. ఇది తల్లిదండ్రుల లాక్ కాదు.</string>
+    <string name="profile_kids_content_blocked">ఈ శీర్షిక పిల్లల ఫిల్టర్ ద్వారా దాచబడింది.</string>
 </resources>

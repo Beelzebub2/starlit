@@ -3308,4 +3308,7 @@
     <string name="remote_tv_volume_up">Lisää äänenvoimakkuutta</string>
     <string name="settings_desktop_tv_installer_ready">Avaa mukana tuleva Samsung Tizen- ja LG webOS -televisioiden asennustyökalu (kehittäjäversio).</string>
     <string name="settings_desktop_tv_installer_missing">TV-asennustyökalua ei ole asennettu. Katso kehittäjäversiot GitHubista.</string>
+    <string name="profile_kids_content_filter">Lasten sisältösuodatin</string>
+    <string name="profile_kids_content_filter_description">Piilottaa kauhua, väkivaltaa ja aikuissisältöä metatietojen perusteella. Ei ole lapsilukko.</string>
+    <string name="profile_kids_content_blocked">Lasten suodatin piilottaa tämän nimikkeen.</string>
 </resources>

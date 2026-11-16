@@ -3348,4 +3348,7 @@
     <string name="remote_tv_volume_up">Збільшення гучності</string>
     <string name="settings_desktop_tv_installer_ready">Відкрити комплектний інсталятор для телевізорів Samsung Tizen і LG webOS (версія для розробників).</string>
     <string name="settings_desktop_tv_installer_missing">Інсталятор для ТВ не встановлено. Переглянути тестові версії на GitHub.</string>
+    <string name="profile_kids_content_filter">Фільтр дитячого вмісту</string>
+    <string name="profile_kids_content_filter_description">Приховує жахи, насильство та вміст для дорослих за метаданими. Це не батьківське блокування.</string>
+    <string name="profile_kids_content_blocked">Цю назву приховано дитячим фільтром.</string>
 </resources>

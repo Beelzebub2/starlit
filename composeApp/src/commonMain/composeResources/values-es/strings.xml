@@ -2605,4 +2605,7 @@ Utilizas esta función bajo tu propia responsabilidad. P2P se puede desactivar e
     <string name="remote_tv_volume_up">Subir volumen</string>
     <string name="settings_desktop_tv_installer_ready">Abrir el instalador incluido para televisores Samsung Tizen y LG webOS (versión preliminar).</string>
     <string name="settings_desktop_tv_installer_missing">El instalador de TV no está instalado. Ver versiones preliminares en GitHub.</string>
+    <string name="profile_kids_content_filter">Filtro de contenido infantil</string>
+    <string name="profile_kids_content_filter_description">Oculta terror, violencia y contenido adulto según los metadatos. No es un bloqueo parental.</string>
+    <string name="profile_kids_content_blocked">Este título está oculto por el filtro infantil.</string>
 </resources>

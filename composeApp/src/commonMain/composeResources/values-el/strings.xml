@@ -2636,4 +2636,7 @@
     <string name="remote_tv_volume_up">Αύξηση έντασης</string>
     <string name="settings_desktop_tv_installer_ready">Άνοιγμα του ενσωματωμένου εργαλείου εγκατάστασης για Samsung Tizen και LG webOS (προεπισκόπηση).</string>
     <string name="settings_desktop_tv_installer_missing">Το εργαλείο εγκατάστασης TV δεν έχει εγκατασταθεί. Δείτε τις δοκιμαστικές εκδόσεις στο GitHub.</string>
+    <string name="profile_kids_content_filter">Φίλτρο παιδικού περιεχομένου</string>
+    <string name="profile_kids_content_filter_description">Κρύβει τρόμο, βία και περιεχόμενο ενηλίκων βάσει μεταδεδομένων. Δεν είναι γονικό κλείδωμα.</string>
+    <string name="profile_kids_content_blocked">Αυτός ο τίτλος κρύβεται από το φίλτρο παιδιών.</string>
 </resources>

@@ -41,6 +41,7 @@ import com.nuvio.app.core.ui.posterCardClickable
 import com.nuvio.app.isDesktop
 import com.nuvio.app.core.ui.desktopPageHorizontalPaddingForWidth
 import com.nuvio.app.features.library.toMetaPreview
+import com.nuvio.app.features.profiles.KidsContentPolicy
 import com.nuvio.app.features.home.MetaPreview
 import com.nuvio.app.features.profiles.ProfileRepository
 import com.nuvio.app.features.watchprogress.ContinueWatchingItem
@@ -71,7 +72,13 @@ internal enum class LibraryView { Library, WatchLater }
 /** Library | Watch Later switch shown under the Library title. */
 @Composable
 internal fun LibraryViewSwitcher(selected: LibraryView, onSelect: (LibraryView) -> Unit, modifier: Modifier = Modifier) {
-    val saved by remember { WatchLaterRepository.ensureLoaded(); WatchLaterRepository.items }.collectAsState()
+    val savedAll by remember { WatchLaterRepository.ensureLoaded(); WatchLaterRepository.items }.collectAsState()
+    val profile by ProfileRepository.state.collectAsState()
+    val saved = remember(savedAll, profile.activeProfile?.kidsContentFilterEnabled) {
+        if (profile.activeProfile?.kidsContentFilterEnabled == true) {
+            savedAll.filterNot { KidsContentPolicy.isRestricted(it.toMetaPreview()) }
+        } else savedAll
+    }
     NuvioSegmentedControl(
         segments = listOf(
             NuvioSegment(LibraryView.Library, stringResource(Res.string.library_title)),
@@ -92,9 +99,14 @@ internal fun WatchLaterScreen(
     topChromePadding: Dp? = null,
     onShowLibrary: () -> Unit = {},
 ) {
-    val saved by remember { WatchLaterRepository.ensureLoaded(); WatchLaterRepository.items }.collectAsState()
+    val savedAll by remember { WatchLaterRepository.ensureLoaded(); WatchLaterRepository.items }.collectAsState()
     val progress by remember { WatchProgressRepository.ensureLoaded(); WatchProgressRepository.uiState }.collectAsState()
     val profile by ProfileRepository.state.collectAsState()
+    val saved = remember(savedAll, profile.activeProfile?.kidsContentFilterEnabled) {
+        if (profile.activeProfile?.kidsContentFilterEnabled == true) {
+            savedAll.filterNot { KidsContentPolicy.isRestricted(it.toMetaPreview()) }
+        } else savedAll
+    }
     val grid = rememberLazyGridState()
     var tipDismissed by rememberSaveable { mutableStateOf(false) }
     val colors = MaterialTheme.nuvio.colors
