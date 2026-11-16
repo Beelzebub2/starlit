@@ -2203,4 +2203,6 @@
     <string name="remote_tv_volume_up">ボリュームアップ</string>
     <string name="settings_tracking_anime_id_subtitle">アニメ作品の主な識別子として使用する外部IDを選択します。</string>
     <string name="settings_tracking_anime_id_title">アニメIDの優先設定</string>
+    <string name="settings_desktop_tv_installer_ready">Samsung Tizen / LG webOS テレビ用の同梱インストーラーを開く（開発者プレビュー）。</string>
+    <string name="settings_desktop_tv_installer_missing">TV インストーラーは未インストールです。GitHub で開発者向けプレビューを確認できます。</string>
 </resources>

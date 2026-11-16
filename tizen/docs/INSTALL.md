@@ -27,6 +27,10 @@ may require another profile. The WGT remains unsigned in CI so a developer
 can sign it for an individual TV. Do not commit signing material or expose
 the TV's developer port to the internet. Install success is not a playback
 certification; follow [the physical-device checklist](DEVICE-ACCEPTANCE.md).
+Each normal Starlit release automatically creates a separate `tv-preview-v<version>`
+prerelease containing the unsigned matching WGT as an **unverified developer
+preview**. Its availability is not Samsung Store
+acceptance or proof that playback works on the target firmware.
 
 ## Updates: Samsung Store and developer installations
 

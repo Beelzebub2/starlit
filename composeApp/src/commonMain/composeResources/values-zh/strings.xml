@@ -3333,4 +3333,6 @@
     <string name="remote_tv_up">向上</string>
     <string name="remote_tv_volume_down">音量调低</string>
     <string name="remote_tv_volume_up">音量调高</string>
+    <string name="settings_desktop_tv_installer_ready">打开随附的三星 Tizen 和 LG webOS 电视安装器（开发者预览版）。</string>
+    <string name="settings_desktop_tv_installer_missing">未安装电视安装器。请在 GitHub 上查看开发者预览构建。</string>
 </resources>

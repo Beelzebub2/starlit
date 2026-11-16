@@ -1738,4 +1738,6 @@
     <string name="remote_tv_volume_up">Volume naik</string>
     <string name="settings_tracking_anime_id_subtitle">Pilih ID eksternal yang digunakan sebagai pengenal utama untuk entri anime.</string>
     <string name="settings_tracking_anime_id_title">Preferensi ID anime</string>
+    <string name="settings_desktop_tv_installer_ready">Buka penginstal bawaan untuk TV Samsung Tizen dan LG webOS (pratinjau pengembang).</string>
+    <string name="settings_desktop_tv_installer_missing">Penginstal TV belum terpasang. Lihat versi pratinjau pengembang di GitHub.</string>
 </resources>

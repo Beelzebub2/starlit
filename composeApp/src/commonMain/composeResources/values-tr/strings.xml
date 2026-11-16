@@ -2439,4 +2439,6 @@ Bu özelliği tamamen kendi sorumluluğunuzda kullanırsınız. P2P istediğiniz
     <string name="remote_tv_up">Yukarı</string>
     <string name="remote_tv_volume_down">Sesi kıs</string>
     <string name="remote_tv_volume_up">Sesi artır</string>
+    <string name="settings_desktop_tv_installer_ready">Samsung Tizen ve LG webOS TV için birlikte gelen yükleyiciyi aç (geliştirici önizlemesi).</string>
+    <string name="settings_desktop_tv_installer_missing">TV yükleyicisi yüklü değil. GitHub üzerinde önizleme sürümlerini görüntüle.</string>
 </resources>

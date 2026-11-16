@@ -3306,4 +3306,6 @@
     <string name="remote_tv_up">Juu</string>
     <string name="remote_tv_volume_down">Kupungua kwa sauti</string>
     <string name="remote_tv_volume_up">Ongeza sauti</string>
+    <string name="settings_desktop_tv_installer_ready">Fungua kisakinishi kilichojumuishwa kwa TV za Samsung Tizen na LG webOS (toleo la majaribio).</string>
+    <string name="settings_desktop_tv_installer_missing">Kisakinishi cha TV hakijasakinishwa. Tazama matoleo ya majaribio kwenye GitHub.</string>
 </resources>

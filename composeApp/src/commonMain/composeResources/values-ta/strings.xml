@@ -3313,4 +3313,6 @@
     <string name="remote_tv_up">மேலே</string>
     <string name="remote_tv_volume_down">ஒலி அளவு குறைந்தது</string>
     <string name="remote_tv_volume_up">வால்யூம் அப்</string>
+    <string name="settings_desktop_tv_installer_ready">Samsung Tizen மற்றும் LG webOS டிவிகளுக்கான இணைக்கப்பட்ட நிறுவியைத் திறக்கவும் (உருவாக்குநர் முன்னோட்டம்).</string>
+    <string name="settings_desktop_tv_installer_missing">டிவி நிறுவி நிறுவப்படவில்லை. GitHub-இல் முன்னோட்டப் பதிப்புகளைப் பார்க்கவும்.</string>
 </resources>

@@ -47,6 +47,56 @@ test('every published release requires a signed Android TV package and checksum'
   assert.match(workflow, /"Starlit-TV-\$version\.apk"/, 'TV APK must be uploaded to the public release');
 });
 
+test('every normal release requires matching Tizen, webOS and TV installer preview artifacts', () => {
+  const workflow = readFileSync(new URL('./workflows/windows-release.yml', import.meta.url), 'utf8');
+  const tizen = readFileSync(new URL('./workflows/tizen.yml', import.meta.url), 'utf8');
+  const webos = readFileSync(new URL('./workflows/webos.yml', import.meta.url), 'utf8');
+  const installer = readFileSync(new URL('./workflows/webos-installer.yml', import.meta.url), 'utf8');
+  const notice = readFileSync(new URL('../docs/TV-DEVELOPER-PREVIEW-NOTICE.md', import.meta.url), 'utf8');
+
+  for (const [name, file, job] of [
+    ['tizen-preview', tizen, 'tizen.yml'],
+    ['webos-preview', webos, 'webos.yml'],
+    ['tv-installer-preview', installer, 'webos-installer.yml'],
+  ]) {
+    const jobBody = workflow.split(`  ${name}:`)[1]?.split(/\r?\n  [a-z-]+:/)[0];
+    assert.ok(jobBody, `${name} must be a tagged release job`);
+    assert.ok(jobBody.includes(`uses: ./.github/workflows/${job}`),
+      `${name} must invoke the expected reusable workflow`);
+    assert.match(jobBody, /release_tag: \$\{\{ inputs\.release_tag \|\| github\.ref_name \}\}/,
+      `${name} must build the exact release tag`);
+    assert.match(file, /  workflow_call:/, `${job} must support tagged reusable builds`);
+    assert.match(file, /required: true/, `${job} must require the release tag`);
+    assert.match(file, /refs\/tags\/\{0\}/, `${job} must build the exact tagged source`);
+  }
+  assert.match(workflow, /needs: \[windows, android-sign, linux, tizen-preview, webos-preview, tv-installer-preview\]/,
+    'release publication must fail if any TV preview build fails');
+  for (const file of ['SHA256SUMS-Tizen', 'SHA256SUMS-WebOS', 'SHA256SUMS-TV-Installer']) {
+    assert.match(workflow, new RegExp(file), `missing ${file} release checksum`);
+  }
+  for (const file of ['Starlit-Tizen-$version.wgt', 'Starlit-WebOS-$version.ipk',
+    'Starlit-TV-Installer-Setup-Windows-$version.exe', 'Starlit-TV-Installer-Windows-$version.exe']) {
+    assert.ok(workflow.includes(file), `missing tagged asset ${file}`);
+  }
+  assert.match(workflow, /pattern: starlit-\*-preview/, 'TV previews must be isolated from the stable artifact download');
+  assert.match(workflow, /preview\/\*\.wgt/);
+  assert.match(workflow, /preview\/\*\.ipk/);
+  assert.match(workflow, /preview_tag="tv-preview-\$RELEASE_TAG"/);
+  assert.match(workflow, /gh release create "\$preview_tag"/);
+  assert.match(workflow, /--prerelease --latest=false/, 'TV preview must never become the latest stable release');
+  assert.match(workflow, /--notes-file \.\.\/docs\/TV-DEVELOPER-PREVIEW-NOTICE\.md/);
+  const stableAssets = workflow.split('gh "${args[@]}"')[1]?.split('# A separate prerelease tag')[0] || '';
+  assert.doesNotMatch(stableAssets, /Starlit-(?:Tizen|WebOS|TV-Installer)-/,
+    'unaccepted TV packages must not enter the stable release or its update channels');
+  assert.match(notice, /developer previews/i);
+  assert.match(notice, /not passed the physical-TV acceptance/i);
+  assert.match(notice, /security\s+advisories/i);
+  assert.match(tizen, /npm run verify:package/);
+  assert.match(webos, /npm run verify:package:webos/);
+  assert.match(installer, /SHA256SUMS-TV-Installer/);
+  assert.match(installer, /npm test/);
+});
+
 test('Windows release uses pinned same-repository LFS runtimes and verifies both binaries', () => {
   const workflow = readFileSync(new URL('./workflows/windows-release.yml', import.meta.url), 'utf8');
   assert.match(workflow, /git lfs fetch origin "refs\/tags\/\$env:RELEASE_TAG"/,

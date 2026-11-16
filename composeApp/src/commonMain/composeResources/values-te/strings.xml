@@ -3310,4 +3310,6 @@
     <string name="remote_tv_up">పైకి</string>
     <string name="remote_tv_volume_down">వాల్యూమ్ తగ్గింది</string>
     <string name="remote_tv_volume_up">వాల్యూమ్ అప్</string>
+    <string name="settings_desktop_tv_installer_ready">Samsung Tizen, LG webOS టీవీల కోసం చేర్చిన ఇన్‌స్టాలర్‌ను తెరవండి (డెవలపర్ ప్రివ్యూ).</string>
+    <string name="settings_desktop_tv_installer_missing">టీవీ ఇన్‌స్టాలర్ ఇన్‌స్టాల్ కాలేదు. GitHubలో ప్రివ్యూ బిల్డ్‌లను చూడండి.</string>
 </resources>

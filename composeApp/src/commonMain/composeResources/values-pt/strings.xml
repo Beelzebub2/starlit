@@ -2466,4 +2466,6 @@
     <string name="remote_tv_volume_up">Aumentar volume</string>
     <string name="settings_tracking_anime_id_subtitle">Escolhe qual o ID externo a usar como identificador principal das entradas de anime.</string>
     <string name="settings_tracking_anime_id_title">ID preferido para anime</string>
+    <string name="settings_desktop_tv_installer_ready">Abrir o instalador incluído para TVs Samsung Tizen e LG webOS (pré-visualização para programadores).</string>
+    <string name="settings_desktop_tv_installer_missing">Instalador de TV não instalado. Ver versões de pré-visualização no GitHub.</string>
 </resources>

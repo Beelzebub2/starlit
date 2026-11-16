@@ -20,6 +20,8 @@ param(
     [string] $LegacyUpgradeCode = '',
     [string] $Arch = 'x64',
     [string] $Vcvars = '',
+    # Explicit opt-in for an independently built, unverified TV preview tool.
+    [string] $TvInstallerDir = '',
     # Local UI work only: keep payload.bin from the last run instead of packing again.
     [switch] $ReusePayload
 )
@@ -54,6 +56,24 @@ if ([string]::IsNullOrWhiteSpace($Vcvars) -or -not (Test-Path -LiteralPath $Vcva
 
 New-Item -ItemType Directory -Force -Path $WorkDir | Out-Null
 $WorkDir = (Resolve-Path -LiteralPath $WorkDir).Path
+
+# Keep the jpackage app image untouched: a failed optional component build must
+# not pollute the next Windows installer build or ship a stale TV executable.
+$packageImage = $AppImage
+if (-not [string]::IsNullOrWhiteSpace($TvInstallerDir)) {
+    $TvInstallerDir = (Resolve-Path -LiteralPath $TvInstallerDir -ErrorAction Stop).Path
+    if (-not (Test-Path -LiteralPath (Join-Path $TvInstallerDir 'Starlit TV Installer.exe'))) {
+        throw 'The TV installer directory is missing its app executable.'
+    }
+    $packageImage = Join-Path $WorkDir 'app-with-tv-installer'
+    if (Test-Path -LiteralPath $packageImage) { Remove-Item -LiteralPath $packageImage -Recurse -Force }
+    New-Item -ItemType Directory -Path $packageImage | Out-Null
+    Copy-Item -Path (Join-Path $AppImage '*') -Destination $packageImage -Recurse -Force
+    $tools = Join-Path $packageImage 'tools\Starlit TV Installer'
+    New-Item -ItemType Directory -Path $tools -Force | Out-Null
+    Copy-Item -Path (Join-Path $TvInstallerDir '*') -Destination $tools -Recurse -Force
+    Write-Host 'Including optional TV installer preview in the Windows setup payload'
+}
 
 # The resource script reads the version from here, so the stub's file
 # properties match the release.
@@ -96,7 +116,7 @@ if ($ReusePayload -and (Test-Path -LiteralPath $payload)) {
     Write-Host 'Reusing the existing payload'
 } else {
     Write-Host "Packing $AppImage"
-    & (Join-Path $WorkDir 'pack.exe') $AppImage $payload "name=$ProductName" "version=$Version" "publisher=$Publisher" "exe=$LauncherExe" "legacyUpgradeCode=$LegacyUpgradeCode"
+    & (Join-Path $WorkDir 'pack.exe') $packageImage $payload "name=$ProductName" "version=$Version" "publisher=$Publisher" "exe=$LauncherExe" "legacyUpgradeCode=$LegacyUpgradeCode"
     if ($LASTEXITCODE -ne 0) { throw "Packing the app image failed with exit code $LASTEXITCODE." }
 }
 

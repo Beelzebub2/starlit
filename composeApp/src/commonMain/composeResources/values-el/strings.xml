@@ -2634,4 +2634,6 @@
     <string name="remote_tv_up">Πάνω</string>
     <string name="remote_tv_volume_down">Μείωση έντασης</string>
     <string name="remote_tv_volume_up">Αύξηση έντασης</string>
+    <string name="settings_desktop_tv_installer_ready">Άνοιγμα του ενσωματωμένου εργαλείου εγκατάστασης για Samsung Tizen και LG webOS (προεπισκόπηση).</string>
+    <string name="settings_desktop_tv_installer_missing">Το εργαλείο εγκατάστασης TV δεν έχει εγκατασταθεί. Δείτε τις δοκιμαστικές εκδόσεις στο GitHub.</string>
 </resources>

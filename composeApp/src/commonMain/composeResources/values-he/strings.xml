@@ -1029,4 +1029,6 @@
     <string name="settings_tracking_anime_id_subtitle">בחרו איזה מזהה חיצוני ישמש כמזהה הראשי של רשומות אנימה.</string>
     <string name="settings_tracking_anime_id_title">העדפת מזהה לאנימה</string>
     <string name="settings_trakt_comments">תגובות</string>
+    <string name="settings_desktop_tv_installer_ready">פתח את כלי ההתקנה המצורף לטלוויזיות Samsung Tizen ו-LG webOS (גרסת מפתחים).</string>
+    <string name="settings_desktop_tv_installer_missing">מתקין הטלוויזיה לא מותקן. הצג גרסאות מפתחים ב-GitHub.</string>
 </resources>

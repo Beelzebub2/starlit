@@ -3350,4 +3350,6 @@ Nagbalik ang</string>
     <string name="remote_tv_up">Taas</string>
     <string name="remote_tv_volume_down">Hinaan ang volume</string>
     <string name="remote_tv_volume_up">Tumaas ang volume</string>
+    <string name="settings_desktop_tv_installer_ready">Buksan ang kasamang installer para sa Samsung Tizen at LG webOS TV (preview para sa developer).</string>
+    <string name="settings_desktop_tv_installer_missing">Hindi naka-install ang TV installer. Tingnan ang mga developer preview build sa GitHub.</string>
 </resources>

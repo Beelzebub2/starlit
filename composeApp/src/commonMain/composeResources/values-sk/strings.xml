@@ -2660,4 +2660,6 @@
     <string name="remote_tv_up">Hore</string>
     <string name="remote_tv_volume_down">Zníženie hlasitosti</string>
     <string name="remote_tv_volume_up">Zvýšenie hlasitosti</string>
+    <string name="settings_desktop_tv_installer_ready">Otvoriť pribalený inštalátor pre televízory Samsung Tizen a LG webOS (vývojárska verzia).</string>
+    <string name="settings_desktop_tv_installer_missing">Inštalátor pre TV nie je nainštalovaný. Pozrieť vývojárske verzie na GitHube.</string>
 </resources>

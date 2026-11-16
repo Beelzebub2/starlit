@@ -56,6 +56,7 @@ struct Existing {
     std::wstring launcher;
     bool startMenu = true;
     bool desktop = true;
+    bool tvInstaller = false;
 
     bool legacy = false;  // installed by the jpackage MSI/EXE
     std::wstring legacyProductCode;
@@ -82,6 +83,7 @@ struct InstallRequest {
     std::wstring dir;
     bool startMenu = true;
     bool desktop = true;
+    bool tvInstaller = false;
 };
 
 class Engine {
@@ -91,6 +93,7 @@ public:
     const Identity& identity() const { return identity_; }
     const PayloadSource& source() const { return source_; }
     const Existing& existing() const { return existing_; }
+    bool hasTvInstaller() const;
 
     std::wstring defaultDir() const;
     // Empty when the folder can take the install, otherwise a sentence for the UI.
@@ -110,8 +113,8 @@ private:
     bool extract(const std::wstring& staging);
     bool writeUninstaller(const std::wstring& dir);
     void removeLegacyMsi();
-    bool swapInto(const std::wstring& staging, const std::wstring& dir);
-    bool mergeInto(const std::wstring& staging, const std::wstring& dir);
+    bool swapInto(const std::wstring& staging, const std::wstring& dir, bool withTvInstaller);
+    bool mergeInto(const std::wstring& staging, const std::wstring& dir, bool withTvInstaller);
     void writeShortcuts(const InstallRequest& request);
     void registerUninstall(const InstallRequest& request);
     bool closeRunning(const std::vector<std::wstring>& dirs);
