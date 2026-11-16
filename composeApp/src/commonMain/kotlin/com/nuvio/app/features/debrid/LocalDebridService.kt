@@ -1,6 +1,11 @@
 package com.nuvio.app.features.debrid
 
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.longOrNull
 
@@ -26,6 +31,21 @@ internal object LocalDebridService {
     }
 
     private suspend fun checkTorboxCached(
+        apiKey: String,
+        hashes: List<String>,
+    ): Map<String, LocalDebridCachedItem>? {
+        val normalized = hashes
+            .map { it.trim().lowercase() }
+            .filter { it.isNotBlank() }
+            .distinct()
+        if (normalized.isEmpty()) return emptyMap()
+        val cached = requestTorboxCached(apiKey, normalized) ?: return null
+        return resolveTorboxAliasMatches(cached, normalized) { hash ->
+            requestTorboxCached(apiKey, listOf(hash))
+        }
+    }
+
+    private suspend fun requestTorboxCached(
         apiKey: String,
         hashes: List<String>,
     ): Map<String, LocalDebridCachedItem>? =
@@ -79,4 +99,52 @@ internal object LocalDebridService {
 private fun kotlinx.serialization.json.JsonElement?.asLongOrNull(): Long? {
     val primitive = this as? JsonPrimitive ?: return null
     return primitive.longOrNull ?: primitive.content.toLongOrNull()
+}
+
+// TorBox can return the canonical hash for an alternative hash. A batch response
+// does not identify which requested alias produced that canonical key.
+internal suspend fun resolveTorboxAliasMatches(
+    cached: Map<String, LocalDebridCachedItem>,
+    requestedHashes: List<String>,
+    fetchCached: suspend (String) -> Map<String, LocalDebridCachedItem>? = { null },
+): Map<String, LocalDebridCachedItem>? {
+    val requested = requestedHashes
+        .map { it.trim().lowercase() }
+        .filter { it.isNotBlank() }
+        .distinct()
+    val normalizedCached = cached.mapKeys { it.key.trim().lowercase() }
+    if (requested.isEmpty() || normalizedCached.keys.all { it in requested }) return normalizedCached
+
+    if (requested.size == 1) {
+        val item = normalizedCached[requested.single()]
+            ?: normalizedCached.values.singleOrNull()
+            ?: return null
+        return mapOf(requested.single() to item)
+    }
+
+    val resolved = normalizedCached.toMutableMap()
+    val limit = Semaphore(4)
+    val matches = coroutineScope {
+        requested.filter { it !in resolved }.map { hash ->
+            async {
+                val answer = limit.withPermit {
+                    try {
+                        fetchCached(hash)
+                    } catch (error: CancellationException) {
+                        throw error
+                    } catch (_: Exception) {
+                        null
+                    }
+                }
+                // A failed or ambiguous lookup is UNKNOWN, not NOT_CACHED.
+                val item = answer?.get(hash) ?: answer?.values?.singleOrNull()
+                Triple(hash, item, answer != null && (answer.containsKey(hash) || answer.size <= 1))
+            }
+        }.awaitAll()
+    }
+    if (matches.any { !it.third }) return null
+    matches.forEach { (hash, item, _) ->
+        if (item != null) resolved[hash] = item
+    }
+    return resolved
 }
