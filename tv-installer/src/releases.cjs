@@ -8,21 +8,32 @@ const settings = require("../installer.config.json");
 const REPO = settings.githubRepo;
 const MAX_CHECKSUMS = 16 * 1024;
 const RELEASE_API = "https://api.github.com/repos/" + REPO + "/releases/latest";
+const PREVIEW_API = "https://api.github.com/repos/" + REPO + "/releases/tags/tv-preview-";
 
-function expectedReleaseAssets(release, platform = "webos") {
-  const spec = platformInfo(platform);
+function stableReleaseTag(release) {
   if (!release || release.draft || release.prerelease || !/^v\d+\.\d+\.\d+$/.test(String(release.tag_name || ""))) {
     throw new Error("No verified stable Starlit release is available");
   }
-  const name = spec.filePrefix + "-" + release.tag_name.slice(1) + spec.extension;
+  return release.tag_name;
+}
+
+function expectedReleaseAssets(release, platform = "webos", stableTag = null) {
+  const spec = platformInfo(platform);
+  const previewTag = String(release?.tag_name || "");
+  if (!release || release.draft || release.prerelease !== true ||
+      !/^tv-preview-v\d+\.\d+\.\d+$/.test(previewTag) ||
+      (stableTag !== null && previewTag !== "tv-preview-" + stableTag)) {
+    throw new Error("No matching Starlit TV developer preview is available for the stable release");
+  }
+  const name = spec.filePrefix + "-" + previewTag.slice("tv-preview-v".length) + spec.extension;
   const assets = Array.isArray(release.assets) ? release.assets : [];
   const fileAsset = assets.find(x => x.name === name);
   const sums = assets.find(x => x.name === spec.checksumFile);
   if (!fileAsset || !sums) {
-    throw new Error("No accepted " + spec.label + " package in the latest Starlit release. Select a local " + spec.extension + " instead.");
+    throw new Error("No verified " + spec.label + " package in the matching TV developer preview. Select a local " + spec.extension + " instead.");
   }
-  return { filename: name, packageUrl: approvedAssetUrl(fileAsset.browser_download_url, release.tag_name, name),
-    checksumUrl: approvedAssetUrl(sums.browser_download_url, release.tag_name, spec.checksumFile) };
+  return { filename: name, packageUrl: approvedAssetUrl(fileAsset.browser_download_url, previewTag, name),
+    checksumUrl: approvedAssetUrl(sums.browser_download_url, previewTag, spec.checksumFile) };
 }
 function approvedAssetUrl(raw, tag, filename) {
   const address = new URL(String(raw || ""));
@@ -68,18 +79,28 @@ async function fetchVerifiedRelease({
 } = {}) {
   const spec = platformInfo(platform);
   const metadataBuffer = await fetchBounded(fetchImpl, RELEASE_API, 256 * 1024, 10000);
-  const release = JSON.parse(metadataBuffer.toString("utf8"));
-  const assets = expectedReleaseAssets(release, platform);
+  const stableTag = stableReleaseTag(JSON.parse(metadataBuffer.toString("utf8")));
+  onStatus("Checking the " + stableTag + " TV developer preview");
+  let previewBuffer;
+  try {
+    previewBuffer = await fetchBounded(fetchImpl, PREVIEW_API + stableTag, 256 * 1024, 10000);
+  } catch (error) {
+    if (/HTTP 404\)/.test(String(error.message))) {
+      throw new Error("The matching " + stableTag + " TV developer preview is not published. Select a local " + spec.extension + " instead.");
+    }
+    throw error;
+  }
+  const assets = expectedReleaseAssets(JSON.parse(previewBuffer.toString("utf8")), platform, stableTag);
   onStatus("Checking Starlit's published SHA-256 checksum");
   const sums = await fetchBounded(fetchImpl, assets.checksumUrl, MAX_CHECKSUMS, 15000);
   const expected = parseChecksum(sums.toString("utf8"), assets.filename);
-  onStatus("Downloading accepted Starlit " + spec.label + " package");
+  onStatus("Downloading verified Starlit " + spec.label + " developer-preview package");
   const bytes = await fetchBounded(fetchImpl, assets.packageUrl, platform === "webos" ? MAX_IPK : MAX_WGT, 60000);
   if (createHash("sha256").update(bytes).digest("hex") !== expected) {
     throw new Error("Package SHA-256 verification failed; nothing was installed");
   }
   const manifest = platform === "webos" ? inspectIpk(bytes) : await inspectWgt(bytes);
-  if (manifest.version !== release.tag_name.slice(1)) {
+  if (manifest.version !== stableTag.slice(1)) {
     throw new Error("TV package version does not match its release tag");
   }
   return { bytes, filename: assets.filename, sha256: expected, manifest };

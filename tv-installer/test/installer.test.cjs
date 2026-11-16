@@ -5,8 +5,10 @@ const { gzipSync } = require("node:zlib");
 const { mkdtemp, writeFile, rm } = require("node:fs/promises");
 const os = require("node:os");
 const path = require("node:path");
+const { Readable } = require("node:stream");
+const { createHash } = require("node:crypto");
 const { inspectIpk } = require("../src/ipk.cjs");
-const { parseChecksum, approvedAssetUrl, expectedReleaseAssets } = require("../src/releases.cjs");
+const { parseChecksum, approvedAssetUrl, expectedReleaseAssets, fetchVerifiedRelease } = require("../src/releases.cjs");
 const { isLanIPv4, validateTarget, pairTv, operate } = require("../src/installer.cjs");
 
 function arEntry(name, data) {
@@ -75,12 +77,45 @@ test("Install performs in-place update; launch and removal use Starlit app ID", 
     await rm(dir, { recursive: true, force: true });
   }
 });
-test("Release assets require a stable tag and an exact SHA-256", () => {
+test("Release assets require a version-matched TV developer preview and exact SHA-256", async () => {
   const name = "Starlit-WebOS-0.1.0.ipk", hash = "a".repeat(64);
   assert.equal(parseChecksum(hash + "  " + name + "\n", name), hash);
   assert.throws(() => parseChecksum(hash + "  other.ipk", name), /SHA-256/);
-  assert.throws(() => expectedReleaseAssets({ tag_name: "v0.1.0", assets: [] }), /accepted LG webOS/);
-  assert.equal(approvedAssetUrl('https://github.com/Beelzebub2/starlit/releases/download/v0.1.0/' + name, 'v0.1.0', name), 'https://github.com/Beelzebub2/starlit/releases/download/v0.1.0/' + name);
-  assert.throws(() => approvedAssetUrl('https://github.com/attacker/starlit/releases/download/v0.1.0/' + name, 'v0.1.0', name), /Untrusted/);
-  assert.throws(() => expectedReleaseAssets({ tag_name: "v0.1.0", prerelease: true, assets: [] }), /verified stable/);
+  const tag = "tv-preview-v0.1.0";
+  const base = "https://github.com/Beelzebub2/starlit/releases/download/" + tag + "/";
+  const preview = { tag_name: tag, prerelease: true, draft: false, assets: [
+    { name, browser_download_url: base + name },
+    { name: "SHA256SUMS.txt", browser_download_url: base + "SHA256SUMS.txt" }
+  ] };
+  assert.equal(expectedReleaseAssets(preview, "webos", "v0.1.0").filename, name);
+  assert.throws(() => expectedReleaseAssets({ ...preview, assets: preview.assets.slice(0, 1) }, "webos"), /verified LG webOS/);
+  assert.throws(() => expectedReleaseAssets(preview, "webos", "v0.1.1"), /matching/);
+  assert.throws(() => expectedReleaseAssets({ ...preview, prerelease: false }, "webos"), /matching/);
+  assert.throws(() => expectedReleaseAssets({ ...preview, draft: true }, "webos"), /matching/);
+  assert.throws(() => expectedReleaseAssets({ ...preview, tag_name: "v0.1.0" }, "webos"), /matching/);
+  assert.equal(approvedAssetUrl(base + name, tag, name), base + name);
+  assert.throws(() => approvedAssetUrl('https://github.com/attacker/starlit/releases/download/' + tag + '/' + name, tag, name), /Untrusted/);
+  const ipk = makePackage();
+  const latestUrl = "https://api.github.com/repos/Beelzebub2/starlit/releases/latest";
+  const previewUrl = "https://api.github.com/repos/Beelzebub2/starlit/releases/tags/" + tag;
+  const payloads = new Map([
+    [latestUrl, Buffer.from(JSON.stringify({ tag_name: "v0.1.0", prerelease: false, draft: false }))],
+    [previewUrl, Buffer.from(JSON.stringify(preview))],
+    [base + "SHA256SUMS.txt", Buffer.from(createHash("sha256").update(ipk).digest("hex") + "  " + name + "\n")],
+    [base + name, ipk]
+  ]);
+  const calls = [];
+  const fetchImpl = async url => {
+    calls.push(url);
+    const body = payloads.get(url);
+    if (!body) return { ok: false, status: 404, headers: { get: () => "0" }, body: Readable.from([]) };
+    return { ok: true, status: 200, headers: { get: () => String(body.length) }, body: Readable.from([body]) };
+  };
+  const verified = await fetchVerifiedRelease({ platform: "webos", fetchImpl });
+  assert.equal(verified.manifest.appId, "app.starlit.webos");
+  assert.deepEqual(calls, [latestUrl, previewUrl, base + "SHA256SUMS.txt", base + name]);
+  payloads.set(previewUrl, Buffer.from(JSON.stringify({ ...preview, tag_name: "tv-preview-v0.1.1" })));
+  await assert.rejects(fetchVerifiedRelease({ platform: "webos", fetchImpl }), /matching/);
+  payloads.delete(previewUrl);
+  await assert.rejects(fetchVerifiedRelease({ platform: "webos", fetchImpl }), /not published/);
 });
