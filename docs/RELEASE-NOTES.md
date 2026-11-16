@@ -1,3 +1,18 @@
+## Starlit 1.30.4
+
+### Windows installer experience
+
+- **Clearer installation choices:** The Windows setup screen now keeps the destination, Start menu and desktop shortcuts, and optional Starlit TV Installer developer preview together before installation begins.
+- **Guided updates and removal:** Update review shows the installed and target versions and offers a direct way to change installation options. Uninstall clearly distinguishes app files from user data, retaining settings, profiles and cache unless data removal is explicitly selected.
+- **Progress and recovery feedback:** A refreshed Starlit-themed progress view displays installation stages, transferred data and the current file; completion and failure screens retain launch, retry, log and close actions. Keyboard support and reduced-motion preferences remain available.
+
+### Compatibility and release scope
+
+- The redesign uses the existing Windows setup engine and command interface, without changing install locations, account data, add-ons, download logic, TV pairing or automatic update behavior. No migration is required.
+- The optional Samsung/LG TV Installer remains disabled by default and is still a developer preview. It is downloaded with checksum verification when selected; installing Starlit does not automatically install software on a TV.
+- Stable Windows, signed Android phone and Android TV, and Linux packages remain covered by the release build, signing, smoke tests and checksums. Samsung Tizen, LG webOS and the Windows TV installer are published as matching-version developer previews under `tv-preview-v1.30.4`, pending hardware and security acceptance.
+- The Windows setup UI remains English-only; no existing application translation catalogs were modified. This release does not include an iOS App Store update or backend deployment.
+
 ## Starlit 1.30.3
 
 ### Desktop player controls
