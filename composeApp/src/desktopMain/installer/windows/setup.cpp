@@ -40,7 +40,7 @@ constexpr UINT kFinishedMessage = WM_APP + 1;
 constexpr UINT kDragMessage = WM_APP + 2;
 constexpr UINT_PTR kProgressTimer = 1;
 constexpr UINT_PTR kShowTimer = 2;
-constexpr COLORREF kBackground = RGB(13, 13, 13);
+constexpr COLORREF kBackground = RGB(13, 9, 25);  // ui/setup.css --sky-1
 
 struct Args {
     bool silent = false;
@@ -559,7 +559,7 @@ bool createWindow(HINSTANCE instance) {
     DwmSetWindowAttribute(gWindow, 20 /* DWMWA_USE_IMMERSIVE_DARK_MODE */, &dark, sizeof dark);
     const DWORD corners = 2 /* DWMWCP_ROUND */;
     DwmSetWindowAttribute(gWindow, 33 /* DWMWA_WINDOW_CORNER_PREFERENCE */, &corners, sizeof corners);
-    const COLORREF border = RGB(42, 42, 42);
+    const COLORREF border = RGB(48, 38, 72);
     DwmSetWindowAttribute(gWindow, 34 /* DWMWA_BORDER_COLOR */, &border, sizeof border);
     SetWindowPos(gWindow, nullptr, 0, 0, 0, 0, SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER);
     // Shown once the page has painted, so it never flashes empty; this is the fallback.
