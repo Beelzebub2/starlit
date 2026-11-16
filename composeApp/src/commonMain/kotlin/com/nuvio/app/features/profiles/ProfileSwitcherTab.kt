@@ -1056,7 +1056,7 @@ private fun PopupProfileBubble(
                     .size(48.dp)
                     .clip(tokens.shapes.avatar)
                     .background(
-                        if (avatarImageUrl != null) {
+                        if (avatarImageUrl != null || isBuiltInAvatar(avatarItem?.id)) {
                             avatarItem?.bgColor?.let { parseHexColor(it) } ?: avatarColor
                         } else {
                             avatarColor.copy(alpha = 0.15f)
@@ -1074,7 +1074,7 @@ private fun PopupProfileBubble(
                                 avatarColor.copy(alpha = 0.6f),
                                 tokens.shapes.avatar,
                             )
-                            avatarImageUrl == null -> Modifier.border(
+                            avatarImageUrl == null && !isBuiltInAvatar(avatarItem?.id) -> Modifier.border(
                                 tokens.borders.thin + NuvioTokens.Space.hairline,
                                 avatarColor.copy(alpha = 0.3f),
                                 tokens.shapes.avatar,
@@ -1090,6 +1090,12 @@ private fun PopupProfileBubble(
                         contentDescription = profile.name,
                         modifier = Modifier.size(48.dp).clip(tokens.shapes.avatar),
                         contentScale = ContentScale.Crop,
+                    )
+                } else if (avatarItem != null && isBuiltInAvatar(avatarItem.id)) {
+                    BuiltInAvatarIcon(
+                        avatarId = avatarItem.id,
+                        contentDescription = avatarItem.displayName,
+                        modifier = Modifier.fillMaxSize(0.64f),
                     )
                 } else if (profile.name.isNotBlank()) {
                     Text(
@@ -1193,7 +1199,7 @@ fun ActiveProfileMiniAvatar(
             .size(size.dp)
             .clip(tokens.shapes.avatar)
             .background(
-                if (avatarImageUrl != null) {
+                if (avatarImageUrl != null || isBuiltInAvatar(avatarItem?.id)) {
                     avatarItem?.bgColor?.let { parseHexColor(it) } ?: avatarColor
                 } else {
                     avatarColor.copy(alpha = 0.15f)
@@ -1208,6 +1214,12 @@ fun ActiveProfileMiniAvatar(
                 contentDescription = profile.name,
                 modifier = Modifier.size(size.dp).clip(tokens.shapes.avatar),
                 contentScale = ContentScale.Crop,
+            )
+        } else if (avatarItem != null && isBuiltInAvatar(avatarItem.id)) {
+            BuiltInAvatarIcon(
+                avatarId = avatarItem.id,
+                contentDescription = avatarItem.displayName,
+                modifier = Modifier.fillMaxSize(0.64f),
             )
         } else if (profile.name.isNotBlank()) {
             Text(
