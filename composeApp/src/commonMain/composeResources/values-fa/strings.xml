@@ -3197,6 +3197,11 @@
     <string name="settings_playback_surround_headset_upmix">استریو به هدست 7.1 PCM (تجربی)</string>
     <string name="settings_playback_surround_headset_upmix_description">برای درایورهای هدستی که 7.1 PCM را می پذیرند، از جمله دستگاه هایی فراتر از Corsair. فراگیر مجازی را در نرم افزار هدست خود فعال کنید. Starlit پردازش دوصدایی/HRTF را ارائه نمی دهد یا تأیید نمی کند که درایور سیگنال را مجازی می کند. به طور پیش فرض خاموش است.</string>
     <string name="settings_playback_surround_section">صدای فراگیر · تجربی</string>
+    <string name="settings_playback_surround_automatic">صدای فراگیر خودکار</string>
+    <string name="settings_playback_surround_automatic_description">خروجی PCM سازگار 7.1 یا 5.1 را امتحان می‌کند. در صورت شکست، صدای اصلی پخش می‌شود. فراگیر مجازی هدست تضمین نمی‌شود. به‌طور پیش‌فرض خاموش است.</string>
+    <string name="settings_playback_surround_automatic_active">خروجی PCM چندکاناله تأیید شد؛ فراگیر مجازی هدست تأیید نشده است.</string>
+    <string name="settings_playback_surround_automatic_fallback">هیچ خروجی فراگیر سازگاری کار نکرد؛ صدای اصلی پخش می‌شود.</string>
+    <string name="settings_playback_surround_automatic_checking">پشتیبانی فراگیر بررسی می‌شود؛ صدای اصلی همچنان در دسترس است.</string>
     <string name="settings_playback_surround_upmix">استریو تا 5.1 فراگیر</string>
     <string name="settings_playback_surround_upmix_description">هنگامی که خروجی پیش‌فرض Windows برای بلندگوهای 5.1 PCM پیکربندی شده است، استریو Upmix کنید. آهنگ های Real 5.1/7.1 بدون تغییر باقی می مانند. خروجی های پشتیبانی نشده صدای اصلی خود را حفظ می کنند. به طور پیش فرض خاموش است.</string>
     <string name="settings_playback_threshold_mode_smart">هوشمند (توصیه می شود)</string>

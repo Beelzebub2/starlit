@@ -2305,6 +2305,11 @@ Bu özelliği tamamen kendi sorumluluğunuzda kullanırsınız. P2P istediğiniz
     <string name="settings_playback_surround_headset_upmix">Stereodan kulaklığa 7.1 PCM (deneysel)</string>
     <string name="settings_playback_surround_headset_upmix_description">Corsair dışındaki cihazlar da dahil olmak üzere 7.1 PCM\'yi kabul eden kulaklık sürücüleri için. Kulaklık yazılımınızda sanal çevreyi etkinleştirin. Starlit binaural/HRTF işleme sağlamaz veya sürücünün sinyali sanallaştırdığını doğrulamaz. Varsayılan olarak kapalıdır.</string>
     <string name="settings_playback_surround_section">SURROUND SES · DENEYSEL</string>
+    <string name="settings_playback_surround_automatic">Otomatik surround ses</string>
+    <string name="settings_playback_surround_automatic_description">Uyumlu 7.1/5.1 PCM çıkışını dener. Başarısız olursa orijinal ses çalınır. Kulaklığın sanal surround özelliği garanti edilmez. Varsayılan olarak kapalıdır.</string>
+    <string name="settings_playback_surround_automatic_active">Çok kanallı PCM çıkışı doğrulandı; kulaklığın sanal surround özelliği doğrulanmadı.</string>
+    <string name="settings_playback_surround_automatic_fallback">Uyumlu surround çıkışı çalışmadı; orijinal ses çalınıyor.</string>
+    <string name="settings_playback_surround_automatic_checking">Surround desteği kontrol ediliyor; orijinal ses kullanılabilir durumda.</string>
     <string name="settings_playback_surround_upmix">Stereodan 5.1 surround\'a</string>
     <string name="settings_playback_surround_upmix_description">Windows varsayılan çıkışı 5.1 PCM hoparlörler için yapılandırıldığında stereoyu yükselt. Gerçek 5.1/7.1 parçalar değişmeden kalır. Desteklenmeyen çıkışlar orijinal seslerini korur. Varsayılan olarak kapalıdır.</string>
     <string name="settings_playback_threshold_mode_smart">Akıllı (önerilir)</string>

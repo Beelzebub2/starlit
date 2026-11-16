@@ -1380,6 +1380,11 @@
     <string name="settings_playback_surround_headset_upmix">Stereo zu Headset 7.1 PCM (experimentell)</string>
     <string name="settings_playback_surround_headset_upmix_description">Für Headset-Treiber, die 7.1 PCM akzeptieren, einschließlich Geräten außerhalb von Corsair. Aktivieren Sie Virtual Surround in Ihrer Headset-Software. Starlit bietet keine binaurale/HRTF-Verarbeitung und überprüft nicht, ob der Treiber das Signal virtualisiert. Standardmäßig deaktiviert.</string>
     <string name="settings_playback_surround_section">SURROUND AUDIO · EXPERIMENTELL</string>
+    <string name="settings_playback_surround_automatic">Automatischer Surround-Sound</string>
+    <string name="settings_playback_surround_automatic_description">Testet kompatible 7.1-/5.1-PCM-Ausgaben. Bei Fehlschlag bleibt der Originalton erhalten. Virtueller Headset-Surround ist nicht garantiert. Standardmäßig aus.</string>
+    <string name="settings_playback_surround_automatic_active">Mehrkanal-PCM-Ausgabe bestätigt; virtueller Headset-Surround ist nicht verifiziert.</string>
+    <string name="settings_playback_surround_automatic_fallback">Keine kompatible Surround-Ausgabe funktionierte; Originalton wird wiedergegeben.</string>
+    <string name="settings_playback_surround_automatic_checking">Surround-Unterstützung wird geprüft; Originalton bleibt verfügbar.</string>
     <string name="settings_playback_surround_upmix">Stereo zu 5.1 Surround</string>
     <string name="settings_playback_surround_upmix_description">Upmix-Stereo, wenn der Standardausgang Windows für 5.1 PCM-Lautsprecher konfiguriert ist. Echte 5.1/7.1-Spuren bleiben unverändert. Nicht unterstützte Ausgänge behalten ihren ursprünglichen Ton. Standardmäßig deaktiviert.</string>
     <string name="settings_playback_threshold_mode_smart">Smart (empfohlen)</string>

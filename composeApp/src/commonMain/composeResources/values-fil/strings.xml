@@ -3237,6 +3237,11 @@ Nagbalik ang</string>
     <string name="settings_playback_surround_headset_upmix">Stereo hanggang headset 7.1 PCM (pang-eksperimento)</string>
     <string name="settings_playback_surround_headset_upmix_description">Para sa mga driver ng headset na tumatanggap ng 7.1 PCM, kabilang ang mga device na lampas sa Corsair. Paganahin ang virtual surround sa iyong headset software. Starlit ay hindi nagbibigay ng binaural/HRTF na pagpoproseso o i-verify na ang driver ay nag-virtualize ng signal. Naka-off bilang default.</string>
     <string name="settings_playback_surround_section">SURROUND AUDIO · EKSPERIMENTAL</string>
+    <string name="settings_playback_surround_automatic">Awtomatikong surround</string>
+    <string name="settings_playback_surround_automatic_description">Susubukan ang tugmang 7.1/5.1 PCM output. Kapag pumalya, orihinal na audio ang tutugtog. Hindi garantisado ang virtual surround ng headset. Naka-off bilang default.</string>
+    <string name="settings_playback_surround_automatic_active">Nakumpirma ang multichannel PCM output; hindi pa napatunayan ang virtual surround ng headset.</string>
+    <string name="settings_playback_surround_automatic_fallback">Walang gumana na tugmang surround output; orihinal na audio ang tumutugtog.</string>
+    <string name="settings_playback_surround_automatic_checking">Sinusuri ang suporta sa surround; available pa rin ang orihinal na audio.</string>
     <string name="settings_playback_surround_upmix">Stereo sa 5.1 surround</string>
     <string name="settings_playback_surround_upmix_description">Upmix stereo kapag ang Windows default na output ay na-configure para sa 5.1 PCM speaker. Ang tunay na 5.1/7.1 na mga track ay mananatiling hindi nagbabago. Pinapanatili ng mga hindi sinusuportahang output ang kanilang orihinal na audio. Naka-off bilang default.</string>
     <string name="settings_playback_threshold_mode_smart">Matalino (inirerekomenda)</string>

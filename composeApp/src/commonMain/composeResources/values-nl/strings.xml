@@ -2413,6 +2413,11 @@
     <string name="settings_playback_surround_headset_upmix">Stereo naar headset 7.1 PCM (experimenteel)</string>
     <string name="settings_playback_surround_headset_upmix_description">Voor headsetstuurprogramma\'s die 7.1 PCM accepteren, inclusief apparaten buiten Corsair. Schakel virtuele surround in uw headsetsoftware in. Starlit biedt geen binaurale/HRTF-verwerking en verifieert niet dat de driver het signaal virtualiseert. Standaard uitgeschakeld.</string>
     <string name="settings_playback_surround_section">SURROUND AUDIO · EXPERIMENTEEL</string>
+    <string name="settings_playback_surround_automatic">Automatisch surroundgeluid</string>
+    <string name="settings_playback_surround_automatic_description">Probeert compatibele 7.1/5.1 PCM-uitvoer. Als dat mislukt, speelt de oorspronkelijke audio. Virtuele surround op de headset is niet gegarandeerd. Standaard uit.</string>
+    <string name="settings_playback_surround_automatic_active">Meerkanaals PCM-uitvoer bevestigd; virtuele surround op de headset is niet geverifieerd.</string>
+    <string name="settings_playback_surround_automatic_fallback">Geen compatibele surrounduitvoer werkte; oorspronkelijke audio wordt afgespeeld.</string>
+    <string name="settings_playback_surround_automatic_checking">Surroundondersteuning controleren; oorspronkelijke audio blijft beschikbaar.</string>
     <string name="settings_playback_surround_upmix">Stereo naar 5.1 surround</string>
     <string name="settings_playback_surround_upmix_description">Upmix stereo wanneer de standaarduitvoer Windows is geconfigureerd voor 5.1 PCM-luidsprekers. Echte 5.1/7.1-tracks blijven ongewijzigd. Niet-ondersteunde uitgangen behouden hun originele audio. Standaard uitgeschakeld.</string>
     <string name="settings_playback_threshold_mode_smart">Slim (aanbevolen)</string>

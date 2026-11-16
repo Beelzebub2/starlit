@@ -3233,6 +3233,11 @@
     <string name="settings_playback_surround_headset_upmix">Стерео на гарнітуру 7.1 PCM (експериментальний)</string>
     <string name="settings_playback_surround_headset_upmix_description">Для драйверів гарнітур, які підтримують 7.1 PCM, включно з пристроями поза межами Corsair. Увімкніть віртуальне об’ємне звучання в програмному забезпеченні гарнітури. Starlit не забезпечує бінауральні/HRTF обробки та не перевіряє, чи драйвер віртуалізує сигнал. За замовчуванням вимкнено.</string>
     <string name="settings_playback_surround_section">ОБ\'ЄМНИЙ АУДІО · ЕКСПЕРИМЕНТАЛЬНИЙ</string>
+    <string name="settings_playback_surround_automatic">Автоматичний об’ємний звук</string>
+    <string name="settings_playback_surround_automatic_description">Перевіряє сумісний вихід PCM 7.1/5.1. У разі невдачі відтворює оригінальний звук. Віртуальний surround гарнітури не гарантований. Типово вимкнено.</string>
+    <string name="settings_playback_surround_automatic_active">Багатоканальний вихід PCM підтверджено; віртуальний surround гарнітури не перевірено.</string>
+    <string name="settings_playback_surround_automatic_fallback">Сумісний вихід surround не спрацював; відтворюється оригінальний звук.</string>
+    <string name="settings_playback_surround_automatic_checking">Перевіряється підтримка surround; оригінальний звук залишається доступним.</string>
     <string name="settings_playback_surround_upmix">Стерео до 5.1 об’ємного звуку</string>
     <string name="settings_playback_surround_upmix_description">Змішує стерео, коли вихід Windows за замовчуванням налаштовано для динаміків 5.1 PCM. Реальні треки 5.1/7.1 залишаються незмінними. Непідтримувані виходи зберігають оригінальний звук. За замовчуванням вимкнено.</string>
     <string name="settings_playback_threshold_mode_smart">Smart (рекомендовано)</string>

@@ -2080,6 +2080,11 @@
     <string name="settings_playback_surround_headset_upmix">Stereo la căști 7.1 PCM (experimental)</string>
     <string name="settings_playback_surround_headset_upmix_description">Pentru driverele de căști care acceptă 7.1 PCM, inclusiv dispozitive dincolo de Corsair. Activați surroundul virtual în software-ul pentru căști. Starlit nu oferă procesare binaurală/HRTF și nu verifică dacă driverul virtualizează semnalul. Oprit implicit.</string>
     <string name="settings_playback_surround_section">AUDIO SURROUND · EXPERIMENTAL</string>
+    <string name="settings_playback_surround_automatic">Sunet surround automat</string>
+    <string name="settings_playback_surround_automatic_description">Testează ieșiri PCM 7.1/5.1 compatibile. Dacă eșuează, redă sunetul original. Surroundul virtual al căștilor nu este garantat. Dezactivat implicit.</string>
+    <string name="settings_playback_surround_automatic_active">Ieșire PCM multicanal confirmată; surroundul virtual al căștilor nu a fost verificat.</string>
+    <string name="settings_playback_surround_automatic_fallback">Nicio ieșire surround compatibilă nu a funcționat; se redă sunetul original.</string>
+    <string name="settings_playback_surround_automatic_checking">Se verifică suportul surround; sunetul original rămâne disponibil.</string>
     <string name="settings_playback_surround_upmix">Stereo la surround 5.1</string>
     <string name="settings_playback_surround_upmix_description">Mixați stereo când ieșirea implicită Windows este configurată pentru difuzoare 5.1 PCM. Piesele reale 5.1/7.1 rămân neschimbate. Ieșirile neacceptate își păstrează sunetul original. Oprit implicit.</string>
     <string name="settings_playback_threshold_mode_smart">Smart (recomandat)</string>

@@ -3193,6 +3193,11 @@
     <string name="settings_playback_surround_headset_upmix">Stereo hadi vifaa vya sauti 7.1 PCM (majaribio)</string>
     <string name="settings_playback_surround_headset_upmix_description">Kwa viendeshi vya vifaa vya sauti vinavyokubali 7.1 PCM, ikijumuisha vifaa zaidi ya Corsair. Washa mazingira ya mtandaoni katika programu yako ya vifaa vya sauti. Starlit haitoi uchakataji wa binaural/HRTF au kuthibitisha kuwa kiendeshi kinaboresha mawimbi. Imezimwa kwa chaguo-msingi.</string>
     <string name="settings_playback_surround_section">SAUTI YA KUZUNGUKA · MAJARIBU</string>
+    <string name="settings_playback_surround_automatic">Sauti ya mzunguko otomatiki</string>
+    <string name="settings_playback_surround_automatic_description">Hujaribu matokeo ya PCM 7.1/5.1 yanayolingana. Yakishindwa, sauti asili huchezwa. Sauti ya mzunguko pepe ya kifaa cha kichwani haijahakikishwa. Imezimwa kwa chaguo-msingi.</string>
+    <string name="settings_playback_surround_automatic_active">Matokeo ya PCM ya njia nyingi yamethibitishwa; sauti ya mzunguko pepe ya kifaa cha kichwani haijathibitishwa.</string>
+    <string name="settings_playback_surround_automatic_fallback">Hakuna matokeo ya surround yanayolingana yaliyofanya kazi; sauti asili inachezwa.</string>
+    <string name="settings_playback_surround_automatic_checking">Inakagua usaidizi wa surround; sauti asili bado inapatikana.</string>
     <string name="settings_playback_surround_upmix">Stereo hadi 5.1 kuzunguka</string>
     <string name="settings_playback_surround_upmix_description">Upmix stereo wakati Windows utoaji chaguo-msingi umesanidiwa kwa spika 5.1 za PCM. Nyimbo halisi za 5.1/7.1 hazijabadilika. Matokeo ambayo hayatumiki huhifadhi sauti yake asili. Imezimwa kwa chaguo-msingi.</string>
     <string name="settings_playback_threshold_mode_smart">Smart (inapendekezwa)</string>

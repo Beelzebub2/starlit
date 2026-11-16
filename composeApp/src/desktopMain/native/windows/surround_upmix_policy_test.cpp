@@ -16,6 +16,34 @@ int main() {
     const auto sideMask = starlit_surround::kFivePointOneSideMask;
     const auto backMask = starlit_surround::kFivePointOneBackMask;
     const auto sevenMask = starlit_surround::kSevenPointOneMask;
+    const auto automatic = starlit_surround::automaticLayouts;
+    // Preserve physical surround output when its mix is already multichannel.
+    assert(automatic(8, sevenMask, true, true, true) ==
+           std::vector<Layout>{Layout::speakersSevenPointOne});
+    assert(automatic(6, sideMask, true, true, true) ==
+           std::vector<Layout>{Layout::fivePointOneSide});
+    assert(automatic(6, backMask, true, true, true) ==
+           std::vector<Layout>{Layout::fivePointOneBack});
+    assert(automatic(6, 0, true, true, true).empty());
+    assert(automatic(2, stereoMask, true, true, true) ==
+           (std::vector<Layout>{Layout::virtualHeadsetSevenPointOne,
+                                Layout::virtualHeadsetFivePointOneSide,
+                                Layout::virtualHeadsetFivePointOneBack}));
+    assert(automatic(2, stereoMask, false, true, false) ==
+           std::vector<Layout>{Layout::virtualHeadsetFivePointOneBack});
+    assert(automatic(2, stereoMask, false, false, false).empty());
+    assert(automatic(2, 0, true, true, true).empty());
+    assert(automatic(8, 0, true, true, true).empty());
+    assert(automatic(1, stereoMask, true, true, true).empty());
+    const auto allCandidates = automatic(2, stereoMask, true, true, true);
+    using starlit_surround::nextAutomaticLayout;
+    assert(nextAutomaticLayout(allCandidates, {}) == Layout::virtualHeadsetSevenPointOne);
+    assert(nextAutomaticLayout(allCandidates, {Layout::virtualHeadsetSevenPointOne}) ==
+           Layout::virtualHeadsetFivePointOneSide);
+    assert(nextAutomaticLayout(allCandidates,
+           {Layout::virtualHeadsetSevenPointOne, Layout::virtualHeadsetFivePointOneSide}) ==
+           Layout::virtualHeadsetFivePointOneBack);
+    assert(nextAutomaticLayout(allCandidates, allCandidates) == Layout::unsupported);
     // No brand or friendly-name requirements. User explicitly selects the mode.
     assert(virtualLayout(Mode::virtualHeadsetSevenPointOne, 2, stereoMask, false, false, true) ==
            Layout::virtualHeadsetSevenPointOne);
@@ -57,12 +85,14 @@ int main() {
     assert(starlit_surround::mpvOutputLayout(Layout::fivePointOneSide) == "5.1(side)");
     assert(starlit_surround::mpvOutputLayout(Layout::fivePointOneBack) == "5.1");
     assert(starlit_surround::mpvOutputLayout(Layout::virtualHeadsetSevenPointOne) == "7.1");
+    assert(starlit_surround::mpvOutputLayout(Layout::speakersSevenPointOne) == "7.1");
     assert(starlit_surround::mpvOutputLayout(Layout::virtualHeadsetFivePointOneSide) == "5.1(side)");
     assert(starlit_surround::mpvOutputLayout(Layout::virtualHeadsetFivePointOneBack) == "5.1");
     assert(starlit_surround::mpvOutputLayout(Layout::unsupported).empty());
     assert(std::string_view(starlit_surround::mpvFilter(Layout::fivePointOneSide)).find("lfe=0") != std::string_view::npos);
     assert(std::string_view(starlit_surround::mpvFilter(Layout::fivePointOneBack)).find("chl_out=5.1:") != std::string_view::npos);
     assert(std::string_view(starlit_surround::mpvFilter(Layout::virtualHeadsetSevenPointOne)).find("chl_out=7.1:") != std::string_view::npos);
+    assert(std::string_view(starlit_surround::mpvFilter(Layout::speakersSevenPointOne)).find("chl_out=7.1:") != std::string_view::npos);
     assert(std::string_view(starlit_surround::mpvFilter(Layout::virtualHeadsetSevenPointOne)).find("lfe=0") != std::string_view::npos);
     assert(std::string_view(starlit_surround::mpvFilter(Layout::virtualHeadsetFivePointOneSide)).find("chl_out=5.1(side):") != std::string_view::npos);
     assert(std::string_view(starlit_surround::mpvFilter(Layout::virtualHeadsetFivePointOneBack)).find("chl_out=5.1:") != std::string_view::npos);

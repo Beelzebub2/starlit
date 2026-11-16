@@ -3197,6 +3197,11 @@
     <string name="settings_playback_surround_headset_upmix">స్టీరియో నుండి హెడ్‌సెట్ 7.1 PCM (ప్రయోగాత్మకం)</string>
     <string name="settings_playback_surround_headset_upmix_description">కోర్సెయిర్ మించిన పరికరాలతో సహా 7.1 PCMని ఆమోదించే హెడ్‌సెట్ డ్రైవర్‌ల కోసం. మీ హెడ్‌సెట్ సాఫ్ట్‌వేర్‌లో వర్చువల్ సరౌండ్‌ని ప్రారంభించండి. Starlit బైనరల్/HRTF ప్రాసెసింగ్‌ను అందించదు లేదా డ్రైవర్ సిగ్నల్‌ను వర్చువలైజ్ చేస్తుందో లేదో ధృవీకరించదు. డిఫాల్ట్‌గా ఆఫ్.</string>
     <string name="settings_playback_surround_section">సరౌండ్ ఆడియో · ప్రయోగాత్మకం</string>
+    <string name="settings_playback_surround_automatic">ఆటోమేటిక్ సరౌండ్ సౌండ్</string>
+    <string name="settings_playback_surround_automatic_description">అనుకూలమైన 7.1/5.1 PCM అవుట్‌పుట్‌ను ప్రయత్నిస్తుంది. విఫలమైతే అసలు ఆడియో ప్లే అవుతుంది. హెడ్‌సెట్ వర్చువల్ సరౌండ్‌కు హామీ లేదు. డిఫాల్ట్‌గా ఆఫ్.</string>
+    <string name="settings_playback_surround_automatic_active">మల్టీచానల్ PCM అవుట్‌పుట్ నిర్ధారించబడింది; హెడ్‌సెట్ వర్చువల్ సరౌండ్ ధృవీకరించబడలేదు.</string>
+    <string name="settings_playback_surround_automatic_fallback">అనుకూలమైన సరౌండ్ అవుట్‌పుట్ పని చేయలేదు; అసలు ఆడియో ప్లే అవుతోంది.</string>
+    <string name="settings_playback_surround_automatic_checking">సరౌండ్ మద్దతును తనిఖీ చేస్తోంది; అసలు ఆడియో అందుబాటులో ఉంటుంది.</string>
     <string name="settings_playback_surround_upmix">స్టీరియో నుండి 5.1 సరౌండ్</string>
     <string name="settings_playback_surround_upmix_description">Windows డిఫాల్ట్ అవుట్‌పుట్ 5.1 PCM స్పీకర్‌ల కోసం కాన్ఫిగర్ చేయబడినప్పుడు అప్‌మిక్స్ స్టీరియో. నిజమైన 5.1/7.1 ట్రాక్‌లు మారవు. మద్దతు లేని అవుట్‌పుట్‌లు వాటి అసలు ఆడియోను ఉంచుతాయి. డిఫాల్ట్‌గా ఆఫ్.</string>
     <string name="settings_playback_threshold_mode_smart">స్మార్ట్ (సిఫార్సు చేయబడింది)</string>

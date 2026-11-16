@@ -3220,6 +3220,11 @@
     <string name="settings_playback_surround_headset_upmix">สเตอริโอไปยังชุดหูฟัง 7.1 PCM (ทดลอง)</string>
     <string name="settings_playback_surround_headset_upmix_description">สำหรับไดรเวอร์ชุดหูฟังที่ยอมรับ 7.1 PCM รวมถึงอุปกรณ์นอกเหนือจาก Corsair เปิดใช้งานเสียงเซอร์ราวด์เสมือนในซอฟต์แวร์ชุดหูฟังของคุณ Starlit ไม่มีการประมวลผลแบบ binaural/HRTF หรือตรวจสอบว่าไดรเวอร์จำลองสัญญาณ ปิดโดยค่าเริ่มต้น</string>
     <string name="settings_playback_surround_section">เสียงเซอร์ราวด์ · ทดลอง</string>
+    <string name="settings_playback_surround_automatic">เสียงเซอร์ราวด์อัตโนมัติ</string>
+    <string name="settings_playback_surround_automatic_description">ลองเอาต์พุต PCM 7.1/5.1 ที่รองรับ หากไม่สำเร็จจะเล่นเสียงต้นฉบับ ไม่รับประกันเซอร์ราวด์เสมือนของหูฟัง ปิดไว้โดยค่าเริ่มต้น</string>
+    <string name="settings_playback_surround_automatic_active">ยืนยันเอาต์พุต PCM หลายช่องแล้ว แต่ยังไม่ได้ยืนยันเซอร์ราวด์เสมือนของหูฟัง</string>
+    <string name="settings_playback_surround_automatic_fallback">ไม่มีเอาต์พุตเซอร์ราวด์ที่รองรับใช้งานได้ กำลังเล่นเสียงต้นฉบับ</string>
+    <string name="settings_playback_surround_automatic_checking">กำลังตรวจสอบการรองรับเซอร์ราวด์ โดยยังคงใช้เสียงต้นฉบับได้</string>
     <string name="settings_playback_surround_upmix">สเตอริโอเป็นเสียงเซอร์ราวด์ 5.1</string>
     <string name="settings_playback_surround_upmix_description">Upmix สเตอริโอเมื่อมีการกำหนดค่าเอาต์พุตเริ่มต้นของ Windows สำหรับลำโพง 5.1 PCM แทร็กจริง 5.1/7.1 ยังคงไม่เปลี่ยนแปลง เอาต์พุตที่ไม่รองรับจะเก็บเสียงต้นฉบับไว้ ปิดโดยค่าเริ่มต้น</string>
     <string name="settings_playback_threshold_mode_smart">สมาร์ท (แนะนำ)</string>

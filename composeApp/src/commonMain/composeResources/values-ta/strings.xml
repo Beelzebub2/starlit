@@ -3200,6 +3200,11 @@
     <string name="settings_playback_surround_headset_upmix">ஸ்டீரியோ முதல் ஹெட்செட் 7.1 PCM (பரிசோதனை)</string>
     <string name="settings_playback_surround_headset_upmix_description">7.1 PCM ஐ ஏற்கும் ஹெட்செட் டிரைவர்களுக்கு, கோர்செயருக்கு அப்பாற்பட்ட சாதனங்கள் உட்பட. உங்கள் ஹெட்செட் மென்பொருளில் விர்ச்சுவல் சரவுண்டை இயக்கவும். Starlit பைனரல்/HRTF செயலாக்கத்தை வழங்காது அல்லது இயக்கி சிக்னலை மெய்நிகராக்குகிறதா என்பதைச் சரிபார்க்காது. இயல்பாக ஆஃப்.</string>
     <string name="settings_playback_surround_section">சரவுண்ட் ஆடியோ · பரிசோதனை</string>
+    <string name="settings_playback_surround_automatic">தானியங்கி சரவுண்ட் ஒலி</string>
+    <string name="settings_playback_surround_automatic_description">இணக்கமான 7.1/5.1 PCM வெளியீட்டை முயற்சிக்கும். தோல்வியடைந்தால் அசல் ஒலி இயங்கும். ஹெட்செட்டின் மெய்நிகர் சரவுண்ட் உறுதி செய்யப்படவில்லை. இயல்பாக முடக்கப்பட்டுள்ளது.</string>
+    <string name="settings_playback_surround_automatic_active">பல்சேனல் PCM வெளியீடு உறுதிசெய்யப்பட்டது; ஹெட்செட்டின் மெய்நிகர் சரவுண்ட் சரிபார்க்கப்படவில்லை.</string>
+    <string name="settings_playback_surround_automatic_fallback">இணக்கமான சரவுண்ட் வெளியீடு எதுவும் இயங்கவில்லை; அசல் ஒலி இயங்குகிறது.</string>
+    <string name="settings_playback_surround_automatic_checking">சரவுண்ட் ஆதரவு சரிபார்க்கப்படுகிறது; அசல் ஒலி தொடர்ந்து கிடைக்கும்.</string>
     <string name="settings_playback_surround_upmix">ஸ்டீரியோ 5.1 சரவுண்ட்</string>
     <string name="settings_playback_surround_upmix_description">Windows இயல்புநிலை வெளியீடு 5.1 பிசிஎம் ஸ்பீக்கர்களுக்கு கட்டமைக்கப்படும்போது ஸ்டீரியோவை மேம்படுத்தவும். உண்மையான 5.1/7.1 டிராக்குகள் மாறாமல் இருக்கும். ஆதரிக்கப்படாத வெளியீடுகள் அவற்றின் அசல் ஆடியோவை வைத்திருக்கும். இயல்பாக ஆஃப்.</string>
     <string name="settings_playback_threshold_mode_smart">ஸ்மார்ட் (பரிந்துரைக்கப்பட்டது)</string>

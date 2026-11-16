@@ -2505,6 +2505,11 @@
     <string name="settings_playback_surround_headset_upmix">سٹیریو سے ہیڈسیٹ 7.1 PCM (تجرباتی)</string>
     <string name="settings_playback_surround_headset_upmix_description">ہیڈسیٹ ڈرائیوروں کے لیے جو 7.1 PCM قبول کرتے ہیں، بشمول Corsair سے آگے کے آلات۔ اپنے ہیڈسیٹ سافٹ ویئر میں ورچوئل سراؤنڈ کو فعال کریں۔ Starlit binaural/HRTF پروسیسنگ فراہم نہیں کرتا یا اس بات کی تصدیق نہیں کرتا کہ ڈرائیور سگنل کو ورچوئلائز کرتا ہے۔ بطور ڈیفالٹ آف۔</string>
     <string name="settings_playback_surround_section">سراؤنڈ آڈیو · تجرباتی</string>
+    <string name="settings_playback_surround_automatic">خودکار سراؤنڈ آواز</string>
+    <string name="settings_playback_surround_automatic_description">مطابقت پذیر 7.1/5.1 PCM آؤٹ پٹ آزماتا ہے۔ ناکامی پر اصل آڈیو چلتا ہے۔ ہیڈسیٹ کا ورچوئل سراؤنڈ یقینی نہیں۔ بطور ڈیفالٹ بند ہے۔</string>
+    <string name="settings_playback_surround_automatic_active">ملٹی چینل PCM آؤٹ پٹ کی تصدیق ہوئی؛ ہیڈسیٹ کے ورچوئل سراؤنڈ کی تصدیق نہیں ہوئی۔</string>
+    <string name="settings_playback_surround_automatic_fallback">کوئی مطابقت پذیر سراؤنڈ آؤٹ پٹ کام نہ آیا؛ اصل آڈیو چل رہا ہے۔</string>
+    <string name="settings_playback_surround_automatic_checking">سراؤنڈ سپورٹ چیک کی جا رہی ہے؛ اصل آڈیو دستیاب ہے۔</string>
     <string name="settings_playback_surround_upmix">سٹیریو سے 5.1 گھیرے۔</string>
     <string name="settings_playback_surround_upmix_description">جب Windows ڈیفالٹ آؤٹ پٹ 5.1 PCM اسپیکرز کے لیے کنفیگر ہو تو اپمکس سٹیریو۔ اصلی 5.1/7.1 پٹریوں میں کوئی تبدیلی نہیں ہے۔ غیر تعاون یافتہ آؤٹ پٹس اپنا اصل آڈیو رکھتے ہیں۔ بطور ڈیفالٹ آف۔</string>
     <string name="settings_playback_threshold_mode_smart">اسمارٹ (تجویز کردہ)</string>

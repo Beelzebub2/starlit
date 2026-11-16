@@ -2066,6 +2066,11 @@
     <string name="settings_playback_surround_headset_upmix">ステレオからヘッドセットへの 7.1 PCM (実験的)</string>
     <string name="settings_playback_surround_headset_upmix_description">Corsair 以外のデバイスを含む、7.1 PCM を受け入れるヘッドセット ドライバー用。ヘッドセット ソフトウェアで仮想サラウンドを有効にします。 Starlit はバイノーラル/HRTF 処理を提供せず、ドライバーが信号を仮想化することを検証しません。デフォルトではオフです。</string>
     <string name="settings_playback_surround_section">サラウンドオーディオ · 実験的</string>
+    <string name="settings_playback_surround_automatic">自動サラウンド</string>
+    <string name="settings_playback_surround_automatic_description">対応する7.1/5.1 PCM出力を試します。失敗した場合は元の音声を再生します。ヘッドセットの仮想サラウンドは保証されません。初期設定ではオフです。</string>
+    <string name="settings_playback_surround_automatic_active">マルチチャンネルPCM出力を確認しました。ヘッドセットの仮想サラウンドは未検証です。</string>
+    <string name="settings_playback_surround_automatic_fallback">対応するサラウンド出力が動作しなかったため、元の音声を再生しています。</string>
+    <string name="settings_playback_surround_automatic_checking">サラウンド対応を確認中です。元の音声は引き続き利用できます。</string>
     <string name="settings_playback_surround_upmix">ステレオから 5.1 サラウンドへ</string>
     <string name="settings_playback_surround_upmix_description">Windows デフォルト出力が 5.1 PCM スピーカー用に設定されている場合、ステレオをアップミックスします。実際の 5.1/7.1 トラックは変更されません。サポートされていない出力は、元のオーディオを保持します。デフォルトではオフです。</string>
     <string name="settings_playback_threshold_mode_smart">スマート（推奨）</string>

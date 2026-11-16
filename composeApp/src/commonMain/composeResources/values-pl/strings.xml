@@ -2452,6 +2452,11 @@
     <string name="settings_playback_surround_headset_upmix">Stereo do zestawu słuchawkowego 7.1 PCM (eksperymentalnie)</string>
     <string name="settings_playback_surround_headset_upmix_description">Dla sterowników zestawu słuchawkowego, które akceptują 7.1 PCM, w tym urządzenia inne niż Corsair. Włącz wirtualny dźwięk przestrzenny w oprogramowaniu zestawu słuchawkowego. Starlit nie zapewnia przetwarzania binauralnego/HRTF ani nie sprawdza, czy sterownik wirtualizuje sygnał. Domyślnie wyłączone.</string>
     <string name="settings_playback_surround_section">AUDIO PRZESTRZENIOWE · EKSPERYMENTALNE</string>
+    <string name="settings_playback_surround_automatic">Automatyczny dźwięk przestrzenny</string>
+    <string name="settings_playback_surround_automatic_description">Sprawdza zgodne wyjścia PCM 7.1/5.1. W razie niepowodzenia odtwarza oryginalny dźwięk. Wirtualny surround w słuchawkach nie jest gwarantowany. Domyślnie wyłączone.</string>
+    <string name="settings_playback_surround_automatic_active">Potwierdzono wielokanałowe wyjście PCM; wirtualny surround słuchawek nie został zweryfikowany.</string>
+    <string name="settings_playback_surround_automatic_fallback">Nie zadziałało żadne zgodne wyjście surround; odtwarzany jest oryginalny dźwięk.</string>
+    <string name="settings_playback_surround_automatic_checking">Sprawdzanie obsługi surround; oryginalny dźwięk pozostaje dostępny.</string>
     <string name="settings_playback_surround_upmix">Stereo do dźwięku przestrzennego 5.1</string>
     <string name="settings_playback_surround_upmix_description">Upmiksowanie dźwięku stereo, gdy domyślne wyjście Windows jest skonfigurowane dla głośników 5.1 PCM. Prawdziwe utwory 5.1/7.1 pozostają niezmienione. Nieobsługiwane wyjścia zachowują oryginalny dźwięk. Domyślnie wyłączone.</string>
     <string name="settings_playback_threshold_mode_smart">Inteligentny (zalecany)</string>

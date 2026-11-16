@@ -2502,6 +2502,11 @@
     <string name="settings_playback_surround_headset_upmix">Στερεοφωνικό σε ακουστικό 7,1 PCM (πειραματικό)</string>
     <string name="settings_playback_surround_headset_upmix_description">Για προγράμματα οδήγησης ακουστικών που δέχονται 7,1 PCM, συμπεριλαμβανομένων συσκευών πέρα από την Corsair. Ενεργοποιήστε το virtual surround στο λογισμικό των ακουστικών σας. Το Starlit δεν παρέχει διφωνική επεξεργασία/HRTF ούτε επαληθεύει ότι το πρόγραμμα οδήγησης εικονικοποιεί το σήμα. Απενεργοποίηση από προεπιλογή.</string>
     <string name="settings_playback_surround_section">SURROUND AUDIO · ΠΕΙΡΑΜΑΤΙΚΟ</string>
+    <string name="settings_playback_surround_automatic">Αυτόματος ήχος surround</string>
+    <string name="settings_playback_surround_automatic_description">Δοκιμάζει συμβατή έξοδο PCM 7.1/5.1. Αν αποτύχει, παίζει ο αρχικός ήχος. Το εικονικό surround των ακουστικών δεν είναι εγγυημένο. Ανενεργό από προεπιλογή.</string>
+    <string name="settings_playback_surround_automatic_active">Επιβεβαιώθηκε πολυκάναλη έξοδος PCM· το εικονικό surround των ακουστικών δεν έχει επαληθευτεί.</string>
+    <string name="settings_playback_surround_automatic_fallback">Δεν λειτούργησε συμβατή έξοδος surround· αναπαράγεται ο αρχικός ήχος.</string>
+    <string name="settings_playback_surround_automatic_checking">Ελέγχεται η υποστήριξη surround· ο αρχικός ήχος παραμένει διαθέσιμος.</string>
     <string name="settings_playback_surround_upmix">Stereo έως 5.1 surround</string>
     <string name="settings_playback_surround_upmix_description">Upmix στερεοφωνικό όταν η προεπιλεγμένη έξοδος Windows έχει διαμορφωθεί για ηχεία 5,1 PCM. Τα πραγματικά κομμάτια 5.1/7.1 παραμένουν αμετάβλητα. Οι μη υποστηριζόμενες έξοδοι διατηρούν τον αρχικό τους ήχο. Απενεργοποίηση από προεπιλογή.</string>
     <string name="settings_playback_threshold_mode_smart">Έξυπνο (συνιστάται)</string>

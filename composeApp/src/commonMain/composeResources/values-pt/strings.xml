@@ -1241,6 +1241,11 @@
     <string name="settings_playback_section_stream_selection">SELEÇÃO DE STREAM</string>
     <string name="settings_playback_section_subtitle_audio">LEGENDAS E ÁUDIO</string>
     <string name="settings_playback_surround_section">ÁUDIO SURROUND · EXPERIMENTAL</string>
+    <string name="settings_playback_surround_automatic">Surround automático</string>
+    <string name="settings_playback_surround_automatic_description">Testa saídas PCM 7.1/5.1 compatíveis. Se falharem, reproduz o áudio original. O surround virtual dos auscultadores não é garantido. Desativado por predefinição.</string>
+    <string name="settings_playback_surround_automatic_active">Saída PCM multicanal confirmada; o surround virtual dos auscultadores não foi verificado.</string>
+    <string name="settings_playback_surround_automatic_fallback">Nenhuma saída surround compatível funcionou; a reproduzir o áudio original.</string>
+    <string name="settings_playback_surround_automatic_checking">A verificar o suporte surround; o áudio original continua disponível.</string>
     <string name="settings_playback_surround_upmix">Converter estéreo para surround 5.1</string>
     <string name="settings_playback_surround_upmix_description">Converte áudio estéreo quando a saída predefinida do Windows está configurada para colunas PCM 5.1. As faixas 5.1/7.1 originais não são alteradas. As saídas incompatíveis mantêm o áudio original. Desativado por predefinição.</string>
     <string name="settings_playback_surround_headset_5_1">Estéreo para PCM 5.1 nos auscultadores (experimental)</string>

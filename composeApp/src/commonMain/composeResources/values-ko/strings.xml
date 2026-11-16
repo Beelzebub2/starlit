@@ -3193,6 +3193,11 @@
     <string name="settings_playback_surround_headset_upmix">스테레오-헤드셋 7.1 PCM(실험적)</string>
     <string name="settings_playback_surround_headset_upmix_description">Corsair 이외의 장치를 포함하여 7.1 PCM을 허용하는 헤드셋 드라이버용입니다. 헤드셋 소프트웨어에서 가상 서라운드를 활성화하십시오. Starlit은 바이노럴/HRTF 처리를 제공하지 않거나 드라이버가 신호를 가상화하는지 확인하지 않습니다. 기본적으로 꺼져 있습니다.</string>
     <string name="settings_playback_surround_section">서라운드 오디오 · 실험적</string>
+    <string name="settings_playback_surround_automatic">자동 서라운드</string>
+    <string name="settings_playback_surround_automatic_description">호환되는 7.1/5.1 PCM 출력을 시도합니다. 실패하면 원본 오디오를 재생합니다. 헤드셋 가상 서라운드는 보장되지 않습니다. 기본적으로 꺼져 있습니다.</string>
+    <string name="settings_playback_surround_automatic_active">다채널 PCM 출력이 확인되었습니다. 헤드셋 가상 서라운드는 검증되지 않았습니다.</string>
+    <string name="settings_playback_surround_automatic_fallback">호환되는 서라운드 출력이 작동하지 않아 원본 오디오를 재생합니다.</string>
+    <string name="settings_playback_surround_automatic_checking">서라운드 지원을 확인하는 중입니다. 원본 오디오는 계속 사용할 수 있습니다.</string>
     <string name="settings_playback_surround_upmix">스테레오에서 5.1 서라운드까지</string>
     <string name="settings_playback_surround_upmix_description">Windows 기본 출력이 5.1 PCM 스피커에 대해 구성된 경우 스테레오를 업믹스합니다. 실제 5.1/7.1 트랙은 변경되지 않습니다. 지원되지 않는 출력은 원본 오디오를 유지합니다. 기본적으로 꺼져 있습니다.</string>
     <string name="settings_playback_threshold_mode_smart">스마트(권장)</string>
