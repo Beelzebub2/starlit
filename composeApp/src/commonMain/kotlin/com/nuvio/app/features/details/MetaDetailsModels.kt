@@ -18,6 +18,7 @@ data class MetaDetails(
     val status: String? = null,
     val imdbRating: String? = null,
     val ageRating: String? = null,
+    val isAdult: Boolean = false,
     val runtime: String? = null,
     val externalRatings: List<MetaExternalRating> = emptyList(),
     val genres: List<String> = emptyList(),

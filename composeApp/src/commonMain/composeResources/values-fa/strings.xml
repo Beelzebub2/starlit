@@ -3312,4 +3312,7 @@
     <string name="remote_tv_volume_up">افزایش صدا</string>
     <string name="settings_desktop_tv_installer_ready">نصب‌کننده همراه برای تلویزیون‌های Samsung Tizen و LG webOS را باز کنید (پیش‌نمایش توسعه‌دهندگان).</string>
     <string name="settings_desktop_tv_installer_missing">نصب‌کننده تلویزیون نصب نشده است. نسخه‌های پیش‌نمایش را در GitHub ببینید.</string>
+    <string name="profile_kids_content_filter">فیلتر محتوای کودکان</string>
+    <string name="profile_kids_content_filter_description">محتوای ترسناک، خشن و بزرگسالان را با فراداده پنهان می‌کند. قفل والدین نیست.</string>
+    <string name="profile_kids_content_blocked">این عنوان توسط فیلتر کودکان پنهان شده است.</string>
 </resources>

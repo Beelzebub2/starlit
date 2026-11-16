@@ -44,6 +44,7 @@ internal object MetaDetailsParser {
             status = meta.string("status"),
             imdbRating = meta.string("imdbRating"),
             ageRating = meta.ageRating(),
+            isAdult = meta.boolean("adult") == true || meta.behaviorHints().boolean("adult") == true,
             runtime = meta.string("runtime"),
             genres = meta.stringList("genres"),
             director = meta.directors(links),

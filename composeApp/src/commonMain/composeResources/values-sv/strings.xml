@@ -3308,4 +3308,7 @@
     <string name="remote_tv_volume_up">Volym upp</string>
     <string name="settings_desktop_tv_installer_ready">Öppna det medföljande installationsprogrammet för Samsung Tizen- och LG webOS-tv (utvecklarversion).</string>
     <string name="settings_desktop_tv_installer_missing">TV-installationsprogrammet är inte installerat. Se utvecklarversioner på GitHub.</string>
+    <string name="profile_kids_content_filter">Innehållsfilter för barn</string>
+    <string name="profile_kids_content_filter_description">Döljer skräck, våld och vuxeninnehåll med hjälp av metadata. Det är inte ett föräldralås.</string>
+    <string name="profile_kids_content_blocked">Den här titeln döljs av barnfiltret.</string>
 </resources>

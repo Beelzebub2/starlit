@@ -2544,4 +2544,7 @@
     <string name="remote_tv_volume_up">Zvýšení hlasitosti</string>
     <string name="settings_desktop_tv_installer_ready">Otevřít přibalený instalátor pro televizory Samsung Tizen a LG webOS (vývojářská verze).</string>
     <string name="settings_desktop_tv_installer_missing">Instalátor pro TV není nainstalován. Zobrazit vývojářské verze na GitHubu.</string>
+    <string name="profile_kids_content_filter">Filtr obsahu pro děti</string>
+    <string name="profile_kids_content_filter_description">Skryje horory, násilí a obsah pro dospělé podle metadat. Nejde o rodičovský zámek.</string>
+    <string name="profile_kids_content_blocked">Tento titul je skryt dětským filtrem.</string>
 </resources>

@@ -2673,4 +2673,7 @@
     <string name="remote_tv_volume_up">ভলিউম আপ</string>
     <string name="settings_desktop_tv_installer_ready">Samsung Tizen ও LG webOS টিভির জন্য অন্তর্ভুক্ত ইনস্টলার খুলুন (ডেভেলপার প্রিভিউ)।</string>
     <string name="settings_desktop_tv_installer_missing">টিভি ইনস্টলার ইনস্টল করা নেই। GitHub-এ ডেভেলপার প্রিভিউ বিল্ড দেখুন।</string>
+    <string name="profile_kids_content_filter">শিশুদের কনটেন্ট ফিল্টার</string>
+    <string name="profile_kids_content_filter_description">তথ্য থাকলে ভৌতিক, সহিংস ও প্রাপ্তবয়স্কদের কনটেন্ট লুকায়। এটি অভিভাবকীয় লক নয়।</string>
+    <string name="profile_kids_content_blocked">এই শিরোনামটি শিশুদের ফিল্টারে লুকানো।</string>
 </resources>

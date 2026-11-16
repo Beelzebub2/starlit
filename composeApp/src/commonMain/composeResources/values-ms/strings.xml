@@ -3350,4 +3350,7 @@ Had permintaan</string>
     <string name="remote_tv_volume_up">Naikkan kelantangan</string>
     <string name="settings_desktop_tv_installer_ready">Buka pemasang yang disertakan untuk TV Samsung Tizen dan LG webOS (pratonton pembangun).</string>
     <string name="settings_desktop_tv_installer_missing">Pemasang TV belum dipasang. Lihat binaan pratonton pembangun di GitHub.</string>
+    <string name="profile_kids_content_filter">Penapis kandungan kanak-kanak</string>
+    <string name="profile_kids_content_filter_description">Sembunyikan seram, keganasan dan kandungan dewasa berdasarkan metadata. Bukan kunci ibu bapa.</string>
+    <string name="profile_kids_content_blocked">Tajuk ini disembunyikan oleh penapis kanak-kanak.</string>
 </resources>

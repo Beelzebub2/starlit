@@ -676,6 +676,8 @@ object TmdbMetadataService {
             logo = null,
             description = result.overview?.takeIf { it.isNotBlank() },
             releaseInfo = releaseInfo,
+            genreIds = result.genreIds,
+            isAdult = result.adult == true,
         )
     }
 
@@ -2257,4 +2259,5 @@ internal data class TmdbDiscoverResult(
     @SerialName("vote_count") val voteCount: Int? = null,
     @SerialName("media_type") val mediaType: String? = null,
     val adult: Boolean? = null,
+    @SerialName("genre_ids") val genreIds: List<Int> = emptyList(),
 )

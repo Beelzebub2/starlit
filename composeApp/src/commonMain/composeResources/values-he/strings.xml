@@ -1031,4 +1031,7 @@
     <string name="settings_trakt_comments">תגובות</string>
     <string name="settings_desktop_tv_installer_ready">פתח את כלי ההתקנה המצורף לטלוויזיות Samsung Tizen ו-LG webOS (גרסת מפתחים).</string>
     <string name="settings_desktop_tv_installer_missing">מתקין הטלוויזיה לא מותקן. הצג גרסאות מפתחים ב-GitHub.</string>
+    <string name="profile_kids_content_filter">סינון תוכן לילדים</string>
+    <string name="profile_kids_content_filter_description">מסתיר אימה, אלימות ותוכן למבוגרים לפי נתוני סיווג. זו אינה נעילת הורים.</string>
+    <string name="profile_kids_content_blocked">הכותרת הוסתרה על ידי סינון הילדים.</string>
 </resources>

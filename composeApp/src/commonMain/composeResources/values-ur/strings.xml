@@ -2641,4 +2641,7 @@
     <string name="remote_tv_volume_up">والیوم اپ</string>
     <string name="settings_desktop_tv_installer_ready">Samsung Tizen اور LG webOS ٹی وی کے لیے شامل انسٹالر کھولیں (ڈویلپر پیش نظارہ)۔</string>
     <string name="settings_desktop_tv_installer_missing">ٹی وی انسٹالر نصب نہیں ہے۔ GitHub پر پیش نظارہ بلڈز دیکھیں۔</string>
+    <string name="profile_kids_content_filter">بچوں کے مواد کا فلٹر</string>
+    <string name="profile_kids_content_filter_description">میٹا ڈیٹا کی بنیاد پر خوفناک، پُرتشدد اور بالغ مواد چھپاتا ہے۔ یہ والدین کا لاک نہیں۔</string>
+    <string name="profile_kids_content_blocked">یہ عنوان بچوں کے فلٹر نے چھپا دیا ہے۔</string>
 </resources>

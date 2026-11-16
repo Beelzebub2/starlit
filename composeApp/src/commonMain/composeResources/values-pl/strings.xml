@@ -2588,4 +2588,7 @@
     <string name="remote_tv_volume_up">Zwiększ głośność</string>
     <string name="settings_desktop_tv_installer_ready">Otwórz dołączony instalator telewizorów Samsung Tizen i LG webOS (wersja dla programistów).</string>
     <string name="settings_desktop_tv_installer_missing">Instalator TV nie jest zainstalowany. Zobacz wersje testowe na GitHubie.</string>
+    <string name="profile_kids_content_filter">Filtr treści dla dzieci</string>
+    <string name="profile_kids_content_filter_description">Ukrywa horrory, przemoc i treści dla dorosłych na podstawie metadanych. Nie jest blokadą rodzicielską.</string>
+    <string name="profile_kids_content_blocked">Ten tytuł ukryto filtrem dziecięcym.</string>
 </resources>

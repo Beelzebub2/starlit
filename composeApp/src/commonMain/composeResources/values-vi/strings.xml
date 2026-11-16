@@ -2667,4 +2667,7 @@
     <string name="remote_tv_volume_up">Tăng âm lượng</string>
     <string name="settings_desktop_tv_installer_ready">Mở trình cài đặt đi kèm cho TV Samsung Tizen và LG webOS (bản xem trước cho nhà phát triển).</string>
     <string name="settings_desktop_tv_installer_missing">Chưa cài đặt trình cài đặt TV. Xem bản dùng thử dành cho nhà phát triển trên GitHub.</string>
+    <string name="profile_kids_content_filter">Bộ lọc nội dung trẻ em</string>
+    <string name="profile_kids_content_filter_description">Ẩn nội dung kinh dị, bạo lực và người lớn theo siêu dữ liệu. Không phải khóa phụ huynh.</string>
+    <string name="profile_kids_content_blocked">Tựa đề này bị ẩn bởi bộ lọc trẻ em.</string>
 </resources>

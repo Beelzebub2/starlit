@@ -4,6 +4,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 
@@ -55,6 +56,11 @@ internal object HomeCatalogParser {
                     releaseInfo = meta.string("releaseInfo"),
                     rawReleaseDate = meta.string("released"),
                     imdbRating = meta.string("imdbRating"),
+                    ageRating = meta.string("ageRating")
+                        ?: (meta["app_extras"] as? JsonObject)?.string("certificationLocal")
+                        ?: (meta["app_extras"] as? JsonObject)?.string("certification"),
+                    isAdult = meta.boolean("adult") == true ||
+                        (meta["behaviorHints"] as? JsonObject)?.boolean("adult") == true,
                     dateAdded = meta.string("dateAdded")
                         ?: meta.string("addedAt")
                         ?: meta.string("added"),
@@ -76,6 +82,9 @@ internal object HomeCatalogParser {
 
     private fun JsonObject.string(name: String): String? =
         this[name]?.jsonPrimitive?.contentOrNull
+
+    private fun JsonObject.boolean(name: String): Boolean? =
+        this[name]?.jsonPrimitive?.booleanOrNull
 
     private fun JsonObject.array(name: String): JsonArray =
         this[name] as? JsonArray ?: JsonArray(emptyList())
