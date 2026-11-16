@@ -12,6 +12,7 @@ import com.nuvio.app.features.home.HomeCatalogSettingsRepository
 import com.nuvio.app.features.home.filterReleasedItems
 import com.nuvio.app.features.trakt.TraktPublicListSourceResolver
 import com.nuvio.app.features.watchprogress.CurrentDateProvider
+import com.nuvio.app.features.profiles.KidsContentPolicy
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -49,7 +50,7 @@ object CatalogRepository {
                 WatchLaterRepository.ensureLoaded()
                 WatchLaterRepository.items.collect { items ->
                     if (activeRequest == request) {
-                        _uiState.value = CatalogUiState(items = items.map { it.toMetaPreview() })
+                        _uiState.value = CatalogUiState(items = KidsContentPolicy.filter(items.map { it.toMetaPreview() }))
                     }
                 }
             }
@@ -117,7 +118,7 @@ object CatalogRepository {
                     target, LibraryRepository.uiState.libraryCatalogOrders(target),
                 ).collect { state ->
                     if (activeRequest != request) return@collect
-                    _uiState.value = state
+                    _uiState.value = state.copy(items = KidsContentPolicy.filter(state.items))
                 }
             } catch (error: CancellationException) {
                 throw error
@@ -187,7 +188,7 @@ object CatalogRepository {
                     CustomPosterUrlRepository.ensureLoaded()
                     val posterPattern = CustomPosterUrlRepository.patternForScreen(com.nuvio.app.core.poster.CustomPosterScreen.HOME)
                     _uiState.value = CatalogUiState(
-                        items = mergedItems.withCustomPosterUrls(posterPattern),
+                        items = KidsContentPolicy.filter(mergedItems.withCustomPosterUrls(posterPattern)),
                         isLoading = false,
                         nextSkip = paginationState.nextSkip,
                         consecutiveDuplicatePages = paginationState.consecutiveDuplicatePages,
@@ -213,6 +214,7 @@ object CatalogRepository {
         CatalogRequest(
             target = target,
             hideUnreleasedContent = HomeCatalogSettingsRepository.snapshot().hideUnreleasedContent,
+            kidsContentFilterEnabled = KidsContentPolicy.isEnabled(),
         )
 }
 
@@ -244,4 +246,5 @@ private suspend fun fetchCollectionSourcePage(
 private data class CatalogRequest(
     val target: CatalogTarget,
     val hideUnreleasedContent: Boolean,
+    val kidsContentFilterEnabled: Boolean,
 )

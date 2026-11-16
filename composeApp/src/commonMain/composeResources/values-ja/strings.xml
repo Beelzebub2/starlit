@@ -2205,4 +2205,7 @@
     <string name="settings_tracking_anime_id_title">アニメIDの優先設定</string>
     <string name="settings_desktop_tv_installer_ready">Samsung Tizen / LG webOS テレビ用の同梱インストーラーを開く（開発者プレビュー）。</string>
     <string name="settings_desktop_tv_installer_missing">TV インストーラーは未インストールです。GitHub で開発者向けプレビューを確認できます。</string>
+    <string name="profile_kids_content_filter">子ども向けコンテンツフィルター</string>
+    <string name="profile_kids_content_filter_description">メタデータに基づきホラー、暴力、成人向け作品を非表示にします。保護者によるロックではありません。</string>
+    <string name="profile_kids_content_blocked">この作品は子ども向けフィルターで非表示です。</string>
 </resources>

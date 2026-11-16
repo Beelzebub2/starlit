@@ -81,6 +81,7 @@ fun ProfileEditScreen(
     var selectedBackgroundId by rememberSaveable { mutableStateOf(currentProfile?.profileBackgroundId) }
     var selectedBackgroundUrl by rememberSaveable { mutableStateOf(currentProfile?.profileBackgroundUrl) }
     var usesPrimaryAddons by rememberSaveable { mutableStateOf(currentProfile?.usesPrimaryAddons ?: false) }
+    var kidsContentFilterEnabled by rememberSaveable { mutableStateOf(currentProfile?.kidsContentFilterEnabled ?: false) }
     var isSaving by remember { mutableStateOf(false) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
     var showPinSetup by remember { mutableStateOf(false) }
@@ -133,8 +134,10 @@ fun ProfileEditScreen(
                 isNew = isNew,
                 profileIndex = currentProfile?.profileIndex,
                 usesPrimaryAddons = usesPrimaryAddons,
+                kidsContentFilterEnabled = kidsContentFilterEnabled,
                 onNameChange = { name = it },
                 onUsesPrimaryAddonsChange = { usesPrimaryAddons = it },
+                onKidsContentFilterChange = { kidsContentFilterEnabled = it },
                 selectedAvatar = visibleAvatarItem,
                 customAvatarUrl = customAvatarUrl,
                 accentColor = previewAccent,
@@ -293,6 +296,7 @@ fun ProfileEditScreen(
                                 avatarId = if (customAvatarUrl == null) selectedAvatarId else null,
                                 avatarUrl = customAvatarUrl,
                                 usesPrimaryAddons = usesPrimaryAddons,
+                                kidsContentFilterEnabled = kidsContentFilterEnabled,
                             )
                         } else {
                             ProfileRepository.updateProfile(
@@ -304,6 +308,7 @@ fun ProfileEditScreen(
                                 profileBackgroundId = selectedBackgroundId,
                                 profileBackgroundUrl = selectedBackgroundUrl,
                                 usesPrimaryAddons = usesPrimaryAddons,
+                                kidsContentFilterEnabled = kidsContentFilterEnabled,
                             )
                         }
                         isSaving = false
@@ -388,8 +393,10 @@ private fun ProfileIdentityCard(
     isNew: Boolean,
     profileIndex: Int?,
     usesPrimaryAddons: Boolean,
+    kidsContentFilterEnabled: Boolean,
     onNameChange: (String) -> Unit,
     onUsesPrimaryAddonsChange: (Boolean) -> Unit,
+    onKidsContentFilterChange: (Boolean) -> Unit,
     selectedAvatar: AvatarCatalogItem?,
     customAvatarUrl: String?,
     accentColor: Color,
@@ -512,6 +519,12 @@ private fun ProfileIdentityCard(
                 description = stringResource(Res.string.profile_use_primary_addons_description),
                 checked = usesPrimaryAddons,
                 onCheckedChange = onUsesPrimaryAddonsChange,
+            )
+            ProfileOptionRow(
+                title = stringResource(Res.string.profile_kids_content_filter),
+                description = stringResource(Res.string.profile_kids_content_filter_description),
+                checked = kidsContentFilterEnabled,
+                onCheckedChange = onKidsContentFilterChange,
             )
         }
     }

@@ -3308,4 +3308,7 @@
     <string name="remote_tv_volume_up">Ongeza sauti</string>
     <string name="settings_desktop_tv_installer_ready">Fungua kisakinishi kilichojumuishwa kwa TV za Samsung Tizen na LG webOS (toleo la majaribio).</string>
     <string name="settings_desktop_tv_installer_missing">Kisakinishi cha TV hakijasakinishwa. Tazama matoleo ya majaribio kwenye GitHub.</string>
+    <string name="profile_kids_content_filter">Kichujio cha maudhui ya watoto</string>
+    <string name="profile_kids_content_filter_description">Huficha maudhui ya kutisha, vurugu na watu wazima kwa metadata. Si kufuli ya wazazi.</string>
+    <string name="profile_kids_content_blocked">Kichwa hiki kimefichwa na kichujio cha watoto.</string>
 </resources>

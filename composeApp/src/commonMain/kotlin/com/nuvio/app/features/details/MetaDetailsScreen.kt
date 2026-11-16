@@ -149,6 +149,7 @@ import com.nuvio.app.features.shuffle.ShuffleSurface
 import com.nuvio.app.features.shuffle.rememberShuffleSave
 import com.nuvio.app.features.shuffle.shufflePrimaryAction
 import com.nuvio.app.features.profiles.ProfileRepository
+import com.nuvio.app.features.profiles.KidsContentPolicy
 import com.nuvio.app.features.streams.rememberPlaybackAvailability
 import com.nuvio.app.features.streams.StreamAutoPlayPolicy
 import com.nuvio.app.features.tmdb.TmdbSettingsRepository
@@ -243,8 +244,12 @@ fun MetaDetailsScreen(
         shuffleWasInactive = !active
     }
     val uiState by MetaDetailsRepository.uiState.collectAsStateWithLifecycle()
-    val displayedMeta = uiState.meta?.takeIf { it.type == type && it.id == id }
+    val activeProfileState by ProfileRepository.state.collectAsStateWithLifecycle()
+    val candidateMeta = uiState.meta?.takeIf { it.type == type && it.id == id }
         ?: MetaDetailsRepository.peek(type, id)
+    val restrictedMeta = activeProfileState.activeProfile?.kidsContentFilterEnabled == true &&
+        candidateMeta?.let(KidsContentPolicy::isRestricted) == true
+    val displayedMeta = candidateMeta.takeUnless { restrictedMeta }
     val metaScreenSettingsUiState by remember {
         MetaScreenSettingsRepository.ensureLoaded()
         MetaScreenSettingsRepository.uiState
@@ -503,6 +508,15 @@ fun MetaDetailsScreen(
                 .background(MaterialTheme.colorScheme.background),
         ) {
             when {
+            restrictedMeta -> {
+                Text(
+                    text = stringResource(Res.string.profile_kids_content_blocked),
+                    modifier = Modifier.align(Alignment.Center).padding(32.dp),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                )
+            }
             displayedMeta == null && uiState.isLoading -> {
                 NuvioLoadingIndicator(
                     modifier = Modifier.align(Alignment.Center),
@@ -2376,6 +2390,8 @@ private fun MetaDetails.toMetaPreview(): MetaPreview =
         releaseInfo = releaseInfo,
         imdbRating = imdbRating,
         genres = genres,
+        ageRating = ageRating,
+        isAdult = isAdult,
     )
 
 private fun LazyListScope.configuredMetaSectionItems(

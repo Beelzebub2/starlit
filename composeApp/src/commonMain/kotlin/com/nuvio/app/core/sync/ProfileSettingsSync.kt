@@ -210,6 +210,7 @@ object ProfileSettingsSync {
             TrackingSettingsRepository.uiState.map { "trakt_settings" },
             TraktCommentsSettings.enabled.map { "trakt_comments" },
             EpisodeReleaseNotificationsRepository.uiState.map { "episode_release_alerts" },
+            ProfileRepository.state.map { "kids_content_filter" },
         )
 
         observeJob = scope.launch {
@@ -289,6 +290,7 @@ object ProfileSettingsSync {
                 notificationsSettings = NotificationsSettingsPayload(
                     episodeReleaseAlertsEnabled = EpisodeReleaseNotificationsRepository.uiState.value.isEnabled,
                 ),
+                kidsContentFilterEnabled = ProfileRepository.state.value.activeProfile?.kidsContentFilterEnabled ?: false,
             ),
         )
     }
@@ -373,6 +375,9 @@ object ProfileSettingsSync {
         TraktCommentsSettings.onProfileChanged()
 
         EpisodeReleaseNotificationsRepository.applyFromSyncEnabled(blob.features.notificationsSettings.episodeReleaseAlertsEnabled)
+        blob.features.kidsContentFilterEnabled?.let { enabled ->
+            ProfileRepository.setKidsContentFilterEnabled(ProfileRepository.activeProfileId, enabled)
+        }
     }
 
     private fun ensureRepositoriesLoaded() {
@@ -418,6 +423,7 @@ object ProfileSettingsSync {
         "trakt_settings=${TrackingSettingsRepository.uiState.value}",
         "trakt_comments=${TraktCommentsSettings.enabled.value}",
         "episode_release_alerts=${EpisodeReleaseNotificationsRepository.uiState.value.isEnabled}",
+        "kids_content_filter=${ProfileRepository.state.value.activeProfile?.kidsContentFilterEnabled}",
     ).joinToString(separator = "||")
 
 }
@@ -446,6 +452,7 @@ private data class MobileProfileSettingsFeatures(
     @SerialName("trakt_settings_payload") val traktSettingsPayload: String = "",
     @SerialName("trakt_comments_settings") val traktCommentsSettings: JsonObject = JsonObject(emptyMap()),
     @SerialName("notifications_settings") val notificationsSettings: NotificationsSettingsPayload = NotificationsSettingsPayload(),
+    @SerialName("kids_content_filter_enabled") val kidsContentFilterEnabled: Boolean? = null,
 )
 
 @Serializable

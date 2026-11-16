@@ -3132,4 +3132,7 @@
     <string name="remote_tv_volume_up">Volume up</string>
     <string name="settings_desktop_tv_installer_ready">Open the bundled installer for Samsung Tizen and LG webOS TVs (developer preview).</string>
     <string name="settings_desktop_tv_installer_missing">TV installer not installed. View developer preview builds on GitHub.</string>
+    <string name="profile_kids_content_filter">Kids content filter</string>
+    <string name="profile_kids_content_filter_description">Hide horror, violence and mature titles when metadata is available. This is not a parental lock.</string>
+    <string name="profile_kids_content_blocked">This title is hidden by the Kids content filter.</string>
 </resources>

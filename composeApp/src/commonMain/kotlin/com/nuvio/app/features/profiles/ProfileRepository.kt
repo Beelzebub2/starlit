@@ -13,6 +13,8 @@ import com.nuvio.app.features.addons.AddonRepository
 import com.nuvio.app.features.catalog.CatalogSortSettingsRepository
 import com.nuvio.app.features.collection.CollectionMobileSettingsRepository
 import com.nuvio.app.features.collection.CollectionRepository
+import com.nuvio.app.features.catalog.CatalogRepository
+import com.nuvio.app.features.details.MetaDetailsRepository
 import com.nuvio.app.features.downloads.DownloadsRepository
 import com.nuvio.app.features.details.MetaScreenSettingsRepository
 import com.nuvio.app.features.home.HomeCatalogSettingsRepository
@@ -145,7 +147,14 @@ object ProfileRepository {
         try {
             val previousProfileId = activeProfileIndex
             val result = SupabaseProvider.client.postgrest.rpc("sync_pull_profiles")
-            val profiles = result.decodeList<NuvioProfile>()
+            val cached = _state.value.profiles
+            val profiles = result.decodeList<NuvioProfile>().map { remote ->
+                val local = cached.firstOrNull { profile ->
+                    profile.userId == remote.userId && profile.profileIndex == remote.profileIndex &&
+                        (profile.id.isBlank() || remote.id.isBlank() || profile.id == remote.id)
+                }
+                remote.copy(kidsContentFilterEnabled = local?.kidsContentFilterEnabled ?: false)
+            }
             _state.value = _state.value.copy(
                 profiles = profiles.sortedBy { it.profileIndex },
                 isLoaded = true,
@@ -211,6 +220,8 @@ object ProfileRepository {
         P2pSettingsRepository.onProfileChanged()
         HomeCatalogSettingsRepository.onProfileChanged()
         HomeRepository.clear()
+        MetaDetailsRepository.clear()
+        CatalogRepository.clear()
         MetaScreenSettingsRepository.onProfileChanged()
         com.nuvio.app.features.shuffle.EpisodeShuffleRepository.onProfileChanged()
         ContinueWatchingPreferencesRepository.onProfileChanged()
@@ -253,6 +264,7 @@ object ProfileRepository {
         avatarId: String? = null,
         avatarUrl: String? = null,
         usesPrimaryAddons: Boolean = false,
+        kidsContentFilterEnabled: Boolean = false,
     ) {
         val existing = _state.value.profiles
         val nextIndex = ((1..MAX_PROFILES).toSet() - existing.map { it.profileIndex }.toSet()).minOrNull() ?: return
@@ -279,6 +291,7 @@ object ProfileRepository {
         )
 
         pushProfiles(allPayloads)
+        setKidsContentFilterEnabled(nextIndex, kidsContentFilterEnabled)
     }
 
     suspend fun updateProfile(
@@ -290,6 +303,7 @@ object ProfileRepository {
         profileBackgroundId: String? = null,
         profileBackgroundUrl: String? = null,
         usesPrimaryAddons: Boolean = false,
+        kidsContentFilterEnabled: Boolean = false,
     ) {
         val allPayloads = _state.value.profiles.map { profile ->
             if (profile.profileIndex == profileIndex) {
@@ -319,6 +333,30 @@ object ProfileRepository {
         }
 
         pushProfiles(allPayloads)
+        setKidsContentFilterEnabled(profileIndex, kidsContentFilterEnabled)
+    }
+
+    fun setKidsContentFilterEnabled(profileIndex: Int, enabled: Boolean) {
+        val current = _state.value
+        val profile = current.profiles.firstOrNull { it.profileIndex == profileIndex } ?: return
+        if (profile.kidsContentFilterEnabled == enabled) return
+        val profiles = current.profiles.map { item ->
+            if (item.profileIndex == profileIndex) item.copy(kidsContentFilterEnabled = enabled) else item
+        }
+        _state.value = current.copy(
+            profiles = profiles,
+            activeProfile = current.activeProfile?.let { active ->
+                profiles.firstOrNull { it.profileIndex == active.profileIndex }
+            },
+        )
+        persist()
+        if (activeProfileIndex == profileIndex) {
+            HomeRepository.clear()
+            SearchRepository.reset()
+            CatalogRepository.clear()
+            MetaDetailsRepository.clear()
+            HomeRepository.refresh(AddonRepository.uiState.value.addons, force = true)
+        }
     }
 
     suspend fun deleteProfile(profileIndex: Int) {

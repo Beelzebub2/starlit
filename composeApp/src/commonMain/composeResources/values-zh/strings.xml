@@ -3335,4 +3335,7 @@
     <string name="remote_tv_volume_up">音量调高</string>
     <string name="settings_desktop_tv_installer_ready">打开随附的三星 Tizen 和 LG webOS 电视安装器（开发者预览版）。</string>
     <string name="settings_desktop_tv_installer_missing">未安装电视安装器。请在 GitHub 上查看开发者预览构建。</string>
+    <string name="profile_kids_content_filter">儿童内容过滤器</string>
+    <string name="profile_kids_content_filter_description">根据元数据隐藏恐怖、暴力和成人内容。这不是家长锁。</string>
+    <string name="profile_kids_content_blocked">此内容已被儿童过滤器隐藏。</string>
 </resources>

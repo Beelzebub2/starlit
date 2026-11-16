@@ -3352,4 +3352,7 @@ Nagbalik ang</string>
     <string name="remote_tv_volume_up">Tumaas ang volume</string>
     <string name="settings_desktop_tv_installer_ready">Buksan ang kasamang installer para sa Samsung Tizen at LG webOS TV (preview para sa developer).</string>
     <string name="settings_desktop_tv_installer_missing">Hindi naka-install ang TV installer. Tingnan ang mga developer preview build sa GitHub.</string>
+    <string name="profile_kids_content_filter">Filter ng content para sa bata</string>
+    <string name="profile_kids_content_filter_description">Itinatago ang horror, marahas at pang-adultong content batay sa metadata. Hindi ito parental lock.</string>
+    <string name="profile_kids_content_blocked">Nakatago ang pamagat na ito sa filter para sa bata.</string>
 </resources>

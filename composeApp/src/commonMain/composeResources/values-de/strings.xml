@@ -1520,4 +1520,7 @@
     <string name="trakt_continue_watching_window">Zeitfenster für „Weiterschauen“</string>
     <string name="settings_desktop_tv_installer_ready">Mitgeliefertes Installationsprogramm für Samsung Tizen und LG webOS öffnen (Entwicklervorschau).</string>
     <string name="settings_desktop_tv_installer_missing">TV-Installationsprogramm nicht installiert. Entwicklerversionen auf GitHub ansehen.</string>
+    <string name="profile_kids_content_filter">Inhaltsfilter für Kinder</string>
+    <string name="profile_kids_content_filter_description">Blendet Horror, Gewalt und Erwachseneninhalt anhand der Metadaten aus. Kein Elternschloss.</string>
+    <string name="profile_kids_content_blocked">Dieser Titel wird durch den Kinderfilter ausgeblendet.</string>
 </resources>

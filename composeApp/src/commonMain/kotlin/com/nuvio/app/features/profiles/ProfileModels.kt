@@ -20,6 +20,9 @@ data class NuvioProfile(
     @SerialName("profile_background_url") val profileBackgroundUrl: String? = null,
     @SerialName("uses_primary_addons") val usesPrimaryAddons: Boolean = false,
     @SerialName("uses_primary_plugins") val usesPrimaryPlugins: Boolean = false,
+    // Device cache mirrors the active profile's synced settings blob; the profiles RPC
+    // does not yet have a dedicated column for this optional preference.
+    @SerialName("kids_content_filter_enabled") val kidsContentFilterEnabled: Boolean = false,
     @SerialName("pin_enabled") val pinEnabled: Boolean = false,
     @SerialName("pin_locked_until") val pinLockedUntil: String? = null,
     @SerialName("created_at") val createdAt: String = "",

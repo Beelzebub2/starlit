@@ -2418,4 +2418,7 @@
     <string name="remote_tv_volume_up">Hangerő növelése</string>
     <string name="settings_desktop_tv_installer_ready">A mellékelt telepítő megnyitása Samsung Tizen és LG webOS tévékhez (fejlesztői előzetes).</string>
     <string name="settings_desktop_tv_installer_missing">A TV-telepítő nincs telepítve. Fejlesztői előzetesek megtekintése a GitHubon.</string>
+    <string name="profile_kids_content_filter">Gyermekbarát tartalomszűrő</string>
+    <string name="profile_kids_content_filter_description">Elrejti a horrort, az erőszakot és a felnőtt tartalmakat a metaadatok alapján. Nem szülői zárolás.</string>
+    <string name="profile_kids_content_blocked">Ezt a címet a gyermekszűrő rejti el.</string>
 </resources>

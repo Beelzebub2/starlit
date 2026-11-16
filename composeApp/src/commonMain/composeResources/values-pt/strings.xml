@@ -2468,4 +2468,7 @@
     <string name="settings_tracking_anime_id_title">ID preferido para anime</string>
     <string name="settings_desktop_tv_installer_ready">Abrir o instalador incluído para TVs Samsung Tizen e LG webOS (pré-visualização para programadores).</string>
     <string name="settings_desktop_tv_installer_missing">Instalador de TV não instalado. Ver versões de pré-visualização no GitHub.</string>
+    <string name="profile_kids_content_filter">Filtro de conteúdos infantis</string>
+    <string name="profile_kids_content_filter_description">Oculta terror, violência e conteúdos para adultos com base nos metadados. Não é um bloqueio parental.</string>
+    <string name="profile_kids_content_blocked">Este título está oculto pelo filtro infantil.</string>
 </resources>

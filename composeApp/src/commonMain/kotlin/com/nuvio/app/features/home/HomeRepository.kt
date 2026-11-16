@@ -17,6 +17,7 @@ import com.nuvio.app.features.collection.catalogRouteKey
 import com.nuvio.app.features.collection.findCollectionCatalog
 import com.nuvio.app.features.trakt.TraktPublicListSourceResolver
 import com.nuvio.app.features.tmdb.TmdbMetadataService
+import com.nuvio.app.features.profiles.KidsContentPolicy
 import com.nuvio.app.features.watchprogress.CurrentDateProvider
 import com.nuvio.app.isDesktop
 import kotlinx.coroutines.CoroutineScope
@@ -54,7 +55,8 @@ object HomeRepository {
 
     fun refresh(addons: List<ManagedAddon>, force: Boolean = false) {
         val activeAddons = addons.enabledAddons().filterNot {
-            isDesktop && it.manifest?.id == "tools.rrm.nuvio.anime-aired-today"
+            (isDesktop && it.manifest?.id == "tools.rrm.nuvio.anime-aired-today") ||
+                (KidsContentPolicy.isEnabled() && it.manifest?.behaviorHints?.adult == true)
         }
         val requests = buildHomeCatalogDefinitions(activeAddons)
         currentDefinitions = requests
@@ -182,11 +184,13 @@ object HomeRepository {
             todayIsoDate = todayIsoDate,
             requestKey = requestKey,
         )
-        val sections = projection.sections
-        val catalogHeroItems = projection.catalogHeroItems
+        val sections = projection.sections.mapNotNull { section ->
+            section.copy(items = KidsContentPolicy.filter(section.items)).takeIf { it.items.isNotEmpty() }
+        }
+        val catalogHeroItems = KidsContentPolicy.filter(projection.catalogHeroItems)
         lastPublishedCatalogHeroEmpty = snapshot.heroEnabled && catalogHeroItems.isEmpty()
         val heroItems = if (snapshot.heroEnabled) {
-            catalogHeroItems.ifEmpty { cachedCollectionHeroItems }
+            catalogHeroItems.ifEmpty { KidsContentPolicy.filter(cachedCollectionHeroItems) }
         } else {
             emptyList()
         }

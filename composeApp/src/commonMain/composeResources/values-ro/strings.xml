@@ -2218,4 +2218,7 @@
     <string name="settings_tracking_anime_id_title">ID anime preferat</string>
     <string name="settings_desktop_tv_installer_ready">Deschide programul inclus pentru instalare pe televizoare Samsung Tizen și LG webOS (versiune de test).</string>
     <string name="settings_desktop_tv_installer_missing">Programul de instalare TV nu este instalat. Vezi versiunile de test pe GitHub.</string>
+    <string name="profile_kids_content_filter">Filtru de conținut pentru copii</string>
+    <string name="profile_kids_content_filter_description">Ascunde groaza, violența și conținutul pentru adulți pe baza metadatelor. Nu este blocare parentală.</string>
+    <string name="profile_kids_content_blocked">Acest titlu este ascuns de filtrul pentru copii.</string>
 </resources>

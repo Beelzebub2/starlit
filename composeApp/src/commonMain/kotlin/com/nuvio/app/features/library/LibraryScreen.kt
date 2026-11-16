@@ -111,6 +111,7 @@ import com.nuvio.app.features.home.components.HomeEmptyStateCard
 import com.nuvio.app.features.home.components.HomePosterCard
 import com.nuvio.app.features.home.components.HomeSkeletonRow
 import com.nuvio.app.features.profiles.ProfileRepository
+import com.nuvio.app.features.profiles.KidsContentPolicy
 import com.nuvio.app.features.tracking.TrackingRefreshIntent
 import com.nuvio.app.features.watched.WatchedRepository
 import com.nuvio.app.features.watching.application.WatchingState
@@ -134,10 +135,23 @@ fun LibraryScreen(
     disintegrationRequest: DisintegrationRequest<String>? = null,
     headerAccessory: (@Composable () -> Unit)? = null,
 ) {
-    val uiState by remember {
+    val rawUiState by remember {
         LibraryRepository.ensureLoaded()
         LibraryRepository.uiState
     }.collectAsStateWithLifecycle()
+    val profileState by ProfileRepository.state.collectAsStateWithLifecycle()
+    val kidsContentFilterEnabled = profileState.activeProfile?.kidsContentFilterEnabled == true
+    val uiState = remember(rawUiState, kidsContentFilterEnabled) {
+        if (kidsContentFilterEnabled) {
+            rawUiState.copy(
+                items = rawUiState.items.filterNot { KidsContentPolicy.isRestricted(it.genres) },
+                sections = rawUiState.sections.mapNotNull { section ->
+                    section.copy(items = section.items.filterNot { KidsContentPolicy.isRestricted(it.genres) })
+                        .takeIf { it.items.isNotEmpty() }
+                },
+            )
+        } else rawUiState
+    }
     val cloudUiState by CloudLibraryRepository.uiState.collectAsStateWithLifecycle()
     val cloudSettings by remember {
         DebridSettingsRepository.ensureLoaded()
