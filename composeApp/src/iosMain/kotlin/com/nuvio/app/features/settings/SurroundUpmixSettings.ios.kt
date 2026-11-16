@@ -2,6 +2,10 @@ package com.nuvio.app.features.settings
 
 internal actual object SurroundUpmixPlatform {
     actual val isSupported: Boolean = false
+    actual fun loadAutomaticEnabled(): Boolean = false
+    actual fun saveAutomaticEnabled(enabled: Boolean) = Unit
+    actual fun loadPreferAutomatic(): Boolean = false
+    actual fun savePreferAutomatic(prefer: Boolean) = Unit
     actual fun loadEnabled(): Boolean = false
     actual fun saveEnabled(enabled: Boolean) = Unit
     actual fun loadHeadsetEnabled(): Boolean = false

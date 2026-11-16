@@ -1601,6 +1601,11 @@
     <string name="settings_playback_surround_headset_upmix">Stereo ke headset 7.1 PCM (eksperimental)</string>
     <string name="settings_playback_surround_headset_upmix_description">Untuk driver headset yang menerima 7.1 PCM, termasuk perangkat di luar Corsair. Aktifkan virtual surround di perangkat lunak headset Anda. Starlit tidak menyediakan pemrosesan binaural/HRTF atau memverifikasi bahwa driver memvirtualisasikan sinyal. Mati secara default.</string>
     <string name="settings_playback_surround_section">AUDIO SURROUND · EKSPERIMENTAL</string>
+    <string name="settings_playback_surround_automatic">Surround otomatis</string>
+    <string name="settings_playback_surround_automatic_description">Mencoba keluaran PCM 7.1/5.1 yang kompatibel. Jika gagal, audio asli diputar. Surround virtual headset tidak dijamin. Nonaktif secara default.</string>
+    <string name="settings_playback_surround_automatic_active">Keluaran PCM multikanal terkonfirmasi; surround virtual headset belum diverifikasi.</string>
+    <string name="settings_playback_surround_automatic_fallback">Tidak ada keluaran surround kompatibel yang berhasil; audio asli diputar.</string>
+    <string name="settings_playback_surround_automatic_checking">Memeriksa dukungan surround; audio asli tetap tersedia.</string>
     <string name="settings_playback_surround_upmix">Stereo hingga 5.1 surround</string>
     <string name="settings_playback_surround_upmix_description">Tingkatkan stereo ketika output default Windows dikonfigurasi untuk speaker 5.1 PCM. Trek 5.1/7.1 yang sebenarnya tetap tidak berubah. Output yang tidak didukung tetap mempertahankan audio aslinya. Mati secara default.</string>
     <string name="settings_playback_threshold_mode_smart">Cerdas (disarankan)</string>

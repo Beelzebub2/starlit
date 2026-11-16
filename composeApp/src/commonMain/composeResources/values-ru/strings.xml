@@ -2400,6 +2400,11 @@
     <string name="settings_playback_surround_headset_upmix">Стерео для гарнитуры 7.1 PCM (экспериментальный)</string>
     <string name="settings_playback_surround_headset_upmix_description">Для драйверов гарнитуры, поддерживающих 7.1 PCM, включая устройства, отличные от Corsair. Включите виртуальное объемное звучание в программном обеспечении гарнитуры. Starlit не обеспечивает бинауральную обработку/HRTF и не проверяет, виртуализирует ли драйвер сигнал. По умолчанию выключено.</string>
     <string name="settings_playback_surround_section">ОБЪЕМНЫЙ ЗВУК · ЭКСПЕРИМЕНТАЛЬНАЯ</string>
+    <string name="settings_playback_surround_automatic">Автоматический объёмный звук</string>
+    <string name="settings_playback_surround_automatic_description">Проверяет совместимый вывод PCM 7.1/5.1. При неудаче воспроизводит исходный звук. Виртуальный объёмный звук гарнитуры не гарантирован. По умолчанию выключено.</string>
+    <string name="settings_playback_surround_automatic_active">Многоканальный вывод PCM подтверждён; виртуальный объёмный звук гарнитуры не проверен.</string>
+    <string name="settings_playback_surround_automatic_fallback">Совместимый объёмный вывод не сработал; воспроизводится исходный звук.</string>
+    <string name="settings_playback_surround_automatic_checking">Проверка поддержки объёмного звука; исходный звук остаётся доступен.</string>
     <string name="settings_playback_surround_upmix">Стерео в объемный звук 5.1</string>
     <string name="settings_playback_surround_upmix_description">Расширенное микширование стерео, если выход по умолчанию Windows настроен для динамиков 5.1 PCM. Реальные треки 5.1/7.1 остаются без изменений. Неподдерживаемые выходы сохраняют исходный звук. По умолчанию выключено.</string>
     <string name="settings_playback_threshold_mode_smart">Умный (рекомендуется)</string>

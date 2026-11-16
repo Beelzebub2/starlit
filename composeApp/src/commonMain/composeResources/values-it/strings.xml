@@ -2101,6 +2101,11 @@
     <string name="settings_playback_surround_headset_upmix">Da stereo a auricolare 7.1 PCM (sperimentale)</string>
     <string name="settings_playback_surround_headset_upmix_description">Per driver di cuffie che accettano PCM 7.1, inclusi dispositivi oltre Corsair. Abilita il surround virtuale nel software delle tue cuffie. Starlit non fornisce l\'elaborazione binaurale/HRTF né verifica che il driver virtualizzi il segnale. Disattivato per impostazione predefinita.</string>
     <string name="settings_playback_surround_section">AUDIO SURROUND · SPERIMENTALE</string>
+    <string name="settings_playback_surround_automatic">Surround automatico</string>
+    <string name="settings_playback_surround_automatic_description">Prova uscite PCM 7.1/5.1 compatibili. In caso di errore riproduce l’audio originale. Il surround virtuale delle cuffie non è garantito. Disattivato per impostazione predefinita.</string>
+    <string name="settings_playback_surround_automatic_active">Uscita PCM multicanale confermata; il surround virtuale delle cuffie non è verificato.</string>
+    <string name="settings_playback_surround_automatic_fallback">Nessuna uscita surround compatibile ha funzionato; riproduzione dell’audio originale.</string>
+    <string name="settings_playback_surround_automatic_checking">Verifica del supporto surround; l’audio originale rimane disponibile.</string>
     <string name="settings_playback_surround_upmix">Da stereo a surround 5.1</string>
     <string name="settings_playback_surround_upmix_description">Upmix stereo quando l\'uscita predefinita Windows è configurata per altoparlanti 5.1 PCM. Le tracce Real 5.1/7.1 rimangono invariate. Le uscite non supportate mantengono l\'audio originale. Disattivato per impostazione predefinita.</string>
     <string name="settings_playback_threshold_mode_smart">Intelligente (consigliato)</string>

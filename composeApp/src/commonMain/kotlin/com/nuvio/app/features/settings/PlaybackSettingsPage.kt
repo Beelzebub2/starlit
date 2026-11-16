@@ -1038,6 +1038,7 @@ private fun PlaybackSettingsSection(
         }
 
         if (SurroundUpmixSettings.isSupported) {
+            val automaticSurroundEnabled by SurroundUpmixSettings.automaticEnabled.collectAsStateWithLifecycle()
             val surroundEnabled by SurroundUpmixSettings.enabled.collectAsStateWithLifecycle()
             val virtualHeadsetEnabled by SurroundUpmixSettings.headsetEnabled.collectAsStateWithLifecycle()
             val virtualFivePointOneEnabled by SurroundUpmixSettings.headsetFivePointOneEnabled.collectAsStateWithLifecycle()
@@ -1046,6 +1047,14 @@ private fun PlaybackSettingsSection(
                 isTablet = isTablet,
             ) {
                 SettingsGroup(isTablet = isTablet) {
+                    SettingsSwitchRow(
+                        title = stringResource(Res.string.settings_playback_surround_automatic),
+                        description = stringResource(Res.string.settings_playback_surround_automatic_description),
+                        checked = automaticSurroundEnabled,
+                        isTablet = isTablet,
+                        onCheckedChange = SurroundUpmixSettings::setAutomaticEnabled,
+                    )
+                    SettingsGroupDivider(isTablet = isTablet)
                     SettingsSwitchRow(
                         title = stringResource(Res.string.settings_playback_surround_upmix),
                         description = stringResource(Res.string.settings_playback_surround_upmix_description),

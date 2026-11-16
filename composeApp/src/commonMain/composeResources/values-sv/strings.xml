@@ -3193,6 +3193,11 @@
     <string name="settings_playback_surround_headset_upmix">Stereo till headset 7.1 PCM (experimentell)</string>
     <string name="settings_playback_surround_headset_upmix_description">För headsetdrivrutiner som accepterar 7.1 PCM, inklusive enheter utanför Corsair. Aktivera virtuell surround i ditt headsetprogram. Starlit tillhandahåller inte binaural/HRTF-behandling eller verifierar att drivrutinen virtualiserar signalen. Av som standard.</string>
     <string name="settings_playback_surround_section">SURROUND AUDIO · EXPERIMENTELLT</string>
+    <string name="settings_playback_surround_automatic">Automatiskt surroundljud</string>
+    <string name="settings_playback_surround_automatic_description">Provar kompatibel 7.1/5.1 PCM-utgång. Om det misslyckas spelas originalljudet. Virtuellt surroundljud i headset garanteras inte. Av som standard.</string>
+    <string name="settings_playback_surround_automatic_active">Flerkanalig PCM-utgång bekräftad; virtuellt surroundljud i headset är inte verifierat.</string>
+    <string name="settings_playback_surround_automatic_fallback">Ingen kompatibel surroundutgång fungerade; originalljudet spelas upp.</string>
+    <string name="settings_playback_surround_automatic_checking">Kontrollerar surroundstöd; originalljudet förblir tillgängligt.</string>
     <string name="settings_playback_surround_upmix">Stereo till 5.1 surround</string>
     <string name="settings_playback_surround_upmix_description">Upmix stereo när Windows standardutgång är konfigurerad för 5.1 PCM-högtalare. Riktiga 5.1/7.1-spår förblir oförändrade. Utgångar som inte stöds behåller sitt ursprungliga ljud. Av som standard.</string>
     <string name="settings_playback_threshold_mode_smart">Smart (rekommenderas)</string>

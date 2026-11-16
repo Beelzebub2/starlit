@@ -2539,6 +2539,11 @@
     <string name="settings_playback_surround_headset_upmix">স্টেরিও থেকে হেডসেট 7.1 PCM (পরীক্ষামূলক)</string>
     <string name="settings_playback_surround_headset_upmix_description">হেডসেট ড্রাইভারদের জন্য যারা 7.1 PCM গ্রহণ করে, যার মধ্যে Corsair এর বাইরের ডিভাইসগুলিও রয়েছে। আপনার হেডসেট সফ্টওয়্যারে ভার্চুয়াল চারপাশ সক্ষম করুন। Starlit binaural/HRTF প্রসেসিং প্রদান করে না বা ড্রাইভার সিগন্যালটিকে ভার্চুয়ালাইজ করে কিনা তা যাচাই করে না। ডিফল্টরূপে বন্ধ।</string>
     <string name="settings_playback_surround_section">সার্রাউন্ড অডিও · পরীক্ষামূলক</string>
+    <string name="settings_playback_surround_automatic">স্বয়ংক্রিয় সারাউন্ড</string>
+    <string name="settings_playback_surround_automatic_description">সামঞ্জস্যপূর্ণ 7.1/5.1 PCM আউটপুট চেষ্টা করুন। ব্যর্থ হলে মূল অডিও চলবে। হেডসেটের ভার্চুয়াল সারাউন্ড নিশ্চিত নয়। ডিফল্টভাবে বন্ধ।</string>
+    <string name="settings_playback_surround_automatic_active">মাল্টিচ্যানেল PCM আউটপুট নিশ্চিত হয়েছে; হেডসেটের ভার্চুয়াল সারাউন্ড যাচাই করা হয়নি।</string>
+    <string name="settings_playback_surround_automatic_fallback">কোনো সামঞ্জস্যপূর্ণ সারাউন্ড আউটপুট কাজ করেনি; মূল অডিও চলছে।</string>
+    <string name="settings_playback_surround_automatic_checking">সারাউন্ড সমর্থন যাচাই করা হচ্ছে; মূল অডিও উপলব্ধ থাকবে।</string>
     <string name="settings_playback_surround_upmix">স্টেরিও থেকে 5.1 চারপাশে</string>
     <string name="settings_playback_surround_upmix_description">আপমিক্স স্টেরিও যখন Windows ডিফল্ট আউটপুট 5.1 PCM স্পিকারের জন্য কনফিগার করা হয়। বাস্তব 5.1/7.1 ট্র্যাক অপরিবর্তিত থাকে। অসমর্থিত আউটপুট তাদের আসল অডিও রাখে। ডিফল্টরূপে বন্ধ।</string>
     <string name="settings_playback_threshold_mode_smart">স্মার্ট (প্রস্তাবিত)</string>

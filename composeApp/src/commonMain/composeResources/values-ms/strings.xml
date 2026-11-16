@@ -3235,6 +3235,11 @@ Had permintaan</string>
     <string name="settings_playback_surround_headset_upmix">Stereo ke set kepala 7.1 PCM (percubaan)</string>
     <string name="settings_playback_surround_headset_upmix_description">Untuk pemacu set kepala yang menerima 7.1 PCM, termasuk peranti di luar Corsair. Dayakan keliling maya dalam perisian set kepala anda. Starlit tidak menyediakan pemprosesan binaural/HRTF atau mengesahkan bahawa pemacu memayakan isyarat. Mati secara lalai.</string>
     <string name="settings_playback_surround_section">AUDIO SURROUND · EKSPERIMEN</string>
+    <string name="settings_playback_surround_automatic">Surround automatik</string>
+    <string name="settings_playback_surround_automatic_description">Mencuba output PCM 7.1/5.1 yang serasi. Jika gagal, audio asal dimainkan. Surround maya set kepala tidak dijamin. Dimatikan secara lalai.</string>
+    <string name="settings_playback_surround_automatic_active">Output PCM berbilang saluran disahkan; surround maya set kepala belum disahkan.</string>
+    <string name="settings_playback_surround_automatic_fallback">Tiada output surround serasi yang berjaya; audio asal sedang dimainkan.</string>
+    <string name="settings_playback_surround_automatic_checking">Memeriksa sokongan surround; audio asal masih tersedia.</string>
     <string name="settings_playback_surround_upmix">Stereo kepada 5.1 surround</string>
     <string name="settings_playback_surround_upmix_description">Campuran stereo apabila output lalai Windows dikonfigurasikan untuk pembesar suara 5.1 PCM. Lagu sebenar 5.1/7.1 kekal tidak berubah. Output yang tidak disokong mengekalkan audio asalnya. Mati secara lalai.</string>
     <string name="settings_playback_threshold_mode_smart">Pintar (disyorkan)</string>

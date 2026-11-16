@@ -2386,6 +2386,11 @@
     <string name="settings_playback_surround_headset_upmix">Стерео към слушалки 7.1 PCM (експериментално)</string>
     <string name="settings_playback_surround_headset_upmix_description">За драйвери за слушалки, които приемат 7.1 PCM, включително устройства извън Corsair. Активирайте виртуален съраунд в софтуера на вашите слушалки. Starlit не предоставя бинаурална/HRTF обработка или не проверява дали драйверът виртуализира сигнала. Изключено по подразбиране.</string>
     <string name="settings_playback_surround_section">СЪРАУД АУДИО · ЕКСПЕРИМЕНТАЛНО</string>
+    <string name="settings_playback_surround_automatic">Автоматичен съраунд звук</string>
+    <string name="settings_playback_surround_automatic_description">Изпробва съвместим PCM изход 7.1/5.1. При неуспех възпроизвежда оригиналния звук. Виртуалният съраунд за слушалки не е гарантиран. Изключено по подразбиране.</string>
+    <string name="settings_playback_surround_automatic_active">Потвърден е многоканален PCM изход; виртуалният съраунд за слушалки не е проверен.</string>
+    <string name="settings_playback_surround_automatic_fallback">Няма работещ съвместим съраунд изход; възпроизвежда се оригиналният звук.</string>
+    <string name="settings_playback_surround_automatic_checking">Проверява се поддръжката на съраунд; оригиналният звук остава наличен.</string>
     <string name="settings_playback_surround_upmix">Стерео към 5.1 съраунд</string>
     <string name="settings_playback_surround_upmix_description">Повишаване на стерео, когато изходът по подразбиране Windows е конфигуриран за 5.1 PCM високоговорители. Реалните 5.1/7.1 песни остават непроменени. Неподдържаните изходи запазват оригиналния си звук. Изключено по подразбиране.</string>
     <string name="settings_playback_threshold_mode_smart">Smart (препоръчително)</string>

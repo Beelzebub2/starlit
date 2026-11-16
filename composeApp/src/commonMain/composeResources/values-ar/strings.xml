@@ -2276,6 +2276,11 @@
     <string name="settings_playback_surround_headset_upmix">ستيريو لسماعة الرأس 7.1 PCM (تجريبي)</string>
     <string name="settings_playback_surround_headset_upmix_description">لمشغلات سماعات الرأس التي تقبل 7.1 PCM، بما في ذلك الأجهزة غير Corsair. قم بتمكين الصوت المحيطي الافتراضي في برنامج سماعة الرأس لديك. Starlit لا يوفر معالجة بكلتا الأذنين/HRTF أو يتحقق من أن برنامج التشغيل يقوم بمحاكاة الإشارة افتراضيًا. إيقاف بشكل افتراضي.</string>
     <string name="settings_playback_surround_section">الصوت المحيطي · تجريبي</string>
+    <string name="settings_playback_surround_automatic">الصوت المحيطي التلقائي</string>
+    <string name="settings_playback_surround_automatic_description">جرّب خرج PCM متوافقًا 7.1 أو 5.1. إذا فشل، شغّل الصوت الأصلي. الصوت المحيطي الافتراضي للسماعة غير مضمون. معطّل افتراضيًا.</string>
+    <string name="settings_playback_surround_automatic_active">تم تأكيد خرج PCM متعدد القنوات؛ لم يتم التحقق من الصوت المحيطي الافتراضي للسماعة.</string>
+    <string name="settings_playback_surround_automatic_fallback">لم يعمل أي خرج محيطي متوافق؛ يجري تشغيل الصوت الأصلي.</string>
+    <string name="settings_playback_surround_automatic_checking">يجري فحص دعم الصوت المحيطي؛ يظل الصوت الأصلي متاحًا.</string>
     <string name="settings_playback_surround_upmix">ستيريو إلى محيط 5.1</string>
     <string name="settings_playback_surround_upmix_description">Upmix ستيريو عندما يتم تكوين الإخراج الافتراضي Windows لسماعات 5.1 PCM. تبقى المسارات الحقيقية 5.1/7.1 دون تغيير. تحتفظ المخرجات غير المدعومة بصوتها الأصلي. إيقاف بشكل افتراضي.</string>
     <string name="settings_playback_threshold_mode_smart">ذكي (مستحسن)</string>

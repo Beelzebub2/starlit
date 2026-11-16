@@ -2462,6 +2462,11 @@ Du bruker denne funksjonen helt på eget ansvar. P2P kan deaktiveres når som he
     <string name="settings_playback_surround_headset_upmix">Stereo til headset 7.1 PCM (eksperimentell)</string>
     <string name="settings_playback_surround_headset_upmix_description">For hodesettdrivere som godtar 7.1 PCM, inkludert enheter utenfor Corsair. Aktiver virtuell surround i hodetelefonprogramvaren. Starlit gir ikke binaural/HRTF-behandling eller verifiserer at driveren virtualiserer signalet. Av som standard.</string>
     <string name="settings_playback_surround_section">SURROUND AUDIO · EKSPERIMENTELL</string>
+    <string name="settings_playback_surround_automatic">Automatisk surroundlyd</string>
+    <string name="settings_playback_surround_automatic_description">Prøver kompatibel 7.1/5.1 PCM-utgang. Ved feil spilles originallyden av. Virtuell surround i hodetelefoner er ikke garantert. Av som standard.</string>
+    <string name="settings_playback_surround_automatic_active">Flerkanals PCM-utgang bekreftet; virtuell surround i hodetelefonene er ikke verifisert.</string>
+    <string name="settings_playback_surround_automatic_fallback">Ingen kompatibel surroundutgang fungerte; originallyden spilles av.</string>
+    <string name="settings_playback_surround_automatic_checking">Kontrollerer støtte for surround; originallyden er fortsatt tilgjengelig.</string>
     <string name="settings_playback_surround_upmix">Stereo til 5.1 surround</string>
     <string name="settings_playback_surround_upmix_description">Upmix stereo når standardutgangen Windows er konfigurert for 5.1 PCM-høyttalere. Ekte 5.1/7.1-spor forblir uendret. Ustøttede utganger beholder sin originale lyd. Av som standard.</string>
     <string name="settings_playback_threshold_mode_smart">Smart (anbefalt)</string>

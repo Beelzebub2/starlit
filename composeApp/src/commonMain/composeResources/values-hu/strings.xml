@@ -2282,6 +2282,11 @@
     <string name="settings_playback_surround_headset_upmix">Sztereó headsethez 7.1 PCM (kísérleti)</string>
     <string name="settings_playback_surround_headset_upmix_description">7.1 PCM-et elfogadó headset-illesztőprogramokhoz, beleértve a Corsair-n kívüli eszközöket is. Engedélyezze a virtuális térhangzást a headset szoftverében. A Starlit nem biztosít binaurális/HRTF-feldolgozást, és nem ellenőrzi, hogy az illesztőprogram virtualizálja-e a jelet. Alapértelmezés szerint ki.</string>
     <string name="settings_playback_surround_section">SURROUND AUDIO · KÍSÉRLETI</string>
+    <string name="settings_playback_surround_automatic">Automatikus térhangzás</string>
+    <string name="settings_playback_surround_automatic_description">Kompatibilis 7.1/5.1 PCM-kimenetet próbál. Sikertelenség esetén az eredeti hangot játssza le. A fejhallgató virtuális térhangzása nem garantált. Alapból kikapcsolva.</string>
+    <string name="settings_playback_surround_automatic_active">Többcsatornás PCM-kimenet megerősítve; a fejhallgató virtuális térhangzása nincs ellenőrizve.</string>
+    <string name="settings_playback_surround_automatic_fallback">Nem működött kompatibilis térhangzáskimenet; az eredeti hang szól.</string>
+    <string name="settings_playback_surround_automatic_checking">Térhangzás-támogatás ellenőrzése; az eredeti hang továbbra is elérhető.</string>
     <string name="settings_playback_surround_upmix">Sztereó 5.1-es térhangzásra</string>
     <string name="settings_playback_surround_upmix_description">Sztereó keverés, ha a Windows alapértelmezett kimenete 5.1 PCM hangszórókhoz van konfigurálva. A valódi 5.1/7.1 sávok változatlanok maradnak. A nem támogatott kimenetek megtartják eredeti hangjukat. Alapértelmezés szerint ki.</string>
     <string name="settings_playback_threshold_mode_smart">Intelligens (ajánlott)</string>

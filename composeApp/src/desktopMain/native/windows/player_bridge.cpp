@@ -695,6 +695,10 @@ std::string discordShareAudioDevice() {
 struct DefaultSurroundOutput {
     starlit_surround::Layout layout = starlit_surround::Layout::unsupported;
     std::wstring endpointId;
+    unsigned mixChannels = 0;
+    uint32_t mixMask = 0;
+    uint32_t mixRate = 0;
+    std::vector<starlit_surround::Layout> automaticCandidates;
 };
 
 // Inspect Windows' default shared-mode layout. For physical speakers the mix
@@ -741,11 +745,15 @@ DefaultSurroundOutput defaultSurroundOutput(starlit_surround::Mode mode) {
         // PCM and IEEE-float are the only formats supported by this DSP path.
         if (extended->SubFormat.Data1 == WAVE_FORMAT_PCM ||
             extended->SubFormat.Data1 == WAVE_FORMAT_IEEE_FLOAT) {
+            output.mixChannels = format->nChannels;
+            output.mixMask = extended->dwChannelMask;
+            output.mixRate = format->nSamplesPerSec;
             if (mode == starlit_surround::Mode::speakersFivePointOne) {
                 output.layout = starlit_surround::configuredLayout(
                     format->nChannels, extended->dwChannelMask);
             } else if (mode == starlit_surround::Mode::virtualHeadsetSevenPointOne ||
-                       mode == starlit_surround::Mode::virtualHeadsetFivePointOne) {
+                       mode == starlit_surround::Mode::virtualHeadsetFivePointOne ||
+                       mode == starlit_surround::Mode::automatic) {
                 const auto acceptsExactFloatPcm = [&](WORD channels, DWORD mask) {
                     WAVEFORMATEXTENSIBLE stream{};
                     stream.Format.wFormatTag = WAVE_FORMAT_EXTENSIBLE;
@@ -769,16 +777,28 @@ DefaultSurroundOutput defaultSurroundOutput(starlit_surround::Mode mode) {
                     if (closest) CoTaskMemFree(closest);
                     return supported == S_OK; // S_FALSE closest match is not sufficient.
                 };
-                const bool wantsFivePointOne =
-                    mode == starlit_surround::Mode::virtualHeadsetFivePointOne;
-                output.layout = starlit_surround::configuredVirtualHeadsetLayout(
-                    mode, format->nChannels, extended->dwChannelMask,
-                    wantsFivePointOne &&
-                        acceptsExactFloatPcm(6, starlit_surround::kFivePointOneSideMask),
-                    wantsFivePointOne &&
-                        acceptsExactFloatPcm(6, starlit_surround::kFivePointOneBackMask),
-                    !wantsFivePointOne &&
-                        acceptsExactFloatPcm(8, starlit_surround::kSevenPointOneMask));
+                if (mode == starlit_surround::Mode::automatic) {
+                    // A physical 5.1/7.1 mix is already the right target.
+                    // Only query alternative exact formats on a stereo mix.
+                    const bool stereoMix = format->nChannels == 2 &&
+                        extended->dwChannelMask == starlit_surround::kStereoMask;
+                    output.automaticCandidates = starlit_surround::automaticLayouts(
+                        format->nChannels, extended->dwChannelMask,
+                        stereoMix && acceptsExactFloatPcm(6, starlit_surround::kFivePointOneSideMask),
+                        stereoMix && acceptsExactFloatPcm(6, starlit_surround::kFivePointOneBackMask),
+                        stereoMix && acceptsExactFloatPcm(8, starlit_surround::kSevenPointOneMask));
+                } else {
+                    const bool wantsFivePointOne =
+                        mode == starlit_surround::Mode::virtualHeadsetFivePointOne;
+                    output.layout = starlit_surround::configuredVirtualHeadsetLayout(
+                        mode, format->nChannels, extended->dwChannelMask,
+                        wantsFivePointOne &&
+                            acceptsExactFloatPcm(6, starlit_surround::kFivePointOneSideMask),
+                        wantsFivePointOne &&
+                            acceptsExactFloatPcm(6, starlit_surround::kFivePointOneBackMask),
+                        !wantsFivePointOne &&
+                            acceptsExactFloatPcm(8, starlit_surround::kSevenPointOneMask));
+                }
             }
         }
     }
@@ -1343,11 +1363,16 @@ public:
 
     bool setSurroundUpmixMode(int mode) {
         if (shuttingDown.load() || stopping.load()) return false;
-        if (mode < 0 || mode > 3) return false;
+        if (mode < 0 || mode > 4) return false;
         const bool changed = surroundRequested.exchange(mode) != mode;
         postUiTask([self = shared_from_this(), changed]() {
             if (self->shuttingDown.load()) return;
-            if (changed) self->surroundRejectedKey.clear(); // UI thread owns this state.
+            if (changed) {
+                // An explicit mode change starts a new bounded trial.
+                self->surroundRejectedKey.clear();
+                self->surroundAutoRouteKey.clear();
+                self->surroundAutoRejectedLayouts.clear();
+            }
             self->syncSurroundUpmix();
         });
         return true; // An opt-in, not a claim that surround output is active.
@@ -1672,9 +1697,12 @@ private:
     std::atomic_bool hwdecLogged = false;  // one-shot log for hwdec-current
     std::atomic<int> surroundRequested{0};
     std::atomic<int> surroundReportedStatus{0};
+    std::atomic<int> surroundReportedChannels{0};
     std::atomic_bool surroundFilterInstalled = false;
     starlit_surround::Layout surroundFilterLayout = starlit_surround::Layout::unsupported;
     std::string surroundRejectedKey;
+    std::string surroundAutoRouteKey;
+    std::vector<starlit_surround::Layout> surroundAutoRejectedLayouts;
     int surroundOutputMismatchCount = 0;
 
     // Independent process and audio device: the primary mpv output is never
@@ -1738,16 +1766,21 @@ private:
         // Called on the native player UI thread, which owns the COM apartment.
         // Do not probe device routing if the user has not opted in.
         if (surroundRequested.load() == 0 && !surroundFilterInstalled.load()) {
+            if (surroundReportedChannels.exchange(0) != 0) {
+                sendPlayerEvent("surroundUpmixChannels", 0.0);
+            }
             if (surroundReportedStatus.exchange(0) != 0) {
                 sendPlayerEvent("surroundUpmixStatus", 0.0);
             }
             return;
         }
         const int requestedMode = surroundRequested.load();
+        const bool automatic = requestedMode == static_cast<int>(starlit_surround::Mode::automatic);
         const auto output = requestedMode != 0
             ? defaultSurroundOutput(static_cast<starlit_surround::Mode>(requestedMode))
             : DefaultSurroundOutput{};
         int nextStatus = requestedMode != 0 ? 1 : 0;
+        int deliveredChannels = 0;
         {
             std::lock_guard<std::mutex> lock(mpvMutex);
             if (!mpv) return;
@@ -1761,24 +1794,55 @@ private:
             const std::string decodedLayout = getString("audio-params/channels");
             const std::string audioDevice = getString("audio-device");
             const std::string outputFormat = getString("audio-out-params/format");
-            const auto layout = output.layout;
+            const std::string trackId = getString("aid");
+            const std::string routeKey = toUtf8(output.endpointId) + "|" +
+                getString("path") + "|" + trackId + "|" +
+                std::to_string(output.mixChannels) + "|" +
+                std::to_string(output.mixMask) + "|" +
+                std::to_string(output.mixRate);
+            if (automatic && routeKey != surroundAutoRouteKey) {
+                surroundAutoRouteKey = routeKey;
+                surroundAutoRejectedLayouts.clear();
+            }
+            auto layout = output.layout;
+            if (automatic) {
+                layout = starlit_surround::nextAutomaticLayout(
+                    output.automaticCandidates, surroundAutoRejectedLayouts);
+            }
             const bool supported = requestedMode != 0 &&
                 layout != starlit_surround::Layout::unsupported &&
                 starlit_surround::acceptsStereoInput(decodedLayout) &&
                 (audioDevice == "auto" || audioDevice == "wasapi/default") &&
                 !outputFormat.empty() && outputFormat.rfind("spdif", 0) != 0;
-            const std::string key = toUtf8(output.endpointId) + "|" +
-                getString("aid") + "|" + std::string(starlit_surround::mpvOutputLayout(layout));
-            if (supported && key == surroundRejectedKey && !surroundFilterInstalled) {
+            const std::string key = routeKey + "|" +
+                std::string(starlit_surround::mpvOutputLayout(layout));
+            if (!automatic && supported && key == surroundRejectedKey && !surroundFilterInstalled) {
                 nextStatus = -1; // Keep the rejection visible until the route/request changes.
             }
             if (requestedMode == 0) surroundRejectedKey.clear();
+            if (automatic && starlit_surround::acceptsStereoInput(decodedLayout) &&
+                layout == starlit_surround::Layout::unsupported) {
+                // No accepted layout remains; normal stereo continues untouched.
+                nextStatus = -1;
+            }
             if (surroundFilterInstalled &&
                 (!supported || layout != surroundFilterLayout ||
                  getString("af").find(starlit_surround::kFilterLabel) == std::string::npos)) {
                 if (!removeSurroundFilterLocked()) nextStatus = -1;
             }
-            if (supported && !surroundFilterInstalled && key != surroundRejectedKey) {
+            const auto rejectLayout = [&]() {
+                if (automatic) {
+                    if (std::find(surroundAutoRejectedLayouts.begin(),
+                                  surroundAutoRejectedLayouts.end(), layout) ==
+                        surroundAutoRejectedLayouts.end()) {
+                        surroundAutoRejectedLayouts.push_back(layout);
+                    }
+                } else {
+                    surroundRejectedKey = key;
+                }
+            };
+            if (supported && !surroundFilterInstalled &&
+                (automatic || key != surroundRejectedKey)) {
                 const char *filter = starlit_surround::mpvFilter(layout);
                 const char *add[] = {"af", "add", filter, nullptr};
                 if (filter && mpvApi().command(mpv, add) >= 0 &&
@@ -1787,7 +1851,7 @@ private:
                     surroundFilterLayout = layout;
                     surroundOutputMismatchCount = 0;
                 } else {
-                    surroundRejectedKey = key;
+                    rejectLayout();
                     nextStatus = -1;
                 }
             }
@@ -1796,11 +1860,23 @@ private:
                     starlit_surround::mpvOutputLayout(layout)) {
                     nextStatus = 2;
                     surroundOutputMismatchCount = 0;
+                    deliveredChannels = starlit_surround::mpvOutputLayout(layout) == "7.1" ? 8 : 6;
                 } else if (++surroundOutputMismatchCount >= 3) {
-                    if (removeSurroundFilterLocked()) surroundRejectedKey = key;
+                    if (removeSurroundFilterLocked()) rejectLayout();
                     nextStatus = -1;
                 }
             }
+            if (automatic && nextStatus == -1 && !surroundFilterInstalled &&
+                starlit_surround::nextAutomaticLayout(
+                    output.automaticCandidates, surroundAutoRejectedLayouts) !=
+                    starlit_surround::Layout::unsupported) {
+                // An alternate format is queued; do not prematurely report
+                // total failure while the next bounded attempt is pending.
+                nextStatus = 1;
+            }
+        }
+        if (surroundReportedChannels.exchange(deliveredChannels) != deliveredChannels) {
+            sendPlayerEvent("surroundUpmixChannels", static_cast<double>(deliveredChannels));
         }
         if (surroundReportedStatus.exchange(nextStatus) != nextStatus) {
             sendPlayerEvent("surroundUpmixStatus", static_cast<double>(nextStatus));

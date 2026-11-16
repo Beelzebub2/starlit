@@ -433,6 +433,7 @@ let state = {
   discordShareEnabled: false,
   showSurroundUpmix: false,
   surroundUpmixEnabled: false,
+  surroundUpmixAutoMode: false,
   surroundUpmixStatus: 0,
 };
 let isScrubbing = false;
@@ -1039,7 +1040,9 @@ const autoToggles = [
 ];
 
 const autoToggleLabel = toggle => toggle.button === surroundUpmixButton
-  ? (state.surroundUpmixLabel === "7.1" ? "7.1" : "5.1")
+  ? (state.surroundUpmixAutoMode
+    ? (state.automaticSurroundLabel || "Auto")
+    : (state.surroundUpmixLabel === "7.1" ? "7.1" : "5.1"))
   : String(state[toggle.labelKey] || toggle.fallbackLabel);
 const autoToggleStateLabel = enabled => (enabled ? state.onLabel || "On" : state.offLabel || "Off");
 
@@ -1056,11 +1059,19 @@ const syncAutoToggleButtons = () => {
     if (text) text.textContent = label;
     if (toggle.button === surroundUpmixButton) {
       const status = Number(state.surroundUpmixStatus);
-      const target = autoToggleLabel(toggle);
+      const automatic = Boolean(state.surroundUpmixAutoMode);
+      const format = state.surroundUpmixLabel === "7.1" ? "7.1" : "5.1";
+      const target = automatic && status === 2 ? autoToggleLabel(toggle) + " · " + format : autoToggleLabel(toggle);
       const virtualHeadset = Boolean(state.surroundUpmixHeadsetMode);
       const active = enabled && status === 2;
       const failed = enabled && status === -1;
-      const description = !enabled
+      const description = automatic && enabled
+        ? active
+          ? state.automaticSurroundActive || target
+          : failed
+            ? state.automaticSurroundFallback || target
+            : state.automaticSurroundChecking || target
+        : !enabled
         ? "Original audio · upmix off"
         : active
           ? virtualHeadset

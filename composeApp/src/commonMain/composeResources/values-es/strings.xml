@@ -2469,6 +2469,11 @@ Utilizas esta función bajo tu propia responsabilidad. P2P se puede desactivar e
     <string name="settings_playback_surround_headset_upmix">Estéreo a auricular 7.1 PCM (experimental)</string>
     <string name="settings_playback_surround_headset_upmix_description">Para controladores de auriculares que aceptan 7.1 PCM, incluidos dispositivos distintos a Corsair. Habilite el sonido envolvente virtual en el software de sus auriculares. Starlit no proporciona procesamiento binaural/HRTF ni verifica que el controlador virtualice la señal. Desactivado de forma predeterminada.</string>
     <string name="settings_playback_surround_section">AUDIO ENVOLVENTE · EXPERIMENTAL</string>
+    <string name="settings_playback_surround_automatic">Sonido envolvente automático</string>
+    <string name="settings_playback_surround_automatic_description">Prueba salidas PCM 7.1/5.1 compatibles. Si fallan, reproduce el audio original. El sonido envolvente virtual de los auriculares no está garantizado. Desactivado por defecto.</string>
+    <string name="settings_playback_surround_automatic_active">Salida PCM multicanal confirmada; no se ha verificado el sonido envolvente virtual de los auriculares.</string>
+    <string name="settings_playback_surround_automatic_fallback">No funcionó ninguna salida envolvente compatible; se reproduce el audio original.</string>
+    <string name="settings_playback_surround_automatic_checking">Comprobando la compatibilidad envolvente; el audio original sigue disponible.</string>
     <string name="settings_playback_surround_upmix">Estéreo a sonido envolvente 5.1</string>
     <string name="settings_playback_surround_upmix_description">Upmix estéreo cuando la salida predeterminada Windows está configurada para altavoces 5.1 PCM. Las pistas reales 5.1/7.1 permanecen sin cambios. Las salidas no compatibles mantienen su audio original. Desactivado de forma predeterminada.</string>
     <string name="settings_playback_threshold_mode_smart">Inteligente (recomendado)</string>

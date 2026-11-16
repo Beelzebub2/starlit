@@ -107,10 +107,31 @@ internal class NativePlayerController(
     private var surroundUpmixMode: Int = 0
     @Volatile
     private var surroundUpmixStatus: Int = 0
+    @Volatile
+    private var surroundUpmixChannels: Int = 0
+
+    private var automaticSurroundLabel: String = "Auto"
+    private var automaticSurroundActive: String = ""
+    private var automaticSurroundFallback: String = ""
+    private var automaticSurroundChecking: String = ""
+
+    fun setAutomaticSurroundLabels(label: String, active: String, fallback: String, checking: String) {
+        automaticSurroundLabel = label
+        automaticSurroundActive = active
+        automaticSurroundFallback = fallback
+        automaticSurroundChecking = checking
+        lastSentControlsStructureKey = null
+        val refresh = { updateControls(controlsState) }
+        if (SwingUtilities.isEventDispatchThread()) refresh() else SwingUtilities.invokeLater(refresh)
+    }
 
     fun setSurroundUpmixMode(mode: Int) {
         if (DesktopHostOs.current != DesktopHostOs.WINDOWS) return
-        val selectedMode = mode.coerceIn(0, 3)
+        val selectedMode = mode.coerceIn(0, 4)
+        if (selectedMode != surroundUpmixMode) {
+            surroundUpmixStatus = 0
+            surroundUpmixChannels = 0
+        }
         surroundUpmixMode = selectedMode
         val current = synchronized(lifecycleLock) { handle }
         if (current != 0L) {
@@ -543,7 +564,14 @@ internal class NativePlayerController(
         val surroundUpmixEnabled = surroundUpmixMode != 0
         val displayedSurroundMode =
             if (surroundUpmixMode == 0) SurroundUpmixSettings.preferredMode else surroundUpmixMode
-        val surroundUpmixLabel = if (displayedSurroundMode == 2) "7.1" else "5.1"
+        val surroundUpmixAutoMode = displayedSurroundMode == 4
+        val surroundUpmixLabel = when {
+            surroundUpmixAutoMode && surroundUpmixStatus == 2 && surroundUpmixChannels == 8 -> "7.1"
+            surroundUpmixAutoMode && surroundUpmixStatus == 2 && surroundUpmixChannels == 6 -> "5.1"
+            surroundUpmixAutoMode -> automaticSurroundLabel
+            displayedSurroundMode == 2 -> "7.1"
+            else -> "5.1"
+        }
         val surroundUpmixHeadsetMode = displayedSurroundMode == 2 || displayedSurroundMode == 3
         val structureKey = NativeControlsStructureKey(
             state = stateWithVolume.nativeControlsStructureKey(),
@@ -554,7 +582,12 @@ internal class NativePlayerController(
             rtxComparisonFailed = rtxComparisonFailed,
             discordShareEnabled = isDiscordShareEnabled,
             surroundUpmixEnabled = surroundUpmixEnabled,
+            surroundUpmixAutoMode = surroundUpmixAutoMode,
             surroundUpmixLabel = surroundUpmixLabel,
+            automaticSurroundLabel = automaticSurroundLabel,
+            automaticSurroundActive = automaticSurroundActive,
+            automaticSurroundFallback = automaticSurroundFallback,
+            automaticSurroundChecking = automaticSurroundChecking,
             surroundUpmixHeadsetMode = surroundUpmixHeadsetMode,
             surroundUpmixStatus = surroundUpmixStatus,
         )
@@ -577,7 +610,12 @@ internal class NativePlayerController(
                 discordShareEnabled = isDiscordShareEnabled,
                 showSurroundUpmix = showSurroundUpmix,
                 surroundUpmixEnabled = surroundUpmixEnabled,
+                surroundUpmixAutoMode = surroundUpmixAutoMode,
                 surroundUpmixLabel = surroundUpmixLabel,
+                automaticSurroundLabel = automaticSurroundLabel,
+                automaticSurroundActive = automaticSurroundActive,
+                automaticSurroundFallback = automaticSurroundFallback,
+                automaticSurroundChecking = automaticSurroundChecking,
                 surroundUpmixHeadsetMode = surroundUpmixHeadsetMode,
                 surroundUpmixStatus = surroundUpmixStatus,
             ),
@@ -664,6 +702,14 @@ internal class NativePlayerController(
                 val status = value.toInt().coerceIn(-1, 2)
                 if (surroundUpmixStatus != status) {
                     surroundUpmixStatus = status
+                    lastSentControlsStructureKey = null
+                    updateControls(controlsState)
+                }
+            }
+            "surroundUpmixChannels" -> {
+                val channels = value.toInt().takeIf { it == 6 || it == 8 } ?: 0
+                if (surroundUpmixChannels != channels) {
+                    surroundUpmixChannels = channels
                     lastSentControlsStructureKey = null
                     updateControls(controlsState)
                 }
@@ -1478,7 +1524,12 @@ private data class NativeControlsStructureKey(
     val rtxComparisonFailed: Boolean,
     val discordShareEnabled: Boolean,
     val surroundUpmixEnabled: Boolean,
+    val surroundUpmixAutoMode: Boolean,
     val surroundUpmixLabel: String,
+    val automaticSurroundLabel: String,
+    val automaticSurroundActive: String,
+    val automaticSurroundFallback: String,
+    val automaticSurroundChecking: String,
     val surroundUpmixHeadsetMode: Boolean,
     val surroundUpmixStatus: Int,
 )
@@ -1492,7 +1543,12 @@ internal fun PlayerControlsState.toControlsJson(
     discordShareEnabled: Boolean = false,
     showSurroundUpmix: Boolean = false,
     surroundUpmixEnabled: Boolean = false,
+    surroundUpmixAutoMode: Boolean = false,
     surroundUpmixLabel: String = "",
+    automaticSurroundLabel: String = "",
+    automaticSurroundActive: String = "",
+    automaticSurroundFallback: String = "",
+    automaticSurroundChecking: String = "",
     surroundUpmixHeadsetMode: Boolean = false,
     surroundUpmixStatus: Int = 0,
 ): String =
@@ -1837,7 +1893,17 @@ internal fun PlayerControlsState.toControlsJson(
         append(',')
         appendJsonField("surroundUpmixEnabled", surroundUpmixEnabled)
         append(',')
+        appendJsonField("surroundUpmixAutoMode", surroundUpmixAutoMode)
+        append(',')
         appendJsonField("surroundUpmixLabel", surroundUpmixLabel)
+        append(',')
+        appendJsonField("automaticSurroundLabel", automaticSurroundLabel)
+        append(',')
+        appendJsonField("automaticSurroundActive", automaticSurroundActive)
+        append(',')
+        appendJsonField("automaticSurroundFallback", automaticSurroundFallback)
+        append(',')
+        appendJsonField("automaticSurroundChecking", automaticSurroundChecking)
         append(',')
         appendJsonField("surroundUpmixHeadsetMode", surroundUpmixHeadsetMode)
         append(',')

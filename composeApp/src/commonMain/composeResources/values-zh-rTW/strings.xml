@@ -3220,6 +3220,11 @@
     <string name="settings_playback_surround_headset_upmix">立體聲到耳機 7.1 PCM（實驗性）</string>
     <string name="settings_playback_surround_headset_upmix_description">適用於接受 7.1 PCM 的耳機驅動程序，包括 Corsair 以外的設備。在耳機軟體中啟用虛擬環繞音效。 Starlit 不提供雙耳/HRTF 處理或驗證驅動程式是否虛擬化訊號。預設關閉。</string>
     <string name="settings_playback_surround_section">環繞音訊·實驗</string>
+    <string name="settings_playback_surround_automatic">自動環繞音效</string>
+    <string name="settings_playback_surround_automatic_description">嘗試相容的 7.1/5.1 PCM 輸出。若失敗則播放原始音訊。無法保證耳機的虛擬環繞效果。預設關閉。</string>
+    <string name="settings_playback_surround_automatic_active">已確認多聲道 PCM 輸出；耳機的虛擬環繞效果尚未驗證。</string>
+    <string name="settings_playback_surround_automatic_fallback">沒有可用的相容環繞音效輸出；正在播放原始音訊。</string>
+    <string name="settings_playback_surround_automatic_checking">正在檢查環繞音效支援情況；原始音訊仍可使用。</string>
     <string name="settings_playback_surround_upmix">立體聲至 5.1 環繞</string>
     <string name="settings_playback_surround_upmix_description">當 Windows 預設輸出配置為 5.1 PCM 揚聲器時，上混立體聲。 Real 5.1/7.1 曲目維持不變。不受支援的輸出會保留其原始音訊。預設關閉。</string>
     <string name="settings_playback_threshold_mode_smart">智能（建議）</string>

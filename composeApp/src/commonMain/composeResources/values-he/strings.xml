@@ -889,6 +889,11 @@
     <string name="settings_playback_surround_headset_upmix">סטריאו לאוזניות 7.1 PCM (ניסיוני)</string>
     <string name="settings_playback_surround_headset_upmix_description">עבור מנהלי התקנים של אוזניות שמקבלים 7.1 PCM, כולל התקנים מעבר ל-Corsair. הפעל סראונד וירטואלי בתוכנת האוזניות שלך. Starlit אינו מספק עיבוד בינאורלי/HRTF או מוודא שהנהג עושה וירטואליזציה של האות. כבוי כברירת מחדל.</string>
     <string name="settings_playback_surround_section">אודיו SURROUND · ניסיוני</string>
+    <string name="settings_playback_surround_automatic">צליל היקפי אוטומטי</string>
+    <string name="settings_playback_surround_automatic_description">מנסה פלט PCM תואם של 7.1/5.1. אם נכשל, השמע המקורי יושמע. צליל היקפי וירטואלי באוזניות אינו מובטח. כבוי כברירת מחדל.</string>
+    <string name="settings_playback_surround_automatic_active">פלט PCM רב־ערוצי אומת; הצליל ההיקפי הווירטואלי באוזניות לא אומת.</string>
+    <string name="settings_playback_surround_automatic_fallback">לא נמצא פלט היקפי תואם שעובד; השמע המקורי מתנגן.</string>
+    <string name="settings_playback_surround_automatic_checking">נבדקת תמיכה בצליל היקפי; השמע המקורי נשאר זמין.</string>
     <string name="settings_playback_surround_upmix">סטריאו ל-5.1 סראונד</string>
     <string name="settings_playback_surround_upmix_description">סטריאו Upmix כאשר פלט ברירת המחדל של Windows מוגדר עבור רמקולי 5.1 PCM. רצועות 5.1/7.1 אמיתיות נשארות ללא שינוי. יציאות לא נתמכות שומרות על האודיו המקורי שלהן. כבוי כברירת מחדל.</string>
     <string name="settings_playback_threshold_mode_smart">חכם (מומלץ)</string>

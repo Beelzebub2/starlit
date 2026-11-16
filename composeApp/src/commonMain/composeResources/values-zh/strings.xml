@@ -3220,6 +3220,11 @@
     <string name="settings_playback_surround_headset_upmix">立体声到耳机 7.1 PCM（实验性）</string>
     <string name="settings_playback_surround_headset_upmix_description">适用于接受 7.1 PCM 的耳机驱动程序，包括 Corsair 以外的设备。在耳机软件中启用虚拟环绕声。 Starlit 不提供双耳/HRTF 处理或验证驱动程序是否虚拟化信号。默认关闭。</string>
     <string name="settings_playback_surround_section">环绕音频·实验</string>
+    <string name="settings_playback_surround_automatic">自动环绕声</string>
+    <string name="settings_playback_surround_automatic_description">尝试兼容的 7.1/5.1 PCM 输出。若失败则播放原始音频。无法保证耳机的虚拟环绕效果。默认关闭。</string>
+    <string name="settings_playback_surround_automatic_active">已确认多声道 PCM 输出；耳机的虚拟环绕效果尚未验证。</string>
+    <string name="settings_playback_surround_automatic_fallback">没有可用的兼容环绕声输出；正在播放原始音频。</string>
+    <string name="settings_playback_surround_automatic_checking">正在检测环绕声支持情况；原始音频仍可使用。</string>
     <string name="settings_playback_surround_upmix">立体声至 5.1 环绕</string>
     <string name="settings_playback_surround_upmix_description">当 Windows 默认输出配置为 5.1 PCM 扬声器时，上混立体声。 Real 5.1/7.1 曲目保持不变。不受支持的输出会保留其原始音频。默认关闭。</string>
     <string name="settings_playback_threshold_mode_smart">智能（推荐）</string>

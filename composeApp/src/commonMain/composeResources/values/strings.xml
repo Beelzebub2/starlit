@@ -1576,6 +1576,11 @@
     <string name="settings_playback_section_stream_selection">STREAM SELECTION</string>
     <string name="settings_playback_section_subtitle_audio">SUBTITLE AND AUDIO</string>
     <string name="settings_playback_surround_section">SURROUND AUDIO · EXPERIMENTAL</string>
+    <string name="settings_playback_surround_automatic">Automatic surround</string>
+    <string name="settings_playback_surround_automatic_description">Try compatible 7.1/5.1 PCM output. If it fails, play original audio. Virtual headset surround is not guaranteed. Off by default.</string>
+    <string name="settings_playback_surround_automatic_active">Multichannel PCM output confirmed; virtual headset surround is not verified.</string>
+    <string name="settings_playback_surround_automatic_fallback">No compatible surround output worked; playing original audio.</string>
+    <string name="settings_playback_surround_automatic_checking">Checking surround support; original audio remains available.</string>
     <string name="settings_playback_surround_upmix">Stereo to 5.1 surround</string>
     <string name="settings_playback_surround_upmix_description">Upmix stereo when the Windows default output is configured for 5.1 PCM speakers. Real 5.1/7.1 tracks stay unchanged. Unsupported outputs keep their original audio. Off by default.</string>
     <string name="settings_playback_surround_headset_5_1">Stereo to headset 5.1 PCM (experimental)</string>

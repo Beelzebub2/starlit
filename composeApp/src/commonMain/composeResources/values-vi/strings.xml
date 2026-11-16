@@ -2533,6 +2533,11 @@
     <string name="settings_playback_surround_headset_upmix">Âm thanh nổi tới tai nghe 7.1 PCM (thử nghiệm)</string>
     <string name="settings_playback_surround_headset_upmix_description">Dành cho trình điều khiển tai nghe chấp nhận 7.1 PCM, bao gồm cả các thiết bị ngoài Corsair. Bật âm thanh vòm ảo trong phần mềm tai nghe của bạn. Starlit không cung cấp khả năng xử lý hai tai/HRTF hoặc xác minh rằng trình điều khiển ảo hóa tín hiệu. Tắt theo mặc định.</string>
     <string name="settings_playback_surround_section">ÂM THANH VÒM · THỬ NGHIỆM</string>
+    <string name="settings_playback_surround_automatic">Âm thanh vòm tự động</string>
+    <string name="settings_playback_surround_automatic_description">Thử đầu ra PCM 7.1/5.1 tương thích. Nếu không thành công, phát âm thanh gốc. Không bảo đảm giả lập âm thanh vòm của tai nghe. Mặc định tắt.</string>
+    <string name="settings_playback_surround_automatic_active">Đã xác nhận đầu ra PCM đa kênh; chưa xác minh âm thanh vòm giả lập của tai nghe.</string>
+    <string name="settings_playback_surround_automatic_fallback">Không có đầu ra âm thanh vòm tương thích nào hoạt động; đang phát âm thanh gốc.</string>
+    <string name="settings_playback_surround_automatic_checking">Đang kiểm tra hỗ trợ âm thanh vòm; âm thanh gốc vẫn khả dụng.</string>
     <string name="settings_playback_surround_upmix">Âm thanh nổi đến âm thanh vòm 5.1</string>
     <string name="settings_playback_surround_upmix_description">Upmix âm thanh nổi khi đầu ra mặc định Windows được định cấu hình cho loa 5.1 PCM. Các bản nhạc Real 5.1/7.1 không thay đổi. Đầu ra không được hỗ trợ sẽ giữ nguyên âm thanh gốc. Tắt theo mặc định.</string>
     <string name="settings_playback_threshold_mode_smart">Thông minh (được khuyến nghị)</string>

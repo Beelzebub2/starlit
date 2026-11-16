@@ -3193,6 +3193,11 @@
     <string name="settings_playback_surround_headset_upmix">Stereo kuulokemikrofonille 7.1 PCM (kokeellinen)</string>
     <string name="settings_playback_surround_headset_upmix_description">Kuulokemikrofonin ajureille, jotka hyväksyvät 7.1 PCM:n, mukaan lukien laitteet Corsairin ulkopuolelta. Ota virtuaalinen surround käyttöön kuulokemikrofonissasi. Starlit ei tarjoa binaural-/HRTF-käsittelyä tai varmista, että ohjain virtualisoi signaalin. Oletuksena pois päältä.</string>
     <string name="settings_playback_surround_section">SURROUND AUDIO · KOKEELLINEN</string>
+    <string name="settings_playback_surround_automatic">Automaattinen tilaääni</string>
+    <string name="settings_playback_surround_automatic_description">Kokeilee yhteensopivaa 7.1/5.1 PCM -ulostuloa. Jos se ei toimi, toistaa alkuperäisen äänen. Kuulokkeiden virtuaalista tilaääntä ei voida taata. Oletuksena pois.</string>
+    <string name="settings_playback_surround_automatic_active">Monikanavainen PCM-ulostulo vahvistettu; kuulokkeiden virtuaalista tilaääntä ei ole varmistettu.</string>
+    <string name="settings_playback_surround_automatic_fallback">Mikään yhteensopiva tilaäänilähtö ei toiminut; alkuperäinen ääni toistetaan.</string>
+    <string name="settings_playback_surround_automatic_checking">Tilaäänen tukea tarkistetaan; alkuperäinen ääni on edelleen käytettävissä.</string>
     <string name="settings_playback_surround_upmix">Stereosta 5.1-surroundiin</string>
     <string name="settings_playback_surround_upmix_description">Upmix stereo, kun Windows oletuslähtö on määritetty 5.1 PCM-kaiuttimille. Todelliset 5.1/7.1-raidat pysyvät ennallaan. Ei-tuetut lähdöt säilyttävät alkuperäisen ääninsä. Oletuksena pois päältä.</string>
     <string name="settings_playback_threshold_mode_smart">Älykäs (suositus)</string>

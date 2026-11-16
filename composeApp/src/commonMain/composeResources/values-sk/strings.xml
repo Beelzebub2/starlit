@@ -2528,6 +2528,11 @@
     <string name="settings_playback_surround_headset_upmix">Stereo do headsetu 7.1 PCM (experimentálne)</string>
     <string name="settings_playback_surround_headset_upmix_description">Pre ovládače náhlavnej súpravy, ktoré akceptujú 7.1 PCM, vrátane zariadení mimo Corsair. Povoľte virtuálny priestorový zvuk v softvéri náhlavnej súpravy. Starlit neposkytuje binaurálne/HRTF spracovanie ani neoveruje, či ovládač virtualizuje signál. Predvolene vypnuté.</string>
     <string name="settings_playback_surround_section">PRIESTOROVÝ ZVUK · EXPERIMENTÁLNY</string>
+    <string name="settings_playback_surround_automatic">Automatický priestorový zvuk</string>
+    <string name="settings_playback_surround_automatic_description">Skúša kompatibilný výstup PCM 7.1/5.1. Pri zlyhaní prehrá pôvodný zvuk. Virtuálny priestorový zvuk slúchadiel nie je zaručený. Predvolene vypnuté.</string>
+    <string name="settings_playback_surround_automatic_active">Viackanálový výstup PCM potvrdený; virtuálny priestorový zvuk slúchadiel nebol overený.</string>
+    <string name="settings_playback_surround_automatic_fallback">Žiadny kompatibilný priestorový výstup nefungoval; prehráva sa pôvodný zvuk.</string>
+    <string name="settings_playback_surround_automatic_checking">Overuje sa podpora priestorového zvuku; pôvodný zvuk zostáva dostupný.</string>
     <string name="settings_playback_surround_upmix">Stereo až 5.1 priestorový zvuk</string>
     <string name="settings_playback_surround_upmix_description">Zmixujte stereo, keď je predvolený výstup Windows nakonfigurovaný pre reproduktory 5.1 PCM. Skutočné stopy 5.1/7.1 zostávajú nezmenené. Nepodporované výstupy si zachovávajú svoj pôvodný zvuk. Predvolene vypnuté.</string>
     <string name="settings_playback_threshold_mode_smart">Smart (odporúčané)</string>
