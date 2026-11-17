@@ -137,7 +137,7 @@ internal fun PlayerScreenRuntime.BindPlayerRuntimeEffects() {
         )
     val malPlaybackPhase = when {
         malCompletionReached -> 2
-        eligibleForMalUpdate -> 1
+        eligibleForMalUpdate && malEpisodeStartObserved -> 1
         else -> 0
     }
     LaunchedEffect(
