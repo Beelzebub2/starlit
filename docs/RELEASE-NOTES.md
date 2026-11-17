@@ -1,3 +1,23 @@
+## Starlit 1.30.7
+
+### MyAnimeList and playback improvements
+
+- **Completed rewatch counts on desktop:** Synchronize MyAnimeList's completed-rewatch total, show it in anime details and MAL list entries, and provide an explicit Finish rewatch action and count correction. Only confirmed completions increment the count; cancelling a rewatch and resuming near the end do not.
+- **More reliable Samsung TV torrent starts:** Wait for stream service and first-video-byte readiness, recover from stale playback tickets, and cancel obsolete startup attempts on Tizen. Real-TV first-frame acceptance remains outstanding.
+
+### Improvements included since the last published release
+
+- **More accurate desktop playback:** Preserve resume positions until confirmed and improve intro-skip seeking.
+- **Clearer desktop Settings:** Group settings into navigable categories with targeted search and keyboard shortcuts.
+- **Expanded language coverage:** Complete previously missing Compose translation entries and improve Portuguese TV settings labels. Native-speaker and right-to-left layout review remain pending.
+- **Windows release test compatibility:** Update batch-download dialog test expectations to match its existing localized selection controls, without changing download behavior.
+
+### Compatibility and distribution
+
+- Existing accounts, profiles, playback history, downloads, device pairings and local preferences are retained; no migration or backend deployment is required. Completed rewatch syncing currently applies to the desktop MyAnimeList integration; Android and iOS support are not included.
+- Stable Windows, signed Android phone and Android TV, and Linux packages require passing build, signing, installer smoke-test, provenance and checksum gates. Samsung Tizen, LG webOS and the Windows TV Installer are matching-version developer previews under `tv-preview-v1.30.7`, not device-accepted stable packages.
+- No iOS App Store publication is included. A connected MyAnimeList account is still required for live synchronization acceptance.
+
 ## Starlit 1.30.6
 
 ### Playback and desktop Settings
