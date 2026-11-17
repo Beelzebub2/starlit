@@ -33,6 +33,7 @@ const createXHR = (status, bytes) => () => ({
 test("readiness probes are limited to loopback torrent playback URLs", () => {
   assert.equal(isLocalTizenTorrentPlaybackUrl(playable), true);
   assert.equal(isLocalTizenTorrentPlaybackUrl("http://localhost:2710/" + hash + "/0?ticket=x"), true);
+  assert.equal(isLocalTizenTorrentPlaybackUrl("http://127.0.0.1:2711/" + hash + "/0"), false);
   assert.equal(isLocalTizenTorrentPlaybackUrl("http://203.0.113.1:2710/" + hash + "/0"), false);
   assert.equal(isLocalTizenTorrentPlaybackUrl("https://127.0.0.1:2710/" + hash + "/0"), false);
   assert.equal(isLocalTizenTorrentPlaybackUrl("magnet:?xt=urn:btih:abc"), false);
@@ -85,4 +86,17 @@ test("an unavailable stream times out without probing unrelated hosts", async ()
     probe: async () => { probes++; return "ready"; }
   }), false);
   assert.equal(probes, 0);
+});
+
+test("a newer source cancels stale first-byte readiness before the next probe", async () => {
+  let current = true;
+  let probes = 0;
+  const ready = await waitForTizenTorrentFirstByte(playable, {
+    timeoutMs: 250,
+    retryMs: 1,
+    isCurrent: () => current,
+    probe: async () => { probes++; current = false; return "ready"; }
+  });
+  assert.equal(ready, false, "a stale response must not start the old episode");
+  assert.equal(probes, 1);
 });

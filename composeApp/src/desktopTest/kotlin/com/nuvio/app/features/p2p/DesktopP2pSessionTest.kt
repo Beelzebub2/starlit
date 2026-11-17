@@ -52,8 +52,6 @@ class DesktopP2pSessionTest {
         var files = listOf(TorrServerFile(1, "sample.mp4", 100))
         val metadataSnapshots = mutableListOf<List<TorrServerFile>>()
         var startGate: CompletableDeferred<Unit>? = null
-        var firstByteGate: CompletableDeferred<Unit>? = null
-        var firstByteChecks = 0
         val requests = mutableListOf<String>()
         private var callsSinceStart = 0
         val dropped = mutableListOf<String>()
@@ -100,7 +98,6 @@ class DesktopP2pSessionTest {
             healthGate?.await()
             return running && healthy && !failAfterMetadata
         }
-        override suspend fun awaitStreamReady(url: String) { firstByteChecks++; firstByteGate?.await() }
         override fun getStreamUrl(magnetLink: String, fileIdx: Int): String = "http://127.0.0.1:${8000 + starts}/stream?index=$fileIdx"
     }
 
@@ -130,40 +127,6 @@ class DesktopP2pSessionTest {
             backend.stopFailure = null
             engine.shutdown().join()
         }
-    }
-
-    @Test fun firstPlaybackWaitsForAReadableByteInsteadOfExposingAnEmptyStream() = runTest {
-        val gate = CompletableDeferred<Unit>()
-        val backend = Backend().apply { firstByteGate = gate }
-        val engine = engine(backend)
-        try {
-            val starting = async { engine.startStream(request) }
-            runCurrent()
-            assertFalse(starting.isCompleted, "A URL alone must not mark playback as ready")
-            assertIs<P2pStreamingState.Connecting>(engine.state.value)
-            assertEquals(1, backend.firstByteChecks)
-            gate.complete(Unit)
-            runCurrent()
-            assertTrue(starting.await().contains("/stream?"))
-            assertIs<P2pStreamingState.Streaming>(engine.state.value)
-            assertEquals(1, backend.starts, "Waiting for the first byte must retain the warm swarm")
-        } finally {
-            engine.shutdown().join()
-        }
-    }
-
-    @Test fun stoppingDuringTheFirstByteWaitDoesNotPublishAStalePlaybackUrl() = runTest {
-        val gate = CompletableDeferred<Unit>()
-        val backend = Backend().apply { firstByteGate = gate }
-        val engine = engine(backend)
-        val starting = async { engine.startStream(request) }
-        runCurrent()
-        assertEquals(1, backend.firstByteChecks)
-        engine.stopStream().join()
-        assertTrue(starting.isCancelled)
-        assertIs<P2pStreamingState.Idle>(engine.state.value)
-        assertFalse(backend.running, "Cancelled partial starts must clean up the engine")
-        engine.shutdown().join()
     }
 
     @Test fun streamingWaitsForIncompleteTorrentFileMetadata() = runTest {

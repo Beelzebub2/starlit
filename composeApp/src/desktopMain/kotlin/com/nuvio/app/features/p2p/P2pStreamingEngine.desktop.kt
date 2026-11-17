@@ -289,11 +289,6 @@ internal class DesktopP2pSession(
                 val index = resolveFileIndex(hash, request, currentIntent, signals)
                 ensureCurrent(currentIntent)
                 val url = backend.getStreamUrl(magnet, index)
-                // The local HTTP route may exist before its first torrent piece is ready.
-                // Do not mount a media player against an empty/stalled first response.
-                publish(currentIntent, P2pStreamingState.Connecting("prepare_stream", request = request))
-                backend.awaitStreamReady(url)
-                ensureCurrent(currentIntent)
                 publish(currentIntent, P2pStreamingState.Streaming(url, 0L, 0L, 0, 0, 0f, 0f, request = request))
                 return Session(request, hash, url, signals)
             } catch (e: DesktopTorrentEngineUnavailable) {

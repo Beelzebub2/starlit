@@ -8,7 +8,7 @@ export function isLocalTizenTorrentPlaybackUrl(value) {
   try {
     const parsed = new URL(String(value || ""));
     const host = parsed.hostname.replace(/^\[|\]$/g, "").toLowerCase();
-    return parsed.protocol === "http:" &&
+    return parsed.protocol === "http:" && parsed.port === "2710" &&
       ["127.0.0.1", "localhost", "::1"].includes(host) &&
       /^\/[a-f0-9]{40}\/\d+\/?$/i.test(parsed.pathname);
   } catch (_) {
@@ -57,11 +57,13 @@ export async function waitForTizenTorrentFirstByte(url, {
   timeoutMs = DEFAULT_WAIT_MS,
   probeTimeoutMs = DEFAULT_PROBE_MS,
   retryMs = DEFAULT_RETRY_MS,
-  probe = probeTizenTorrentFirstByte
+  probe = probeTizenTorrentFirstByte,
+  isCurrent = () => true
 } = {}) {
   if (!isLocalTizenTorrentPlaybackUrl(url)) return false;
   const deadline = Date.now() + Math.max(1, timeoutMs);
   while (Date.now() < deadline) {
+    if (!isCurrent()) return false;
     const remaining = deadline - Date.now();
     let result = "retry";
     try {
@@ -69,6 +71,7 @@ export async function waitForTizenTorrentFirstByte(url, {
     } catch (_) {
       // Temporary local service or connection errors must not discard the swarm.
     }
+    if (!isCurrent()) return false;
     if (result === "ready") return true;
     if (result === "terminal") return false;
     const wait = Math.min(retryMs, deadline - Date.now());

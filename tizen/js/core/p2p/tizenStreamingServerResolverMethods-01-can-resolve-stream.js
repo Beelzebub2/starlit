@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 import * as internals from "./tizenStreamingServerResolver.js";
 import { TizenUsbTorrentCache } from "../../platform/tizen/tizenUsbTorrentCache.js";
-import { waitForTizenTorrentFirstByte } from "./tizenTorrentPlaybackReadiness.js";
+import { waitForTizenTorrentFirstByte, isLocalTizenTorrentPlaybackUrl } from "./tizenTorrentPlaybackReadiness.js";
 export function createTizenStreamingServerResolverMethods01() {
   const {
     Platform,
@@ -122,7 +122,12 @@ export function createTizenStreamingServerResolverMethods01() {
       return removeRequest;
     },
     async resolve(stream = {}, context = {}) {
-      if (getDirectPlaybackUrl(stream)) {
+      const isCurrent = () => typeof context.isCurrentRequest !== "function" || context.isCurrentRequest();
+      if (!isCurrent()) return { status: "cancelled" };
+      // A previously resolved loopback ticket can expire when the local engine restarts.
+      // Never treat that ticket as a permanent direct URL during recovery.
+      const directUrl = getDirectPlaybackUrl(stream);
+      if (directUrl && !isLocalTizenTorrentPlaybackUrl(directUrl)) {
         return { status: "success", stream };
       }
       if (!Platform.isTizen()) {
@@ -139,6 +144,7 @@ export function createTizenStreamingServerResolverMethods01() {
         let baseUrl = "";
         const baseUrlKind = "local-service";
         const localService = await TizenEngineFsService.ensureStarted({ purpose: "p2p" });
+        if (!isCurrent()) return { status: "cancelled" };
         if (localService.status === "success" && localService.baseUrl) {
           baseUrl = localService.baseUrl;
         } else {
@@ -151,6 +157,7 @@ export function createTizenStreamingServerResolverMethods01() {
         // The first opted-in session probes the USB, subsequent sessions reuse it.
         if (TizenUsbTorrentCache.isEnabled()) {
           await TizenUsbTorrentCache.configure(baseUrl);
+          if (!isCurrent()) return { status: "cancelled" };
         }
         const magnetUri = getMagnetUri(stream);
         const trackerSources = getTrackerSources(stream, magnetUri);
@@ -170,6 +177,7 @@ export function createTizenStreamingServerResolverMethods01() {
               episode: Number.isFinite(episode) ? episode : null
             })
           : { infoHash, fileIdx: explicitFileIdx };
+        if (!isCurrent()) return { status: "cancelled" };
         const fileIdx = selectFileIdx(stream, createJson);
         if (!Number.isInteger(fileIdx) || fileIdx < 0 || (Array.isArray(createJson.files) && !createJson.files[fileIdx])) {
           return {
@@ -184,7 +192,9 @@ export function createTizenStreamingServerResolverMethods01() {
         // /create confirms metadata only. Start AVPlay after the selected range
         // has delivered an actual verified byte, not just a valid URL/ticket.
         // Keep the swarm running while temporary range requests time out.
-        if (!await waitForTizenTorrentFirstByte(playbackUrl)) {
+        const firstByteReady = await waitForTizenTorrentFirstByte(playbackUrl, { isCurrent });
+        if (!isCurrent()) return { status: "cancelled" };
+        if (!firstByteReady) {
           logTizenP2pDebug("TizenStreamingServerResolver: first-byte readiness timed out", {
             infoHash, fileIdx
           });

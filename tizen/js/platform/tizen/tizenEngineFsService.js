@@ -5,6 +5,10 @@ import { verifyTizenRangeProbe } from "./tizenRangeProbe.js";
 import { getWrtServiceClass, startWithWrtServiceClass } from "./tizenWrtService.js";
 const LOCAL_BASE_URLS = ["http://127.0.0.1:2710", "http://localhost:2710"];
 const START_TIMEOUT_MS = 12000;
+const P2P_COLD_START_TIMEOUT_MS = 25000;
+export function tizenServiceStartupWaitMs(purpose) {
+  return purpose === "p2p" ? P2P_COLD_START_TIMEOUT_MS : START_TIMEOUT_MS;
+}
 const PROBE_TIMEOUT_MS = 2500;
 const SERVICE_START_CALL_TIMEOUT_MS = 4000;
 const TIZEN_DEFAULT_OPERATION = "http://tizen.org/appcontrol/operation/default";
@@ -220,8 +224,14 @@ async function probeBaseUrl(baseUrl, timeoutMs = PROBE_TIMEOUT_MS) {
   } catch (_) {
     json = null;
   }
-  const probe = await fetch(`${baseUrl}/range-probe`, { headers: { Range: "bytes=1-3" }, cache: "no-store" });
-  await verifyTizenRangeProbe(probe);
+  // A cold or wedged local service can answer /settings but never complete
+  // the range body. Bound both the response and its bytes before retrying.
+  await withTimeout(
+    fetch(`${baseUrl}/range-probe`, { headers: { Range: "bytes=1-3" }, cache: "no-store" })
+      .then(verifyTizenRangeProbe),
+    timeoutMs,
+    "Tizen local EngineFS byte-range probe timed out"
+  );
   return { baseUrl, settings: json };
 }
 async function findReachableLocalBaseUrl(timeoutMs = PROBE_TIMEOUT_MS) {
@@ -356,7 +366,7 @@ export const TizenEngineFsService = {
           serviceId,
           method: startResult.method
         });
-        const reachable = await waitForLocalBaseUrl();
+        const reachable = await waitForLocalBaseUrl(tizenServiceStartupWaitMs(purpose));
         await connectLocalControl(serviceId,"2710");
         diagnostic("explicit startup health success", {
           purpose,

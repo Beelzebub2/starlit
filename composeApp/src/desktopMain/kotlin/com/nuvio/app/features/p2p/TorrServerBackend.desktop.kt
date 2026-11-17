@@ -2,7 +2,6 @@ package com.nuvio.app.features.p2p
 
 import co.touchlab.kermit.Logger
 import com.nuvio.app.core.storage.DesktopStorage
-import com.nuvio.app.core.i18n.localizedP2pUnknownTorrentError
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -49,8 +48,6 @@ internal interface DesktopTorrentBackend {
     suspend fun addTorrent(magnetLink: String): String
     suspend fun getTorrentStats(hash: String): TorrServerStats
     suspend fun isHealthy(): Boolean
-    /** The selected file must produce bytes before its URL is passed to the media player. */
-    suspend fun awaitStreamReady(url: String) {}
     fun getStreamUrl(magnetLink: String, fileIdx: Int): String
 }
 
@@ -141,7 +138,6 @@ internal class TorrServerBackend(
     override suspend fun addTorrent(magnetLink: String): String = api.addTorrent(magnetLink)
     override suspend fun getTorrentStats(hash: String): TorrServerStats = api.getTorrentStats(hash)
     override suspend fun isHealthy(): Boolean = binary.processId != null && binary.isRunning()
-    override suspend fun awaitStreamReady(url: String) = api.awaitStreamReady(url)
     override fun getStreamUrl(magnetLink: String, fileIdx: Int): String = api.getStreamUrl(magnetLink, fileIdx)
 }
 
@@ -475,54 +471,6 @@ private class TorrServerApi(
 
     suspend fun dropTorrent(hash: String) {
         postJson("/torrents", buildJsonObject { put("action", "drop"); put("hash", hash) })
-    }
-
-    /**
-     * Torrent metadata and /echo readiness are not proof that the selected video can
-     * be read. A one-byte HTTP range gives TorrServer time to discover peers and
-     * fetch the first verified piece without buffering the full media response.
-     *
-     * Keep the torrent alive across transient HTTP/read timeouts; rebuilding it
-     * on every slow first piece discards the peer state that the retry needs.
-     */
-    suspend fun awaitStreamReady(url: String) {
-        val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(45L)
-        var lastStatus: Int? = null
-        var interruptedProbes = 0
-        var probes = 0
-        while (System.nanoTime() < deadline) {
-            val remainingMs = TimeUnit.NANOSECONDS.toMillis(deadline - System.nanoTime())
-            val probe = HttpRequest.newBuilder(URI.create(url))
-                .timeout(Duration.ofMillis(remainingMs.coerceIn(1_000L, 45_000L)))
-                .header("Range", "bytes=0-0")
-                .GET()
-                .build()
-            probes += 1
-            try {
-                val response = runInterruptible(Dispatchers.IO) {
-                    client.send(probe, HttpResponse.BodyHandlers.ofByteArray())
-                }
-                lastStatus = response.statusCode()
-                if (lastStatus == 206 && response.body().isNotEmpty()) return
-                if (lastStatus == 401 || lastStatus == 403 || lastStatus == 416) {
-                    throw P2pStreamingException(localizedP2pUnknownTorrentError())
-                }
-                interruptedProbes = 0
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: IOException) {
-                interruptedProbes += 1
-                if (interruptedProbes >= 3 && !binary.isRunning()) {
-                    Logger.withTag("TorrServerApi").w(e) { "Local torrent process exited before the first video byte" }
-                    throw DesktopTorrentEngineUnavailable(localizedP2pUnknownTorrentError(), e)
-                }
-            }
-            if (System.nanoTime() < deadline) delay(750L)
-        }
-        Logger.withTag("TorrServerApi").w {
-            "First media byte was unavailable after $probes probes (last HTTP status: $lastStatus)"
-        }
-        throw P2pStreamingException(localizedP2pUnknownTorrentError())
     }
 
     fun getStreamUrl(magnetLink: String, fileIdx: Int): String {

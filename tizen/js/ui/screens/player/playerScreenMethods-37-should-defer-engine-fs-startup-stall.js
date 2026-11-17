@@ -63,11 +63,14 @@ export function createPlayerScreenMethods37() {
       const snapshot = this.getEngineFsStallSnapshot(stats);
       const startupMediaErrorWithEmptyEngine =
         Number(mediaErrorCode) > 0 && snapshot && snapshot.downloaded <= 0 && snapshot.progress <= 0 && snapshot.downloadSpeed <= 0;
-      const recreateLocalEngineFs =
-        (!stats || (startupMediaErrorWithEmptyEngine && retry <= 3)) &&
-        Environment.isWebOS() &&
-        this.currentEngineFsStream.kind === "webos-enginefs" &&
-        Boolean(sourceCandidate);
+      const recreateLocalEngineFs = Boolean(sourceCandidate) && (
+        (Environment.isWebOS() && this.currentEngineFsStream.kind === "webos-enginefs" &&
+          (!stats || (startupMediaErrorWithEmptyEngine && retry <= 3))) ||
+        // After a failed same-session retry on Tizen, an unavailable local
+        // torrent needs a fresh ticket instead of replaying a stale URL.
+        (Environment.isTizen() && this.currentEngineFsStream.kind === "tizen-streaming-server" &&
+          !stats && retry === 2)
+      );
       this.lastPlaybackErrorAt = 0;
       this.loadingVisible = true;
       this.paused = false;
