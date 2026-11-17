@@ -67,8 +67,8 @@ internal actual suspend fun markMyAnimeListRewatchOnPlayback(
                 else "Connected as ${connection.username}")
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Button(enabled = !connection.busy, onClick = { setup = true }) { Text(if (connection.connected) "Reconnect" else "Set up / Connect") }
-                if (connection.connected) TextButton(onClick = MyAnimeListRepository::disconnect) { Text("Disconnect") }
-                if (connection.connecting) TextButton(onClick = MyAnimeListRepository::cancelConnect) { Text("Cancel") }
+                if (connection.connected) TextButton(onClick = MyAnimeListRepository::disconnect) { Text(stringResource(Res.string.remote_disconnect)) }
+                if (connection.connecting) TextButton(onClick = MyAnimeListRepository::cancelConnect) { Text(stringResource(Res.string.action_cancel)) }
             }
             if (connection.connected) {
                 TextButton(enabled = !connection.busy, onClick = {
@@ -197,7 +197,7 @@ internal actual suspend fun markMyAnimeListRewatchOnPlayback(
         }
         if (busy) LinearProgressIndicator(Modifier.width(220.dp))
         error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
-            NuvioCompactActionButton(label = "Retry", icon = Icons.Default.Refresh,
+            NuvioCompactActionButton(label = stringResource(Res.string.action_retry), icon = Icons.Default.Refresh,
                 enabled = !busy && !connection.busy,
                 onClick = { scope.launch { busy = true; try { malId?.let { status = MyAnimeListRepository.listStatus(it); error = null } }
                     catch (e: CancellationException) { throw e } catch (e: Exception) { error = e.message } finally { busy = false } } }) }
@@ -230,7 +230,7 @@ internal actual suspend fun markMyAnimeListRewatchOnPlayback(
         }
     }, confirmButton = { TextButton(enabled = clientId.isNotBlank() && !connection.busy, onClick = {
         runCatching { MyAnimeListRepository.connect(clientId, clientSecret); onDismiss() }.onFailure { error = it.message }
-    }) { Text("Connect") } }, dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } })
+    }) { Text(stringResource(Res.string.remote_pc_connect)) } }, dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(Res.string.action_cancel)) } })
 }
 
 @Composable private fun MalSearchDialog(meta: MetaDetails, onDismiss: () -> Unit, onSelect: (MalAnime) -> Unit) {
@@ -246,10 +246,10 @@ internal actual suspend fun markMyAnimeListRewatchOnPlayback(
     AlertDialog(onDismissRequest = onDismiss, title = { Text("Choose this title on MyAnimeList") }, text = {
         Column(Modifier.heightIn(max = 420.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             OutlinedTextField(value = query, onValueChange = { query = it }, singleLine = true)
-            TextButton(enabled = !busy && query.length >= 2, onClick = ::search) { Text("Search") }
+            TextButton(enabled = !busy && query.length >= 2, onClick = ::search) { Text(stringResource(Res.string.compose_nav_search)) }
             if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
             results.forEach { anime -> TextButton(onClick = { onSelect(anime) }) { Text(anime.title, maxLines = 2) } }
             error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
         }
-    }, confirmButton = { TextButton(onClick = onDismiss) { Text("Cancel") } })
+    }, confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(Res.string.action_cancel)) } })
 }
