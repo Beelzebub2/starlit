@@ -1,7 +1,7 @@
 // A torrent create response only confirms metadata. AVPlay needs actual verified
 // media bytes; the first range often blocks while its pieces are downloaded.
 const DEFAULT_WAIT_MS = 35_000;
-const DEFAULT_PROBE_MS = 5_000;
+const DEFAULT_PROBE_MS = 35_000;
 const DEFAULT_RETRY_MS = 750;
 
 export function isLocalTizenTorrentPlaybackUrl(value) {
