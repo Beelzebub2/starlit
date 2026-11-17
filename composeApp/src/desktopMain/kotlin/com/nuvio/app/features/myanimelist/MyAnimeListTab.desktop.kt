@@ -106,7 +106,8 @@ import kotlinx.coroutines.withContext
 
 // Tall enough that every card in a row has the same height, whatever its title length.
 private val PosterWidth = 96.dp
-private val PosterHeight = 144.dp
+// Leave enough vertical room for the rewatch count without uneven card heights.
+private val PosterHeight = 160.dp
 private val ControlHeight = 34.dp
 private val CardMinWidth = 500.dp
 private val ScoreGold = Color(0xFFF5C518)
