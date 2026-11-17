@@ -27,6 +27,7 @@ jobs:
         run: |
           python3 scripts/check_ios_localizations.py
           xcrun swiftc -frontend -parse iosApp/iosApp/ContentView.swift
+          xcrun swiftc -frontend -parse iosApp/DownloadsWidgetExtension/DownloadsLiveActivityWidget.swift
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
