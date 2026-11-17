@@ -3071,7 +3071,7 @@
     <string name="genre_biography">Biografia</string>
     <string name="genre_children">Infantil</string>
     <string name="genre_donghua">Donghua</string>
-    <string name="genre_game_show">Game Show</string>
+    <string name="genre_game_show">Programa de auditório</string>
     <string name="genre_holiday">Especial de Feriado</string>
     <string name="genre_home_and_garden">Casa e Jardim</string>
     <string name="genre_mini_series">Minissérie</string>
@@ -3361,9 +3361,9 @@
     <string name="profile_copy_settings_error">Não foi possível copiar as configurações. Verifique sua conexão e tente novamente.</string>
     <string name="profile_copy_settings_created_success">Perfil criado com as configurações de %1$s.</string>
     <string name="profile_copy_settings_created_error">Perfil criado, mas não foi possível copiar as configurações. Você pode tentar novamente nas opções do perfil.</string>
-    <string name="profile_copy_settings_credentials_title">Copy credentials from %1$s?</string>
-    <string name="profile_copy_settings_success_title">Settings copied</string>
-    <string name="profile_copy_settings_error_title">Could not copy settings</string>
+    <string name="profile_copy_settings_credentials_title">Copiar credenciais de %1$s?</string>
+    <string name="profile_copy_settings_success_title">Configurações copiadas</string>
+    <string name="profile_copy_settings_error_title">Não foi possível copiar as configurações</string>
     <string name="common.done">Done</string>
     <string name="settings_stream_badges_in_player_title">Exibir no player</string>
     <string name="settings_stream_badges_in_player_description">Mostrar os selos de vídeo e áudio abaixo do título durante a reprodução. É necessário um pacote que reconheça informações em texto, como 2160p ou Atmos.</string>
@@ -3404,7 +3404,7 @@
     <string name="stream_test_label_parallel8">Conexão paralela (chunks de 8 MB)</string>
     <string name="stream_test_label_parallel16">Conexão paralela (chunks de 16 MB)</string>
     <string name="stream_test_error_connection">Falha na conexão. O link do último stream reproduzido pode ter expirado ou estar inacessível. Por favor, reproduza o vídeo novamente e tente de novo.</string>
-    <string name="settings_p2p_cache_unsupported">Not available on this TV.</string>
+    <string name="settings_p2p_cache_unsupported">Não disponível nesta TV.</string>
     <string name="update_via_phone">Escaneie este código no celular e instale a atualização com o Apps2Samsung.</string>
     <!-- Starlit TV redesign -->
     <string name="auth_phone_title">Entre com o celular</string>
