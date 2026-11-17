@@ -513,7 +513,8 @@ private class TorrServerApi(
             } catch (e: IOException) {
                 interruptedProbes += 1
                 if (interruptedProbes >= 3 && !binary.isRunning()) {
-                    throw DesktopTorrentEngineUnavailable("Torrent engine stopped while waiting for media", e)
+                    Logger.withTag("TorrServerApi").w(e) { "Local torrent process exited before the first video byte" }
+                    throw DesktopTorrentEngineUnavailable(localizedP2pUnknownTorrentError(), e)
                 }
             }
             if (System.nanoTime() < deadline) delay(750L)
