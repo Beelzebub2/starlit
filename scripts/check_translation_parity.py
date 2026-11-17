@@ -8,6 +8,7 @@ Run after editing catalogs and before PR/merge/release.
 from __future__ import annotations
 
 import argparse
+import csv
 import io
 import json
 import re
@@ -33,6 +34,48 @@ CATALOGS = {
         "full": True,
     },
 }
+
+
+def review_rows(product: str, locale: str, source: dict[str, str],
+                current: dict[str, str], previous: dict[str, str]) -> list[tuple[str, ...]]:
+    """Report changed translations for linguistic review; these are not approvals."""
+    rows: list[tuple[str, ...]] = []
+    for key in sorted(source.keys() & current.keys()):
+        translated = current[key]
+        if previous.get(key) == translated:
+            continue
+        english = source[key]
+        flags = []
+        if translated == english and re.search(r"[A-Za-z]{3,} [A-Za-z]{3,}", english):
+            flags.append("english_identical")
+        if 5 <= len(english) <= 45 and len(translated) > max(35, len(english) * 2.1):
+            flags.append("possible_ui_overflow")
+        rtl_range = {
+            "ar": r"[\u0600-\u06FF]",
+            "he": r"[\u0590-\u05FF]",
+            "ur": r"[\u0600-\u06FF]",
+        }.get(locale)
+        if (rtl_range and translated != english and len(english) >= 25
+                and not re.search(rtl_range, translated)):
+            flags.append("rtl_script_missing")
+        rows.append((
+            product, locale, "added" if key not in previous else "revised",
+            key, english, translated, ",".join(flags),
+        ))
+    return rows
+
+
+def write_review_csv(path: str, rows: list[tuple[str, ...]]) -> None:
+    """Write a spreadsheet-safe, human-readable review queue."""
+    destination = Path(path)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    with destination.open("w", encoding="utf-8-sig", newline="") as stream:
+        writer = csv.writer(stream)
+        writer.writerow(("product", "locale", "change", "key", "english", "translation", "review_flags"))
+        for row in sorted(rows, key=lambda item: (not bool(item[6]), item[1], item[3])):
+            # Prevent spreadsheet formula evaluation when the report is opened.
+            writer.writerow(("'" + value if value.lstrip().startswith(("=", "+", "-", "@"))
+                             else value) for value in row)
 
 
 def parse_xml(raw: bytes, source: str) -> dict[str, str]:
@@ -75,9 +118,10 @@ def catalog(location: str, files: tuple[str, ...], ref: str | None = None) -> di
 
 
 def validate(base_ref: str | None = None, *, strict: bool = False,
-             report_json: str | None = None) -> int:
+             report_json: str | None = None, review_csv: str | None = None) -> int:
     errors: list[str] = []
     report: dict[str, object] = {}
+    review_queue: list[tuple[str, ...]] = []
     for product, config in CATALOGS.items():
         base = config["path"]
         path = f"{base}/values"
@@ -102,6 +146,8 @@ def validate(base_ref: str | None = None, *, strict: bool = False,
             current = catalog(locale_path, ("strings.xml",))
             previous = catalog(locale_path, ("strings.xml",), config["baseline"]) if changed and not config["full"] else {}
             base_localized = catalog(locale_path, ("strings.xml",), base_ref) if base_ref else {}
+            if base_ref and review_csv:
+                review_queue.extend(review_rows(product, locale, source, current, base_localized))
             missing = set(source) - set(current)
             identical = sum(
                 1 for key in current.keys() & source.keys()
@@ -158,6 +204,9 @@ def validate(base_ref: str | None = None, *, strict: bool = False,
         destination = Path(report_json)
         destination.parent.mkdir(parents=True, exist_ok=True)
         destination.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    if review_csv and base_ref:
+        write_review_csv(review_csv, review_queue)
+        print(f"Review CSV: {len(review_queue)} changed locale strings (not linguistic approval)")
     if errors:
         for err in errors[:100]:
             print("ERROR:", err)
@@ -172,5 +221,8 @@ if __name__ == "__main__":
     parser.add_argument("--base-ref", default=None, help="Git commit before the PR/push for incremental parity")
     parser.add_argument("--strict", action="store_true", help="Require full catalog coverage in all locales")
     parser.add_argument("--report-json", default=None, help="Write measured locale coverage as JSON")
+    parser.add_argument("--review-csv", default=None,
+                        help="Export changed locale entries for human review (requires --base-ref)")
     args = parser.parse_args()
-    raise SystemExit(validate(args.base_ref or None, strict=args.strict, report_json=args.report_json))
+    raise SystemExit(validate(args.base_ref or None, strict=args.strict,
+                              report_json=args.report_json, review_csv=args.review_csv))
