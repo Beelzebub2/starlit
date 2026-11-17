@@ -1,0 +1,98 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "profile_unlock_prompt": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter PIN for %@"
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Introduz o PIN do perfil %@"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Digite o PIN do perfil %@"
+          }
+        }
+      }
+    },
+    "profile_unlock_pin_hint": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "4-digit PIN"
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PIN de 4 dígitos"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PIN de 4 dígitos"
+          }
+        }
+      }
+    },
+    "profile_unlock_cancel": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancel"
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancelar"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancelar"
+          }
+        }
+      }
+    },
+    "profile_unlock_confirm": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unlock"
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Desbloquear"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Desbloquear"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

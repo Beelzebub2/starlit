@@ -37,6 +37,19 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import nuvio.composeapp.generated.resources.Res
+import nuvio.composeapp.generated.resources.airing_now_title
+import nuvio.composeapp.generated.resources.action_cancel
+import nuvio.composeapp.generated.resources.action_edit
+import nuvio.composeapp.generated.resources.action_remove
+import nuvio.composeapp.generated.resources.action_save
+import nuvio.composeapp.generated.resources.action_saving
+import nuvio.composeapp.generated.resources.airing_action_refresh
+import nuvio.composeapp.generated.resources.auth_passkey_retry
+import nuvio.composeapp.generated.resources.compose_player_episodes
+import nuvio.composeapp.generated.resources.details_actions_menu_label
+import nuvio.composeapp.generated.resources.settings_desktop_signed_in_as
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -205,7 +218,7 @@ internal actual fun MyAnimeListTabContent(topChromePadding: Dp?) {
                 actions = {
                     if (connection.connected) {
                         NuvioCompactActionButton(
-                            label = "Refresh",
+                            label = stringResource(Res.string.airing_action_refresh),
                             icon = Icons.Rounded.Refresh,
                             onClick = { refreshId++ },
                             enabled = !loading && !editor.hasPendingWork,
@@ -252,7 +265,7 @@ internal actual fun MyAnimeListTabContent(topChromePadding: Dp?) {
                     awaitingFirstPage && error != null -> MalMessage(
                         title = "Couldn't load your list",
                         body = error.orEmpty(),
-                        action = "Try again",
+                        action = stringResource(Res.string.auth_passkey_retry),
                         onAction = { retryId++ },
                         modifier = Modifier.padding(horizontal = inset),
                     )
@@ -358,7 +371,7 @@ internal fun MalProfileSummary(username: String?, stats: MalAnimeStatistics?, mo
     ) {
         if (username != null) {
             Text(
-                "Signed in as $username",
+                stringResource(Res.string.settings_desktop_signed_in_as, username),
                 style = MaterialTheme.typography.bodyMedium,
                 color = colors.textSecondary,
             )
@@ -504,7 +517,7 @@ internal fun MalEntryCard(
                 }
                 if (saving) {
                     Text(
-                        "Saving…",
+                        stringResource(Res.string.action_saving),
                         style = MaterialTheme.typography.labelSmall,
                         color = colors.textMuted,
                         modifier = Modifier.padding(start = 8.dp, top = 8.dp),
@@ -573,7 +586,7 @@ private fun MalPoster(entry: MalAnimeListEntry, accent: Color, onClick: () -> Un
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Box(Modifier.size(6.dp).background(malStatusColor(MalStatus.WATCHING), CircleShape))
-                Text("Airing", style = MaterialTheme.typography.labelSmall, color = Color.White)
+                Text(stringResource(Res.string.airing_now_title), style = MaterialTheme.typography.labelSmall, color = Color.White)
             }
         }
         Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(3.dp).background(accent))
@@ -805,10 +818,10 @@ private fun MalEntryMenu(onEdit: () -> Unit, onOpen: () -> Unit, onRemove: () ->
     var open by remember { mutableStateOf(false) }
     Box {
         IconButton(onClick = { open = true }, modifier = Modifier.size(32.dp)) {
-            Icon(Icons.Rounded.MoreVert, contentDescription = "More actions", tint = colors.textSecondary, modifier = Modifier.size(18.dp))
+            Icon(Icons.Rounded.MoreVert, contentDescription = stringResource(Res.string.details_actions_menu_label), tint = colors.textSecondary, modifier = Modifier.size(18.dp))
         }
         Menu(expanded = open, onDismissRequest = { open = false }) {
-            MenuItem(text = "Edit entry", onClick = { open = false; onEdit() })
+            MenuItem(text = stringResource(Res.string.action_edit), onClick = { open = false; onEdit() })
             MenuItem(text = "Open on MyAnimeList", onClick = { open = false; onOpen() })
             MenuItem(text = "Remove from list", onClick = { open = false; onRemove() })
         }
@@ -823,7 +836,7 @@ private fun MalListFooter(loadingMore: Boolean, error: String?, hasMore: Boolean
             loadingMore -> NuvioLoadingIndicator(size = 22.dp)
             error != null -> Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text(error, style = MaterialTheme.typography.bodySmall, color = colors.danger)
-                TextButton(onClick = onRetry) { Text("Try again") }
+                TextButton(onClick = onRetry) { Text(stringResource(Res.string.auth_passkey_retry)) }
             }
             !hasMore -> Text(
                 if (count == 1) "1 title" else "%,d titles".format(count),
@@ -931,7 +944,7 @@ private fun MalConnectPrompt(connection: MalConnectionState, onConnect: () -> Un
         if (connection.connecting) {
             Text("Waiting for you to approve access in your browser…", style = MaterialTheme.typography.bodySmall, color = colors.textSecondary)
             LinearProgressIndicator(Modifier.fillMaxWidth())
-            TextButton(onClick = MyAnimeListRepository::cancelConnect) { Text("Cancel") }
+            TextButton(onClick = MyAnimeListRepository::cancelConnect) { Text(stringResource(Res.string.action_cancel)) }
         } else {
             NuvioCompactActionButton(
                 label = "Connect MyAnimeList",
@@ -1024,7 +1037,7 @@ internal fun MalEntryEditorDialog(
                         if (draft.watchedEpisodes != count) episodesText = draft.watchedEpisodes.toString()
                     }
                 },
-                label = "Episodes",
+                label = stringResource(Res.string.compose_player_episodes),
                 modifier = Modifier.width(110.dp),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 textStyle = MaterialTheme.typography.bodyLarge.copy(textAlign = TextAlign.Center),
@@ -1091,9 +1104,9 @@ internal fun MalEntryEditorDialog(
             Text("Remove from list", color = colors.danger)
         }
         DialogButtons {
-            DialogButton(text = "Cancel", onClick = onDismiss)
+            DialogButton(text = stringResource(Res.string.action_cancel), onClick = onDismiss)
             DialogButton(
-                text = "Save",
+                text = stringResource(Res.string.action_save),
                 onClick = { onSave(draft) },
                 style = DialogButtonStyle.Primary,
                 enabled = draft != entry.listStatus,
@@ -1110,8 +1123,8 @@ private fun MalRemoveDialog(title: String, onDismiss: () -> Unit, onConfirm: () 
         message = "\"$title\" will be removed from your list, along with its status, score and episode progress.",
     ) {
         DialogButtons {
-            DialogButton(text = "Cancel", onClick = onDismiss)
-            DialogButton(text = "Remove", onClick = onConfirm, style = DialogButtonStyle.Destructive)
+            DialogButton(text = stringResource(Res.string.action_cancel), onClick = onDismiss)
+            DialogButton(text = stringResource(Res.string.action_remove), onClick = onConfirm, style = DialogButtonStyle.Destructive)
         }
     }
 }

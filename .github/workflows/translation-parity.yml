@@ -4,19 +4,25 @@ on:
   pull_request:
     paths:
       - 'composeApp/**'
+      - 'iosApp/**'
       - 'tizen/**'
       - 'tv-setup-server/**'
       - 'scripts/check_localizations.py'
       - 'scripts/check_translation_parity.py'
+      - 'scripts/check_hardcoded_ui_text.py'
+      - 'scripts/test_hardcoded_ui_text.py'
       - '.github/workflows/translation-parity.yml'
   push:
     branches: [Dev]
     paths:
       - 'composeApp/**'
+      - 'iosApp/**'
       - 'tizen/**'
       - 'tv-setup-server/**'
       - 'scripts/check_localizations.py'
       - 'scripts/check_translation_parity.py'
+      - 'scripts/check_hardcoded_ui_text.py'
+      - 'scripts/test_hardcoded_ui_text.py'
       - '.github/workflows/translation-parity.yml'
   workflow_dispatch:
 
@@ -44,5 +50,11 @@ jobs:
         env:
           BASE_REF: ${{ github.event.pull_request.base.sha || github.event.before || '' }}
         run: python3 scripts/check_translation_parity.py --base-ref "$BASE_REF"
+      - name: Prevent new hard-coded UI labels
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.sha || github.event.before || '' }}
+        run: |
+          python3 -m unittest scripts.test_hardcoded_ui_text
+          python3 scripts/check_hardcoded_ui_text.py --base-ref "$BASE_REF"
       - name: Verify phone setup locales and session tests
         run: npm test --prefix tv-setup-server

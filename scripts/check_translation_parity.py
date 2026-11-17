@@ -100,13 +100,23 @@ def validate(base_ref: str | None = None) -> int:
             base_localized = catalog(locale_path, ("strings.xml",), base_ref) if base_ref else {}
             missing = set(source) - set(current)
             existing_debt += len(missing - required)
-            for key in sorted(missing & required):
+            # Both Portuguese variants have full source-key coverage. Validate the
+            # complete catalogs rather than exempting older omissions and copy.
+            locale_required = (
+                set(source)
+                if product == "compose" and locale in {"pt", "pt-rBR"}
+                else required
+            )
+            for key in sorted(missing & locale_required):
                 errors.append(f"{product}/{locale}/{key}: missing translation")
-            for key in sorted(required & set(current)):
+            for key in sorted(locale_required & set(current)):
                 translation = current[key]
                 if "[[P" in translation or "[[K" in translation:
                     errors.append(f"{product}/{locale}/{key}: leaked draft marker")
-                if Counter(FMT.findall(source[key])) != Counter(FMT.findall(translation)):
+                # Literal percent escaping (%%) is not an interpolation argument.
+                source_params = (item for item in FMT.findall(source[key]) if item != "%%")
+                locale_params = (item for item in FMT.findall(translation) if item != "%%")
+                if Counter(source_params) != Counter(locale_params):
                     errors.append(f"{product}/{locale}/{key}: formatting parameters differ")
                 source_breaks = source[key].count(r"\n") + source[key].count("\n")
                 translated_breaks = translation.count(r"\n") + translation.count("\n")
