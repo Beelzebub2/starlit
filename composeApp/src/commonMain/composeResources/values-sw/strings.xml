@@ -3331,4 +3331,7 @@
     <string name="settings_playback_tab_video">Video</string>
     <string name="settings_playback_tab_video_p2p">Video na P2P</string>
     <string name="settings_desktop_subtitle_language">Lugha ya manukuu</string>
+    <string name="mal_rewatch_count">Kutazama tena: %1$d</string>
+    <string name="mal_rewatch_finish">Maliza kutazama tena</string>
+    <string name="mal_rewatch_in_progress">Unatazama tena</string>
 </resources>

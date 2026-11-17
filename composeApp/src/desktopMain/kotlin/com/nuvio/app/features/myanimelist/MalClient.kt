@@ -19,7 +19,9 @@ internal data class MalListStatus(
     val score: Int,
     val watchedEpisodes: Int,
     val isRewatching: Boolean = false,
+    val numTimesRewatched: Int = 0,
 )
+internal data class MalAnimeRewatchSnapshot(val totalEpisodes: Int, val listStatus: MalListStatus?)
 internal data class MalAnime(
     val id: Int,
     val title: String,
@@ -76,6 +78,7 @@ internal data class MalAnimeStatistics(
 
 /** Upper bound for episode counts sent to MAL; long-running series stay well below it. */
 internal const val MAX_MAL_EPISODES = 10_000
+internal const val MAX_MAL_REWATCHES = 10_000
 
 /** Never reset a completed title's progress or score when a new rewatch starts. */
 internal fun shouldMarkMalRewatch(status: MalListStatus?): Boolean =
@@ -115,19 +118,29 @@ internal class MalClient(
         require(id > 0)
         return (get("anime/$id?fields=my_list_status", token)["my_list_status"] as? JsonObject)?.let(::parseMalListStatus)
     }
+    suspend fun animeRewatchSnapshot(id: Int, token: String): MalAnimeRewatchSnapshot {
+        require(id > 0)
+        val response = get("anime/$id?fields=num_episodes,my_list_status", token)
+        return MalAnimeRewatchSnapshot(
+            totalEpisodes = response["num_episodes"]?.jsonPrimitive?.intOrNull?.coerceIn(0, MAX_MAL_EPISODES) ?: 0,
+            listStatus = (response["my_list_status"] as? JsonObject)?.let(::parseMalListStatus),
+        )
+    }
     suspend fun update(
         id: Int, token: String, status: MalStatus? = null, score: Int? = null,
-        isRewatching: Boolean? = null, watchedEpisodes: Int? = null,
+        isRewatching: Boolean? = null, watchedEpisodes: Int? = null, numTimesRewatched: Int? = null,
     ): MalListStatus {
-        require(id > 0 && (status != null || score != null || isRewatching != null || watchedEpisodes != null))
+        require(id > 0 && (status != null || score != null || isRewatching != null || watchedEpisodes != null || numTimesRewatched != null))
         require(score == null || score in 0..10)
         require(watchedEpisodes == null || watchedEpisodes in 0..MAX_MAL_EPISODES)
+        require(numTimesRewatched == null || numTimesRewatched in 0..MAX_MAL_REWATCHES)
         val body = FormBody.Builder().apply {
             status?.let { add("status", it.value) }
             score?.let { add("score", it.toString()) }
             isRewatching?.let { add("is_rewatching", it.toString()) }
             // MAL's write field is num_watched_episodes; responses call it num_episodes_watched.
             watchedEpisodes?.let { add("num_watched_episodes", it.toString()) }
+            numTimesRewatched?.let { add("num_times_rewatched", it.toString()) }
         }.build()
         return parseMalListStatus(request(Request.Builder().url(api + "anime/$id/my_list_status")
             .header("Authorization", "Bearer $token").patch(body).build()))
@@ -265,4 +278,5 @@ internal fun parseMalListStatus(value: JsonObject) = MalListStatus(
     value["score"]?.jsonPrimitive?.intOrNull?.coerceIn(0, 10) ?: 0,
     value["num_episodes_watched"]?.jsonPrimitive?.intOrNull?.coerceAtLeast(0) ?: 0,
     value["is_rewatching"]?.jsonPrimitive?.booleanOrNull ?: false,
+    value["num_times_rewatched"]?.jsonPrimitive?.intOrNull?.coerceIn(0, MAX_MAL_REWATCHES) ?: 0,
 )

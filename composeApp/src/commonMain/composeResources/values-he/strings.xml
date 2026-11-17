@@ -3331,4 +3331,7 @@
     <string name="settings_playback_regex_preset_dolby_atmos_dts">Dolby Atmos / DTS</string>
     <string name="settings_playback_regex_preset_hdr_dolby_vision">HDR / Dolby Vision</string>
     <string name="theme_arctic_blue">כחול ארקטי</string>
+    <string name="mal_rewatch_count">צפיות חוזרות: %1$d</string>
+    <string name="mal_rewatch_finish">סיום צפייה חוזרת</string>
+    <string name="mal_rewatch_in_progress">בצפייה חוזרת</string>
 </resources>

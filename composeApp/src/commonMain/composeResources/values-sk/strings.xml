@@ -3375,4 +3375,7 @@
     <string name="settings_mdb_ratings_key_override_description">Kláves API prepíše hodnotenie vášho pripojeného účtu. Ak chcete znova použiť pripojený účet, vymažte ho a uložte.</string>
     <string name="tracking_source_mdblist">MDBList</string>
     <string name="settings_playback_nvidia_rtx_video_section">NVIDIA RTX Video</string>
+    <string name="mal_rewatch_count">Opakované pozretia: %1$d</string>
+    <string name="mal_rewatch_finish">Dokončiť opakované sledovanie</string>
+    <string name="mal_rewatch_in_progress">Opakované sledovanie</string>
 </resources>

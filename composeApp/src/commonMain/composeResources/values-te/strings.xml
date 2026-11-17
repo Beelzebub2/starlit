@@ -3335,4 +3335,7 @@
     <string name="settings_playback_tab_video">వీడియో</string>
     <string name="settings_playback_tab_video_p2p">వీడియో &amp; P2P</string>
     <string name="settings_desktop_subtitle_language">ఉపశీర్షిక భాష</string>
+    <string name="mal_rewatch_count">మళ్లీ చూసినవి: %1$d</string>
+    <string name="mal_rewatch_finish">మళ్లీ చూడటం పూర్తి చేయి</string>
+    <string name="mal_rewatch_in_progress">మళ్లీ చూస్తున్నారు</string>
 </resources>

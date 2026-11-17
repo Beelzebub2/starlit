@@ -3375,4 +3375,7 @@
     <string name="watch_later_tip">مشورہ: کسی بھی ایپی سوڈ یا پوسٹر کو یہاں محفوظ کرنے کے لیے درمیانی کلک کریں۔ کارڈ کی تفصیلات کے لیے دائیں کلک کریں۔</string>
     <string name="downloads_remove_selected_message">کیا آپ منتخب کردہ %1$d ڈاؤن لوڈز ہٹانا چاہتے ہیں؟ ان کی مکمل اور نامکمل فائلیں حذف ہو جائیں گی، اور قطار میں موجود یا جاری منتقلیاں منسوخ ہو جائیں گی۔</string>
     <string name="player_cast_alternative">مقامی فائلیں، P2P اسٹریمز، DRM اور نجی ذرائع کو Cast ریسیور پر منتقل نہیں کیا جا سکتا۔ جوڑے گئے کمپیوٹر پر Starlit PC کے ذریعے چلانے کا اختیار دستیاب رہے گا۔</string>
+    <string name="mal_rewatch_count">دوبارہ دیکھنے کی تعداد: %1$d</string>
+    <string name="mal_rewatch_finish">دوبارہ دیکھنا مکمل کریں</string>
+    <string name="mal_rewatch_in_progress">دوبارہ دیکھا جا رہا ہے</string>
 </resources>

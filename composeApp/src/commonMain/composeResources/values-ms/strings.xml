@@ -3373,4 +3373,7 @@ Had permintaan</string>
     <string name="settings_playback_tab_video">Video</string>
     <string name="settings_playback_tab_video_p2p">Video &amp; P2P</string>
     <string name="settings_desktop_subtitle_language">Bahasa sari kata</string>
+    <string name="mal_rewatch_count">Tontonan semula: %1$d</string>
+    <string name="mal_rewatch_finish">Selesaikan tontonan semula</string>
+    <string name="mal_rewatch_in_progress">Sedang menonton semula</string>
 </resources>

@@ -75,9 +75,9 @@ class MalClientTest {
         server.createContext("/v2/anime/21") { request ->
             val response = if (request.requestMethod == "PATCH") {
                 patches += request.requestBody.readBytes().toString(Charsets.UTF_8)
-                """{"status":"completed","score":10,"num_episodes_watched":11,"is_rewatching":true}"""
+                """{"status":"completed","score":10,"num_episodes_watched":11,"is_rewatching":true,"num_times_rewatched":2}"""
             } else {
-                """{"my_list_status":{"status":"completed","score":10,"num_episodes_watched":11,"is_rewatching":false}}"""
+                """{"my_list_status":{"status":"completed","score":10,"num_episodes_watched":11,"is_rewatching":false,"num_times_rewatched":2}}"""
             }
             val bytes = response.toByteArray()
             request.sendResponseHeaders(200, bytes.size.toLong())
@@ -93,10 +93,43 @@ class MalClientTest {
             assertEquals(MalStatus.COMPLETED, updated.status)
             assertEquals(10, updated.score)
             assertEquals(11, updated.watchedEpisodes)
+            assertEquals(2, updated.numTimesRewatched)
             assertEquals(listOf("is_rewatching=true"), patches)
             assertFalse(shouldMarkMalRewatch(updated))
             assertFalse(shouldMarkMalRewatch(MalListStatus(MalStatus.WATCHING, 0, 1)))
             assertFalse(shouldMarkMalRewatch(null))
+        } finally { server.stop(0) }
+    }
+
+    @Test fun completedRewatchSendsOnlyCounterAndFlagPreservingScoreAndEpisodes(): Unit = runBlocking {
+        val server = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0)
+        val patches = mutableListOf<String>()
+        server.createContext("/v2/anime/21") { request ->
+            val response = if (request.requestMethod == "PATCH") {
+                patches += request.requestBody.readBytes().toString(Charsets.UTF_8)
+                """{"status":"completed","score":9,"num_episodes_watched":12,"is_rewatching":false,"num_times_rewatched":4}"""
+            } else {
+                assertContains(request.requestURI.rawQuery.orEmpty(), "num_episodes")
+                """{"num_episodes":12,"my_list_status":{"status":"completed","score":9,"num_episodes_watched":12,"is_rewatching":true,"num_times_rewatched":3}}"""
+            }
+            val bytes = response.toByteArray()
+            request.sendResponseHeaders(200, bytes.size.toLong())
+            request.responseBody.use { it.write(bytes) }
+        }
+        server.start()
+        try {
+            val client = MalClient(api = "http://127.0.0.1:${server.address.port}/v2/")
+            val snapshot = client.animeRewatchSnapshot(21, "test-token")
+            assertEquals(12, snapshot.totalEpisodes)
+            assertEquals(3, snapshot.listStatus?.numTimesRewatched)
+            val updated = client.update(21, "test-token", isRewatching = false, numTimesRewatched = 4)
+            assertEquals(MalStatus.COMPLETED, updated.status)
+            assertEquals(4, updated.numTimesRewatched)
+            assertEquals(9, updated.score)
+            assertEquals(12, updated.watchedEpisodes)
+            assertEquals(listOf("is_rewatching=false&num_times_rewatched=4"), patches)
+            assertFailsWith<IllegalArgumentException> { client.update(21, "test-token", numTimesRewatched = -1) }
+            assertFailsWith<IllegalArgumentException> { client.update(21, "test-token", numTimesRewatched = MAX_MAL_REWATCHES + 1) }
         } finally { server.stop(0) }
     }
 
@@ -139,7 +172,7 @@ class MalClientTest {
             assertContains(query, "fields=list_status%2Cnum_episodes")
             assertContains(query, "status=completed")
             assertContains(query, "offset=20")
-            val response = """{"data":[{"node":{"id":42,"title":"Test title","main_picture":{"medium":"https://example.org/a.jpg"},"num_episodes":12},"list_status":{"status":"completed","score":9,"num_episodes_watched":12,"is_rewatching":true}}],"paging":{"next":"https://api.myanimelist.net/v2/users/@me/animelist?offset=21"}}"""
+            val response = """{"data":[{"node":{"id":42,"title":"Test title","main_picture":{"medium":"https://example.org/a.jpg"},"num_episodes":12},"list_status":{"status":"completed","score":9,"num_episodes_watched":12,"is_rewatching":true,"num_times_rewatched":6}}],"paging":{"next":"https://api.myanimelist.net/v2/users/@me/animelist?offset=21"}}"""
             val bytes = response.toByteArray()
             request.sendResponseHeaders(200, bytes.size.toLong())
             request.responseBody.use { it.write(bytes) }
@@ -152,6 +185,7 @@ class MalClientTest {
             assertEquals(42, page.entries.single().anime.id)
             assertEquals(12, page.entries.single().totalEpisodes)
             assertTrue(page.entries.single().listStatus.isRewatching)
+            assertEquals(6, page.entries.single().listStatus.numTimesRewatched)
         } finally { server.stop(0) }
     }
     @Test fun oauthUsesMalPkceAndRejectsWrongOrDuplicatedState() {

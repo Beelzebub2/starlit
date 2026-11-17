@@ -3331,4 +3331,7 @@
     <string name="settings_playback_tab_video">Video</string>
     <string name="settings_playback_tab_video_p2p">Video ja P2P</string>
     <string name="settings_desktop_subtitle_language">Tekstityskieli</string>
+    <string name="mal_rewatch_count">Uudelleenkatselut: %1$d</string>
+    <string name="mal_rewatch_finish">Päätä uudelleenkatselu</string>
+    <string name="mal_rewatch_in_progress">Katsotaan uudelleen</string>
 </resources>

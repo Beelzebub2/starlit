@@ -3358,4 +3358,7 @@
     <string name="settings_playback_tab_video">影片</string>
     <string name="settings_playback_tab_video_p2p">影片與 P2P</string>
     <string name="settings_desktop_subtitle_language">字幕語言</string>
+    <string name="mal_rewatch_count">重看次數：%1$d</string>
+    <string name="mal_rewatch_finish">完成重看</string>
+    <string name="mal_rewatch_in_progress">正在重看</string>
 </resources>

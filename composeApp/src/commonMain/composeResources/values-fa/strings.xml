@@ -3335,4 +3335,7 @@
     <string name="settings_playback_tab_video">ویدیو</string>
     <string name="settings_playback_tab_video_p2p">ویدیو و P2P</string>
     <string name="settings_desktop_subtitle_language">زبان زیرنویس</string>
+    <string name="mal_rewatch_count">بازبینی‌ها: %1$d</string>
+    <string name="mal_rewatch_finish">پایان بازبینی</string>
+    <string name="mal_rewatch_in_progress">در حال بازبینی</string>
 </resources>

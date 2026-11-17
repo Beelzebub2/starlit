@@ -3374,4 +3374,7 @@
     <string name="watch_later_series">Serie</string>
     <string name="watch_later_tip">Tip: klik met de middelste muisknop op een aflevering of poster om deze hier op te slaan. Klik met de rechtermuisknop op een kaart voor de details ervan.</string>
     <string name="settings_mdblist_progress_description">Geschiedenis bekeken, voortgang hervat en Volgende omhoog vanaf MDBList.</string>
+    <string name="mal_rewatch_count">Opnieuw bekeken: %1$d</string>
+    <string name="mal_rewatch_finish">Opnieuw kijken afronden</string>
+    <string name="mal_rewatch_in_progress">Opnieuw aan het kijken</string>
 </resources>

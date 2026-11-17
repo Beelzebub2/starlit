@@ -3350,4 +3350,7 @@ Du bruker denne funksjonen helt på eget ansvar. P2P kan deaktiveres når som he
     <string name="settings_appearance_top_bar_style">Stil for topplinjen</string>
     <string name="settings_appearance_top_bar_style_sheet_title">Stil for topplinjen</string>
     <string name="settings_licenses_attributions_upstream_desktop_title">Nuvio Desktop</string>
+    <string name="mal_rewatch_count">Gjentatte visninger: %1$d</string>
+    <string name="mal_rewatch_finish">Fullfør ny gjennomseing</string>
+    <string name="mal_rewatch_in_progress">Ser på nytt</string>
 </resources>

@@ -49,6 +49,9 @@ import nuvio.composeapp.generated.resources.auth_passkey_retry
 import nuvio.composeapp.generated.resources.compose_player_episodes
 import nuvio.composeapp.generated.resources.details_actions_menu_label
 import nuvio.composeapp.generated.resources.settings_desktop_signed_in_as
+import nuvio.composeapp.generated.resources.mal_rewatch_count
+import nuvio.composeapp.generated.resources.mal_rewatch_finish
+import nuvio.composeapp.generated.resources.mal_rewatch_in_progress
 import org.jetbrains.compose.resources.stringResource
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
@@ -103,7 +106,8 @@ import kotlinx.coroutines.withContext
 
 // Tall enough that every card in a row has the same height, whatever its title length.
 private val PosterWidth = 96.dp
-private val PosterHeight = 144.dp
+// Leave enough vertical room for the rewatch count without uneven card heights.
+private val PosterHeight = 160.dp
 private val ControlHeight = 34.dp
 private val CardMinWidth = 500.dp
 private val ScoreGold = Color(0xFFF5C518)
@@ -329,6 +333,22 @@ internal actual fun MyAnimeListTabContent(topChromePadding: Dp?) {
                 onSave = { draft ->
                     editingId = null
                     editor.edit(id) { draft }
+                },
+                onFinishRewatch = {
+                    if (!editor.isSaving(id)) {
+                        editingId = null
+                        MyAnimeListRepository.launchDetached {
+                            try {
+                                MyAnimeListRepository.finishRewatch(id)
+                                withContext(Dispatchers.Main) { refreshId++; statsVersion++ }
+                            } catch (e: CancellationException) { throw e }
+                            catch (e: Exception) {
+                                withContext(Dispatchers.Main) {
+                                    NuvioToastController.show(e.message ?: "MyAnimeList")
+                                }
+                            }
+                        }
+                    }
                 },
                 onRemove = { removingId = id },
             )
@@ -596,41 +616,51 @@ private fun MalPoster(entry: MalAnimeListEntry, accent: Color, onClick: () -> Un
 @Composable
 private fun MalFacts(entry: MalAnimeListEntry) {
     val colors = MaterialTheme.nuvio.colors
-    Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
-        val facts = malEntryFacts(entry)
-        if (facts.isNotEmpty()) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+            val facts = malEntryFacts(entry)
+            if (facts.isNotEmpty()) {
+                Text(
+                    facts.joinToString("  ·  "),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = colors.textSecondary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false),
+                )
+            }
+            entry.meanScore?.let { mean ->
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(3.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.semantics(mergeDescendants = true) {
+                        contentDescription = "MyAnimeList community score %.2f".format(mean)
+                    },
+                ) {
+                    Icon(Icons.Rounded.Star, contentDescription = null, tint = colors.textMuted, modifier = Modifier.size(13.dp))
+                    Text("%.2f".format(mean), style = MaterialTheme.typography.labelMedium, color = colors.textSecondary)
+                }
+            }
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+            if (entry.listStatus.isRewatching) {
+                Row(
+                    Modifier
+                        .background(colors.textPrimary.copy(alpha = 0.08f), RoundedCornerShape(NuvioTokens.Radius.xs))
+                        .padding(horizontal = 6.dp, vertical = 2.dp),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(Icons.Rounded.Replay, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(12.dp))
+                    Text(stringResource(Res.string.mal_rewatch_in_progress), style = MaterialTheme.typography.labelSmall, color = colors.textSecondary)
+                }
+            }
             Text(
-                facts.joinToString("  ·  "),
-                style = MaterialTheme.typography.labelMedium,
+                stringResource(Res.string.mal_rewatch_count, entry.listStatus.numTimesRewatched),
+                style = MaterialTheme.typography.labelSmall,
                 color = colors.textSecondary,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f, fill = false),
+                modifier = Modifier.testTag("mal-rewatch-count-${entry.anime.id}"),
             )
-        }
-        entry.meanScore?.let { mean ->
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(3.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.semantics(mergeDescendants = true) {
-                    contentDescription = "MyAnimeList community score %.2f".format(mean)
-                },
-            ) {
-                Icon(Icons.Rounded.Star, contentDescription = null, tint = colors.textMuted, modifier = Modifier.size(13.dp))
-                Text("%.2f".format(mean), style = MaterialTheme.typography.labelMedium, color = colors.textSecondary)
-            }
-        }
-        if (entry.listStatus.isRewatching) {
-            Row(
-                Modifier
-                    .background(colors.textPrimary.copy(alpha = 0.08f), RoundedCornerShape(NuvioTokens.Radius.xs))
-                    .padding(horizontal = 6.dp, vertical = 2.dp),
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Icon(Icons.Rounded.Replay, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(12.dp))
-                Text("Rewatching", style = MaterialTheme.typography.labelSmall, color = colors.textSecondary)
-            }
         }
     }
 }
@@ -964,15 +994,18 @@ internal fun MalEntryEditorDialog(
     entry: MalAnimeListEntry,
     onDismiss: () -> Unit,
     onSave: (MalListStatus) -> Unit,
+    onFinishRewatch: () -> Unit = {},
     onRemove: () -> Unit,
 ) {
     val colors = MaterialTheme.nuvio.colors
     val total = entry.totalEpisodes
     var draft by remember(entry.anime.id) { mutableStateOf(entry.listStatus) }
     var episodesText by remember(entry.anime.id) { mutableStateOf(entry.listStatus.watchedEpisodes.toString()) }
+    var rewatchText by remember(entry.anime.id) { mutableStateOf(entry.listStatus.numTimesRewatched.toString()) }
     fun update(next: MalListStatus) {
         draft = next
         episodesText = next.watchedEpisodes.toString()
+        rewatchText = next.numTimesRewatched.toString()
     }
     DialogSurface(onDismissRequest = onDismiss) {
         Row(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -1084,6 +1117,20 @@ internal fun MalEntryEditorDialog(
         )
 
         if (draft.status == MalStatus.COMPLETED) {
+            DialogTextField(
+                value = rewatchText,
+                onValueChange = { text ->
+                    val digits = text.filter(Char::isDigit).take(5)
+                    rewatchText = digits
+                    digits.toIntOrNull()?.let { count ->
+                        draft = draft.copy(numTimesRewatched = count.coerceAtMost(MAX_MAL_REWATCHES))
+                        if (count > MAX_MAL_REWATCHES) rewatchText = draft.numTimesRewatched.toString()
+                    }
+                },
+                label = stringResource(Res.string.mal_rewatch_count, draft.numTimesRewatched),
+                modifier = Modifier.width(230.dp),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            )
             Row(
                 Modifier
                     .fillMaxWidth()
@@ -1093,10 +1140,20 @@ internal fun MalEntryEditorDialog(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column(Modifier.weight(1f)) {
-                    Text("Rewatching", style = MaterialTheme.typography.bodyLarge, color = colors.textPrimary)
+                    Text(stringResource(Res.string.mal_rewatch_in_progress), style = MaterialTheme.typography.bodyLarge, color = colors.textPrimary)
                     Text("Stays completed while you watch it again.", style = MaterialTheme.typography.bodySmall, color = colors.textSecondary)
                 }
                 Switch(checked = draft.isRewatching, onCheckedChange = null, colors = nuvioSwitchColors())
+            }
+            if (draft.isRewatching && draft.numTimesRewatched < MAX_MAL_REWATCHES) {
+                TextButton(
+                    enabled = draft == entry.listStatus,
+                    onClick = onFinishRewatch,
+                ) {
+                    Icon(Icons.Rounded.Replay, contentDescription = null)
+                    Spacer(Modifier.width(6.dp))
+                    Text(stringResource(Res.string.mal_rewatch_finish))
+                }
             }
         }
 

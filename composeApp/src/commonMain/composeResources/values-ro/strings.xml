@@ -3342,4 +3342,7 @@
     <string name="settings_tracking_anime_id_kitsu">Preferă Kitsu</string>
     <string name="settings_tracking_anime_id_mal">Preferă MyAnimeList</string>
     <string name="settings_tracking_anime_id_tvdb">Preferă TVDB</string>
+    <string name="mal_rewatch_count">Revizionări: %1$d</string>
+    <string name="mal_rewatch_finish">Finalizează revizionarea</string>
+    <string name="mal_rewatch_in_progress">În curs de revizionare</string>
 </resources>

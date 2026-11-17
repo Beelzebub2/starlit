@@ -14,6 +14,9 @@ internal expect suspend fun markMyAnimeListRewatchOnPlayback(
     playbackProfileId: Int,
     positionMs: Long,
     durationMs: Long,
+    seasonNumber: Int?,
+    episodeNumber: Int?,
+    completionReached: Boolean,
 ): Boolean
 internal expect fun clearMyAnimeListState()
 

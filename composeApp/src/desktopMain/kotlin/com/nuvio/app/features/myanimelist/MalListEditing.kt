@@ -18,6 +18,7 @@ internal data class MalListPatch(
     val score: Int? = null,
     val watchedEpisodes: Int? = null,
     val isRewatching: Boolean? = null,
+    val numTimesRewatched: Int? = null,
 )
 
 /** Only the fields that differ between [from] and [to], or null when nothing changed. */
@@ -27,9 +28,16 @@ internal fun malListPatch(from: MalListStatus, to: MalListStatus): MalListPatch?
         score = to.score.takeIf { it != from.score },
         watchedEpisodes = to.watchedEpisodes.takeIf { it != from.watchedEpisodes },
         isRewatching = to.isRewatching.takeIf { it != from.isRewatching },
+        numTimesRewatched = to.numTimesRewatched.takeIf { it != from.numTimesRewatched },
     )
     return patch.takeUnless { it == MalListPatch() }
 }
+
+/** A cancelled rewatch is not a completed rewatch; only an explicit finish increments MAL. */
+internal fun MalListStatus.withCompletedRewatch(): MalListStatus =
+    if (status == MalStatus.COMPLETED && isRewatching && numTimesRewatched < MAX_MAL_REWATCHES)
+        copy(isRewatching = false, numTimesRewatched = numTimesRewatched + 1)
+    else this
 
 /**
  * Sets the watched-episode count the way MyAnimeList's own list does: the first episode moves a
@@ -40,7 +48,7 @@ internal fun MalListStatus.withWatchedEpisodes(episodes: Int, totalEpisodes: Int
     val finished = totalEpisodes > 0 && count == totalEpisodes && count > watchedEpisodes
     val started = count > 0 && (status == null || status == MalStatus.PLAN_TO_WATCH)
     return when {
-        finished -> copy(status = MalStatus.COMPLETED, watchedEpisodes = count, isRewatching = false)
+        finished -> withCompletedRewatch().copy(status = MalStatus.COMPLETED, watchedEpisodes = count, isRewatching = false)
         started -> copy(status = MalStatus.WATCHING, watchedEpisodes = count)
         else -> copy(watchedEpisodes = count)
     }

@@ -3376,4 +3376,7 @@
     <string name="settings_mdblist_library_description">Danh sách theo dõi cũng như danh sách phim và chương trình tĩnh của bạn.</string>
     <string name="settings_mdblist_progress_description">Lịch sử đã xem, tiếp tục tiến trình và Tiếp theo từ MDBList.</string>
     <string name="remote_pc_tile_network_caption">Tìm máy tính trên mạng Wi-Fi này.</string>
+    <string name="mal_rewatch_count">Số lần xem lại: %1$d</string>
+    <string name="mal_rewatch_finish">Hoàn tất xem lại</string>
+    <string name="mal_rewatch_in_progress">Đang xem lại</string>
 </resources>

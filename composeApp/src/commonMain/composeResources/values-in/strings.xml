@@ -3336,4 +3336,7 @@
     <string name="trakt_public_list_missing_id">ID daftar Trakt tidak ada</string>
     <string name="trakt_public_list_rate_limit_reached">Trakt batas kecepatan tercapai</string>
     <string name="settings_licenses_attributions_upstream_desktop_title">Nuvio Desktop</string>
+    <string name="mal_rewatch_count">Tonton ulang: %1$d</string>
+    <string name="mal_rewatch_finish">Selesaikan menonton ulang</string>
+    <string name="mal_rewatch_in_progress">Sedang menonton ulang</string>
 </resources>

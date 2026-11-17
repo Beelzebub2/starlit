@@ -3343,4 +3343,7 @@
     <string name="remote_pc_troubleshoot_network">Και οι δύο συσκευές βρίσκονται στο ίδιο δίκτυο Wi-Fi ή Ethernet, όχι σε δίκτυο επισκέπτη.</string>
     <string name="settings_mdblist_library_description">Λίστα παρακολούθησης και οι στατικές λίστες ταινιών και εκπομπών σας.</string>
     <string name="tracking_source_mdblist">MDBList</string>
+    <string name="mal_rewatch_count">Επαναπροβολές: %1$d</string>
+    <string name="mal_rewatch_finish">Ολοκλήρωση επαναπροβολής</string>
+    <string name="mal_rewatch_in_progress">Επαναπροβολή</string>
 </resources>

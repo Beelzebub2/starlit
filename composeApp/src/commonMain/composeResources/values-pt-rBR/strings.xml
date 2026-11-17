@@ -3333,4 +3333,7 @@
     <string name="changelog_loading">Carregando alterações…</string>
     <string name="changelog_load_failed">Não foi possível ler o histórico de alterações incluído. Tente abri-lo novamente.</string>
     <string name="changelog_view_github">Ver no GitHub</string>
+    <string name="mal_rewatch_count">Reassistidas: %1$d</string>
+    <string name="mal_rewatch_finish">Concluir reassistida</string>
+    <string name="mal_rewatch_in_progress">Reassistindo</string>
 </resources>

@@ -23,6 +23,13 @@ class MalListEditingTest {
             malListPatch(before, MalListStatus(MalStatus.COMPLETED, 7, 12)),
         )
         assertEquals(MalListPatch(score = 0), malListPatch(before, before.copy(score = 0)))
+        assertEquals(MalListPatch(numTimesRewatched = 3),
+            malListPatch(before, before.copy(numTimesRewatched = 3)))
+        assertEquals(MalListPatch(isRewatching = false, numTimesRewatched = 4),
+            malListPatch(
+                before.copy(status = MalStatus.COMPLETED, isRewatching = true, numTimesRewatched = 3),
+                before.copy(status = MalStatus.COMPLETED, isRewatching = false, numTimesRewatched = 4),
+            ))
     }
 
     @Test fun episodesFollowMyAnimeListConventions() {
@@ -39,11 +46,23 @@ class MalListEditingTest {
 
         // Finishing a rewatch ends it; lowering progress on a completed title leaves it completed.
         val rewatch = MalListStatus(MalStatus.COMPLETED, 10, 11, isRewatching = true)
-        assertEquals(MalListStatus(MalStatus.COMPLETED, 10, 12, isRewatching = false), rewatch.withWatchedEpisodes(12, 12))
+        assertEquals(MalListStatus(MalStatus.COMPLETED, 10, 12, isRewatching = false, numTimesRewatched = 1), rewatch.withWatchedEpisodes(12, 12))
         val done = MalListStatus(MalStatus.COMPLETED, 10, 12)
         assertEquals(MalListStatus(MalStatus.COMPLETED, 10, 11), done.withWatchedEpisodes(11, 12))
         // Dropped titles keep their status while progress changes.
         assertEquals(MalStatus.DROPPED, MalListStatus(MalStatus.DROPPED, 0, 2).withWatchedEpisodes(3, 12).status)
+    }
+
+    @Test fun finishCountsExactlyOnceAndCancellingDoesNotCount() {
+        val started = MalListStatus(MalStatus.COMPLETED, 9, 12, isRewatching = true, numTimesRewatched = 2)
+        val finished = started.withCompletedRewatch()
+        assertEquals(3, finished.numTimesRewatched)
+        assertFalse(finished.isRewatching)
+        assertEquals(finished, finished.withCompletedRewatch())
+        assertEquals(2, started.copy(isRewatching = false).numTimesRewatched)
+        assertEquals(started.copy(isRewatching = false), started.copy(isRewatching = false).withCompletedRewatch())
+        assertEquals(started.copy(numTimesRewatched = MAX_MAL_REWATCHES),
+            started.copy(numTimesRewatched = MAX_MAL_REWATCHES).withCompletedRewatch())
     }
 
     @Test fun completingFillsEpisodesAndOtherStatusesKeepProgress() {

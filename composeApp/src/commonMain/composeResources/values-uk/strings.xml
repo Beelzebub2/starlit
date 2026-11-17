@@ -3371,4 +3371,7 @@
     <string name="settings_playback_tab_video">Відео</string>
     <string name="settings_playback_tab_video_p2p">Відео та P2P</string>
     <string name="settings_desktop_subtitle_language">Мова субтитрів</string>
+    <string name="mal_rewatch_count">Повторні перегляди: %1$d</string>
+    <string name="mal_rewatch_finish">Завершити повторний перегляд</string>
+    <string name="mal_rewatch_in_progress">Повторний перегляд</string>
 </resources>
