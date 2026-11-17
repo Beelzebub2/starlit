@@ -231,13 +231,13 @@ class DownloadUiTest {
         compose.setContent { NuvioTheme { Surface { BatchDownloadDialog(meta,1,{}) } } }
         compose.onNodeWithText("Download 1 episode").assertIsEnabled()
         compose.onNodeWithText("Highest available").assertIsSelected()
-        compose.onNodeWithText("Select all seasons").performClick()
+        compose.onNodeWithText("Select all").performClick()
         compose.onNodeWithText("Download 2 episodes").assertIsEnabled()
         compose.onNodeWithText("Seasons 1–2").assertExists()
         compose.onNodeWithText("Season 2").performClick()
         compose.onNodeWithText("Future").assertIsNotEnabled()
         compose.onNodeWithText("Airs", substring = true).assertExists()
-        compose.onNodeWithText("Clear all").performClick()
+        compose.onNodeWithText("Clear selection").performClick()
         compose.onNodeWithText("No episodes selected").assertExists()
         compose.onNodeWithText("Download").assertIsNotEnabled()
     }
