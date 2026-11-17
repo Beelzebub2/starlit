@@ -102,6 +102,11 @@ def validate(base_ref: str | None = None) -> int:
             existing_debt += len(missing - required)
             for key in sorted(missing & required):
                 errors.append(f"{product}/{locale}/{key}: missing translation")
+            # European Portuguese reached full Compose key coverage in November 2026.
+            # Historical grandfathering must not let previously covered keys regress.
+            if product == "compose" and locale == "pt":
+                for key in sorted(missing - required):
+                    errors.append(f"{product}/{locale}/{key}: missing full-coverage translation")
             for key in sorted(required & set(current)):
                 translation = current[key]
                 if "[[P" in translation or "[[K" in translation:

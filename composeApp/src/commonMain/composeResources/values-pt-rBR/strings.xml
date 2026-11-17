@@ -924,9 +924,9 @@
     <string name="settings_debrid_add_key_first">Adicione uma chave de API primeiro.</string>
     <string name="settings_debrid_section_providers">CONTA</string>
     <string name="settings_debrid_provider_torbox_description">Conecte sua conta do Torbox.</string>
-    <string name="settings_debrid_dialog_title">Chave de API do Torbox</string>
-    <string name="settings_debrid_dialog_subtitle">Insira sua chave de API do Torbox.</string>
-    <string name="settings_debrid_dialog_placeholder">Insira a chave de API do Torbox</string>
+    <string name="settings_debrid_dialog_title">Chave de API do %1$s</string>
+    <string name="settings_debrid_dialog_subtitle">Digite sua chave de API do %1$s.</string>
+    <string name="settings_debrid_dialog_placeholder">Digite a chave de API do %1$s</string>
     <string name="settings_debrid_not_set">Não definido</string>
     <string name="settings_debrid_section_instant_playback">REPRODUÇÃO INSTANTÂNEA</string>
     <string name="settings_debrid_prepare_instant_playback">Preparar links</string>

@@ -457,7 +457,7 @@
     <string name="compose_player_outline_thickness">Espessura do contorno</string>
     <string name="compose_player_panel_episodes">Episódios</string>
     <string name="compose_player_panel_sources">Fontes</string>
-    <string name="compose_player_panel_streams">Streams</string>
+    <string name="compose_player_panel_streams">Fontes</string>
     <string name="compose_player_playback_error">Erro de reprodução</string>
     <string name="compose_player_playing">A reproduzir</string>
     <string name="compose_player_fetch_subtitles">Toca para procurar legendas</string>
@@ -538,8 +538,8 @@
     <string name="compose_settings_page_plugins">Plugins</string>
     <string name="compose_settings_page_poster_customization">Estilo dos cartões com cartaz</string>
     <string name="compose_settings_page_root">Definições</string>
-    <string name="compose_settings_page_streams">Streams</string>
-    <string name="settings_appearance_section_streams">STREAMS</string>
+    <string name="compose_settings_page_streams">Fontes</string>
+    <string name="settings_appearance_section_streams">FONTES</string>
     <string name="compose_settings_page_supporters_contributors">Apoiantes e colaboradores</string>
     <string name="compose_settings_page_tmdb_enrichment">Enriquecimento TMDB</string>
     <string name="compose_settings_page_trakt">Trakt</string>
@@ -822,7 +822,7 @@
     <string name="remote_source_quality_stars">Qualidade da resolução: %1$d de 5 estrelas</string>
     <string name="remote_source_quality_hint">As estrelas indicam a resolução, não avaliações de utilizadores nem a fiabilidade da reprodução.</string>
     <string name="remote_source_seeders">Seeders: %1$d</string>
-    <string name="remote_source_peers">Peers: %1$d</string>
+    <string name="remote_source_peers">Pares: %1$d</string>
     <string name="remote_source_cached">Em cache</string>
     <string name="settings_account">Conta</string>
     <string name="settings_account_delete_account">Eliminar conta</string>
@@ -1002,8 +1002,8 @@
     <string name="settings_debrid_prepare_instant_playback_description">Resolve links reproduzíveis antes de a reprodução começar.</string>
     <string name="settings_debrid_prepare_stream_count">Links a preparar</string>
     <string name="settings_debrid_prepare_stream_count_warning">Utiliza um número mais baixo quando possível. Os serviços ligados podem limitar a frequência com que os links são resolvidos num determinado período. Abrir um filme ou episódio pode contar para esses limites mesmo que não toques em Reproduzir, porque os links são preparados antecipadamente.</string>
-    <string name="settings_debrid_prepare_count_one">1 link</string>
-    <string name="settings_debrid_prepare_count_many">%1$d links</string>
+    <string name="settings_debrid_prepare_count_one">1 ligação</string>
+    <string name="settings_debrid_prepare_count_many">%1$d ligações</string>
     <string name="settings_debrid_section_formatting">FORMATAÇÃO</string>
     <string name="settings_debrid_name_template">Modelo de nome</string>
     <string name="settings_debrid_name_template_description">Controla a forma como os nomes dos resultados aparecem. Deixa em branco para utilizar o nome original.</string>
@@ -1219,10 +1219,10 @@
     <string name="settings_playback_regex_preset_quality_720p_smaller">720p / Menor</string>
     <string name="settings_playback_regex_preset_web_sources">Fontes WEB</string>
     <string name="settings_playback_render_type">Modo de renderização Libass</string>
-    <string name="settings_playback_render_type_cues">Standard Cues</string>
-    <string name="settings_playback_render_type_effects_canvas">Effects Canvas</string>
-    <string name="settings_playback_render_type_effects_opengl">Effects OpenGL</string>
-    <string name="settings_playback_render_type_overlay_canvas">Overlay Canvas</string>
+    <string name="settings_playback_render_type_cues">Sinais padrão</string>
+    <string name="settings_playback_render_type_effects_canvas">Efeitos Canvas</string>
+    <string name="settings_playback_render_type_effects_opengl">Efeitos OpenGL</string>
+    <string name="settings_playback_render_type_overlay_canvas">Sobreposição Canvas</string>
     <string name="settings_playback_render_type_overlay_opengl">Overlay OpenGL (Recomendado)</string>
     <string name="settings_playback_reuse_last_link">Reutilizar último link</string>
     <string name="settings_playback_reuse_last_link_description">Reproduz automaticamente o teu último stream funcional para este mesmo filme/episódio enquanto a cache for válida</string>
@@ -1655,8 +1655,8 @@
     <string name="source_filter_hdr">HDR</string>
     <string name="source_filter_atmos">Atmos</string>
     <string name="source_filter_surround">Som surround</string>
-    <string name="source_filter_seeds_ten">10+ seeds</string>
-    <string name="source_filter_seeds_fifty">50+ seeds</string>
+    <string name="source_filter_seeds_ten">10+ semeadores</string>
+    <string name="source_filter_seeds_fifty">50+ semeadores</string>
     <string name="source_filter_size_two">Até 2 GiB</string>
     <string name="source_filter_size_five">Até 5 GiB</string>
     <string name="source_filter_clear">Limpar filtros</string>
@@ -1742,7 +1742,7 @@
     <string name="profile_pin_set_requires_internet">Liga-te à internet para definir um PIN.</string>
     <string name="profile_primary_addons_required">Este perfil utiliza os addons principais.</string>
     <string name="streams_failed_to_load_scraper">Falha ao carregar %1$s</string>
-    <string name="stream_default_name">Stream</string>
+    <string name="stream_default_name">Transmissão</string>
     <string name="source_embedded">Integrado</string>
     <string name="trakt_authorization_denied">Autorização recusada</string>
     <string name="trakt_complete_sign_in_browser">Conclui o início de sessão do Trakt no teu navegador</string>
@@ -2215,10 +2215,10 @@
     <string name="settings_p2p_subtitle">Permitir streams ponto a ponto (torrent)</string>
     <string name="settings_p2p_hide_stats_title">Ocultar estatísticas de torrent</string>
     <string name="settings_p2p_hide_stats_subtitle">Oculta buffer, seeds, peers e velocidade de transferência durante o carregamento e a reprodução</string>
-    <string name="player_torrent_peer_info">%1$d seeds · %2$d peers</string>
+    <string name="player_torrent_peer_info">%1$d semeadores · %2$d pares</string>
     <string name="player_torrent_buffered_status">%1$s em buffer · %2$s · %3$s</string>
     <string name="player_torrent_status">%1$s · %2$s</string>
-    <string name="player_torrent_stats">%1$d peers · %2$d seeds · %3$d%%</string>
+    <string name="player_torrent_stats">%1$d pares · %2$d semeadores · %3$d%%</string>
     <string name="player_torrent_connecting_peers">A ligar aos peers…</string>
     <string name="player_torrent_starting_engine">A iniciar motor P2P…</string>
     <string name="player_error_failed_start_torrent">Falha ao iniciar o torrent: %1$s</string>
