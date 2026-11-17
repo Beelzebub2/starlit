@@ -51,7 +51,7 @@ internal fun LibraryDownloadsButton(onClick: () -> Unit) {
         TextButton(onClick = onClick) {
             DownloadIcon(tint = MaterialTheme.colorScheme.primary)
             Spacer(Modifier.width(6.dp))
-            Text("Downloads" + downloads.items.size.takeIf { it > 0 }?.let { " ($it)" }.orEmpty())
+            Text(stringResource(Res.string.compose_settings_root_downloads_title) + downloads.items.size.takeIf { it > 0 }?.let { " ($it)" }.orEmpty())
         }
         return
     }
