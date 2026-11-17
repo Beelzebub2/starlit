@@ -37,6 +37,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import nuvio.composeapp.generated.resources.Res
+import nuvio.composeapp.generated.resources.airing_now_title
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -573,7 +576,7 @@ private fun MalPoster(entry: MalAnimeListEntry, accent: Color, onClick: () -> Un
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Box(Modifier.size(6.dp).background(malStatusColor(MalStatus.WATCHING), CircleShape))
-                Text("Airing", style = MaterialTheme.typography.labelSmall, color = Color.White)
+                Text(stringResource(Res.string.airing_now_title), style = MaterialTheme.typography.labelSmall, color = Color.White)
             }
         }
         Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(3.dp).background(accent))
