@@ -1,13 +1,15 @@
-﻿"""Check recent Starlit UI translations across every shipped Compose and TV locale.
+﻿"""Check complete Starlit UI translations across every shipped Compose and TV locale.
 
-Historical Compose translation omissions are reported but grandfathered, not silently
-claimed fixed. All keys added/reworded since the localization baselines are mandatory.
-Run after updating the base message catalogs and before PR/merge/release.
+All source keys and formatting parameters are mandatory in every locale; there
+are no grandfathered missing keys. Also report unchanged English text as
+linguistic-review candidates (brand names are not automatically violations).
+Run after editing catalogs and before PR/merge/release.
 """
 from __future__ import annotations
 
 import argparse
 import io
+import json
 import re
 import subprocess
 from collections import Counter
@@ -22,7 +24,7 @@ CATALOGS = {
         "path": "composeApp/src/commonMain/composeResources",
         "source_files": ("strings.xml", "strings_changelog.xml", "strings_mdblist.xml", "strings_redesign.xml"),
         "baseline": "a684b128c",
-        "full": False,
+        "full": True,
     },
     "tv": {
         "path": "tizen/res",
@@ -72,8 +74,10 @@ def catalog(location: str, files: tuple[str, ...], ref: str | None = None) -> di
     return values
 
 
-def validate(base_ref: str | None = None) -> int:
+def validate(base_ref: str | None = None, *, strict: bool = False,
+             report_json: str | None = None) -> int:
     errors: list[str] = []
+    report: dict[str, object] = {}
     for product, config in CATALOGS.items():
         base = config["path"]
         path = f"{base}/values"
@@ -91,7 +95,7 @@ def validate(base_ref: str | None = None) -> int:
             }
         required = set(source) if config["full"] else new | changed | diff_keys
         locales = sorted(folder for folder in (ROOT / base).glob("values-*") if folder.is_dir())
-        existing_debt = 0
+        locale_report: dict[str, object] = {}
         for folder in locales:
             locale = folder.name.removeprefix("values-")
             locale_path = f"{base}/{folder.name}"
@@ -99,14 +103,25 @@ def validate(base_ref: str | None = None) -> int:
             previous = catalog(locale_path, ("strings.xml",), config["baseline"]) if changed and not config["full"] else {}
             base_localized = catalog(locale_path, ("strings.xml",), base_ref) if base_ref else {}
             missing = set(source) - set(current)
-            existing_debt += len(missing - required)
-            # Both Portuguese variants have full source-key coverage. Validate the
-            # complete catalogs rather than exempting older omissions and copy.
-            locale_required = (
-                set(source)
-                if product == "compose" and locale in {"pt", "pt-rBR"}
-                else required
+            identical = sum(
+                1 for key in current.keys() & source.keys()
+                if current[key] == source[key] and re.search(r"[A-Za-z]{3,} [A-Za-z]{3,}", source[key])
             )
+            locale_report[locale] = {
+                "translated": len(current.keys() & source.keys()),
+                "source": len(source),
+                "missing": len(missing),
+                "untranslated_candidates": identical,
+                "obsolete_keys": len(current.keys() - source.keys()),
+            }
+            locale_required = set(source)
+            # Keys created or changed in a locale on this PR never receive the
+            # historical exemption, even when the English source is unchanged.
+            if base_ref:
+                locale_required |= {
+                    key for key in current.keys() & source.keys()
+                    if base_localized.get(key) != current[key]
+                }
             for key in sorted(missing & locale_required):
                 errors.append(f"{product}/{locale}/{key}: missing translation")
             for key in sorted(locale_required & set(current)):
@@ -132,19 +147,30 @@ def validate(base_ref: str | None = None) -> int:
         print(
             f"{product}: {len(locales)} locale catalogs, {len(source)} source keys; "
             f"{len(new)} newer keys, {len(changed)} revised strings; "
-            f"{existing_debt} older missing entries exempted"
+            f"full key coverage required"
         )
+        report[product] = {"source_keys": len(source), "locales": locale_report}
+        for locale, value in locale_report.items():
+            if value["missing"] or value["untranslated_candidates"]:
+                print(f"  {locale}: {value['missing']} missing, "
+                      f"{value['untranslated_candidates']} possible English fallbacks")
+    if report_json:
+        destination = Path(report_json)
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     if errors:
         for err in errors[:100]:
             print("ERROR:", err)
         print(f"FAILED: {len(errors)} translation parity errors")
         return 1
-    print("PASS: all recent UI keys covered in every supported locale")
+    print("PASS: all Compose and TV source keys covered in every supported locale")
     return 0
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--base-ref", default=None, help="Git commit before the PR/push for incremental parity")
+    parser.add_argument("--strict", action="store_true", help="Require full catalog coverage in all locales")
+    parser.add_argument("--report-json", default=None, help="Write measured locale coverage as JSON")
     args = parser.parse_args()
-    raise SystemExit(validate(args.base_ref or None))
+    raise SystemExit(validate(args.base_ref or None, strict=args.strict, report_json=args.report_json))

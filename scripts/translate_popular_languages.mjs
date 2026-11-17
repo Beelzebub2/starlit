@@ -4,12 +4,13 @@ import fs from "node:fs";
 import path from "node:path";
 
 const root = process.cwd();
-const dataRoot = path.join(root, "build", "localization-drafts-20261107");
-const { languages, prepared } = JSON.parse(fs.readFileSync(path.join(dataRoot, "source.json"), "utf8"));
+const dataRoot = process.env.STARLIT_TRANSLATION_DRAFT_DIR
+  ? path.resolve(process.env.STARLIT_TRANSLATION_DRAFT_DIR)
+  : path.join(root, "build", "localization-drafts-20261107");
+const { languages, prepared, prepared_by_locale } = JSON.parse(fs.readFileSync(path.join(dataRoot, "source.json"), "utf8"));
 const resourceDir = path.join(root, "composeApp", "src", "commonMain", "composeResources");
-const items = Object.entries(prepared).map(([name, { text }], index) => ({ index, name, text }));
 const keyMatcher = /\[\[K(\d{4})\]\]/g;
-const MAX_WORKERS = 4;
+const MAX_WORKERS = Math.max(1, Math.min(6, Number(process.env.STARLIT_TRANSLATION_WORKERS) || 4));
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 function *batches(pending) {
@@ -80,14 +81,21 @@ async function translateBatch(batch, language) {
 }
 
 for (const [folder, language] of Object.entries(languages)) {
-  if (fs.existsSync(path.join(resourceDir, "values-" + folder))) {
+  if (fs.existsSync(path.join(resourceDir, "values-" + folder)) &&
+      process.env.STARLIT_TRANSLATION_EXISTING !== "1") {
     console.log("SKIP existing locale " + folder);
     continue;
   }
+  const localeEntries = prepared_by_locale?.[folder] ?? prepared;
+  if (!localeEntries) throw new Error("Missing prepared source strings for " + folder);
+  const items = Object.entries(localeEntries).map(([name, { text }], index) => ({ index, name, text }));
   const outFile = path.join(dataRoot, folder + ".json");
   const saved = fs.existsSync(outFile) ? JSON.parse(fs.readFileSync(outFile, "utf8")) : {};
   const pending = items.filter(item => saved[item.name] == null);
-  const jobs = [...batches(pending)];
+  // Singleton retries avoid a translator accidentally blending the prose of
+  // adjacent UI keys when a batch loses its [[K....]] separators.
+  const jobs = process.env.STARLIT_TRANSLATION_SINGLETON === "1"
+    ? pending.map(item => [item]) : [...batches(pending)];
   console.log(folder + ": " + items.length + " strings, " + jobs.length + " batches", { flush: true });
   let index = 0, complete = 0;
   const worker = async () => {
