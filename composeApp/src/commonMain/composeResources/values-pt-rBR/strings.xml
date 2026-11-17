@@ -2026,7 +2026,7 @@
     <string name="server_error_restart">O servidor foi salvo, mas o app não pôde reiniciar automaticamente. Reinicie-o manualmente.</string>
     <string name="compose_settings_root_tracking_description">Conecte provedores de rastreamento e escolha qual deles alimenta sua Biblioteca e o Continuar Assistindo.</string>
     <string name="settings_advanced_remember_last_profile">Lembrar último perfil selecionado</string>
-    <string name="settings_advanced_remember_last_profile_description">Abre com o último perfil usado ao iniciar o app</string>
+    <string name="settings_advanced_remember_last_profile_description">Lembra do último perfil selecionado ao iniciar o aplicativo.</string>
     <string name="settings_advanced_clear_cw_cache">Limpar cache de "Continuar Assistindo"</string>
     <string name="settings_licenses_attributions_haze_license">Licenciado sob a Apache License, Version 2.0.</string>
     <string name="remote_playback_options">Opções de reprodução</string>
@@ -2612,7 +2612,7 @@
     <string name="settings_desktop_current_version_detail">Compilação %1$s</string>
     <string name="settings_desktop_signed_in_as">Conectado como %1$s</string>
     <string name="profile_background_member_note">URLs personalizadas de plano de fundo podem ser configuradas pelo painel web do Nuvio.</string>
-    <string name="addons_delete_confirm_title">Eliminar addon?</string>
+    <string name="addons_delete_confirm_title">Excluir addon?</string>
     <string name="collections_copy_json_error">Os dados da coleção são demasiado grandes para a área de transferência deste dispositivo.</string>
     <string name="collections_editor_tmdb_genres_movie_placeholder">28,12</string>
     <string name="collections_editor_tmdb_genres_series_placeholder">18,35</string>
@@ -2660,7 +2660,7 @@
     <string name="compose_settings_root_streams_description">Apresentação dos resultados de streams e regras dos URLs de emblemas.</string>
     <string name="settings_advanced_section_startup">INICIALIZAÇÃO</string>
     <string name="settings_advanced_section_cache">CACHE</string>
-    <string name="settings_advanced_clear_cw_cache_subtitle">Remova os dados em cache do Continuar a Ver e atualiza o progresso de visualização.</string>
+    <string name="settings_advanced_clear_cw_cache_subtitle">Remova os dados em cache de Continuar assistindo e atualize o progresso de visualização.</string>
     <string name="settings_advanced_clear_cw_cache_done">Cache limpa</string>
     <string name="settings_licenses_attributions_section_ui">BIBLIOTECAS DA INTERFACE</string>
     <string name="settings_licenses_attributions_haze_title">Haze 1.7.2</string>
@@ -2675,7 +2675,7 @@
     <string name="settings_licenses_attributions_mpv_body">Usado para reprodução na versão para computador.</string>
     <string name="settings_licenses_attributions_mpv_license">O código-fonte e os termos da licença estão disponíveis no repositório do mpv.</string>
     <string name="compose_tracking_list_picker_loading">Carregando listas…</string>
-    <string name="compose_tracking_list_picker_subtitle">Escolha onde guardar este título</string>
+    <string name="compose_tracking_list_picker_subtitle">Escolha onde salvar este título</string>
     <string name="action_support_nuvio">Apoiar o Nuvio</string>
     <string name="downloads_open_directory">Abrir pasta de downloads</string>
     <string name="downloads_open_directory_failed">Não foi possível abrir a pasta de downloads</string>
@@ -2701,7 +2701,7 @@
     <string name="settings_stream_badges_section">ESTILO FUSION</string>
     <string name="settings_stream_display_section">APRESENTAÇÃO</string>
     <string name="settings_stream_background_title">Fundo</string>
-    <string name="settings_stream_background_description">Escolha o fundo do tela de fontes.</string>
+    <string name="settings_stream_background_description">Escolha o plano de fundo da tela de fontes.</string>
     <string name="settings_stream_badge_import_failed">Falha ao importar etiquetas.</string>
     <string name="settings_stream_badge_enter_url">Insira um URL JSON de etiquetas.</string>
     <string name="settings_stream_badge_url_scheme_invalid">O URL das etiquetas tem de começar por http:// ou https://.</string>
@@ -2711,7 +2711,7 @@
     <string name="settings_meta_poster_transition">Transição do pôster</string>
     <string name="settings_meta_poster_transition_description">Amplia e desfoca os pôsteres ao abrir os detalhes.</string>
     <string name="settings_meta_background_mode_normal">Normal</string>
-    <string name="settings_meta_background_mode_normal_description">Use o fundo padrão da aplicativo.</string>
+    <string name="settings_meta_background_mode_normal_description">Use o plano de fundo padrão do aplicativo.</string>
     <string name="settings_meta_background_mode_cinematic">Cinematográfico</string>
     <string name="settings_meta_background_mode_cinematic_description">Mostre um fundo suavemente desfocado atrás da página.</string>
     <string name="settings_meta_background_mode_dominant">Cor dominante</string>
@@ -2719,7 +2719,7 @@
     <string name="settings_meta_hero_trailer_playback">Reprodução do trailer em destaque</string>
     <string name="settings_meta_hero_trailer_playback_description">Reproduz prévias de trailers no destaque dos metadados quando houver um trailer disponível.</string>
     <string name="community_view_supporter_membership">Ver assinatura de apoio</string>
-    <string name="community_membership_you_are">És um</string>
+    <string name="community_membership_you_are">Você é um</string>
     <string name="community_membership_thank_you">Obrigado.</string>
     <string name="community_membership_refresh">Atualizar</string>
     <string name="community_membership_refreshing">Atualizando</string>
@@ -2742,7 +2742,7 @@
     <string name="settings_playback_touch_gestures">Gestos táteis</string>
     <string name="settings_playback_touch_gestures_description">Permite deslizar e tocar duas vezes na área do leitor para avançar/recuar, ajustar o brilho ou ajustar o volume.</string>
     <string name="settings_playback_preload_next_episode">Pré-carregar fontes do episódio seguinte</string>
-    <string name="settings_playback_preload_next_episode_description">Começa a procurar fontes em segundo plano antes de aparecer o botão do episódio seguinte.</string>
+    <string name="settings_playback_preload_next_episode_description">Comece a buscar fontes em segundo plano antes de o botão do próximo episódio aparecer.</string>
     <string name="settings_playback_engine">Motor de reprodução</string>
     <string name="settings_playback_engine_auto_description">Use primeiro o ExoPlayer e recorre ao libmpv se a reprodução falhar.</string>
     <string name="settings_playback_engine_exoplayer_description">Use os decodificadores ExoPlayer e Android Media3.</string>
@@ -2759,7 +2759,7 @@
     <string name="settings_playback_subtitle_color_transparent">Transparente</string>
     <string name="settings_playback_subtitle_outline">Contorno</string>
     <string name="settings_playback_subtitle_outline_color">Cor do contorno</string>
-    <string name="settings_playback_subtitle_outline_description">Desenha um contorno à volta do texto das legendas.</string>
+    <string name="settings_playback_subtitle_outline_description">Desenhe um contorno ao redor do texto das legendas.</string>
     <string name="settings_playback_subtitle_show_preferred_only_description">Mostre apenas legendas que correspondam aos idiomas preferidos.</string>
     <string name="settings_playback_subtitle_size">Tamanho das legendas</string>
     <string name="settings_playback_subtitle_strip_sdh">Remover descrições SDH das legendas</string>
@@ -2774,7 +2774,7 @@
     <string name="settings_tmdb_personal_api_key">Chave API pessoal</string>
     <string name="settings_trakt_device_code_copied">Código copiado.</string>
     <string name="settings_trakt_device_finish_sign_in">Insira este código no Trakt</string>
-    <string name="settings_trakt_device_instructions">Abra a conexão e introduz o código para autorizares o Starlit. Este tela será atualizado automaticamente.</string>
+    <string name="settings_trakt_device_instructions">Abra o link e digite este código para autorizar o Starlit. Esta tela será atualizada automaticamente.</string>
     <string name="settings_trakt_open_activation">Abrir página de ativação do Trakt</string>
     <string name="settings_tracking_data_sources">Fontes</string>
     <string name="settings_tracking_features">PREFERÊNCIAS DE FONTES</string>
@@ -2811,14 +2811,14 @@
     <string name="settings_simkl_finish_sign_in">Concluir autorização da conexão</string>
     <string name="settings_simkl_pin_code_copied">Código copiado.</string>
     <string name="settings_simkl_pin_finish_sign_in">Insira este código no Simkl</string>
-    <string name="settings_simkl_pin_instructions">Abra o PIN do Simkl e introduz este código para autorizares o Starlit. Este tela será atualizado automaticamente.</string>
+    <string name="settings_simkl_pin_instructions">Abra a página do PIN do Simkl e digite este código para autorizar o Starlit. Esta tela será atualizada automaticamente.</string>
     <string name="settings_simkl_open_pin">Abrir PIN do Simkl</string>
     <string name="settings_simkl_open_login">Abrir início de sessão do Simkl</string>
     <string name="settings_simkl_visit">Visitar Simkl</string>
     <string name="settings_simkl_invalid_callback">O Simkl não aceitou a resposta de autenticação. Tente novamente.</string>
     <string name="settings_simkl_sign_in_failed">Não foi possível concluir o login do Simkl. Tente novamente.</string>
     <string name="settings_simkl_sync_now">Sincronizar agora</string>
-    <string name="settings_simkl_sync_info_description">O Starlit verifica o Simkl automaticamente, no máximo a cada %1$d minutos. As alterações feitas noutra aplicativo ou no site do Simkl podem demorar esse tempo a aparecer.</string>
+    <string name="settings_simkl_sync_info_description">O Starlit verifica o Simkl automaticamente, no máximo uma vez a cada %1$d minutos. As alterações feitas em outro aplicativo ou no site do Simkl podem levar esse tempo para aparecer.</string>
     <string name="settings_simkl_sync_info_activity">A cada atualização, o Starlit verifica primeiro se há mudanças no Simkl e baixa apenas os novos dados. Isso respeita as regras da API do Simkl, reduz o tráfego desnecessário e ajuda a manter o serviço estável.</string>
     <string name="settings_simkl_sync_info_manual">As alterações feitas no Starlit são enviadas imediatamente para o Simkl. Usa Sincronizar agora para verificares mais cedo as alterações remotas.</string>
     <string name="settings_simkl_sync_info_library_statuses">As séries nas listas Em pausa ou Abandonadas do Simkl são ocultadas de Continuar a ver enquanto permanecerem nessas listas.</string>
@@ -2854,7 +2854,7 @@
     <string name="updates_download_empty_body">Corpo da download vazio</string>
     <string name="updates_download_file_missing">O arquivo de atualização transferido está em falta.</string>
     <string name="player_engine_unavailable_rebuild">O mecanismo de reprodução MPV não está disponível. Recompile o aplicativo.</string>
-    <string name="trakt_authorization_expired_reconnect">A autorização do Trakt deixou de ser válida. Volta a ligar sua conta Trakt.</string>
+    <string name="trakt_authorization_expired_reconnect">Sua autorização do Trakt não é mais válida. Conecte sua conta do Trakt novamente.</string>
     <string name="trakt_connected">Ligado ao Trakt</string>
     <string name="trakt_device_authorization_expired">A autorização do Trakt expirou. Tente novamente.</string>
     <string name="trakt_device_authorization_failed">Não foi possível iniciar a autorização de dispositivo do Trakt.</string>
@@ -2932,7 +2932,7 @@
     <string name="player_video_settings_deband">Redução de banding</string>
     <string name="player_video_settings_deband_desc">Reduz o banding de cor com um pequeno custo de desempenho.</string>
     <string name="player_video_settings_interpolation">Interpolação de fotogramas</string>
-    <string name="player_video_settings_interpolation_desc">Suaviza o movimento quando o mpv consegue utilizar corretamente a sincronização do tela.</string>
+    <string name="player_video_settings_interpolation_desc">Suaviza os movimentos quando o mpv consegue usar corretamente a sincronização da tela.</string>
     <string name="player_video_settings_brightness">Brilho</string>
     <string name="player_video_settings_contrast">Contraste</string>
     <string name="player_video_settings_saturation">Saturação</string>
@@ -2950,8 +2950,8 @@
     <string name="settings_playback_ios_hardware_decoder">Descodificador por hardware</string>
     <string name="settings_playback_ios_extended_dynamic_range">Gama dinâmica alargada</string>
     <string name="settings_playback_ios_extended_dynamic_range_desc">Modo de saída Metal padrão para novas sessões de reprodução.</string>
-    <string name="settings_playback_ios_display_color_hint">Sugestão de cor do tela</string>
-    <string name="settings_playback_ios_display_color_hint_desc">Permite que o mpv use por configuração padrão o espaço de cor do tela ativo.</string>
+    <string name="settings_playback_ios_display_color_hint">Sugestão de cor da tela</string>
+    <string name="settings_playback_ios_display_color_hint_desc">Permite que o mpv use o espaço de cor da tela ativa por padrão.</string>
     <string name="settings_playback_ios_target_primaries">Primárias de destino</string>
     <string name="settings_playback_ios_target_transfer">Transferência de destino</string>
     <string name="settings_playback_ios_audio_output_section">SAÍDA DE ÁUDIO DO iOS</string>
@@ -3046,7 +3046,7 @@
     <string name="plugins_button_installing">A instalar…</string>
     <string name="plugins_button_test_provider">Testar fornecedor</string>
     <string name="plugins_button_testing">A testar…</string>
-    <string name="plugins_cd_delete_repo">Eliminar repositório de plugins</string>
+    <string name="plugins_cd_delete_repo">Excluir repositório de plugins</string>
     <string name="plugins_cd_refresh_repo">Atualizar repositório de plugins</string>
     <string name="plugins_empty_providers">Ainda não existem fornecedores disponíveis.</string>
     <string name="plugins_empty_repos_subtitle">Adicione o URL de um repositório para instalares plugins de fornecedores de streams.</string>
@@ -3155,7 +3155,7 @@
     <string name="addons_backup_json">JSON da backup dos addons</string>
     <string name="addons_backup_invalid">Esta backup de addons não é válida. Nenhum addon foi alterado.</string>
     <string name="addons_backup_version">Esta versão do backup não é compatível. Atualize o aplicativo e tente novamente.</string>
-    <string name="addons_backup_too_large">A backup é demasiado grande. Escolhe um arquivo com menos de 1 MB.</string>
+    <string name="addons_backup_too_large">O backup é muito grande. Escolha um arquivo com menos de 1 MB.</string>
     <string name="addons_backup_profile_changed">O perfil mudou durante a seleção da backup. Reinicia a importação.</string>
     <string name="addons_backup_file_error">Não foi possível ler nem salvar o backup. Confira o arquivo e tente novamente.</string>
     <string name="addons_backup_imported">Importados %1$d addons. Ignorados %2$d duplicados. Os addons ativados serão atualizados em segundo plano.</string>
@@ -3255,9 +3255,9 @@
     <string name="streams_searching">a pesquisar…</string>
     <string name="streams_episode_label">Temporada %1$d · Episódio %2$d</string>
     <string name="watch_later">Ver mais tarde</string>
-    <string name="watch_later_save_named">Guardar %1$s em Ver mais tarde</string>
+    <string name="watch_later_save_named">Salvar %1$s em Assistir mais tarde</string>
     <string name="watch_later_remove_named">Remover %1$s de Ver mais tarde</string>
-    <string name="watch_later_save">Guardar em Ver mais tarde</string>
+    <string name="watch_later_save">Salvar em Assistir mais tarde</string>
     <string name="watch_later_remove">Remover de Ver mais tarde</string>
     <string name="watch_later_saved">Guardado em Ver mais tarde</string>
     <string name="watch_later_tip">Dica: clica com o botão do meio num episódio ou pôster para o guardares aqui. Clica com o botão direito num cartão para veres os detalhes.</string>
@@ -3274,11 +3274,11 @@
     <string name="collections_desktop_pinned_count">%1$d fixadas</string>
     <string name="collections_desktop_no_folders">Ainda não existem pastas</string>
     <string name="collections_desktop_more_folders">+%1$d</string>
-    <string name="collections_desktop_empty_message">Crie uma coleção, adiciona pastas e escolhe os catálogos de cada uma. Será apresentada no Início numa linha própria.</string>
+    <string name="collections_desktop_empty_message">Crie uma coleção, adicione pastas e escolha os catálogos de cada uma. Ela aparecerá em uma linha própria na tela inicial.</string>
     <string name="addons_desktop_stat_installed">Instalados</string>
     <string name="addons_desktop_install_title">Instalar addon</string>
     <string name="addons_desktop_install_placeholder">Cola um URL de manifesto, por exemplo https://…/manifest.json</string>
-    <string name="addons_desktop_install_hint">O Starlit verifica o manifesto antes de o adicionar.</string>
+    <string name="addons_desktop_install_hint">O Starlit verifica o manifesto antes de adicioná-lo.</string>
     <string name="addons_desktop_install_action">Instalar</string>
     <string name="addons_desktop_installed_title">Instalados</string>
     <string name="addons_desktop_order_hint">O Starlit consulta os addons por esta ordem.</string>
@@ -3292,8 +3292,8 @@
     <string name="library_desktop_all">Tudo</string>
     <string name="library_desktop_layout_rows">Linhas</string>
     <string name="library_desktop_layout_grid">Grade</string>
-    <string name="settings_mdb_ratings_credentials_required">Liga o MDBList em Acompanhamento ou introduz uma chave API para obteres classificações.</string>
-    <string name="settings_mdb_ratings_key_override_description">Uma chave API substitui a conta ligada para obter classificações. Limpa a chave e guarda para voltares a usar a conta ligada.</string>
+    <string name="settings_mdb_ratings_credentials_required">Conecte o MDBList em Acompanhamento ou insira uma chave de API para buscar avaliações.</string>
+    <string name="settings_mdb_ratings_key_override_description">Uma chave de API substitui sua conta conectada para consultar avaliações. Limpe a chave e salve para voltar a usar a conta conectada.</string>
     <string name="settings_mdb_ratings_connected_account">A utilizar a conta ligada</string>
     <string name="tracking_source_mdblist">MDBList</string>
     <string name="settings_mdblist_library_description">Lista para ver e listas estáticas de filmes e séries.</string>
@@ -3315,7 +3315,7 @@
     <string name="library_list_private">Privada</string>
     <string name="library_list_public">Pública</string>
     <string name="library_list_delete_message">Isto remove «%1$s» e todos os seus elementos do MDBList.</string>
-    <string name="library_list_delete_action">Eliminar</string>
+    <string name="library_list_delete_action">Excluir</string>
     <string name="settings_mdblist_disconnect_description">Deixa de enviar atualizações de visualização deste perfil. Seu histórico do MDBList é mantido.</string>
     <string name="settings_mdblist_account_fallback">Usuário do MDBList</string>
     <string name="library_create_list_action">Criar</string>
@@ -3325,7 +3325,7 @@
     <string name="library_list_public_description">Qualquer pessoa pode ver esta lista.</string>
     <string name="changelog_title">Registo de alterações</string>
     <string name="changelog_description">Novidades desta versão e de versões anteriores. Disponível sem conexão à Internet.</string>
-    <string name="changelog_subtitle">Novidades · Seleciona uma versão para expandires as alterações</string>
+    <string name="changelog_subtitle">Novidades · Selecione uma versão para expandir as alterações</string>
     <string name="changelog_installed">Instalado</string>
     <string name="changelog_available">Atualização disponível</string>
     <string name="changelog_expanded">Expandido</string>
