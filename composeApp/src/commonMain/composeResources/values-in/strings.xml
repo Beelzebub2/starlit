@@ -321,6 +321,11 @@
     <string name="compose_nav_search">Pencarian</string>
     <string name="compose_nav_settings">Pengaturan</string>
     <string name="compose_player_audio_tracks">Trek Audio</string>
+    <string name="player_tracks_title">Audio dan subtitel</string>
+    <string name="player_track_badge_sdh">SDH</string>
+    <string name="player_track_badge_commentary">Komentar</string>
+    <string name="player_track_badge_original">Asli</string>
+    <string name="player_track_badge_description">Deskripsi audio</string>
     <string name="compose_player_audio">Audio</string>
     <string name="compose_player_auto_sync">Sinkronisasi Otomatis</string>
     <string name="compose_player_bold">Tebal</string>

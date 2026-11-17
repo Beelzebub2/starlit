@@ -2921,6 +2921,7 @@
     <string name="home.removeContinueWatching">தொடர்ந்து பார்க்கும் பட்டியலிலிருந்து நீக்கு</string>
     <string name="player.track.audioDescription">ஒலி விளக்கம்</string>
     <string name="player.track.commentary">விளக்கவுரை</string>
+    <string name="player.track.original">அசல்</string>
     <string name="player.track.stereo">ஸ்டீரியோ</string>
     <string name="player.track.surround">சுற்றப்பு</string>
     <string name="sidebar.profileFallback">சுயவிவரம்</string>

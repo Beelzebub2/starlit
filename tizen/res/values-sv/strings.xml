@@ -2922,6 +2922,7 @@
     <string name="home.removeContinueWatching">Ta bort från ”Fortsätt titta”</string>
     <string name="player.track.audioDescription">Ljudbeskrivning</string>
     <string name="player.track.commentary">Kommentar</string>
+    <string name="player.track.original">Original</string>
     <string name="player.track.stereo">Stereo</string>
     <string name="player.track.surround">Surround</string>
     <string name="sidebar.profileFallback">Profil</string>

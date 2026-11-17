@@ -504,6 +504,11 @@
     <string name="compose_nav_settings">Inställningar</string>
     <string name="compose_nav_search">Sök</string>
     <string name="compose_player_audio_tracks">Ljudspår</string>
+    <string name="player_tracks_title">Ljud och undertexter</string>
+    <string name="player_track_badge_sdh">SDH</string>
+    <string name="player_track_badge_commentary">Kommentar</string>
+    <string name="player_track_badge_original">Original</string>
+    <string name="player_track_badge_description">Syntolkning</string>
     <string name="compose_player_audio">Ljud</string>
     <string name="compose_player_auto_sync">Autosynk</string>
     <string name="compose_player_bold">Fet</string>

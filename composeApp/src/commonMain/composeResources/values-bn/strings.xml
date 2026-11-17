@@ -424,6 +424,11 @@
     <string name="compose_nav_profile">প্রোফাইল</string>
     <string name="compose_nav_search">সার্চ</string>
     <string name="compose_player_audio_tracks">অডিও ট্র্যাক</string>
+    <string name="player_tracks_title">অডিও ও সাবটাইটেল</string>
+    <string name="player_track_badge_sdh">SDH</string>
+    <string name="player_track_badge_commentary">ধারাভাষ্য</string>
+    <string name="player_track_badge_original">মূল</string>
+    <string name="player_track_badge_description">অডিও বর্ণনা</string>
     <string name="compose_player_audio">অডিও</string>
     <string name="compose_player_auto_sync">স্বয়ংক্রিয় সিঙ্ক</string>
     <string name="compose_player_bold">বোল্ড</string>

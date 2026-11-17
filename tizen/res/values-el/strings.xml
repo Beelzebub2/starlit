@@ -3165,6 +3165,7 @@
     <string name="home.removeContinueWatching">Κατάργηση από τη λίστα «Συνέχεια παρακολούθησης»</string>
     <string name="player.track.audioDescription">Ηχητική περιγραφή</string>
     <string name="player.track.commentary">Σχόλιο</string>
+    <string name="player.track.original">Πρωτότυπο</string>
     <string name="player.track.stereo">Στερεοφωνικό</string>
     <string name="player.track.surround">Surround</string>
     <string name="sidebar.profileFallback">Προφίλ</string>

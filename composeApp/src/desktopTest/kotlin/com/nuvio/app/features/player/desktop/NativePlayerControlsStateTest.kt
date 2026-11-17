@@ -24,6 +24,15 @@ class NativePlayerControlsStateTest {
         assertFalse(json.getValue("rtxSuperResolutionActive").jsonPrimitive.boolean)
     }
 
+    @Test fun `track panel labels reach the desktop chrome`() {
+        val state = PlayerControlsState(tracksPanelTitle = "Audio & subtitles", trackBadgeSdhLabel = "SDH")
+        val json = Json.parseToJsonElement(state.toControlsJson()).jsonObject
+        assertEquals("Audio & subtitles", json.getValue("tracksPanelTitle").jsonPrimitive.content)
+        assertEquals("Audio", json.getValue("audioSectionLabel").jsonPrimitive.content)
+        assertEquals("SDH", json.getValue("trackBadgeSdhLabel").jsonPrimitive.content)
+        assertEquals("Audio description", json.getValue("trackBadgeDescriptionLabel").jsonPrimitive.content)
+    }
+
     @Test fun `buffer dimensions and skip chapters serialize with values`() {
         val state = PlayerControlsState(
             bufferedPositionMs = 38_500L,

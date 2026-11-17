@@ -187,6 +187,11 @@
     <string name="compose_nav_search">חיפוש</string>
     <string name="compose_nav_settings">הגדרות</string>
     <string name="compose_player_audio_tracks">רצועות שמע</string>
+    <string name="player_tracks_title">שמע וכתוביות</string>
+    <string name="player_track_badge_sdh">SDH</string>
+    <string name="player_track_badge_commentary">פרשנות</string>
+    <string name="player_track_badge_original">מקורי</string>
+    <string name="player_track_badge_description">תיאור קולי</string>
     <string name="compose_player_audio">אודיו</string>
     <string name="compose_player_auto_sync">סנכרון אוטומטי</string>
     <string name="compose_player_bold">מודגש</string>

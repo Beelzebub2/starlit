@@ -2462,6 +2462,7 @@
     <string name="home.removeContinueWatching">Supprimer de « Continuer le visionnage »</string>
     <string name="player.track.audioDescription">Description audio</string>
     <string name="player.track.commentary">Commentaire</string>
+    <string name="player.track.original">Original</string>
     <string name="player.track.stereo">Stéréo</string>
     <string name="player.track.surround">Son surround</string>
     <string name="sidebar.profileFallback">Profil</string>

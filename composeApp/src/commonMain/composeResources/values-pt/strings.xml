@@ -445,6 +445,11 @@
     <string name="compose_nav_search">Pesquisar</string>
     <string name="compose_nav_settings">Definições</string>
     <string name="compose_player_audio_tracks">Faixas de áudio</string>
+    <string name="player_tracks_title">Áudio e legendas</string>
+    <string name="player_track_badge_sdh">SDH</string>
+    <string name="player_track_badge_commentary">Comentários</string>
+    <string name="player_track_badge_original">Original</string>
+    <string name="player_track_badge_description">Audiodescrição</string>
     <string name="compose_player_audio">Áudio</string>
     <string name="compose_player_auto_sync">Sincronização automática</string>
     <string name="compose_player_bold">Negrito</string>

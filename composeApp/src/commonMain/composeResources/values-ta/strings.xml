@@ -507,6 +507,11 @@
     <string name="compose_nav_settings">அமைப்புகள்</string>
     <string name="compose_nav_search">தேடல்</string>
     <string name="compose_player_audio_tracks">ஆடியோ டிராக்குகள்</string>
+    <string name="player_tracks_title">ஆடியோ மற்றும் வசனங்கள்</string>
+    <string name="player_track_badge_sdh">SDH</string>
+    <string name="player_track_badge_commentary">வர்ணனை</string>
+    <string name="player_track_badge_original">அசல்</string>
+    <string name="player_track_badge_description">ஒலி விவரிப்பு</string>
     <string name="compose_player_audio">ஆடியோ</string>
     <string name="compose_player_auto_sync">தானியங்கு ஒத்திசைவு</string>
     <string name="compose_player_bold">தடித்த</string>

@@ -1029,6 +1029,7 @@
     <string name="home.removeContinueWatching">Eliminar de «Seguir viendo»</string>
     <string name="player.track.audioDescription">Descripción de audio</string>
     <string name="player.track.commentary">Comentario</string>
+    <string name="player.track.original">Original</string>
     <string name="player.track.stereo">Estéreo</string>
     <string name="player.track.surround">Sonido envolvente</string>
     <string name="sidebar.profileFallback">Perfil</string>

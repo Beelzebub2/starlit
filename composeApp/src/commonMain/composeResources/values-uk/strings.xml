@@ -508,6 +508,11 @@
     <string name="compose_nav_settings">Налаштування</string>
     <string name="compose_nav_search">Пошук</string>
     <string name="compose_player_audio_tracks">Аудіодоріжки</string>
+    <string name="player_tracks_title">Аудіо та субтитри</string>
+    <string name="player_track_badge_sdh">SDH</string>
+    <string name="player_track_badge_commentary">Коментар</string>
+    <string name="player_track_badge_original">Оригінал</string>
+    <string name="player_track_badge_description">Аудіоопис</string>
     <string name="compose_player_audio">Аудіо</string>
     <string name="compose_player_auto_sync">Автоматична синхронізація</string>
     <string name="compose_player_bold">Жирний</string>

@@ -506,6 +506,11 @@
     <string name="compose_nav_settings">تنظیمات</string>
     <string name="compose_nav_search">جستجو</string>
     <string name="compose_player_audio_tracks">آهنگ های صوتی</string>
+    <string name="player_tracks_title">صدا و زیرنویس</string>
+    <string name="player_track_badge_sdh">SDH</string>
+    <string name="player_track_badge_commentary">تفسیر</string>
+    <string name="player_track_badge_original">اصلی</string>
+    <string name="player_track_badge_description">توصیف صوتی</string>
     <string name="compose_player_audio">صوتی</string>
     <string name="compose_player_auto_sync">همگام‌سازی خودکار</string>
     <string name="compose_player_bold">پررنگ</string>

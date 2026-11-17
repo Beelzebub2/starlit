@@ -506,6 +506,11 @@
     <string name="compose_nav_settings">设置</string>
     <string name="compose_nav_search">搜索</string>
     <string name="compose_player_audio_tracks">音轨</string>
+    <string name="player_tracks_title">音频和字幕</string>
+    <string name="player_track_badge_sdh">SDH</string>
+    <string name="player_track_badge_commentary">评论音轨</string>
+    <string name="player_track_badge_original">原声</string>
+    <string name="player_track_badge_description">口述影像</string>
     <string name="compose_player_audio">音频</string>
     <string name="compose_player_auto_sync">自动同步</string>
     <string name="compose_player_bold">粗体</string>

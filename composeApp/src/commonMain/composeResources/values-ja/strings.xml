@@ -340,6 +340,11 @@
     <string name="compose_nav_search">検索</string>
     <string name="compose_nav_settings">設定</string>
     <string name="compose_player_audio_tracks">音声トラック</string>
+    <string name="player_tracks_title">音声と字幕</string>
+    <string name="player_track_badge_sdh">SDH</string>
+    <string name="player_track_badge_commentary">コメンタリー</string>
+    <string name="player_track_badge_original">オリジナル</string>
+    <string name="player_track_badge_description">音声解説</string>
     <string name="compose_player_audio">音声</string>
     <string name="compose_player_auto_sync">自動同期</string>
     <string name="compose_player_bold">太字</string>

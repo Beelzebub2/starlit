@@ -422,28 +422,48 @@
           </div>
         </div>
       </section>
-      <section class="modal-layer player-rail-modal" id="audioModal" aria-label="Audio tracks" hidden>
-        <div class="track-panel audio-rail-panel">
-          <div class="track-header" id="audioPanelTitle">Audio tracks</div>
-          <div class="track-list" id="audioTrackList"></div>
-        </div>
-      </section>
-      <section class="modal-layer player-side-modal subs-modal" id="subtitleModal" aria-label="Subtitles" hidden>
+      <section class="modal-layer player-side-modal subs-modal" id="subtitleModal" aria-labelledby="subtitlePanelTitle" hidden>
         <div class="track-panel player-side-panel subs-panel">
           <div class="track-header-row">
-            <div class="track-title" id="subtitlePanelTitle">Subtitles</div>
-            <button class="panel-button" id="subtitleCloseButton" type="button">Close</button>
+            <h2 class="track-title" id="subtitlePanelTitle">Audio &amp; subtitles</h2>
+            <button class="panel-icon-button" id="subtitleCloseButton" type="button" aria-label="Close"><svg aria-hidden="true"><use href="#icon-close"></use></svg></button>
           </div>
-          <div class="subs-tabs" role="tablist" aria-label="Subtitle settings">
+          <div class="subs-tabs" role="tablist" aria-label="Audio and subtitle settings">
             <button class="subs-tab" id="subtitleTabTracks" data-subs-tab="tracks" role="tab" type="button">Tracks</button>
             <button class="subs-tab" id="subtitleTabStyle" data-subs-tab="style" role="tab" type="button">Style</button>
             <button class="subs-tab" id="subtitleTabTiming" data-subs-tab="timing" role="tab" type="button">Timing</button>
           </div>
-          <div class="subs-view" id="subtitleTracksView" role="tabpanel">
-            <div class="subs-options" id="subtitleOffList"></div>
-            <div class="subs-section-label" id="subtitleLanguageRailTitle">Languages</div>
-            <div class="subs-chips" id="subtitleTrackList"></div>
-            <div class="subs-options" id="addonSubtitleList"></div>
+          <div class="subs-view tracks-view" id="subtitleTracksView" role="tabpanel">
+            <div class="tracks-columns">
+              <section class="tracks-column tracks-audio" aria-labelledby="audioPanelTitle">
+                <div class="tracks-column-head">
+                  <h3 class="tracks-column-title" id="audioPanelTitle">Audio</h3>
+                  <span class="tracks-column-count" id="audioTrackCount"></span>
+                </div>
+                <div class="subs-options tracks-scroll" id="audioTrackList" role="radiogroup" aria-labelledby="audioPanelTitle"></div>
+              </section>
+              <div class="tracks-divider" aria-hidden="true"></div>
+              <section class="tracks-column tracks-subtitles" aria-labelledby="subtitleColumnTitle">
+                <div class="tracks-column-head">
+                  <h3 class="tracks-column-title" id="subtitleColumnTitle">Subtitles</h3>
+                  <span class="tracks-column-count" id="subtitleTrackCount"></span>
+                </div>
+                <div class="tracks-scroll">
+                  <div class="subs-options" id="subtitleOffList" role="radiogroup" aria-labelledby="subtitleColumnTitle"></div>
+                  <div class="subs-section-label" id="subtitleLanguageRailTitle">Languages</div>
+                  <div class="subs-chips" id="subtitleTrackList" role="group" aria-labelledby="subtitleLanguageRailTitle"></div>
+                  <div class="subs-options" id="addonSubtitleList" role="radiogroup" aria-labelledby="subtitleColumnTitle"></div>
+                </div>
+                <div class="tracks-footer">
+                  <span class="tracks-footer-label" id="tracksSyncLabel">Subtitle Delay</span>
+                  <div class="tracks-sync">
+                    <button class="tracks-sync-step" id="tracksSyncMinus" type="button" aria-label="Show subtitles 0.1 seconds earlier">&minus;</button>
+                    <span class="tracks-sync-value" id="tracksSyncValue" aria-live="polite">0.0 s</span>
+                    <button class="tracks-sync-step" id="tracksSyncPlus" type="button" aria-label="Show subtitles 0.1 seconds later">+</button>
+                  </div>
+                </div>
+              </section>
+            </div>
           </div>
           <div class="subs-view" id="subtitleStyleView" role="tabpanel" hidden>
             <div class="subs-preview" id="subtitlePreview" aria-hidden="true">
@@ -632,6 +652,7 @@
   </div>
 
   <script src="diagnostics.js"></script>
+  <script src="track-labels.js"></script>
   <script src="controls.js"></script>
 </body>
 </html>

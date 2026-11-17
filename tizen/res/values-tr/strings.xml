@@ -2305,6 +2305,7 @@
     <string name="home.removeContinueWatching">"İzlemeye Devam Et"ten Kaldır</string>
     <string name="player.track.audioDescription">Sesli açıklama</string>
     <string name="player.track.commentary">Yorum</string>
+    <string name="player.track.original">Orijinal</string>
     <string name="player.track.stereo">Stereo</string>
     <string name="player.track.surround">Surround</string>
     <string name="sidebar.profileFallback">Profil</string>

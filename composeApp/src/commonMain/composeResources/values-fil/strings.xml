@@ -506,6 +506,11 @@ Ang</string>
     <string name="compose_nav_settings">Mga Setting</string>
     <string name="compose_nav_search">Hanapin</string>
     <string name="compose_player_audio_tracks">Mga Audio Track</string>
+    <string name="player_tracks_title">Audio at subtitle</string>
+    <string name="player_track_badge_sdh">SDH</string>
+    <string name="player_track_badge_commentary">Komentaryo</string>
+    <string name="player_track_badge_original">Orihinal</string>
+    <string name="player_track_badge_description">Paglalarawan sa audio</string>
     <string name="compose_player_audio">Audio</string>
     <string name="compose_player_auto_sync">Auto Sync</string>
     <string name="compose_player_bold">Matapang</string>

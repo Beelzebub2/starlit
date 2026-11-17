@@ -3103,6 +3103,7 @@
     <string name="home.removeContinueWatching">从“继续观看”中移除</string>
     <string name="player.track.audioDescription">音频描述</string>
     <string name="player.track.commentary">评注</string>
+    <string name="player.track.original">原声</string>
     <string name="player.track.stereo">立体声</string>
     <string name="player.track.surround">环绕声</string>
     <string name="sidebar.profileFallback">个人资料</string>

@@ -505,6 +505,11 @@
     <string name="compose_nav_settings">సెట్టింగ్‌లు</string>
     <string name="compose_nav_search">శోధన</string>
     <string name="compose_player_audio_tracks">ఆడియో ట్రాక్‌లు</string>
+    <string name="player_tracks_title">ఆడియో మరియు ఉపశీర్షికలు</string>
+    <string name="player_track_badge_sdh">SDH</string>
+    <string name="player_track_badge_commentary">వ్యాఖ్యానం</string>
+    <string name="player_track_badge_original">అసలు</string>
+    <string name="player_track_badge_description">ఆడియో వివరణ</string>
     <string name="compose_player_audio">ఆడియో</string>
     <string name="compose_player_auto_sync">స్వీయ సమకాలీకరణ</string>
     <string name="compose_player_bold">బోల్డ్</string>

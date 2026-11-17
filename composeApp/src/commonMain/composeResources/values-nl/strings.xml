@@ -419,6 +419,11 @@
     <string name="compose_nav_search">Zoeken</string>
     <string name="compose_nav_settings">Instellingen</string>
     <string name="compose_player_audio_tracks">Audiosporen</string>
+    <string name="player_tracks_title">Audio en ondertitels</string>
+    <string name="player_track_badge_sdh">SDH</string>
+    <string name="player_track_badge_commentary">Commentaar</string>
+    <string name="player_track_badge_original">Origineel</string>
+    <string name="player_track_badge_description">Audiodescriptie</string>
     <string name="compose_player_audio">Audio</string>
     <string name="compose_player_auto_sync">Automatische synchronisatie</string>
     <string name="compose_player_bold">Vet</string>

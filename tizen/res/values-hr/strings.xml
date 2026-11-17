@@ -2780,6 +2780,7 @@
     <string name="home.removeContinueWatching">Ukloni iz Nastavi gledati</string>
     <string name="player.track.audioDescription">Audio opis</string>
     <string name="player.track.commentary">Komentari</string>
+    <string name="player.track.original">Izvornik</string>
     <string name="player.track.stereo">Stereo</string>
     <string name="player.track.surround">Surround</string>
     <string name="sidebar.profileFallback">Profil</string>

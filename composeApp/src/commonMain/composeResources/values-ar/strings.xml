@@ -357,6 +357,11 @@
     <string name="compose_nav_search">بحث</string>
     <string name="compose_nav_settings">الإعدادات</string>
     <string name="compose_player_audio_tracks">المسارات الصوتية</string>
+    <string name="player_tracks_title">الصوت والترجمة</string>
+    <string name="player_track_badge_sdh">SDH</string>
+    <string name="player_track_badge_commentary">تعليق</string>
+    <string name="player_track_badge_original">أصلي</string>
+    <string name="player_track_badge_description">وصف صوتي</string>
     <string name="compose_player_audio">الصوت</string>
     <string name="compose_player_auto_sync">مزامنة تلقائية</string>
     <string name="compose_player_bold">عريض</string>
