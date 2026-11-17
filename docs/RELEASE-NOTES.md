@@ -1,3 +1,22 @@
+## Starlit 1.30.6
+
+### Playback and desktop Settings
+
+- **Accurate resume and intro skipping:** Use precise seek targets on desktop players, and preserve saved playback progress until the player confirms the intended resume position.
+- **Better Settings navigation:** Organize desktop Settings into clearer categories with an overview, targeted setting search and Ctrl+K/Cmd+K shortcuts.
+
+### Language coverage
+
+- **More complete localization:** Fill 23,284 historical missing Compose string entries, with full source-key and formatting-argument coverage across 38 Compose and 37 TV catalogs. Restore truncated Czech and Hebrew status messages.
+- **Portuguese TV labels:** Improve PT-PT and PT-BR settings terminology on Samsung TVs. Localization CI also supplies a review report for changed strings.
+
+### Compatibility and release scope
+
+- This update retains existing account, profile, library, add-on, download and device-pairing formats; no client data migration or backend deployment is included.
+- Newly filled historical catalogs contain machine-drafted translations. Native-language terminology review and representative long-label/right-to-left screen validation are still outstanding; automated key parity and green builds are not linguistic acceptance.
+- Stable Windows, signed Android phone and Android TV, and Linux packages are published only after release build, signing, smoke-test, checksum and provenance checks pass. Samsung Tizen, LG webOS and the Windows TV Installer remain separate, matching-version developer previews under `tv-preview-v1.30.6`, pending physical-device and dependency-security acceptance.
+- No iOS App Store publication is included.
+
 ## Starlit 1.30.5
 
 ### Profile PIN protection and avatar choices
