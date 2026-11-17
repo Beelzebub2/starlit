@@ -2847,7 +2847,7 @@
     <string name="home_airing_first_run_title">Zobrazit vysílání právě na domovské stránce?</string>
     <string name="layout_episode_ratings">Hodnocení epizod</string>
     <string name="layout_episode_ratings_sub">Vyberte, která hodnocení epizod budou viditelná.</string>
-    <string name="layout_overall_ratings_sub_on">a TMDB.</string>
+    <string name="layout_overall_ratings_sub_on">Zobrazují se standardní hodnocení a hodnocení TMDB.</string>
     <string name="layout_random_episode_sub">Náhodné přehrávání epizod z libovolné série. Vypnutím se pozastaví náhodné přehrávání.</string>
     <string name="layout_ratings_hide">Skrýt</string>
     <string name="layout_ratings_hide_unwatched">Skrýt Nesledováno</string>

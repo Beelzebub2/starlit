@@ -50,6 +50,8 @@ def review_rows(product: str, locale: str, source: dict[str, str],
             flags.append("english_identical")
         if 5 <= len(english) <= 45 and len(translated) > max(35, len(english) * 2.1):
             flags.append("possible_ui_overflow")
+        if len(english) >= 20 and len(translated) <= 12 and len(translated) < len(english) * 0.23:
+            flags.append("possible_truncation")
         rtl_range = {
             "ar": r"[\u0600-\u06FF]",
             "he": r"[\u0590-\u05FF]",

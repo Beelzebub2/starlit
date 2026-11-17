@@ -64,13 +64,18 @@ REVIEWED_OVERRIDES = {
             "Starlit, TVmaze-এর সঙ্গে সংশ্লিষ্ট নয় এবং TVmaze এটি অনুমোদনও করে না।"
         ),
     },
-    "cs": {"player_auto_next_episode_toggle": "Automaticky další epizoda"},
+    "cs": {
+        "player_auto_next_episode_toggle": "Automaticky další epizoda",
+        "layout_overall_ratings_sub_on": "Zobrazují se standardní hodnocení a hodnocení TMDB.",
+    },
     "de": {
         "collections_editor_tmdb_person_title_format": "TMDB-Person %1$s",
         "tmdb_sources_person_fallback_title": "TMDB-Person %1$d",
     },
     "fr": {"watch_later_series": "Séries"},
     "he": {
+        "trakt_error_authorization_expired": "פג תוקף ההרשאה של Trakt",
+        "trakt_error_list_limit_reached": "הגעת למגבלת הרשימות ב-Trakt",
         "p2p_consent_body": (
             "השידור הזה משתמש בטכנולוגיית עמית לעמית (P2P). בהפעלת P2P אתם מאשרים ומסכימים כי:"
             r"\n\n" "• כתובת ה-IP שלכם תהיה גלויה למשתמשים אחרים ברשת"

@@ -25,6 +25,24 @@ class ReviewReportTest(unittest.TestCase):
         self.assertIn("rtl_script_missing", rows[0][6])
         self.assertEqual(rows[0][2], "added")
 
+    def test_short_translations_are_flagged_for_human_review(self):
+        source = {"message": "Authorization expired for Trakt"}
+        rows = review_rows("compose", "he", source, {"message": "Trakt"}, {})
+        self.assertIn("possible_truncation", rows[0][6])
+
+    def test_critical_translations_do_not_lose_error_meaning(self):
+        from scripts.complete_existing_locales import REVIEWED_OVERRIDES, locale_entries
+        keys = {
+            "he": ("trakt_error_authorization_expired", "trakt_error_list_limit_reached"),
+            "cs": ("layout_overall_ratings_sub_on",),
+        }
+        for locale, names in keys.items():
+            current = locale_entries(locale)
+            for key in names:
+                with self.subTest(locale=locale, key=key):
+                    self.assertEqual(current[key], REVIEWED_OVERRIDES[locale][key])
+                    self.assertGreater(len(current[key]), 15)
+
     def test_csv_preserves_unicode_and_neutralizes_formulas(self):
         with tempfile.TemporaryDirectory() as temporary:
             destination = Path(temporary) / "reviews.csv"

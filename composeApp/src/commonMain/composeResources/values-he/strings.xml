@@ -3215,8 +3215,8 @@
     <string name="trakt_disconnected">מנותק מ-Trakt</string>
     <string name="trakt_disconnected_status">מנותק מ-Trakt</string>
     <string name="trakt_error_add_list_failed">הוספה לרשימה Trakt נכשלה</string>
-    <string name="trakt_error_authorization_expired">Trakt</string>
-    <string name="trakt_error_list_limit_reached">Trakt</string>
+    <string name="trakt_error_authorization_expired">פג תוקף ההרשאה של Trakt</string>
+    <string name="trakt_error_list_limit_reached">הגעת למגבלת הרשימות ב-Trakt</string>
     <string name="trakt_error_list_not_found">רשימה Trakt לא נמצאה</string>
     <string name="trakt_error_request_failed">Trakt נכשלה</string>
     <string name="trakt_invalid_callback">התקשרות חזרה לא חוקית Trakt</string>
