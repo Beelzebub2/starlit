@@ -3140,4 +3140,7 @@
     <string name="profile_kids_content_filter">Kids content filter</string>
     <string name="profile_kids_content_filter_description">Hide horror, violence and mature titles when metadata is available. This is not a parental lock.</string>
     <string name="profile_kids_content_blocked">This title is hidden by the Kids content filter.</string>
+    <string name="mal_rewatch_count">Rewatches: %1$d</string>
+    <string name="mal_rewatch_finish">Finish rewatch</string>
+    <string name="mal_rewatch_in_progress">Rewatching</string>
 </resources>

@@ -3380,4 +3380,7 @@
     <string name="settings_mdblist_library_description">Список просмотра и статические списки фильмов и шоу.</string>
     <string name="settings_stream_background_title">Предыстория</string>
     <string name="trailer_exit_fullscreen">Выход из полноэкранного режима</string>
+    <string name="mal_rewatch_count">Повторных просмотров: %1$d</string>
+    <string name="mal_rewatch_finish">Завершить повторный просмотр</string>
+    <string name="mal_rewatch_in_progress">Смотрю повторно</string>
 </resources>

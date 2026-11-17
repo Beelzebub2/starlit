@@ -3343,4 +3343,7 @@
     <string name="settings_mdblist_progress_description">سجل المشاهدة واستئناف التقدم والمتابعة التالية من MDBList.</string>
     <string name="settings_stream_background_title">الخلفية</string>
     <string name="trailer_exit_fullscreen">الخروج من وضع ملء الشاشة</string>
+    <string name="mal_rewatch_count">مرات إعادة المشاهدة: %1$d</string>
+    <string name="mal_rewatch_finish">إنهاء إعادة المشاهدة</string>
+    <string name="mal_rewatch_in_progress">جارٍ إعادة المشاهدة</string>
 </resources>

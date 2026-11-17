@@ -48,8 +48,13 @@ internal actual suspend fun markMyAnimeListRewatchOnPlayback(
     playbackProfileId: Int,
     positionMs: Long,
     durationMs: Long,
+    seasonNumber: Int?,
+    episodeNumber: Int?,
+    completionReached: Boolean,
 ): Boolean {
-    return MyAnimeListRepository.markRewatchingIfCompleted(meta, playbackProfileId, positionMs, durationMs)
+    return MyAnimeListRepository.markRewatchingIfCompleted(
+        meta, playbackProfileId, positionMs, durationMs, seasonNumber, episodeNumber, completionReached,
+    )
 }
 
 @Composable internal actual fun MyAnimeListSettingsCard() {
@@ -148,6 +153,19 @@ internal actual suspend fun markMyAnimeListRewatchOnPlayback(
             finally { busy = false }
         }
     }
+    fun finishRewatch() {
+        val id = malId ?: return
+        if (busy || connection.busy) return
+        scope.launch {
+            busy = true; error = null
+            try {
+                status = MyAnimeListRepository.finishRewatch(id)
+                NuvioToastController.show("MyAnimeList updated")
+            } catch (e: CancellationException) { throw e }
+            catch (e: Exception) { error = e.message }
+            finally { busy = false }
+        }
+    }
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             if (!connection.connected) NuvioCompactActionButton(
@@ -187,12 +205,23 @@ internal actual suspend fun markMyAnimeListRewatchOnPlayback(
                 if (status?.status == MalStatus.COMPLETED) {
                     val rewatching = status?.isRewatching == true
                     NuvioCompactActionButton(
-                        label = if (rewatching) "Rewatching · On" else "Mark rewatching",
+                        label = if (rewatching) stringResource(Res.string.mal_rewatch_in_progress) else "Mark rewatching",
                         icon = Icons.Default.Replay,
                         enabled = !busy && !connection.busy,
                         onClick = { update(isRewatching = !rewatching) },
                     )
+                    if (rewatching) NuvioCompactActionButton(
+                        label = stringResource(Res.string.mal_rewatch_finish),
+                        icon = Icons.Default.Replay,
+                        enabled = !busy && !connection.busy,
+                        onClick = ::finishRewatch,
+                    )
                 }
+                status?.let { Text(
+                    stringResource(Res.string.mal_rewatch_count, it.numTimesRewatched),
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(top = 9.dp),
+                ) }
             }
         }
         if (busy) LinearProgressIndicator(Modifier.width(220.dp))

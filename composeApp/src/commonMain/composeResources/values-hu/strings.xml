@@ -3345,4 +3345,7 @@
     <string name="community_membership_tier_supporter_plus">Supporter Plus</string>
     <string name="settings_advanced_discord_rich_presence">Discord Rich Presence</string>
     <string name="theme_arctic_blue">Sarkvidéki kék</string>
+    <string name="mal_rewatch_count">Újranézések: %1$d</string>
+    <string name="mal_rewatch_finish">Újranézés befejezése</string>
+    <string name="mal_rewatch_in_progress">Újranézés alatt</string>
 </resources>

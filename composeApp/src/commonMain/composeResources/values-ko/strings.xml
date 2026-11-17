@@ -3331,4 +3331,7 @@
     <string name="settings_playback_tab_video">동영상</string>
     <string name="settings_playback_tab_video_p2p">동영상 및 P2P</string>
     <string name="settings_desktop_subtitle_language">자막 언어</string>
+    <string name="mal_rewatch_count">재시청 횟수: %1$d</string>
+    <string name="mal_rewatch_finish">재시청 완료</string>
+    <string name="mal_rewatch_in_progress">재시청 중</string>
 </resources>

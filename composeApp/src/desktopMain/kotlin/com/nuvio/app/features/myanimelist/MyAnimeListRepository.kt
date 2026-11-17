@@ -79,6 +79,7 @@ internal object MyAnimeListRepository {
         val profile = ProfileRepository.activeProfileId
         clearState()
         store.remove("tokens_$profile"); store.remove("username_$profile"); store.remove("sync_owner_$profile")
+        store.remove("rewatch_epoch_$profile")
         ensureLoaded()
     }
 
@@ -163,6 +164,11 @@ internal object MyAnimeListRepository {
             save = { encrypted ->
                 store.putString("tokens_$profile", encrypted)
                 session = tokens
+                if (finishConnect) {
+                    // A freshly connected MAL account must not inherit partial progress from
+                    // a different account previously linked to this Starlit profile.
+                    store.putString("rewatch_epoch_$profile", java.util.UUID.randomUUID().toString())
+                }
                 if (finishConnect) mutableState.value = mutableState.value.copy(
                     connected = true, username = tokens.username, busy = false, connecting = false)
             })
@@ -227,10 +233,16 @@ internal object MyAnimeListRepository {
     suspend fun listStatus(id: Int) = authorized { client.listStatus(id, it) }
     suspend fun update(
         id: Int, status: MalStatus? = null, score: Int? = null, isRewatching: Boolean? = null,
-        watchedEpisodes: Int? = null,
-    ) = authorized { client.update(id, it, status, score, isRewatching, watchedEpisodes) }
+        watchedEpisodes: Int? = null, numTimesRewatched: Int? = null,
+    ) = authorized { token ->
+        val updated = client.update(id, token, status, score, isRewatching, watchedEpisodes, numTimesRewatched)
+        if (isRewatching != null || numTimesRewatched != null) {
+            store.remove(rewatchProgressKey(ProfileRepository.activeProfileId, id))
+        }
+        updated
+    }
     suspend fun update(id: Int, patch: MalListPatch) =
-        update(id, patch.status, patch.score, patch.isRewatching, patch.watchedEpisodes)
+        update(id, patch.status, patch.score, patch.isRewatching, patch.watchedEpisodes, patch.numTimesRewatched)
     suspend fun remove(id: Int) = authorized { client.remove(id, it) }
     suspend fun animeStatistics() = authorized { client.animeStatistics(it) }
     suspend fun animeList(status: MalStatus? = null, offset: Int = 0, sort: MalListSort = MalListSort.UPDATED) =
@@ -240,12 +252,30 @@ internal object MyAnimeListRepository {
     internal fun launchDetached(block: suspend CoroutineScope.() -> Unit): Job = scope.launch(block = block)
     suspend fun search(name: String) = authorized { client.search(name, it) }
 
+    private fun rewatchProgressKey(profile: Int, id: Int) =
+        "rewatch_progress_${profile}_${store.getString("rewatch_epoch_$profile").orEmpty()}_$id"
+
+    /** Complete an active MAL rewatch once; never count an interrupted/cancelled rewatch. */
+    suspend fun finishRewatch(id: Int): MalListStatus = authorized { token ->
+        val current = client.listStatus(id, token) ?: error("This title is not on your MyAnimeList.")
+        val completed = current.withCompletedRewatch()
+        if (completed == current) return@authorized current
+        val updated = client.update(
+            id, token, isRewatching = false, numTimesRewatched = completed.numTimesRewatched,
+        )
+        store.remove(rewatchProgressKey(ProfileRepository.activeProfileId, id))
+        updated
+    }
+
     /** True only after a resolved MAL entry was checked, even if no patch was necessary. */
     suspend fun markRewatchingIfCompleted(
         meta: MetaDetails,
         playbackProfileId: Int,
         positionMs: Long,
         durationMs: Long,
+        seasonNumber: Int?,
+        episodeNumber: Int?,
+        completionReached: Boolean,
     ): Boolean {
         if (ProfileRepository.activeProfileId != playbackProfileId) return false
         if (!shouldUpdateMalAfterPlayback(positionMs, durationMs, true, false, playbackUpdateThresholdPercent())) return false
@@ -255,8 +285,39 @@ internal object MyAnimeListRepository {
         val id = resolveId(meta) ?: return false
         // Keep the status lookup and conditional PATCH inside the same profile auth lock.
         return authorized(expectedProfileId = playbackProfileId) { token ->
-            val existing = client.listStatus(id, token)
-            if (shouldMarkMalRewatch(existing)) client.update(id, token, isRewatching = true)
+            val snapshot = if (completionReached) client.animeRewatchSnapshot(id, token) else null
+            var existing = snapshot?.listStatus ?: if (completionReached) null else client.listStatus(id, token)
+            val progressKey = rewatchProgressKey(playbackProfileId, id)
+            if (shouldMarkMalRewatch(existing)) {
+                // Any progress from an interrupted or externally cancelled pass belongs to an
+                // older attempt and must never contribute to the next rewatch.
+                store.remove(progressKey)
+                val started = client.update(id, token, isRewatching = true)
+                existing = started.copy(numTimesRewatched = existing!!.numTimesRewatched)
+            }
+            if (completionReached && existing?.status == MalStatus.COMPLETED && existing.isRewatching &&
+                existing.numTimesRewatched < MAX_MAL_REWATCHES
+            ) {
+                val episode = matchedMalRewatchEpisode(meta, snapshot?.totalEpisodes ?: 0, seasonNumber, episodeNumber)
+                if (episode != null) {
+                    val saved = store.getString(progressKey)?.let { encoded ->
+                        runCatching { json.decodeFromString<MalRewatchProgress>(encoded) }.getOrNull()
+                    }?.takeIf { it.baseline == existing.numTimesRewatched }
+                        ?: MalRewatchProgress(baseline = existing.numTimesRewatched)
+                    val progress = saved.record(episode)
+                    if (progress.complete(snapshot!!.totalEpisodes)) {
+                        // Preserve MAL score, status and watched-episode count. Both fields in one
+                        // PATCH make repeated callbacks or resume requests harmless.
+                        client.update(
+                            id, token, isRewatching = false,
+                            numTimesRewatched = existing.numTimesRewatched + 1,
+                        )
+                        store.remove(progressKey)
+                    } else {
+                        store.putString(progressKey, json.encodeToString(progress))
+                    }
+                }
+            }
             true
         }
     }

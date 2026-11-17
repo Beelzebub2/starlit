@@ -3385,4 +3385,7 @@
     <string name="airing_hidden_toast">লুকানো %1$s। এটি আবার দেখানোর জন্য লুকানো অধীনে এটি খুঁজুন.</string>
     <string name="settings_import_summary_cloud">অ্যাকাউন্ট সিঙ্ক</string>
     <string name="settings_licenses_attributions_tvmaze_body">TVmaze (https://www.tvmaze.com) থেকে পর্বের মেটাডেটা ও ছবি ব্যবহার করা হয়, যা CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0/) লাইসেন্সের অধীনে উপলব্ধ। অ্যানিমে পর্বের তারিখ অনুযায়ী ছবির মিল নির্ধারণের পদ্ধতি সমন্বয় করা হয়েছে। Starlit, TVmaze-এর সঙ্গে সংশ্লিষ্ট নয় এবং TVmaze এটি অনুমোদনও করে না।</string>
+    <string name="mal_rewatch_count">পুনরায় দেখার সংখ্যা: %1$d</string>
+    <string name="mal_rewatch_finish">পুনরায় দেখা শেষ করুন</string>
+    <string name="mal_rewatch_in_progress">পুনরায় দেখা হচ্ছে</string>
 </resources>

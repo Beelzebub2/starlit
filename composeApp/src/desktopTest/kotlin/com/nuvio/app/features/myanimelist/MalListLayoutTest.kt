@@ -43,7 +43,7 @@ class MalListLayoutTest {
         entry(5, "Kono Subarashii Sekai ni Shukufuku wo! 2", "KonoSuba: God's Blessing on This Wonderful World! 2",
             MalStatus.COMPLETED, 10, 10, 10, 2017, "winter", 8.3),
         entry(6, "Black Clover 2nd Season", null, MalStatus.ON_HOLD, 0, 4, 0, 2018, "spring", null),
-    ).let { list -> list.map { if (it.anime.id == 5) it.copy(listStatus = it.listStatus.copy(isRewatching = true)) else it } }
+    ).let { list -> list.map { if (it.anime.id == 5) it.copy(listStatus = it.listStatus.copy(isRewatching = true, numTimesRewatched = 3)) else it } }
 
     private val stats = MalAnimeStatistics(7, 120, 3, 2, 40, 172, 2650, 45.32, 7.91)
 
@@ -110,7 +110,7 @@ class MalListLayoutTest {
             }
         }
         waitForIdle()
-        listOf("Status", "Episodes watched", "Your score", "Rewatching", "Remove from list", "Save").forEach {
+        listOf("Status", "Episodes watched", "Your score", "Rewatching", "Rewatches: 3", "Finish rewatch", "Remove from list", "Save").forEach {
             onNodeWithText(it).assertExists()
         }
         val directory = File("build/reports/mal-list").apply { mkdirs() }

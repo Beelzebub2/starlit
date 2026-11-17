@@ -3374,4 +3374,7 @@
     <string name="settings_mdblist_progress_description">Хронология на гледания, напредък на възобновяване и Next Up от MDBList.</string>
     <string name="settings_advanced_discord_rich_presence">Discord Rich Presence</string>
     <string name="settings_playback_nvidia_rtx_super_resolution">RTX Video Super Resolution</string>
+    <string name="mal_rewatch_count">Повторни гледания: %1$d</string>
+    <string name="mal_rewatch_finish">Завърши повторното гледане</string>
+    <string name="mal_rewatch_in_progress">Повторно гледане</string>
 </resources>

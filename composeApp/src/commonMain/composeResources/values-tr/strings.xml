@@ -3382,4 +3382,7 @@ Bu özelliği tamamen kendi sorumluluğunuzda kullanırsınız. P2P istediğiniz
     <string name="watch_later_series">Serisi</string>
     <string name="watch_later_tip">İpucu: Buraya kaydetmek için herhangi bir bölümü veya posteri orta tıklayın. Ayrıntıları için bir kartı sağ tıklayın.</string>
     <string name="remote_pc_forget">Unut</string>
+    <string name="mal_rewatch_count">Tekrar izleme: %1$d</string>
+    <string name="mal_rewatch_finish">Tekrar izlemeyi tamamla</string>
+    <string name="mal_rewatch_in_progress">Tekrar izleniyor</string>
 </resources>

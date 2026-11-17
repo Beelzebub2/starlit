@@ -3338,4 +3338,7 @@
     <string name="settings_licenses_attributions_upstream_desktop_title">Nuvio Desktop</string>
     <string name="tmdb_sources_person_fallback_title">TMDB-Person %1$d</string>
     <string name="trakt_watch_progress_source_nuvio">Starlit Sync</string>
+    <string name="mal_rewatch_count">Erneut angesehen: %1$d</string>
+    <string name="mal_rewatch_finish">Erneutes Ansehen abschließen</string>
+    <string name="mal_rewatch_in_progress">Erneutes Ansehen</string>
 </resources>

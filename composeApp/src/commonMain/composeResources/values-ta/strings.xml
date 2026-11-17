@@ -3338,4 +3338,7 @@
     <string name="settings_playback_tab_video">வீடியோ</string>
     <string name="settings_playback_tab_video_p2p">வீடியோ &amp; P2P</string>
     <string name="settings_desktop_subtitle_language">வசன மொழி</string>
+    <string name="mal_rewatch_count">மீண்டும் பார்த்தவை: %1$d</string>
+    <string name="mal_rewatch_finish">மீண்டும் பார்ப்பதை முடி</string>
+    <string name="mal_rewatch_in_progress">மீண்டும் பார்க்கப்படுகிறது</string>
 </resources>

@@ -3352,4 +3352,7 @@
     <string name="settings_account_loading">Sprawdzam logowanie…</string>
     <string name="settings_mdblist_library_description">Lista obserwowanych oraz statyczne listy filmów i programów.</string>
     <string name="settings_simkl_pin_instructions">Otwórz Simkl PIN i wprowadź ten kod, aby zatwierdzić Starlit. Ten ekran zostanie zaktualizowany automatycznie.</string>
+    <string name="mal_rewatch_count">Ponowne obejrzenia: %1$d</string>
+    <string name="mal_rewatch_finish">Zakończ ponowne oglądanie</string>
+    <string name="mal_rewatch_in_progress">Oglądanie ponownie</string>
 </resources>

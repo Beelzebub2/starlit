@@ -3339,4 +3339,7 @@
     <string name="settings_mdblist_visit">Visitar MDBList</string>
     <string name="settings_mdblist_disconnect_description">Deixa de enviar atualizações de visualização deste perfil. O teu histórico do MDBList é mantido.</string>
     <string name="settings_mdblist_account_fallback">Utilizador do MDBList</string>
+    <string name="mal_rewatch_count">Vezes revisto: %1$d</string>
+    <string name="mal_rewatch_finish">Concluir revisão</string>
+    <string name="mal_rewatch_in_progress">A rever</string>
 </resources>

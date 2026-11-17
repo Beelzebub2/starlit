@@ -3369,4 +3369,7 @@
     <string name="streams_searching">を検索中…</string>
     <string name="streams_sources_summary">%1$d 件のソース（%2$d 個のアドオンから）</string>
     <string name="streams_sources_summary_searching">%1$d 件のソース（%2$d 個のアドオンから）・%3$d 件を検索中</string>
+    <string name="mal_rewatch_count">再視聴回数: %1$d</string>
+    <string name="mal_rewatch_finish">再視聴を完了</string>
+    <string name="mal_rewatch_in_progress">再視聴中</string>
 </resources>

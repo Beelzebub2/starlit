@@ -3375,4 +3375,7 @@ Nagbalik ang</string>
     <string name="settings_playback_tab_video">Video</string>
     <string name="settings_playback_tab_video_p2p">Video at P2P</string>
     <string name="settings_desktop_subtitle_language">Wika ng subtitle</string>
+    <string name="mal_rewatch_count">Ulit na panonood: %1$d</string>
+    <string name="mal_rewatch_finish">Tapusin ang muling panonood</string>
+    <string name="mal_rewatch_in_progress">Muling pinapanood</string>
 </resources>

@@ -3358,4 +3358,7 @@
     <string name="settings_playback_tab_video">วิดีโอ</string>
     <string name="settings_playback_tab_video_p2p">วิดีโอและ P2P</string>
     <string name="settings_desktop_subtitle_language">ภาษาคำบรรยาย</string>
+    <string name="mal_rewatch_count">จำนวนครั้งที่ดูซ้ำ: %1$d</string>
+    <string name="mal_rewatch_finish">ดูซ้ำเสร็จแล้ว</string>
+    <string name="mal_rewatch_in_progress">กำลังดูซ้ำ</string>
 </resources>

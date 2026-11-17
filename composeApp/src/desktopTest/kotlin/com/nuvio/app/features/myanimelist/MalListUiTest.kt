@@ -36,6 +36,7 @@ class MalListUiTest {
                         patch.score ?: server.score,
                         patch.watchedEpisodes ?: server.watchedEpisodes,
                         patch.isRewatching ?: server.isRewatching,
+                        patch.numTimesRewatched ?: server.numTimesRewatched,
                     )
                     server
                 }, delete = {}, debounceMillis = 0).also { it.show(listOf(entry), append = false) }
@@ -114,6 +115,19 @@ class MalListUiTest {
         compose.waitUntil(5_000) { sent.isNotEmpty() }
         assertEquals(listOf(MalListPatch(status = MalStatus.COMPLETED, score = 9, watchedEpisodes = 12)), sent)
         compose.onNodeWithText("12 / 12").assertIsDisplayed()
+    }
+
+    @Test fun rewatchCountIsShownAndSavedBackToMyAnimeList() {
+        val completed = tempal.copy(listStatus = MalListStatus(
+            MalStatus.COMPLETED, score = 9, watchedEpisodes = 12,
+            isRewatching = true, numTimesRewatched = 2,
+        ))
+        showCard(completed, editing = true)
+        compose.onNodeWithTag("mal-rewatch-count-41").assertIsDisplayed()
+        compose.onAllNodes(hasSetTextAction())[1].performTextReplacement("4")
+        compose.onNodeWithText("Save").performClick()
+        compose.waitUntil(5_000) { sent.isNotEmpty() }
+        assertEquals(listOf(MalListPatch(numTimesRewatched = 4)), sent)
     }
 
     private val listStats = MalAnimeStatistics(

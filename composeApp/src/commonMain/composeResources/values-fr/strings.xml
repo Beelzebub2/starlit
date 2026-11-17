@@ -3377,4 +3377,7 @@
     <string name="watch_later_saved">Enregistré pour être visionné plus tard</string>
     <string name="community_membership_tier_supporter_plus">Supporter Plus</string>
     <string name="watch_later_series">Séries</string>
+    <string name="mal_rewatch_count">Revisionnages : %1$d</string>
+    <string name="mal_rewatch_finish">Terminer le revisionnage</string>
+    <string name="mal_rewatch_in_progress">En cours de revisionnage</string>
 </resources>

@@ -113,14 +113,41 @@ internal fun PlayerScreenRuntime.BindPlayerRuntimeEffects() {
             isLoading = playbackSnapshot.isLoading,
             thresholdPercent = myAnimeListPlaybackUpdateThresholdPercent(),
         )
+    var malEpisodeStartObserved by remember(
+        profileId, parentMetaType, parentMetaId, activeVideoId, activeSeasonNumber, activeEpisodeNumber,
+    ) { mutableStateOf(false) }
+    val malPlayingNearBeginning = !privatePlayback && isDesktop &&
+        playbackSnapshotKey == activePlaybackKey &&
+        playbackSnapshot.isPlaying && !playbackSnapshot.isLoading &&
+        playbackSnapshot.durationMs > 0L &&
+        playbackSnapshot.positionMs in 0L..(playbackSnapshot.durationMs / 5L)
+    LaunchedEffect(profileId, parentMetaId, activeVideoId, activeSeasonNumber, activeEpisodeNumber, malPlayingNearBeginning) {
+        if (malPlayingNearBeginning) malEpisodeStartObserved = true
+    }
+    // Starting a rewatch and completing an episode are distinct events. The latter must
+    // not be inferred from the configurable 55-95% start threshold alone. A stream
+    // resumed near its end must not count as another completed rewatch.
+    val malCompletionReached = eligibleForMalUpdate && malEpisodeStartObserved &&
+        shouldUpdateMalAfterPlayback(
+            positionMs = playbackSnapshot.positionMs,
+            durationMs = playbackSnapshot.durationMs,
+            isPlaying = playbackSnapshot.isPlaying,
+            isLoading = playbackSnapshot.isLoading,
+            thresholdPercent = 95,
+        )
+    val malPlaybackPhase = when {
+        malCompletionReached -> 2
+        eligibleForMalUpdate -> 1
+        else -> 0
+    }
     LaunchedEffect(
         profileId, parentMetaType, parentMetaId, activePlaybackKey,
-        playerMeta, eligibleForMalUpdate,
+        playerMeta, malPlaybackPhase, activeSeasonNumber, activeEpisodeNumber,
     ) {
         val meta = playerMeta
-        if (!eligibleForMalUpdate ||
+        if (malPlaybackPhase == 0 ||
             meta == null || !isLikelyMyAnimeListAnime(meta)) return@LaunchedEffect
-        val key = "$profileId:$parentMetaType:$parentMetaId:$activePlaybackKey"
+        val key = "$profileId:$parentMetaType:$parentMetaId:$activePlaybackKey:$malPlaybackPhase"
         if (key in malRewatchAttempted) return@LaunchedEffect
         try {
             if (markMyAnimeListRewatchOnPlayback(
@@ -128,6 +155,9 @@ internal fun PlayerScreenRuntime.BindPlayerRuntimeEffects() {
                 playbackProfileId = profileId,
                 positionMs = playbackSnapshot.positionMs,
                 durationMs = playbackSnapshot.durationMs,
+                seasonNumber = activeSeasonNumber,
+                episodeNumber = activeEpisodeNumber,
+                completionReached = malPlaybackPhase == 2,
             )) malRewatchAttempted += key
         } catch (e: CancellationException) {
             throw e
