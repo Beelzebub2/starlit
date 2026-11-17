@@ -59,6 +59,11 @@ export function createPlayerScreenMethods38() {
         }
         if (startup && this.currentEngineFsStream) {
           const stats = await this.fetchCurrentEngineFsStats();
+          if (firstFrameBudgetActive && !stats && Environment.isTizen() &&
+              this.shouldRetryEngineFsStartupError(null) &&
+              this.scheduleEngineFsStartupRetry({ mediaErrorCode: 2, stats: null })) {
+            return;
+          }
           if (firstFrameBudgetActive && !stats && Environment.isWebOS() && this.scheduleEngineFsStartupRetry({ mediaErrorCode: 0, stats: null })) {
             return;
           }
