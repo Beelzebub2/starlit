@@ -9,6 +9,8 @@ on:
       - 'tv-setup-server/**'
       - 'scripts/check_localizations.py'
       - 'scripts/check_translation_parity.py'
+      - 'scripts/complete_tizen_portuguese.py'
+      - 'scripts/test_complete_tizen_portuguese.py'
       - 'scripts/check_hardcoded_ui_text.py'
       - 'scripts/test_hardcoded_ui_text.py'
       - '.github/workflows/translation-parity.yml'
@@ -21,6 +23,8 @@ on:
       - 'tv-setup-server/**'
       - 'scripts/check_localizations.py'
       - 'scripts/check_translation_parity.py'
+      - 'scripts/complete_tizen_portuguese.py'
+      - 'scripts/test_complete_tizen_portuguese.py'
       - 'scripts/check_hardcoded_ui_text.py'
       - 'scripts/test_hardcoded_ui_text.py'
       - '.github/workflows/translation-parity.yml'
@@ -45,7 +49,9 @@ jobs:
         with:
           node-version: "24"
       - name: Verify new locale catalogs
-        run: python3 scripts/check_localizations.py
+        run: |
+          python3 -m unittest scripts.test_complete_tizen_portuguese
+          python3 scripts/check_localizations.py
       - name: Verify translated feature text and formatting
         env:
           BASE_REF: ${{ github.event.pull_request.base.sha || github.event.before || '' }}
