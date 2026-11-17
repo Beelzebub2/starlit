@@ -99,6 +99,10 @@ class TorrServerIntegrationTest {
             }
             val id = backend.getTorrentStats(hash).files.single().id
             val url = backend.getStreamUrl("magnet:?xt=urn:btih:$hash", id)
+            // Exercise the first-byte readiness barrier against an actual local peer
+            // before the player starts seeking or buffering the stream.
+            backend.awaitStreamReady(url)
+            assertTrue(seed.blocksServed.get() > 0, "First-byte readiness must fetch torrent data")
             for (start in listOf(0, payload.size - 8192, 1024 * 1024, 0)) {
                 val end = start + 8191
                 val response = try {
