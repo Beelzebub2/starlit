@@ -493,7 +493,7 @@ private class TorrServerApi(
         while (System.nanoTime() < deadline) {
             val remainingMs = TimeUnit.NANOSECONDS.toMillis(deadline - System.nanoTime())
             val probe = HttpRequest.newBuilder(URI.create(url))
-                .timeout(Duration.ofMillis(remainingMs.coerceIn(1_000L, 5_000L)))
+                .timeout(Duration.ofMillis(remainingMs.coerceIn(1_000L, 45_000L)))
                 .header("Range", "bytes=0-0")
                 .GET()
                 .build()
