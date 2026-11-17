@@ -1,6 +1,7 @@
 /* eslint-disable no-unused-vars */
 import * as internals from "./tizenStreamingServerResolver.js";
 import { TizenUsbTorrentCache } from "../../platform/tizen/tizenUsbTorrentCache.js";
+import { waitForTizenTorrentFirstByte } from "./tizenTorrentPlaybackReadiness.js";
 export function createTizenStreamingServerResolverMethods01() {
   const {
     Platform,
@@ -180,9 +181,17 @@ export function createTizenStreamingServerResolverMethods01() {
         if (!/^[a-f0-9]{64}$/.test(createJson.playbackTicket || "")) throw new Error("Local streaming ticket unavailable");
         const playbackUrl = buildPlaybackUrl(baseUrl, infoHash, fileIdx, sources) + `${sources.length ? "&" : "?"}ticket=${encodeURIComponent(createJson.playbackTicket)}`;
         const filename = getFilename(createJson, fileIdx);
-        logTizenP2pDebug("TizenStreamingServerResolver: P2P stream resolved", {
+        // /create confirms metadata only. Start AVPlay after the selected range
+        // has delivered an actual verified byte, not just a valid URL/ticket.
+        // Keep the swarm running while temporary range requests time out.
+        if (!await waitForTizenTorrentFirstByte(playbackUrl)) {
+          logTizenP2pDebug("TizenStreamingServerResolver: first-byte readiness timed out", {
+            infoHash, fileIdx
+          });
+          return { status: "unavailable" };
+        }
+        logTizenP2pDebug("TizenStreamingServerResolver: P2P media ready", {
           baseUrl,
-          playbackUrl,
           infoHash,
           fileIdx,
           filename: filename || null,
