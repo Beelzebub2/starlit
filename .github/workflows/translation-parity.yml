@@ -11,6 +11,10 @@ on:
       - 'scripts/check_translation_parity.py'
       - 'scripts/complete_tizen_portuguese.py'
       - 'scripts/test_complete_tizen_portuguese.py'
+      - 'scripts/complete_existing_locales.py'
+      - 'scripts/test_complete_existing_locales.py'
+      - 'scripts/test_translation_review_report.py'
+      - 'scripts/translate_popular_languages.mjs'
       - 'scripts/check_hardcoded_ui_text.py'
       - 'scripts/test_hardcoded_ui_text.py'
       - '.github/workflows/translation-parity.yml'
@@ -25,6 +29,10 @@ on:
       - 'scripts/check_translation_parity.py'
       - 'scripts/complete_tizen_portuguese.py'
       - 'scripts/test_complete_tizen_portuguese.py'
+      - 'scripts/complete_existing_locales.py'
+      - 'scripts/test_complete_existing_locales.py'
+      - 'scripts/test_translation_review_report.py'
+      - 'scripts/translate_popular_languages.mjs'
       - 'scripts/check_hardcoded_ui_text.py'
       - 'scripts/test_hardcoded_ui_text.py'
       - '.github/workflows/translation-parity.yml'
@@ -51,11 +59,23 @@ jobs:
       - name: Verify new locale catalogs
         run: |
           python3 -m unittest scripts.test_complete_tizen_portuguese
+          python3 -m unittest scripts.test_complete_existing_locales
+          python3 -m unittest scripts.test_translation_review_report
           python3 scripts/check_localizations.py
       - name: Verify translated feature text and formatting
         env:
           BASE_REF: ${{ github.event.pull_request.base.sha || github.event.before || '' }}
-        run: python3 scripts/check_translation_parity.py --base-ref "$BASE_REF"
+        run: python3 scripts/check_translation_parity.py --strict --base-ref "$BASE_REF" --report-json build/i18n-coverage.json --review-csv build/i18n-review.csv
+      - name: Attach locale coverage and linguistic review queue
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: localization-review
+          path: |
+            build/i18n-coverage.json
+            build/i18n-review.csv
+          if-no-files-found: ignore
+          retention-days: 14
       - name: Prevent new hard-coded UI labels
         env:
           BASE_REF: ${{ github.event.pull_request.base.sha || github.event.before || '' }}
