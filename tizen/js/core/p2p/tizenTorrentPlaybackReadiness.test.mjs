@@ -56,6 +56,15 @@ test("a cold torrent waits for actual bytes without discarding its peer connecti
   assert.equal(probes, 3);
 });
 
+test("a cold first range keeps its download window open instead of aborting every five seconds", async () => {
+  let probeTimeout = 0;
+  assert.equal(await waitForTizenTorrentFirstByte(playable, {
+    timeoutMs: 15_000,
+    probe: async (_url, timeoutMs) => { probeTimeout = timeoutMs; return "ready"; }
+  }), true);
+  assert.ok(probeTimeout > 10_000, "The initial piece must retain its peer-download window");
+});
+
 test("invalid playback tickets fail promptly instead of retrying", async () => {
   let probes = 0;
   const ready = await waitForTizenTorrentFirstByte(playable, {
