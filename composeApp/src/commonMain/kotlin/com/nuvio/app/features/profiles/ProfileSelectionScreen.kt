@@ -339,6 +339,7 @@ fun ProfileSelectionScreen(
     pinDialogProfile?.let { profile ->
         PinEntryDialog(
             profileName = profile.name,
+            profile = profile,
             onVerify = { pin -> ProfileRepository.verifyPin(profile.profileIndex, pin) },
             onVerified = {
                 pinDialogProfile = null
