@@ -21,6 +21,8 @@ data class ListCapabilities(
     val rewatch: Boolean,
     val changeEntry: Boolean,
     val removeFromHistory: Boolean,
+    /** Statuses a user can leave without picking another (watchlist/dropped on history-derived services). */
+    val leavableStatuses: Set<ListStatus> = emptySet(),
 )
 
 data class ListSort(val key: String, val label: String)
