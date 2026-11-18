@@ -23,7 +23,7 @@ const HASH = "a".repeat(40);
 const SERVICE_ID = "StarlitTV1.EngineFsService";
 const BASE = "http://127.0.0.1:2710";
 
-function trustedTizenRuntime() {
+function trustedTizenRuntime({ dropFirstMessage = false } = {}) {
   let receive;
   return {
     crypto: { getRandomValues(bytes) { bytes.fill(42); return bytes; } },
@@ -40,6 +40,10 @@ function trustedTizenRuntime() {
           return {
             isTrusted: true,
             sendMessage(message) {
+              if (dropFirstMessage) {
+                dropFirstMessage = false;
+                return;
+              }
               queueMicrotask(() => receive(
                 [{ key: "nonce", value: message[0].value }, { key: "token", value: TOKEN }],
                 { isTrusted: true, appId: SERVICE_ID }
@@ -64,6 +68,13 @@ test("trusted TV bridge token is bound to the correct local EngineFS port", asyn
   }
   clearLocalControlTokens();
   assert.throws(() => trustedEngineFsControlHeaders(BASE), /authorization unavailable/);
+});
+
+test("an acknowledged but unanswered control message is sent again", async () => {
+  clearLocalControlTokens();
+  const runtime = trustedTizenRuntime({ dropFirstMessage: true });
+  assert.equal(await connectLocalControl(SERVICE_ID, "2710", runtime), TOKEN);
+  clearLocalControlTokens();
 });
 
 test("large add-on tracker lists are bounded before Tizen service create", async () => {
@@ -194,7 +205,7 @@ test("cold service range probes must time out instead of hanging the first start
   try {
     globalThis.fetch = async (url) => {
       if (String(url).endsWith("/settings")) return {
-        ok: true, clone() { return { json: async () => ({ capabilities: { torrent: true } }) }; }
+        ok: true, json: async () => ({ capabilities: { torrent: true } })
       };
       if (String(url).endsWith("/range-probe")) { rangeAttempts++; return pending; }
       throw new Error("Unexpected URL");
@@ -203,5 +214,67 @@ test("cold service range probes must time out instead of hanging the first start
     assert.equal(rangeAttempts, 1);
   } finally {
     globalThis.fetch = originalFetch;
+  }
+});
+
+test("the first play recreates an expired ticket without waiting for USB benchmarking", async () => {
+  const { TizenCapabilities } = await import("../js/platform/tizen/tizenCapabilities.js");
+  const { TizenEngineFsService } = await import("../js/platform/tizen/tizenEngineFsService.js");
+  const { TizenUsbTorrentCache } = await import("../js/platform/tizen/tizenUsbTorrentCache.js");
+  const previous = {
+    platform: Platform.current, supported: TizenCapabilities.canUseP2p, service: TizenEngineFsService.ensureStarted,
+    usbEnabled: TizenUsbTorrentCache.isEnabled, configure: TizenUsbTorrentCache.configure,
+    fetch: globalThis.fetch, xhr: globalThis.XMLHttpRequest
+  };
+  let starts = 0;
+  const creates = [];
+  const ranges = [];
+  try {
+    await connectLocalControl(SERVICE_ID, "2710", trustedTizenRuntime());
+    Platform.current = tizenAdapter;
+    TizenCapabilities.canUseP2p = () => true;
+    TizenEngineFsService.ensureStarted = async () => {
+      starts++;
+      return { status: "success", baseUrl: BASE };
+    };
+    TizenUsbTorrentCache.isEnabled = () => true;
+    TizenUsbTorrentCache.configure = () => new Promise(() => {});
+    globalThis.fetch = async (_url, options) => {
+      const body = JSON.parse(options.body);
+      creates.push(body.fileIdx);
+      return {
+        ok: true,
+        json: async () => ({
+          files: [{ name: "other.mp4" }, { name: "selected.mp4" }],
+          fileIdx: body.fileIdx, playbackTicket: String(creates.length).repeat(64)
+        })
+      };
+    };
+    globalThis.XMLHttpRequest = class {
+      open(_method, url) { this.url = url; }
+      setRequestHeader() {}
+      send() {
+        ranges.push(this.url);
+        this.status = ranges.length === 1 ? 404 : 206;
+        this.response = new ArrayBuffer(1);
+        queueMicrotask(() => this.onload());
+      }
+    };
+    const result = await TizenStreamingServerResolver.resolve({ infoHash: HASH, fileIdx: 1 });
+    assert.equal(result.status, "success");
+    assert.equal(starts, 2);
+    assert.deepEqual(creates, [1, 1]);
+    assert.match(ranges[0], /ticket=1{64}$/);
+    assert.equal(result.stream.url, ranges[1]);
+    assert.match(result.stream.url, /ticket=2{64}$/);
+  } finally {
+    Platform.current = previous.platform;
+    TizenCapabilities.canUseP2p = previous.supported;
+    TizenEngineFsService.ensureStarted = previous.service;
+    TizenUsbTorrentCache.isEnabled = previous.usbEnabled;
+    TizenUsbTorrentCache.configure = previous.configure;
+    globalThis.fetch = previous.fetch;
+    globalThis.XMLHttpRequest = previous.xhr;
+    clearLocalControlTokens();
   }
 });

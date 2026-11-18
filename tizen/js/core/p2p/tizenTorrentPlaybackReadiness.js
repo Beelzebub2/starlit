@@ -34,10 +34,12 @@ export function probeTizenTorrentFirstByte(url, timeoutMs = DEFAULT_PROBE_MS, cr
       xhr = createRequest();
       xhr.onload = () => {
         const status = Number(xhr.status);
-        if (status === 206 && Number(xhr.response?.byteLength) > 0) return finish("ready");
-        finish([401, 403, 416].includes(status) ? "terminal" : "retry");
+        if (status === 206 && Number(xhr.response?.byteLength) === 1) return finish("ready");
+        if ([401, 403, 404].includes(status)) return finish("session-lost");
+        finish(status === 416 ? "unavailable" : "retry");
       };
-      xhr.onerror = xhr.ontimeout = xhr.onabort = () => finish("retry");
+      xhr.onerror = () => finish("disconnected");
+      xhr.ontimeout = xhr.onabort = () => finish("retry");
       xhr.open("GET", url, true);
       xhr.responseType = "arraybuffer";
       xhr.timeout = timeoutMs;
@@ -60,10 +62,11 @@ export async function waitForTizenTorrentFirstByte(url, {
   probe = probeTizenTorrentFirstByte,
   isCurrent = () => true
 } = {}) {
-  if (!isLocalTizenTorrentPlaybackUrl(url)) return false;
+  if (!isLocalTizenTorrentPlaybackUrl(url)) return "unavailable";
   const deadline = Date.now() + Math.max(1, timeoutMs);
+  let disconnects = 0;
   while (Date.now() < deadline) {
-    if (!isCurrent()) return false;
+    if (!isCurrent()) return "cancelled";
     const remaining = deadline - Date.now();
     let result = "retry";
     try {
@@ -71,11 +74,12 @@ export async function waitForTizenTorrentFirstByte(url, {
     } catch (_) {
       // Temporary local service or connection errors must not discard the swarm.
     }
-    if (!isCurrent()) return false;
-    if (result === "ready") return true;
-    if (result === "terminal") return false;
+    if (!isCurrent()) return "cancelled";
+    if (result === "ready" || result === "session-lost" || result === "unavailable") return result;
+    disconnects = result === "disconnected" ? disconnects + 1 : 0;
+    if (disconnects >= 3) return "session-lost";
     const wait = Math.min(retryMs, deadline - Date.now());
     if (wait > 0) await new Promise((resolve) => setTimeout(resolve, wait));
   }
-  return false;
+  return "unavailable";
 }

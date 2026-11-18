@@ -140,90 +140,59 @@ export function createTizenStreamingServerResolverMethods01() {
       if (!infoHash) {
         return { status: "unsupported", detail: "Missing torrent infoHash" };
       }
-      try {
-        let baseUrl = "";
-        const baseUrlKind = "local-service";
+      const trackerSources = getTrackerSources(stream, getMagnetUri(stream));
+      const fileIndex = Number(
+        stream.fileIdx ?? stream.raw?.fileIdx ?? stream.clientResolve?.fileIdx ?? stream.raw?.clientResolve?.fileIdx
+      );
+      const sources = trackerSources.length ? buildPeerSearchSources(infoHash, trackerSources) : [];
+      for (let attempt = 0; attempt < 2; attempt++) {
         const localService = await TizenEngineFsService.ensureStarted({ purpose: "p2p" });
         if (!isCurrent()) return { status: "cancelled" };
-        if (localService.status === "success" && localService.baseUrl) {
-          baseUrl = localService.baseUrl;
-        } else {
+        const baseUrl = localService.baseUrl;
+        if (localService.status !== "success" || !baseUrl) {
           return {
             status: "error",
             detail: localService.detail || "Tizen local EngineFS service did not start"
           };
         }
-        // Never delay playback if removable storage is missing or unavailable.
-        // The first opted-in session probes the USB, subsequent sessions reuse it.
-        if (TizenUsbTorrentCache.isEnabled()) {
-          await TizenUsbTorrentCache.configure(baseUrl);
-          if (!isCurrent()) return { status: "cancelled" };
-        }
-        const magnetUri = getMagnetUri(stream);
-        const trackerSources = getTrackerSources(stream, magnetUri);
-        const explicitFileIdx = Number(
-          stream.fileIdx ?? stream.raw?.fileIdx ?? stream.clientResolve?.fileIdx ?? stream.raw?.clientResolve?.fileIdx
-        );
-        const hasExplicitFileIdx = Number.isInteger(explicitFileIdx) && explicitFileIdx >= 0;
-        const season = Number(context?.season);
-        const episode = Number(context?.episode);
-        const needsCreate = true;
-        const createJson = needsCreate
-          ? await createTorrent(baseUrl, {
-              infoHash,
-              fileIdx: explicitFileIdx,
-              trackerSources,
-              season: Number.isFinite(season) ? season : null,
-              episode: Number.isFinite(episode) ? episode : null
-            })
-          : { infoHash, fileIdx: explicitFileIdx };
-        if (!isCurrent()) return { status: "cancelled" };
-        const fileIdx = selectFileIdx(stream, createJson);
-        if (!Number.isInteger(fileIdx) || fileIdx < 0 || (Array.isArray(createJson.files) && !createJson.files[fileIdx])) {
-          return {
-            status: "error",
-            detail: "Tizen streaming server did not return a playable file index"
-          };
-        }
-        const sources = needsCreate && trackerSources.length ? buildPeerSearchSources(infoHash, trackerSources) : [];
-        if (!/^[a-f0-9]{64}$/.test(createJson.playbackTicket || "")) throw new Error("Local streaming ticket unavailable");
-        const playbackUrl = buildPlaybackUrl(baseUrl, infoHash, fileIdx, sources) + `${sources.length ? "&" : "?"}ticket=${encodeURIComponent(createJson.playbackTicket)}`;
-        const filename = getFilename(createJson, fileIdx);
-        // /create confirms metadata only. Start AVPlay after the selected range
-        // has delivered an actual verified byte, not just a valid URL/ticket.
-        // Keep the swarm running while temporary range requests time out.
-        const firstByteReady = await waitForTizenTorrentFirstByte(playbackUrl, { isCurrent });
-        if (!isCurrent()) return { status: "cancelled" };
-        if (!firstByteReady) {
-          logTizenP2pDebug("TizenStreamingServerResolver: first-byte readiness timed out", {
-            infoHash, fileIdx
-          });
-          return { status: "unavailable" };
-        }
-        logTizenP2pDebug("TizenStreamingServerResolver: P2P media ready", {
-          baseUrl,
-          infoHash,
-          fileIdx,
-          filename: filename || null,
-          createUsed: needsCreate
-        });
-        return {
-          status: "success",
-          stream: buildResolvedStream(stream, {
-            baseUrl,
-            baseUrlKind,
+        // A first USB benchmark can outlast metadata discovery. Use RAM until
+        // an idle benchmark has prepared a cache for the next torrent.
+        if (TizenUsbTorrentCache.isEnabled()) void TizenUsbTorrentCache.configure(baseUrl);
+        try {
+          const createJson = await createTorrent(baseUrl, {
             infoHash,
-            fileIdx,
-            playbackUrl,
-            filename,
-            sources
-          })
-        };
-      } catch (error) {
-        return {
-          status: "error",
-          detail: error?.message || String(error || "Tizen streaming server resolve failed")
-        };
+            fileIdx: fileIndex,
+            trackerSources,
+            season: context.season == null ? null : Number(context.season),
+            episode: context.episode == null ? null : Number(context.episode)
+          });
+          if (!isCurrent()) return { status: "cancelled" };
+          const fileIdx = selectFileIdx(stream, createJson);
+          if (!Number.isInteger(fileIdx) || fileIdx < 0 ||
+              (Array.isArray(createJson.files) && !createJson.files[fileIdx])) {
+            return {
+              status: "error",
+              detail: "Tizen streaming server did not return a playable file index"
+            };
+          }
+          if (!/^[a-f0-9]{64}$/.test(createJson.playbackTicket || "")) throw new Error("Local streaming ticket unavailable");
+          const playbackUrl = buildPlaybackUrl(baseUrl, infoHash, fileIdx, sources) +
+            `${sources.length ? "&" : "?"}ticket=${encodeURIComponent(createJson.playbackTicket)}`;
+          const readiness = await waitForTizenTorrentFirstByte(playbackUrl, { isCurrent });
+          if (!isCurrent()) return { status: "cancelled" };
+          if (readiness === "session-lost" && attempt === 0) continue;
+          if (readiness !== "ready") return { status: readiness === "cancelled" ? readiness : "unavailable" };
+          const filename = getFilename(createJson, fileIdx);
+          logTizenP2pDebug("TizenStreamingServerResolver: P2P media ready", { infoHash, fileIdx });
+          return {
+            status: "success",
+            stream: buildResolvedStream(stream, { baseUrl, infoHash, fileIdx, playbackUrl, filename, sources })
+          };
+        } catch (error) {
+          if (!isCurrent()) return { status: "cancelled" };
+          if (attempt === 0 && (error?.status === 403 || error instanceof TypeError)) continue;
+          return { status: "error", detail: error?.message || "Tizen streaming server resolve failed" };
+        }
       }
     }
   };
