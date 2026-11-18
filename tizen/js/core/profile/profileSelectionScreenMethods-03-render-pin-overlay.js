@@ -1,8 +1,15 @@
 /* eslint-disable no-unused-vars */
 import * as internals from "./profileSelectionScreen.js";
 export function createProfileSelectionScreenMethods03() {
-  const { PROFILE_PIN_TEXT, getDefaultProfileColor, escapeHtml, centerAvatarRowInScrollContainer, findNearestByHorizontalCenter } =
-    internals;
+  const {
+    PROFILE_PIN_TEXT,
+    getDefaultProfileColor,
+    getProfileInitial,
+    resolveProfileAvatarUrl,
+    escapeHtml,
+    centerAvatarRowInScrollContainer,
+    findNearestByHorizontalCenter
+  } = internals;
   return {
     renderPinOverlay() {
       const state = this.getRenderedPinOverlayState();
@@ -33,16 +40,34 @@ export function createProfileSelectionScreenMethods03() {
       } else if (this.isPinOperationInProgress) {
         support = isSingleEntryMode ? PROFILE_PIN_TEXT.verifying : PROFILE_PIN_TEXT.saving;
       }
+      const avatarUrl = resolveProfileAvatarUrl(profile, (avatarId) => this.getAvatarImageUrl(avatarId));
+      // Identity (who is locked) sits left of the entry column so the keypad stays reachable by remote.
       return `
           <div class="profile-pin-layer${phaseClass}">
             <div class="profile-pin-overlay profile-focusable focusable" data-overlay-root="pin" data-focus-key="pin:root" tabindex="0">
               <div class="profile-pin-content">
-                <div class="profile-pin-heading">${escapeHtml(heading)}</div>
-                <div class="profile-pin-box-row" data-role="pin-box-row">${this.renderPinBoxes()}</div>
-                <div class="profile-pin-support${this.pinOverlayError ? " is-error" : ""}">${escapeHtml(support)}</div>
-                <div class="profile-pin-keypad" aria-label="PIN keypad">${this.renderPinKeypad()}</div>
-                ${isSingleEntryMode ? `<div class="profile-pin-forgot">${escapeHtml(PROFILE_PIN_TEXT.forgot)}</div>` : ""}
-                <div class="profile-pin-back-hint">${escapeHtml(PROFILE_PIN_TEXT.back)}</div>
+                <div class="profile-pin-identity">
+                  <div class="profile-pin-avatar" style="background:${escapeHtml(profile.avatarColorHex || getDefaultProfileColor())}" aria-hidden="true">
+                    ${
+                      avatarUrl
+                        ? `<img class="profile-pin-avatar-image" src="${escapeHtml(avatarUrl)}" alt=""/>`
+                        : escapeHtml(getProfileInitial(profile.name))
+                    }
+                    <span class="profile-pin-lock">
+                      <span class="profile-pin-lock-inner">
+                        <svg viewBox="0 0 24 24" focusable="false"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>
+                      </span>
+                    </span>
+                  </div>
+                  <div class="profile-pin-heading">${escapeHtml(heading)}</div>
+                  ${isSingleEntryMode ? `<div class="profile-pin-forgot">${escapeHtml(PROFILE_PIN_TEXT.forgot)}</div>` : ""}
+                  <div class="profile-pin-back-hint">${escapeHtml(PROFILE_PIN_TEXT.back)}</div>
+                </div>
+                <div class="profile-pin-entry">
+                  <div class="profile-pin-box-row" data-role="pin-box-row">${this.renderPinBoxes()}</div>
+                  <div class="profile-pin-support${this.pinOverlayError ? " is-error" : ""}">${escapeHtml(support)}</div>
+                  <div class="profile-pin-keypad" aria-label="PIN keypad">${this.renderPinKeypad()}</div>
+                </div>
               </div>
             </div>
           </div>
