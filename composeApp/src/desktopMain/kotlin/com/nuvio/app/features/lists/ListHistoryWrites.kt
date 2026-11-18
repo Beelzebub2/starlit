@@ -12,7 +12,7 @@ import com.nuvio.app.features.watching.domain.isSeriesLikeWatchingContentType
 
 /**
  * Seam over the title page's own watched actions so history-derived list services
- * (Simkl now, Trakt and MDBList later) can be tested without repositories or network.
+ * (Simkl and Trakt now, MDBList later) can be tested without repositories or network.
  */
 interface ListHistoryPort {
     suspend fun fetchMeta(type: String, id: String): MetaDetails?
@@ -88,6 +88,24 @@ class ListHistoryWrites(private val port: ListHistoryPort = DefaultListHistoryPo
             if (previous.size < count) throw IllegalStateException("There is no watched episode to unmark")
             previous.forEach { port.toggleEpisodeWatched(meta, it, isCurrentlyWatched = true) }
         }
+    }
+
+    /**
+     * Removes the title's watch history through the title page's actions and returns how many entries were removed.
+     * A movie is toggled off only when watched; a series has each watched released main-season episode toggled off
+     * one by one. The poster toggle is never used for a series: on a partly watched series it would mark everything.
+     */
+    suspend fun removeAll(catalogType: String, catalogId: String): Int {
+        if (isMovie(catalogType)) {
+            if (!port.isWatched(id = catalogId, type = catalogType)) return 0
+            port.togglePosterWatched(MetaPreview(id = catalogId, type = catalogType, name = catalogId))
+            return 1
+        }
+        val meta = port.fetchMeta(catalogType, catalogId)
+            ?: throw IllegalStateException("Could not load episodes to remove them from watch history")
+        val watched = releasedMain(meta).filter { isEpisodeWatched(meta, it) }
+        watched.forEach { port.toggleEpisodeWatched(meta, it, isCurrentlyWatched = true) }
+        return watched.size
     }
 
     private fun releasedMain(meta: MetaDetails): List<MetaVideo> =

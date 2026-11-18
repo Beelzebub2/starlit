@@ -50,4 +50,32 @@ class ListHistoryWritesTest {
         assertEquals(1, ListHistoryWrites(FakeHistoryPort()).completedImpact("movie", "tt2"))
         assertEquals(0, ListHistoryWrites(FakeHistoryPort(watched = mutableSetOf("title"))).completedImpact("movie", "tt2"))
     }
+
+    @Test fun removeAllUnmarksOnlyWatchedReleasedEpisodesAndNeverUsesThePosterToggle(): Unit = runBlocking {
+        val port = FakeHistoryPort(meta = seriesMeta(episodes = 5, future = 2), watched = mutableSetOf("1:1", "1:3", "1:4"))
+        val removed = ListHistoryWrites(port).removeAll("series", "tt1")
+        assertEquals(3, removed)
+        assertEquals(listOf("episode:1:1:true", "episode:1:3:true", "episode:1:4:true"), port.calls)
+    }
+
+    @Test fun removeAllOnAnUnwatchedSeriesWritesNothing(): Unit = runBlocking {
+        val port = FakeHistoryPort(meta = seriesMeta(3))
+        assertEquals(0, ListHistoryWrites(port).removeAll("series", "tt1"))
+        assertTrue(port.calls.isEmpty())
+    }
+
+    @Test fun removeAllOnAMovieTogglesOffOnlyWhenWatched(): Unit = runBlocking {
+        val watched = FakeHistoryPort(watched = mutableSetOf("title"))
+        assertEquals(1, ListHistoryWrites(watched).removeAll("movie", "tt2"))
+        assertEquals(listOf("poster:tt2"), watched.calls)
+        val unwatched = FakeHistoryPort()
+        assertEquals(0, ListHistoryWrites(unwatched).removeAll("movie", "tt2"))
+        assertTrue(unwatched.calls.isEmpty())
+    }
+
+    @Test fun removeAllWithMissingMetaFailsBeforeAnyWrite(): Unit = runBlocking {
+        val port = FakeHistoryPort(meta = null, watched = mutableSetOf("1:1"))
+        assertFailsWith<IllegalStateException> { ListHistoryWrites(port).removeAll("series", "tt1") }
+        assertTrue(port.calls.isEmpty())
+    }
 }
