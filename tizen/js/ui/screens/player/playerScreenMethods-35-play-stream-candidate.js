@@ -47,6 +47,10 @@ export function createPlayerScreenMethods35() {
       }
       const tizenResolveId = Environment.isTizen()
         ? (this.tizenStreamResolveId = Number(this.tizenStreamResolveId || 0) + 1) : 0;
+      if (tizenResolveId) {
+        this.abortTizenTorrentProbe?.();
+        this.abortTizenTorrentProbe = null;
+      }
       const isCurrentSelection = () => this.isActiveMountToken(mountToken) &&
         (!tizenResolveId || this.tizenStreamResolveId === tizenResolveId);
       streamRepository.setLocalPluginSearchPaused(true);
@@ -92,7 +96,10 @@ export function createPlayerScreenMethods35() {
         const resolveContext = {
           season: this.params?.season == null ? null : Number(this.params.season),
           episode: this.params?.episode == null ? null : Number(this.params.episode),
-          isCurrentRequest: isCurrentSelection
+          isCurrentRequest: isCurrentSelection,
+          setTizenProbeAbort: (abort) => {
+            if (isCurrentSelection()) this.abortTizenTorrentProbe = abort;
+          }
         };
         const canUseEngineFs = WebOsEngineFsResolver.canResolveStream(streamCandidate);
         const canUseTizenP2p = TizenStreamingServerResolver.canResolveStream(streamCandidate);

@@ -178,7 +178,9 @@ export function createTizenStreamingServerResolverMethods01() {
           if (!/^[a-f0-9]{64}$/.test(createJson.playbackTicket || "")) throw new Error("Local streaming ticket unavailable");
           const playbackUrl = buildPlaybackUrl(baseUrl, infoHash, fileIdx, sources) +
             `${sources.length ? "&" : "?"}ticket=${encodeURIComponent(createJson.playbackTicket)}`;
-          const readiness = await waitForTizenTorrentFirstByte(playbackUrl, { isCurrent });
+          const readiness = await waitForTizenTorrentFirstByte(playbackUrl, {
+            isCurrent, setProbeAbort: context.setTizenProbeAbort
+          });
           if (!isCurrent()) return { status: "cancelled" };
           if (readiness === "session-lost" && attempt === 0) continue;
           if (readiness !== "ready") return { status: readiness === "cancelled" ? readiness : "unavailable" };

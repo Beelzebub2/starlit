@@ -102,3 +102,20 @@ test("a newer source cancels stale first-byte readiness before the next probe", 
   assert.equal(ready, "cancelled", "a stale response must not start the old episode");
   assert.equal(probes, 1);
 });
+
+test("superseding a source aborts the outstanding range without waiting for peer data", async () => {
+  let cancel = null;
+  let sent = false;
+  let aborted = false;
+  const pending = probeTizenTorrentFirstByte(playable, 35_000, () => ({
+    open() {},
+    setRequestHeader() {},
+    send() { sent = true; },
+    abort() { aborted = true; }
+  }), (abort) => { cancel = abort; });
+  assert.equal(sent, true);
+  cancel();
+  assert.equal(await pending, "cancelled");
+  assert.equal(aborted, true);
+  assert.equal(cancel, null);
+});

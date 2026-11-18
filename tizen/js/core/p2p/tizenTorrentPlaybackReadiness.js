@@ -18,7 +18,9 @@ export function isLocalTizenTorrentPlaybackUrl(value) {
 
 // XHR, unlike fetch on Chromium 63, supports bounded cancellation without AbortController.
 // Only accept a 206 containing the requested byte; HEAD/metadata/empty 206 are not ready.
-export function probeTizenTorrentFirstByte(url, timeoutMs = DEFAULT_PROBE_MS, createRequest = () => new XMLHttpRequest()) {
+export function probeTizenTorrentFirstByte(
+  url, timeoutMs = DEFAULT_PROBE_MS, createRequest = () => new XMLHttpRequest(), setProbeAbort
+) {
   return new Promise((resolve) => {
     let xhr;
     let watchdog;
@@ -28,7 +30,12 @@ export function probeTizenTorrentFirstByte(url, timeoutMs = DEFAULT_PROBE_MS, cr
       settled = true;
       if (watchdog) clearTimeout(watchdog);
       if (xhr) xhr.onload = xhr.onerror = xhr.ontimeout = xhr.onabort = null;
+      setProbeAbort?.(null);
       resolve(result);
+    };
+    const abort = (result) => {
+      finish(result);
+      try { xhr.abort(); } catch (_) {}
     };
     try {
       xhr = createRequest();
@@ -44,11 +51,9 @@ export function probeTizenTorrentFirstByte(url, timeoutMs = DEFAULT_PROBE_MS, cr
       xhr.responseType = "arraybuffer";
       xhr.timeout = timeoutMs;
       xhr.setRequestHeader("Range", "bytes=0-0");
-      watchdog = setTimeout(() => {
-        try { xhr.abort(); } catch (_) {}
-        finish("retry");
-      }, timeoutMs + 250);
-      xhr.send();
+      watchdog = setTimeout(() => abort("retry"), timeoutMs + 250);
+      setProbeAbort?.(() => abort("cancelled"));
+      if (!settled) xhr.send();
     } catch (_) {
       finish("retry");
     }
@@ -60,6 +65,7 @@ export async function waitForTizenTorrentFirstByte(url, {
   probeTimeoutMs = DEFAULT_PROBE_MS,
   retryMs = DEFAULT_RETRY_MS,
   probe = probeTizenTorrentFirstByte,
+  setProbeAbort,
   isCurrent = () => true
 } = {}) {
   if (!isLocalTizenTorrentPlaybackUrl(url)) return "unavailable";
@@ -70,12 +76,12 @@ export async function waitForTizenTorrentFirstByte(url, {
     const remaining = deadline - Date.now();
     let result = "retry";
     try {
-      result = await probe(url, Math.min(probeTimeoutMs, Math.max(1, remaining)));
+      result = await probe(url, Math.min(probeTimeoutMs, Math.max(1, remaining)), undefined, setProbeAbort);
     } catch (_) {
       // Temporary local service or connection errors must not discard the swarm.
     }
     if (!isCurrent()) return "cancelled";
-    if (result === "ready" || result === "session-lost" || result === "unavailable") return result;
+    if (result === "ready" || result === "session-lost" || result === "unavailable" || result === "cancelled") return result;
     disconnects = result === "disconnected" ? disconnects + 1 : 0;
     if (disconnects >= 3) return "session-lost";
     const wait = Math.min(retryMs, deadline - Date.now());

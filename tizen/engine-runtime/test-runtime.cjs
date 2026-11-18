@@ -106,7 +106,7 @@ function concurrentRanges() {
 function boundedConcurrentRanges() {
   // Keep several distinct pieces in flight to verify the playback-request cap
   // without allowing more concurrent piece downloads on constrained TVs.
-  delayedSeedMs = 350;
+  delayedSeedMs = 1000;
   var clients = [];
   function closeAll() {
     delayedSeedMs = 0;
@@ -121,22 +121,26 @@ function boundedConcurrentRanges() {
     req.on('error', function () {});
     clients.push(req);
   }
-  function waitForFour(attempts) {
+  var engine = engines[engines.length - 1];
+  function pendingPeerRequests() {
+    return engine.swarm.wires.some(function (wire) { return wire.requests.length > 0; });
+  }
+  function waitForRanges(count, attempts) {
     return stats().then(function (snapshot) {
-      if (snapshot.activeRanges === 4) return;
-      if (attempts >= 25) throw new Error('Expected four simultaneous media ranges');
+      if (snapshot.activeRanges === count && (count === 0 || pendingPeerRequests())) return;
+      if (attempts >= 25) throw new Error('Expected ' + count + ' simultaneous media ranges');
       return new Promise(function (resolve) { setTimeout(resolve, 10); }).then(function () {
-        return waitForFour(attempts + 1);
+        return waitForRanges(count, attempts + 1);
       });
     });
   }
-  return waitForFour(0).then(function () {
+  return waitForRanges(4, 0).then(function () {
     return request('/' + hash + '/1?ticket=' + ticket, 'GET', null, { Range: 'bytes=2100000-2100100' });
   }).then(function (response) {
     assert.equal(response.status, 429, 'A fifth concurrent range must be rejected');
     closeAll();
-    return new Promise(function (resolve) { setTimeout(resolve, 400); }).then(stats).then(function (snapshot) {
-      assert.equal(snapshot.activeRanges, 0, 'Aborting all media clients must release every range');
+    return waitForRanges(0, 0).then(function () {
+      assert.equal(pendingPeerRequests(), false, 'Abandoned ranges must cancel pending peer requests');
     });
   }, function (error) {
     closeAll();
