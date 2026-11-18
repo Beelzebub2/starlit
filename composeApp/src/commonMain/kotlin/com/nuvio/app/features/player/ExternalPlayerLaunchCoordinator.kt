@@ -62,6 +62,9 @@ suspend fun prepareExternalPlayerLaunch(
                     videoId = videoId,
                     preferredLanguage = preferredLanguage,
                     secondaryLanguage = secondaryLanguage,
+                    contentId = contentId,
+                    season = request.season,
+                    episode = request.episode,
                 )
             }
 

@@ -48,6 +48,7 @@ data class PlayerLaunch(
     val contentLanguage: String? = null,
     /** Explicitly opted-in for this launch only. Never persisted as a player setting. */
     val privatePlayback: Boolean = false,
+    val subtitleRequestExtra: String? = null,
 )
 
 object PlayerLaunchStore {

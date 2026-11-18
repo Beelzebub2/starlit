@@ -28,6 +28,8 @@ export function createPlayerScreenMethods68() {
               subtitleLookup.id,
               subtitleLookup.videoId || null,
               {
+                imdbId: subtitleLookup.imdbId,
+                tmdbId: subtitleLookup.tmdbId,
                 season: subtitleLookup.season,
                 episode: subtitleLookup.episode,
                 title: subtitleLookup.title,

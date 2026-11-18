@@ -161,6 +161,8 @@ internal fun PlayerScreenRuntime.saveP2pStreamForReuse(
         responseHeaders = emptyMap(),
         filename = stream.behaviorHints.filename,
         videoSize = stream.behaviorHints.videoSize,
+        videoHash = stream.behaviorHints.videoHash,
+        externalSubtitles = stream.externalSubtitles,
         infoHash = infoHash,
         fileIdx = stream.p2pFileIdx,
         sources = stream.sources,
@@ -186,6 +188,7 @@ internal fun PlayerScreenRuntime.switchToP2pSourceStream(stream: StreamItem) {
         episode = activeEpisodeNumber,
     )
     externalSubtitles = stream.externalSubtitles
+    activeSubtitleRequestExtra = stream.subtitleRequestExtra()
     activeSourceUrl = p2pSentinelUrl(infoHash, stream.p2pFileIdx)
     activeSourceAudioUrl = null
     activeSourceHeaders = emptyMap()
@@ -231,6 +234,7 @@ internal fun PlayerScreenRuntime.switchToP2pEpisodeStream(
         episode = episode.episode,
     )
     externalSubtitles = stream.externalSubtitles
+    activeSubtitleRequestExtra = stream.subtitleRequestExtra()
     activeSourceUrl = p2pSentinelUrl(infoHash, stream.p2pFileIdx)
     activeSourceAudioUrl = null
     activeSourceHeaders = emptyMap()
@@ -283,6 +287,7 @@ internal fun PlayerScreenRuntime.switchToSource(stream: StreamItem) {
         saveDirectStreamForReuse(stream, url, currentVideoId, activeSeasonNumber, activeEpisodeNumber)
     }
     externalSubtitles = stream.externalSubtitles
+    activeSubtitleRequestExtra = stream.subtitleRequestExtra()
     activeSourceUrl = url
     activeSourceAudioUrl = null
     activeSourceHeaders = sanitizePlaybackHeaders(stream.behaviorHints.proxyHeaders?.request)
@@ -334,6 +339,7 @@ internal fun PlayerScreenRuntime.switchToEpisodeStream(stream: StreamItem, episo
         saveDirectStreamForReuse(stream, url, epVideoId, episode.season, episode.episode)
     }
     externalSubtitles = stream.externalSubtitles
+    activeSubtitleRequestExtra = stream.subtitleRequestExtra()
     activeSourceUrl = url
     activeSourceAudioUrl = null
     activeSourceHeaders = sanitizePlaybackHeaders(stream.behaviorHints.proxyHeaders?.request)
@@ -368,6 +374,7 @@ internal fun PlayerScreenRuntime.switchToDownloadedEpisode(downloadItem: Downloa
     val epResumePositionMs = epEntry?.lastPositionMs?.takeIf { it > 0L } ?: 0L
 
     externalSubtitles = DownloadSubtitles.localSubtitles(localFileUri)
+    activeSubtitleRequestExtra = null
     activeSourceUrl = localFileUri
     activeSourceAudioUrl = null
     activeSourceHeaders = emptyMap()
@@ -549,6 +556,8 @@ private fun PlayerScreenRuntime.saveDirectStreamForReuse(
         responseHeaders = sanitizePlaybackResponseHeaders(stream.behaviorHints.proxyHeaders?.response),
         filename = stream.behaviorHints.filename,
         videoSize = stream.behaviorHints.videoSize,
+        videoHash = stream.behaviorHints.videoHash,
+        externalSubtitles = stream.externalSubtitles,
         bingeGroup = stream.behaviorHints.bingeGroup,
         streamType = stream.streamType,
         contentLanguage = contentLanguage,

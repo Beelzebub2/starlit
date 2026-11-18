@@ -91,14 +91,14 @@ test("unknown, short, long and scene-named chapters are ignored", () => {
     []
   );
 });
-test("post-credits and mid-credits scenes are excluded", () => {
+test("retains post-credits and mid-credits boundaries as scene markers", () => {
   const intervals = chapterSkipIntervals(
     chapters([0, "Movie"], [5_520_000, "Credits"], [5_700_000, "Post-Credits Scene"]),
     6_000_000
   );
   assert.equal(
-    intervals.some((interval) => interval.startTime === 5_700),
-    false
+    intervals.some((interval) => interval.startTime === 5_700 && interval.type === "post-credits"),
+    true
   );
   assert.equal(
     intervals.some((interval) => interval.type === "outro" && interval.startTime === 5_520),
@@ -114,8 +114,8 @@ test("post-credits and mid-credits scenes are excluded", () => {
     6_000_000
   );
   assert.equal(
-    mid.some((interval) => interval.startTime === 5_600),
-    false
+    mid.some((interval) => interval.startTime === 5_600 && interval.type === "post-credits"),
+    true
   );
 });
 test("case-insensitive labels, OP suffix and last chapter duration", () => {
@@ -162,8 +162,20 @@ test("merge prefers chapters by category and keeps unknown API intervals", () =>
     mergeSkipIntervals(api, chapter).map((interval) => interval.provider + ":" + interval.type),
     ["chapters:intro", "chapters:recap", "introdb:outro", "introdb:post-credits"]
   );
-  assert.equal(mergeSkipIntervals(api, chapter, true), api);
   assert.deepEqual(mergeSkipIntervals(api, []), api);
   assert.deepEqual(mergeSkipIntervals([], chapter), chapter);
-  assert.deepEqual(mergeSkipIntervals([], chapter, true), chapter);
+});
+
+test("movie chapter credits stop at the actual scene and fill gaps in provider data", () => {
+  const movieChapters = chapters([0, "Feature"], [5_520_000, "Credits"], [5_700_000, "Post-Credits Scene"]);
+  const fromChapters = chapterSkipIntervals(movieChapters, 6_000_000, true);
+  const provider = [
+    { type: "intro", startTime: 10, endTime: 20, provider: "theintrodb" },
+    { type: "movie-credits", startTime: 5530, endTime: 5870, provider: "theintrodb" }
+  ];
+  assert.deepEqual(mergeSkipIntervals(provider, fromChapters).map(({ type, startTime, endTime }) =>
+    [type, startTime, endTime]), [
+    ["movie-credits", 5520, 5700], ["post-credits", 5700, 6000], ["intro", 10, 20]
+  ]);
+  assert.deepEqual(chapterSkipIntervals(movieChapters.slice(0, 2), 6_000_000, true), []);
 });

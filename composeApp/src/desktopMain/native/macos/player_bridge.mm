@@ -117,6 +117,7 @@ static constexpr double kMaxVolumePercent = 200.0;
 - (BOOL)isEnded;
 - (NSString *)audioTracksJson;
 - (NSString *)subtitleTracksJson;
+- (NSString *)chaptersJson;
 - (std::vector<double>)chapterStarts;
 - (void)selectAudioTrackId:(int)trackId;
 - (void)selectSubtitleTrackId:(int)trackId;
@@ -2217,6 +2218,20 @@ static void nuvioMpvWakeup(void *ctx) {
     return [self tracksJsonForType:@"sub"];
 }
 
+- (NSString *)chaptersJson {
+    NSMutableArray *chapters = [NSMutableArray array];
+    long long count = [self int64Property:"chapter-list/count" fallback:0];
+    for (long long index = 0; index < count; ++index) {
+        NSString *prefix = [NSString stringWithFormat:@"chapter-list/%lld", index];
+        double start = [self doubleProperty:[prefix stringByAppendingString:@"/time"].UTF8String fallback:-1.0];
+        if (!std::isfinite(start) || start < 0) continue;
+        NSString *title = [self stringProperty:[prefix stringByAppendingString:@"/title"].UTF8String fallback:@""];
+        [chapters addObject:@{@"startTime": @(start), @"title": title}];
+    }
+    NSData *data = [NSJSONSerialization dataWithJSONObject:chapters options:0 error:nil];
+    return data ? [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] : @"[]";
+}
+
 - (std::vector<double>)chapterStarts {
     std::vector<double> starts;
     long long count = [self int64Property:"chapter-list/count" fallback:0];
@@ -3352,6 +3367,13 @@ Java_com_nuvio_app_features_player_desktop_NativePlayerBridge_subtitleTracksJson
     if (handle == 0) return env->NewStringUTF("[]");
     MpvWebPlayer *player = (__bridge MpvWebPlayer *)(void *)(intptr_t)handle;
     NSString *json = [player subtitleTracksJson] ?: @"[]";
+    return env->NewStringUTF(json.UTF8String);
+}
+
+extern "C" JNIEXPORT jstring JNICALL
+Java_com_nuvio_app_features_player_desktop_NativePlayerBridge_chaptersJson(JNIEnv *env, jobject, jlong handle) {
+    MpvWebPlayer *player = (__bridge MpvWebPlayer *)(void *)(intptr_t)handle;
+    NSString *json = [player chaptersJson] ?: @"[]";
     return env->NewStringUTF(json.UTF8String);
 }
 

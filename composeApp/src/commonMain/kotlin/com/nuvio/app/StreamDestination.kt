@@ -28,6 +28,7 @@ import com.nuvio.app.features.debrid.toastMessage
 import com.nuvio.app.features.details.MetaDetailsRepository
 import com.nuvio.app.features.p2p.P2pConsentDialog
 import com.nuvio.app.features.p2p.P2pSettingsRepository
+import com.nuvio.app.features.player.subtitleRequestExtra
 import com.nuvio.app.features.player.PlayerLaunch
 import com.nuvio.app.features.player.PlayerLaunchStore
 import com.nuvio.app.features.player.PlayerSettingsRepository
@@ -208,6 +209,8 @@ internal fun StreamDestination(
                 responseHeaders = emptyMap(),
                 filename = stream.behaviorHints.filename,
                 videoSize = stream.behaviorHints.videoSize,
+                videoHash = stream.behaviorHints.videoHash,
+                externalSubtitles = stream.externalSubtitles,
                 infoHash = infoHash,
                 fileIdx = stream.p2pFileIdx,
                 sources = stream.sources,
@@ -328,8 +331,10 @@ internal fun StreamDestination(
                     behaviorHints = StreamBehaviorHints(
                         filename = cached.filename,
                         videoSize = cached.videoSize,
+                        videoHash = cached.videoHash,
                         bingeGroup = cached.bingeGroup,
                     ),
+                    externalSubtitles = cached.externalSubtitles,
                 )
                 requestOrOpenP2pStream(
                     stream = cachedStream,
@@ -348,7 +353,12 @@ internal fun StreamDestination(
                 sourceUrl = cached.url,
                 sourceHeaders = sanitizePlaybackHeaders(cached.requestHeaders),
                 sourceResponseHeaders = sanitizePlaybackResponseHeaders(cached.responseHeaders),
-                externalSubtitles = emptyList(),
+                externalSubtitles = cached.externalSubtitles,
+                subtitleRequestExtra = StreamBehaviorHints(
+                    filename = cached.filename,
+                    videoHash = cached.videoHash,
+                    videoSize = cached.videoSize,
+                ).subtitleRequestExtra(),
                 streamType = cached.streamType,
                 logo = launch.logo,
                 poster = launch.poster,
@@ -503,6 +513,8 @@ internal fun StreamDestination(
                 responseHeaders = sanitizePlaybackResponseHeaders(stream.behaviorHints.proxyHeaders?.response),
                 filename = stream.behaviorHints.filename,
                 videoSize = stream.behaviorHints.videoSize,
+                videoHash = stream.behaviorHints.videoHash,
+                externalSubtitles = stream.externalSubtitles,
                 bingeGroup = stream.behaviorHints.bingeGroup,
                 streamType = stream.streamType,
                 contentLanguage = resolveLaunchContentLanguage(),
@@ -515,6 +527,7 @@ internal fun StreamDestination(
             sourceHeaders = sanitizePlaybackHeaders(stream.behaviorHints.proxyHeaders?.request),
             sourceResponseHeaders = sanitizePlaybackResponseHeaders(stream.behaviorHints.proxyHeaders?.response),
             externalSubtitles = stream.externalSubtitles,
+            subtitleRequestExtra = stream.subtitleRequestExtra(),
             streamType = stream.streamType,
             logo = launch.logo,
             poster = launch.poster,
@@ -672,6 +685,8 @@ internal fun StreamDestination(
                 responseHeaders = sanitizePlaybackResponseHeaders(stream.behaviorHints.proxyHeaders?.response),
                 filename = stream.behaviorHints.filename,
                 videoSize = stream.behaviorHints.videoSize,
+                videoHash = stream.behaviorHints.videoHash,
+                externalSubtitles = stream.externalSubtitles,
                 bingeGroup = stream.behaviorHints.bingeGroup,
                 streamType = stream.streamType,
                 contentLanguage = resolveLaunchContentLanguage(),
@@ -684,6 +699,7 @@ internal fun StreamDestination(
             sourceHeaders = sanitizePlaybackHeaders(stream.behaviorHints.proxyHeaders?.request),
             sourceResponseHeaders = sanitizePlaybackResponseHeaders(stream.behaviorHints.proxyHeaders?.response),
             externalSubtitles = stream.externalSubtitles,
+            subtitleRequestExtra = stream.subtitleRequestExtra(),
             streamType = stream.streamType,
             logo = launch.logo,
             poster = launch.poster,

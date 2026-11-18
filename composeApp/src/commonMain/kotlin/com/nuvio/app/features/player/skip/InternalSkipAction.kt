@@ -34,6 +34,19 @@ internal fun SkipInterval.internalSkipAction(
     )
 }
 
+internal fun List<SkipInterval>.protectPostCredits(): List<SkipInterval> {
+    val scenes = filter { it.type == "post-credits" && it.hasValidSeekTimes() }
+    if (scenes.isEmpty()) return this
+    return mapNotNull { interval ->
+        if (interval.type !in PlayerNextEpisodeRules.OUTRO_SEGMENT_TYPES && interval.type != "movie-credits") {
+            return@mapNotNull interval
+        }
+        val scene = scenes.filter { it.startTime < interval.endTime && it.endTime > interval.startTime }
+            .minByOrNull { it.startTime } ?: return@mapNotNull interval
+        interval.copy(endTime = scene.startTime).takeIf { it.hasValidSeekTimes() }
+    }
+}
+
 private const val POST_CREDITS_GAP_MS = 5_000L
 
 internal fun SkipInterval.hasValidSeekTimes(): Boolean =

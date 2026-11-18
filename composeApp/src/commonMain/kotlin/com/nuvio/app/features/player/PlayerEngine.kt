@@ -19,7 +19,7 @@ interface PlayerEngineController {
     fun getRemoteVolume(): Float = 1f
     fun getAudioTracks(): List<AudioTrack>
     fun getSubtitleTracks(): List<SubtitleTrack>
-    fun getChapterStarts(): List<Double> = emptyList()
+    fun getPlaybackChapters(): List<com.nuvio.app.features.player.skip.PlaybackChapter> = emptyList()
     fun applyAudioLanguagePreferences(languages: List<String>)
     fun selectAudioTrack(index: Int)
     fun selectSubtitleTrack(index: Int)

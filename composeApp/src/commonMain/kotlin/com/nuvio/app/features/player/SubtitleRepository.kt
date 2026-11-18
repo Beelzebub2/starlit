@@ -14,7 +14,7 @@ import nuvio.composeapp.generated.resources.compose_player_no_subtitles_found
 import org.jetbrains.compose.resources.getString
 
 object SubtitleRepository {
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
     private val _addonSubtitles = MutableStateFlow<List<AddonSubtitle>>(emptyList())
     val addonSubtitles: StateFlow<List<AddonSubtitle>> = _addonSubtitles.asStateFlow()
@@ -30,7 +30,7 @@ object SubtitleRepository {
 
     private var activeFetchJob: Job? = null
 
-    fun fetchAddonSubtitles(type: String, videoId: String) {
+    internal fun fetchAddonSubtitles(lookup: SubtitleLookup) {
         activeFetchJob?.cancel()
         _loadingProgress.value = null
         activeFetchJob = scope.launch {
@@ -38,7 +38,7 @@ object SubtitleRepository {
             _error.value = null
             _addonSubtitles.value = emptyList()
 
-            val requests = addonSubtitleRequests(type, videoId)
+            val requests = addonSubtitleRequests(lookup.resolve())
             if (requests.isEmpty()) {
                 _isLoading.value = false
                 return@launch
@@ -46,7 +46,7 @@ object SubtitleRepository {
 
             _loadingProgress.value = SubtitleLoadingProgress(total = requests.size)
             loadAddonSubtitles(requests) { request, subtitles ->
-                _addonSubtitles.update { it + subtitles }
+                _addonSubtitles.update { (it + subtitles).distinctBy { track -> track.url to track.language } }
                 _loadingProgress.update { progress ->
                     progress?.copy(completed = progress.completed + 1, addonName = request.addonName)
                 }

@@ -4,6 +4,7 @@ import { TmdbService } from "../../core/tmdb/tmdbService.js";
 import { Platform } from "../../platform/index.js";
 import { AnimeSkipSettingsStore } from "../local/animeSkipSettingsStore.js";
 import { animeIdResolver } from "./animeIdResolver.js";
+const THEINTRODB_MEDIA_URL = "https://api.theintrodb.org/v4/media";
 const CACHE = new Map();
 const CACHE_TTL_MS = 30 * 60 * 1000;
 const CACHE_EMPTY_TTL_MS = 2 * 60 * 1000;
@@ -58,16 +59,8 @@ function toSkipInterval(segment, type) {
   if (!segment || typeof segment !== "object") {
     return null;
   }
-  const start = Number.isFinite(Number(segment.start_sec))
-    ? Number(segment.start_sec)
-    : Number.isFinite(Number(segment.start_ms))
-      ? Number(segment.start_ms) / 1000
-      : NaN;
-  const end = Number.isFinite(Number(segment.end_sec))
-    ? Number(segment.end_sec)
-    : Number.isFinite(Number(segment.end_ms))
-      ? Number(segment.end_ms) / 1000
-      : NaN;
+  const start = segment.start_sec != null ? Number(segment.start_sec) : Number(segment.start_ms ?? NaN) / 1000;
+  const end = segment.end_sec != null ? Number(segment.end_sec) : Number(segment.end_ms ?? NaN) / 1000;
   if (!Number.isFinite(start) || !Number.isFinite(end) || start < 0 || end <= start) {
     return null;
   }
@@ -83,7 +76,8 @@ export function mapIntroDbSegmentsToSkipIntervals(data = {}, { isMovie = false }
     return [
       toSkipInterval(data?.intro, "intro"),
       toSkipInterval(data?.recap, "recap"),
-      toSkipInterval(data?.outro, "outro")
+      toSkipInterval(data?.outro, "outro"),
+      toSkipInterval(data?.post_credits, "post-credits")
     ]
       .filter(Boolean)
       .sort((left, right) => left.startTime - right.startTime);
@@ -94,7 +88,7 @@ export function mapIntroDbSegmentsToSkipIntervals(data = {}, { isMovie = false }
     credits && scene && scene.startTime < credits.endTime && scene.endTime > credits.startTime
       ? { ...credits, endTime: scene.startTime }
       : credits;
-  return [safeCredits, scene]
+  return [toSkipInterval(data?.intro, "intro"), toSkipInterval(data?.recap, "recap"), safeCredits, scene]
     .filter(Boolean)
     .filter((interval) => interval.endTime > interval.startTime)
     .sort((left, right) => left.startTime - right.startTime);
@@ -260,6 +254,33 @@ async function fetchFromIntroDb(imdbId, season, episode) {
   const data = await fetchJson(url.toString());
   return mapIntroDbSegmentsToSkipIntervals(data);
 }
+async function fetchFromTheIntroDb(imdbId, season = null, episode = null) {
+  if (!imdbId) return [];
+  const isMovie = season == null || episode == null;
+  const url = new URL(THEINTRODB_MEDIA_URL);
+  url.searchParams.set("imdb_id", imdbId);
+  if (!isMovie) {
+    url.searchParams.set("season", String(season));
+    url.searchParams.set("episode", String(episode));
+  }
+  const payload = await fetchJson(url.toString());
+  return [
+    ["intro", payload?.intro],
+    ["recap", payload?.recap],
+    [isMovie ? "movie-credits" : "outro", payload?.credits]
+  ].flatMap(([type, segments]) =>
+    (Array.isArray(segments) ? segments : []).flatMap((segment) => {
+      if (segment?.end_ms == null || (segment.start_ms == null && (type === "movie-credits" || type === "outro"))) {
+        return [];
+      }
+      const startTime = Number(segment.start_ms ?? 0) / 1000;
+      const endTime = Number(segment.end_ms) / 1000;
+      if (!Number.isFinite(startTime) || startTime < 0 || !Number.isFinite(endTime) || endTime <= startTime) return [];
+      return [{ startTime, endTime, type, provider: "theintrodb" }];
+    })
+  );
+}
+
 async function fetchFromAniSkip(malId, episode) {
   const baseUrl = normalizeBaseUrl(ANISKIP_API_URL);
   if (!baseUrl || !malId || !Number.isFinite(Number(episode)) || Number(episode) <= 0) {
@@ -351,18 +372,18 @@ async function fetchFromAnimeSkip(anilistId, episode, season = null) {
 }
 export const skipIntroRepository = {
   async getSkipIntervals(imdbId, season, episode, options = {}) {
-    const normalizedImdbId = normalizeImdbId(imdbId);
-    const seasonNumber = Number(season || 0);
-    const episodeNumber = Number(episode || 0);
-    if (seasonNumber <= 0 || episodeNumber <= 0) {
-      return [];
-    }
+    const seasonNumber = Number(season);
+    const episodeNumber = Number(episode);
+    if (season == null || !Number.isInteger(seasonNumber) || seasonNumber < 0 ||
+        !Number.isInteger(episodeNumber) || episodeNumber <= 0) return [];
+    const normalizedImdbId = normalizeImdbId(imdbId) ||
+      (options.tmdbId ? await TmdbService.tmdbToImdb(options.tmdbId, "series") : "") || "";
     const animeSkipSettings = AnimeSkipSettingsStore.get();
     const animeSkipKey =
       animeSkipSettings?.enabled === true
         ? `animeskip:${String(animeSkipSettings.clientId || "")}`
         : "animeskip:off";
-    const cacheKey = `${normalizedImdbId || "noimdb"}:${seasonNumber}:${episodeNumber}:${animeSkipKey}`;
+    const cacheKey = `${normalizedImdbId || options.contentId || options.videoId || "noid"}:${seasonNumber}:${episodeNumber}:${animeSkipKey}`;
     const cached = readCache(cacheKey);
     if (cached) {
       return cached;
@@ -371,6 +392,7 @@ export const skipIntroRepository = {
     const introDbPromise = normalizedImdbId
       ? fetchFromIntroDb(normalizedImdbId, seasonNumber, episodeNumber)
       : Promise.resolve([]);
+    const fallbackPromise = fetchFromTheIntroDb(normalizedImdbId, seasonNumber, episodeNumber);
     const animeIds = await animeIdResolver
       .resolveAnimeIds({
         imdbId: normalizedImdbId,
@@ -389,22 +411,20 @@ export const skipIntroRepository = {
             })
             .catch(() => episodeNumber)
         : episodeNumber;
-    const [introDb, aniSkip, animeSkip] = await Promise.all([
+    const [introDb, aniSkip, animeSkip, fallback] = await Promise.all([
       introDbPromise,
       animeIds?.mal ? fetchFromAniSkip(animeIds.mal, animeEpisode) : Promise.resolve([]),
       animeIds?.anilist
         ? fetchFromAnimeSkip(animeIds.anilist, animeEpisode, seasonNumber)
-        : Promise.resolve([])
+        : Promise.resolve([]),
+      fallbackPromise
     ]);
-    const intervals = mergeSkipIntervalsByPriority([introDb, aniSkip, animeSkip]);
+    const intervals = mergeSkipIntervalsByPriority([introDb, aniSkip, animeSkip, fallback]);
     writeCache(cacheKey, intervals);
     return intervals;
   },
   async getMovieSkipIntervals({ imdbId = "", tmdbId = "", contentId = "", videoId = "" } = {}) {
     const baseUrl = normalizeBaseUrl(INTRODB_API_URL);
-    if (!baseUrl) {
-      return [];
-    }
     const candidates = [imdbId, videoId, contentId]
       .map((value) => normalizeImdbId(value))
       .filter(Boolean);
@@ -425,11 +445,14 @@ export const skipIntroRepository = {
     if (cached) {
       return cached;
     }
-    const url = new URL("segments", baseUrl);
-    url.searchParams.set("imdb_id", normalizedImdbId);
-    url.searchParams.set("is_movie", "true");
-    const data = await fetchJson(url.toString());
-    const intervals = mapIntroDbSegmentsToSkipIntervals(data, { isMovie: true });
+    const primary = baseUrl ? (async () => {
+      const url = new URL("segments", baseUrl);
+      url.searchParams.set("imdb_id", normalizedImdbId);
+      url.searchParams.set("is_movie", "true");
+      return mapIntroDbSegmentsToSkipIntervals(await fetchJson(url.toString()), { isMovie: true });
+    })() : [];
+    const [introDb, fallback] = await Promise.all([primary, fetchFromTheIntroDb(normalizedImdbId)]);
+    const intervals = mergeSkipIntervalsByPriority([introDb, fallback]);
     writeCache(cacheKey, intervals);
     return intervals;
   }

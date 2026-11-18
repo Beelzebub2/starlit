@@ -49,4 +49,11 @@ class PlayerStartupSubtitlesTest {
             merged.map { it.url },
         )
     }
+    @Test
+    fun desktopCanSelectDownloadedSidecarsFromTheSamePool() {
+        val downloaded = StreamSubtitle("file:/E:/Media/Feature%20EN.srt", "en", "English")
+        val merged = mergeStreamAndAddonSubtitles(emptyList(), listOf(downloaded), includeLocal = true)
+        assertEquals(downloaded.url, merged.single().url)
+    }
+
 }
