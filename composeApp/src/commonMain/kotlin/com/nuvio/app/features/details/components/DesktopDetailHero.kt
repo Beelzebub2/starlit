@@ -411,12 +411,8 @@ fun DesktopDetailHero(
                     )
                 }
             }
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(space.s8),
-                verticalArrangement = Arrangement.spacedBy(space.s8),
-            ) {
-                com.nuvio.app.features.myanimelist.MyAnimeListControls(meta)
-            }
+            // Emits nothing for non-anime titles, so the hero gets no empty spaced slot.
+            com.nuvio.app.features.myanimelist.MyAnimeListControls(meta)
         }
 
         if (heroTrailerSourceUrl != null) {

@@ -1,33 +1,74 @@
 package com.nuvio.app.features.myanimelist
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.TooltipArea
+import androidx.compose.foundation.TooltipPlacement
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.ExpandMore
-import androidx.compose.material.icons.filled.Link
-import androidx.compose.material.icons.filled.PlaylistAddCheck
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Replay
-import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.ErrorOutline
+import androidx.compose.material.icons.rounded.KeyboardArrowDown
+import androidx.compose.material.icons.rounded.Link
+import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material.icons.rounded.Replay
+import androidx.compose.material.icons.rounded.Star
+import androidx.compose.material.icons.rounded.StarBorder
+import androidx.compose.material.icons.rounded.TaskAlt
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import kotlin.math.roundToInt
+import com.nuvio.app.core.ui.NuvioActionSize
 import com.nuvio.app.core.ui.NuvioToastController
 import com.nuvio.app.core.ui.NuvioCompactActionButton
 import com.nuvio.app.core.ui.NuvioCompactActionTone
+import com.nuvio.app.core.ui.NuvioTokens
+import com.nuvio.app.core.ui.nuvio
 import com.nuvio.app.features.details.MetaDetails
 import com.nuvio.app.features.profiles.ProfileRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import nuvio.composeapp.generated.resources.*
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
 @Composable private fun rememberMalConnection(): MalConnectionState {
@@ -130,8 +171,6 @@ internal actual suspend fun markMyAnimeListRewatchOnPlayback(
     var error by remember(meta.id, connection.profileId) { mutableStateOf<String?>(null) }
     var setup by remember { mutableStateOf(false) }
     var search by remember { mutableStateOf(false) }
-    var statusMenu by remember { mutableStateOf(false) }
-    var ratingMenu by remember { mutableStateOf(false) }
     LaunchedEffect(meta.id, connection.profileId, connection.connected, connection.busy) {
         if (connection.busy) return@LaunchedEffect
         busy = true; error = null
@@ -166,76 +205,458 @@ internal actual suspend fun markMyAnimeListRewatchOnPlayback(
             finally { busy = false }
         }
     }
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            if (!connection.connected) NuvioCompactActionButton(
-                label = "Connect MyAnimeList", icon = Icons.Default.Link,
-                enabled = !connection.busy, onClick = { setup = true },
-            )
-            else {
-                Box {
-                    NuvioCompactActionButton(
-                        label = "MAL · ${status?.status?.label ?: "Set status"}", icon = Icons.Default.PlaylistAddCheck,
-                        accessibilityLabel = "MyAnimeList status: ${status?.status?.label ?: "Set status"}",
-                        trailingIcon = Icons.Default.ExpandMore, enabled = !busy && !connection.busy && malId != null,
-                        onClick = { statusMenu = true },
-                    )
-                    DropdownMenu(expanded = statusMenu, onDismissRequest = { statusMenu = false }) {
-                        MalStatus.entries.forEach { option -> DropdownMenuItem(text = { Text(option.label) },
-                            onClick = { statusMenu = false; update(newStatus = option) }) }
-                    }
-                }
-                Box {
-                    NuvioCompactActionButton(
-                        label = status?.score?.takeIf { it > 0 }?.let { "Rating · $it/10" } ?: "Rate on MAL",
-                        accessibilityLabel = status?.score?.takeIf { it > 0 }?.let { "MyAnimeList rating: $it out of 10" } ?: "Rate on MyAnimeList",
-                        icon = Icons.Default.Star, trailingIcon = Icons.Default.ExpandMore,
-                        enabled = !busy && !connection.busy && malId != null, onClick = { ratingMenu = true },
-                    )
-                    DropdownMenu(expanded = ratingMenu, onDismissRequest = { ratingMenu = false }) {
-                        (10 downTo 0).forEach { score -> DropdownMenuItem(text = { Text(if (score == 0) "Clear rating" else "$score / 10") },
-                            onClick = { ratingMenu = false; update(score = score) }) }
-                    }
-                }
-                NuvioCompactActionButton(
-                    label = if (malId == null) "Link MAL entry" else "Change MAL entry",
-                    icon = Icons.Default.Edit, tone = NuvioCompactActionTone.Quiet,
-                    enabled = !busy && !connection.busy, onClick = { search = true },
-                )
-                if (status?.status == MalStatus.COMPLETED) {
-                    val rewatching = status?.isRewatching == true
-                    NuvioCompactActionButton(
-                        label = if (rewatching) stringResource(Res.string.mal_rewatch_in_progress) else "Mark rewatching",
-                        icon = Icons.Default.Replay,
-                        enabled = !busy && !connection.busy,
-                        onClick = { update(isRewatching = !rewatching) },
-                    )
-                    if (rewatching) NuvioCompactActionButton(
-                        label = stringResource(Res.string.mal_rewatch_finish),
-                        icon = Icons.Default.Replay,
-                        enabled = !busy && !connection.busy,
-                        onClick = ::finishRewatch,
-                    )
-                }
-                status?.let { Text(
-                    stringResource(Res.string.mal_rewatch_count, it.numTimesRewatched),
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(top = 9.dp),
-                ) }
-            }
-        }
-        if (busy) LinearProgressIndicator(Modifier.width(220.dp))
-        error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
-            NuvioCompactActionButton(label = stringResource(Res.string.action_retry), icon = Icons.Default.Refresh,
-                enabled = !busy && !connection.busy,
-                onClick = { scope.launch { busy = true; try { malId?.let { status = MyAnimeListRepository.listStatus(it); error = null } }
-                    catch (e: CancellationException) { throw e } catch (e: Exception) { error = e.message } finally { busy = false } } }) }
-    }
+    MalTrackerControls(
+        connected = connection.connected,
+        connectionBusy = connection.busy,
+        working = busy || connection.busy,
+        linked = malId != null,
+        entry = status,
+        error = error,
+        onConnect = { setup = true },
+        onChooseEntry = { search = true },
+        onStatus = { update(newStatus = it) },
+        onScore = { update(score = it) },
+        onToggleRewatching = { update(isRewatching = status?.isRewatching != true) },
+        onFinishRewatch = ::finishRewatch,
+        onRetry = {
+            scope.launch { busy = true; try { malId?.let { status = MyAnimeListRepository.listStatus(it); error = null } }
+                catch (e: CancellationException) { throw e } catch (e: Exception) { error = e.message } finally { busy = false } }
+        },
+    )
     if (setup) MalSetupDialog(connection, onDismiss = { setup = false })
     if (search) MalSearchDialog(meta, onDismiss = { search = false }, onSelect = { selected ->
         MyAnimeListRepository.link(meta, selected.id); malId = selected.id; search = false
         scope.launch { try { status = MyAnimeListRepository.listStatus(selected.id) } catch (e: CancellationException) { throw e } catch (e: Exception) { error = e.message } }
     })
+}
+
+/**
+ * Stateless MyAnimeList tracker shown under the desktop detail hero actions: list status, score,
+ * rewatch count and entry editing, grouped in one bar. [entry] is null when the title is not on the list.
+ */
+@Composable internal fun MalTrackerControls(
+    connected: Boolean,
+    connectionBusy: Boolean,
+    working: Boolean,
+    linked: Boolean,
+    entry: MalListStatus?,
+    error: String?,
+    onConnect: () -> Unit,
+    onChooseEntry: () -> Unit,
+    onStatus: (MalStatus) -> Unit,
+    onScore: (Int) -> Unit,
+    onToggleRewatching: () -> Unit,
+    onFinishRewatch: () -> Unit,
+    onRetry: () -> Unit,
+) {
+    var statusMenu by remember { mutableStateOf(false) }
+    var ratingMenu by remember { mutableStateOf(false) }
+    val entryStatus = entry?.status
+    val colors = MaterialTheme.nuvio.colors
+    Column(verticalArrangement = Arrangement.spacedBy(NuvioTokens.Space.s8)) {
+        MalTrackerBar(working = working) {
+            MalBrandMark()
+            MalBarDivider()
+            when {
+                !connected -> MalBarSegment(
+                    onClick = onConnect, enabled = !connectionBusy,
+                    accessibilityLabel = "Connect MyAnimeList",
+                ) {
+                    MalBarIcon(Icons.Rounded.Link)
+                    MalBarLabel("Connect MyAnimeList", emphasized = true)
+                }
+                !linked && !working -> MalBarSegment(
+                    onClick = onChooseEntry, enabled = true,
+                    accessibilityLabel = "Link MAL entry",
+                ) {
+                    MalBarIcon(Icons.Rounded.Link)
+                    MalBarLabel("Link MAL entry", emphasized = true)
+                }
+                else -> {
+                    val canEdit = !working && linked
+                    Box {
+                        MalBarSegment(
+                            onClick = { statusMenu = true }, enabled = canEdit,
+                            accessibilityLabel = "MyAnimeList status: ${entryStatus?.label ?: "Set status"}",
+                        ) {
+                            MalStatusDot(entryStatus)
+                            MalBarLabel(entryStatus?.label ?: "Set status", emphasized = entryStatus != null)
+                            MalBarChevron()
+                        }
+                        MalMenu(expanded = statusMenu, onDismiss = { statusMenu = false }) {
+                            MalStatus.entries.forEach { option ->
+                                MalMenuItem(
+                                    text = option.label,
+                                    selected = option == entryStatus,
+                                    leading = { MalStatusDot(option) },
+                                    onClick = { statusMenu = false; onStatus(option) },
+                                )
+                            }
+                        }
+                    }
+                    MalBarDivider()
+                    val score = entry?.score?.takeIf { it > 0 }
+                    Box {
+                        MalBarSegment(
+                            onClick = { ratingMenu = true }, enabled = canEdit,
+                            accessibilityLabel = score?.let { "MyAnimeList rating: $it out of 10" } ?: "Rate on MyAnimeList",
+                        ) {
+                            if (score != null) {
+                                MalBarIcon(Icons.Rounded.Star, tint = MalStarColor)
+                                Text(malScoreText(score), style = malBarTextStyle(), maxLines = 1)
+                            } else {
+                                MalBarIcon(Icons.Rounded.StarBorder)
+                                MalBarLabel("Rate", emphasized = false)
+                            }
+                            MalBarChevron()
+                        }
+                        MalMenu(expanded = ratingMenu, onDismiss = { ratingMenu = false }) {
+                            (10 downTo 1).forEach { value ->
+                                MalMenuItem(
+                                    text = "$value / 10",
+                                    selected = value == score,
+                                    leading = { Icon(Icons.Rounded.Star, null, Modifier.size(18.dp), tint = MalStarColor) },
+                                    onClick = { ratingMenu = false; onScore(value) },
+                                )
+                            }
+                            if (score != null) {
+                                HorizontalDivider(Modifier.padding(vertical = 4.dp), color = colors.borderSubtle)
+                                MalMenuItem(
+                                    text = "Clear rating",
+                                    selected = false,
+                                    leading = { Icon(Icons.Rounded.StarBorder, null, Modifier.size(18.dp), tint = colors.textSecondary) },
+                                    onClick = { ratingMenu = false; onScore(0) },
+                                )
+                            }
+                        }
+                    }
+                    if (entry != null && entryStatus != null) {
+                        MalBarDivider()
+                        MalRewatchSegment(
+                            entry = entry,
+                            enabled = canEdit,
+                            onToggleRewatching = onToggleRewatching,
+                            onFinishRewatch = onFinishRewatch,
+                        )
+                    }
+                    MalBarDivider()
+                    val editLabel = if (linked) "Change MAL entry" else "Link MAL entry"
+                    MalTooltip(editLabel) {
+                        MalBarSegment(
+                            onClick = onChooseEntry, enabled = !working,
+                            accessibilityLabel = editLabel, horizontalPadding = 11.dp,
+                        ) {
+                            MalBarIcon(Icons.Rounded.Edit)
+                        }
+                    }
+                }
+            }
+        }
+        error?.let { message ->
+            Row(
+                modifier = Modifier.widthIn(max = 620.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(NuvioTokens.Space.s8),
+            ) {
+                Icon(Icons.Rounded.ErrorOutline, null, Modifier.size(16.dp), tint = colors.danger)
+                Text(
+                    message,
+                    modifier = Modifier.weight(1f, fill = false),
+                    color = colors.danger,
+                    style = MaterialTheme.typography.bodySmall,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                NuvioCompactActionButton(
+                    label = stringResource(Res.string.action_retry), icon = Icons.Rounded.Refresh,
+                    tone = NuvioCompactActionTone.Ghost, size = NuvioActionSize.Small,
+                    enabled = !working,
+                    onClick = onRetry,
+                )
+            }
+        }
+    }
+}
+
+private val MalStarColor = Color(0xFFF5C451)
+
+/** MyAnimeList's own list colours, lifted slightly so they read on the dark hero. */
+private fun MalStatus.dotColor(): Color = when (this) {
+    MalStatus.WATCHING -> Color(0xFF2DB039)
+    MalStatus.COMPLETED -> Color(0xFF5B83E6)
+    MalStatus.ON_HOLD -> Color(0xFFF1C83E)
+    MalStatus.DROPPED -> Color(0xFFE5534B)
+    MalStatus.PLAN_TO_WATCH -> Color(0xFFB8BEC5)
+}
+
+@Composable private fun malBarTextStyle(): TextStyle = MaterialTheme.typography.labelLarge.copy(
+    fontSize = 14.sp,
+    fontWeight = FontWeight.Medium,
+    letterSpacing = 0.sp,
+    fontFeatureSettings = "tnum",
+)
+
+/** One glass pill that groups every MyAnimeList control, so it reads as a single tracker. */
+@Composable private fun MalTrackerBar(working: Boolean, content: @Composable RowScope.() -> Unit) {
+    val colors = MaterialTheme.nuvio.colors
+    val shape = RoundedCornerShape(NuvioTokens.Radius.full)
+    Box(
+        Modifier
+            .height(46.dp)
+            .clip(shape)
+            .background(colors.textPrimary.copy(alpha = 0.07f))
+            .border(NuvioTokens.Border.thin, colors.textPrimary.copy(alpha = 0.12f), shape),
+    ) {
+        Row(
+            Modifier.fillMaxHeight().padding(4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(2.dp),
+            content = content,
+        )
+        if (working) LinearProgressIndicator(
+            modifier = Modifier.matchParentSize().wrapContentHeight(Alignment.Bottom).height(2.dp),
+            color = colors.accent,
+            trackColor = Color.Transparent,
+        )
+    }
+}
+
+@Composable private fun MalBrandMark() {
+    MalTooltip("MyAnimeList") {
+        Box(Modifier.fillMaxHeight().padding(start = 6.dp, end = 4.dp), contentAlignment = Alignment.Center) {
+            Image(
+                painter = painterResource(Res.drawable.rating_mal),
+                contentDescription = "MyAnimeList",
+                modifier = Modifier.size(26.dp).clip(RoundedCornerShape(7.dp)),
+            )
+        }
+    }
+}
+
+@Composable private fun MalBarDivider() {
+    Box(
+        Modifier
+            .width(NuvioTokens.Border.thin)
+            .height(18.dp)
+            .background(MaterialTheme.nuvio.colors.textPrimary.copy(alpha = 0.14f)),
+    )
+}
+
+@Composable private fun MalBarSegment(
+    onClick: (() -> Unit)?,
+    enabled: Boolean,
+    accessibilityLabel: String,
+    horizontalPadding: Dp = 12.dp,
+    content: @Composable RowScope.() -> Unit,
+) {
+    val colors = MaterialTheme.nuvio.colors
+    val shape = RoundedCornerShape(NuvioTokens.Radius.full)
+    val interactionSource = remember { MutableInteractionSource() }
+    val hovered by interactionSource.collectIsHoveredAsState()
+    val focused by interactionSource.collectIsFocusedAsState()
+    val pressed by interactionSource.collectIsPressedAsState()
+    val interactive = onClick != null && enabled
+    val background by animateColorAsState(
+        targetValue = when {
+            !interactive -> Color.Transparent
+            pressed -> colors.textPrimary.copy(alpha = 0.16f)
+            hovered || focused -> colors.textPrimary.copy(alpha = 0.10f)
+            else -> Color.Transparent
+        },
+        animationSpec = tween(NuvioTokens.Motion.fastMillis),
+        label = "mal_bar_segment_background",
+    )
+    val click = if (onClick != null) {
+        Modifier.clickable(
+            interactionSource = interactionSource,
+            indication = null,
+            enabled = enabled,
+            role = Role.Button,
+            onClick = onClick,
+        )
+    } else Modifier
+    Row(
+        modifier = Modifier
+            .fillMaxHeight()
+            .graphicsLayer { alpha = if (onClick != null && !enabled) 0.45f else 1f }
+            .clip(shape)
+            .background(background)
+            .then(if (interactive && focused) Modifier.border(NuvioTokens.Border.medium, colors.focusRing, shape) else Modifier)
+            .then(click)
+            .semantics(mergeDescendants = true) { contentDescription = accessibilityLabel }
+            .padding(horizontal = horizontalPadding),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(7.dp),
+        content = content,
+    )
+}
+
+@Composable private fun MalBarIcon(icon: ImageVector, tint: Color? = null) {
+    Icon(icon, contentDescription = null, modifier = Modifier.size(17.dp), tint = tint ?: MaterialTheme.nuvio.colors.textSecondary)
+}
+
+@Composable private fun MalBarLabel(text: String, emphasized: Boolean) {
+    val colors = MaterialTheme.nuvio.colors
+    Text(
+        text,
+        style = malBarTextStyle(),
+        color = if (emphasized) colors.textPrimary else colors.textSecondary,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+    )
+}
+
+@Composable private fun MalBarChevron() {
+    Icon(
+        Icons.Rounded.KeyboardArrowDown,
+        contentDescription = null,
+        modifier = Modifier.size(16.dp),
+        tint = MaterialTheme.nuvio.colors.textSecondary.copy(alpha = 0.8f),
+    )
+}
+
+@Composable private fun MalStatusDot(status: MalStatus?) {
+    val colors = MaterialTheme.nuvio.colors
+    Box(Modifier.size(12.dp), contentAlignment = Alignment.Center) {
+        val color = status?.dotColor()
+        if (color == null) {
+            Box(Modifier.size(9.dp).border(1.5.dp, colors.textSecondary, CircleShape))
+        } else {
+            Box(Modifier.size(12.dp).background(color.copy(alpha = 0.25f), CircleShape))
+            Box(Modifier.size(7.dp).background(color, CircleShape))
+        }
+    }
+}
+
+@Composable private fun malScoreText(score: Int): AnnotatedString {
+    val colors = MaterialTheme.nuvio.colors
+    return buildAnnotatedString {
+        withStyle(SpanStyle(color = colors.textPrimary, fontWeight = FontWeight.SemiBold)) { append(score.toString()) }
+        withStyle(SpanStyle(color = colors.textSecondary)) { append("/10") }
+    }
+}
+
+/** Keeps the translated "Rewatches: %d" wording but lifts the number so the count is what you see first. */
+@Composable private fun malRewatchCountText(label: String, count: Int): AnnotatedString {
+    val colors = MaterialTheme.nuvio.colors
+    val number = count.toString()
+    val index = label.lastIndexOf(number)
+    return buildAnnotatedString {
+        withStyle(SpanStyle(color = colors.textSecondary)) { append(label) }
+        if (index >= 0) {
+            addStyle(SpanStyle(color = colors.textPrimary, fontWeight = FontWeight.SemiBold), index, index + number.length)
+        }
+    }
+}
+
+@Composable private fun MalRewatchSegment(
+    entry: MalListStatus,
+    enabled: Boolean,
+    onToggleRewatching: () -> Unit,
+    onFinishRewatch: () -> Unit,
+) {
+    val colors = MaterialTheme.nuvio.colors
+    val completed = entry.status == MalStatus.COMPLETED
+    val rewatching = completed && entry.isRewatching
+    var menu by remember { mutableStateOf(false) }
+    val countLabel = stringResource(Res.string.mal_rewatch_count, entry.numTimesRewatched)
+    val inProgressLabel = stringResource(Res.string.mal_rewatch_in_progress)
+    Box {
+        MalBarSegment(
+            onClick = if (completed) ({ menu = true }) else null,
+            enabled = enabled,
+            accessibilityLabel = if (rewatching) "$countLabel, $inProgressLabel" else countLabel,
+        ) {
+            MalBarIcon(Icons.Rounded.Replay, tint = if (rewatching) colors.accent else null)
+            Text(malRewatchCountText(countLabel, entry.numTimesRewatched), style = malBarTextStyle(), maxLines = 1)
+            if (rewatching) {
+                val tagShape = RoundedCornerShape(NuvioTokens.Radius.full)
+                Text(
+                    inProgressLabel,
+                    modifier = Modifier
+                        .background(colors.accent.copy(alpha = 0.20f), tagShape)
+                        .border(NuvioTokens.Border.thin, colors.accent.copy(alpha = 0.45f), tagShape)
+                        .padding(horizontal = 8.dp, vertical = 2.dp),
+                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold, letterSpacing = 0.sp),
+                    color = colors.textPrimary,
+                    maxLines = 1,
+                )
+            }
+            if (completed) MalBarChevron()
+        }
+        if (completed) MalMenu(expanded = menu, onDismiss = { menu = false }) {
+            DropdownMenuItem(
+                text = { Text(inProgressLabel, style = MaterialTheme.typography.bodyMedium, color = colors.textPrimary) },
+                leadingIcon = { Icon(Icons.Rounded.Replay, null, Modifier.size(18.dp), tint = colors.textSecondary) },
+                trailingIcon = { Switch(checked = rewatching, onCheckedChange = null) },
+                onClick = { menu = false; onToggleRewatching() },
+                modifier = Modifier.widthIn(min = 220.dp),
+            )
+            if (rewatching) DropdownMenuItem(
+                text = { Text(stringResource(Res.string.mal_rewatch_finish), style = MaterialTheme.typography.bodyMedium, color = colors.textPrimary) },
+                leadingIcon = { Icon(Icons.Rounded.TaskAlt, null, Modifier.size(18.dp), tint = colors.accent) },
+                onClick = { menu = false; onFinishRewatch() },
+            )
+        }
+    }
+}
+
+@Composable private fun MalMenu(expanded: Boolean, onDismiss: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
+    val colors = MaterialTheme.nuvio.colors
+    DropdownMenu(
+        expanded = expanded,
+        onDismissRequest = onDismiss,
+        offset = DpOffset(0.dp, 6.dp),
+        shape = RoundedCornerShape(NuvioTokens.Radius.lg),
+        containerColor = colors.surfacePopover,
+        border = BorderStroke(NuvioTokens.Border.thin, colors.borderSubtle),
+        content = content,
+    )
+}
+
+@Composable private fun MalMenuItem(text: String, selected: Boolean, leading: @Composable () -> Unit, onClick: () -> Unit) {
+    val colors = MaterialTheme.nuvio.colors
+    DropdownMenuItem(
+        text = {
+            Text(
+                text,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                color = colors.textPrimary,
+            )
+        },
+        leadingIcon = leading,
+        trailingIcon = if (selected) {
+            { Icon(Icons.Rounded.Check, null, Modifier.size(18.dp), tint = colors.accent) }
+        } else null,
+        onClick = onClick,
+        modifier = Modifier.widthIn(min = 200.dp),
+    )
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable private fun MalTooltip(label: String, content: @Composable () -> Unit) {
+    val colors = MaterialTheme.nuvio.colors
+    TooltipArea(
+        tooltip = {
+            Surface(
+                shape = RoundedCornerShape(NuvioTokens.Radius.md),
+                color = colors.surfacePopover,
+                contentColor = colors.textPrimary,
+                border = BorderStroke(NuvioTokens.Border.thin, colors.borderSubtle),
+                shadowElevation = 6.dp,
+            ) {
+                Text(label, Modifier.padding(horizontal = 10.dp, vertical = 6.dp), style = MaterialTheme.typography.labelMedium)
+            }
+        },
+        delayMillis = 450,
+        tooltipPlacement = TooltipPlacement.ComponentRect(
+            anchor = Alignment.TopCenter,
+            alignment = Alignment.TopCenter,
+            offset = DpOffset(0.dp, (-6).dp),
+        ),
+        content = content,
+    )
 }
 
 @Composable internal fun MalSetupDialog(connection: MalConnectionState, onDismiss: () -> Unit) {
