@@ -24,9 +24,10 @@ internal fun StreamSubtitle.toAddonSubtitle(): AddonSubtitle = AddonSubtitle(
 internal fun mergeStreamAndAddonSubtitles(
     addonSubtitles: List<AddonSubtitle>,
     streamSubtitles: List<StreamSubtitle>,
+    includeLocal: Boolean = false,
 ): List<AddonSubtitle> {
-    val remoteStreamSubtitles = streamSubtitles.filterNot { it.url.isLocalSubtitleUri() }
-    if (remoteStreamSubtitles.isEmpty()) return addonSubtitles
-    return (remoteStreamSubtitles.map { it.toAddonSubtitle() } + addonSubtitles)
+    val visibleStreamSubtitles = if (includeLocal) streamSubtitles else streamSubtitles.filterNot { it.url.isLocalSubtitleUri() }
+    if (visibleStreamSubtitles.isEmpty()) return addonSubtitles
+    return (visibleStreamSubtitles.map { it.toAddonSubtitle() } + addonSubtitles)
         .distinctBy { "${it.id}|${it.url}" }
 }

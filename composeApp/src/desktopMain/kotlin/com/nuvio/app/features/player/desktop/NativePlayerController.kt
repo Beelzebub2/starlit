@@ -1322,8 +1322,11 @@ internal class NativePlayerController(
     override fun setSubtitleUri(url: String) {
         log.d { "setSubtitleUri ${url.toPlaybackLogKey()} handle=$handle" }
         handle.takeIf { it != 0L }?.let { current ->
+            val subtitlePath = if (url.startsWith("file:", ignoreCase = true)) {
+                runCatching { java.io.File(java.net.URI(url)).path }.getOrDefault(url)
+            } else url
             NativePlayerBridge.clearExternalSubtitles(current)
-            NativePlayerBridge.addSubtitleUrl(current, url)
+            NativePlayerBridge.addSubtitleUrl(current, subtitlePath)
         }
     }
 

@@ -156,6 +156,7 @@ internal fun PlayerScreenRuntime.selectUserAddonSubtitle(subtitle: AddonSubtitle
 }
 
 internal fun PlayerScreenRuntime.persistAddonSubtitlePreference(subtitle: AddonSubtitle) {
+    if (subtitle.url.isLocalSubtitleUri()) return
     updateTrackPreference { current ->
         current.copy(
             subtitleType = PersistedSubtitleSelectionType.ADDON,
