@@ -1491,7 +1491,7 @@ private fun AuthPhoneCard(
 
 @Composable
 private fun AuthWaitingStatus(text: String, scale: Float) {
-    val transition = rememberInfiniteTransition(label = "authWaiting")
+    val transition = rememberInfiniteTransition()
     val pulse by transition.animateFloat(
         initialValue = 1f,
         targetValue = 0.3f,
@@ -1499,7 +1499,6 @@ private fun AuthWaitingStatus(text: String, scale: Float) {
             animation = tween(durationMillis = 800, easing = LinearEasing),
             repeatMode = RepeatMode.Reverse,
         ),
-        label = "authWaitingPulse",
     )
     Row(
         verticalAlignment = Alignment.CenterVertically,

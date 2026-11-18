@@ -683,7 +683,7 @@ private fun RowScope.PinKey(
     val shape: Shape = RoundedCornerShape(if (television) 16.dp else 20.dp)
     // TV focus is the only cursor, so the focused key inverts and lifts; elsewhere a ring is enough.
     val tvFocused = television && focused
-    val lift by animateFloatAsState(if (tvFocused) 1.08f else 1f, label = "pinKeyLift")
+    val lift by animateFloatAsState(if (tvFocused) 1.08f else 1f)
     val background = when {
         tvFocused -> PinTextPrimary
         subtle -> Color.Transparent
