@@ -34,10 +34,10 @@ class SimklRatingMutationTest {
     @Test
     fun ratingBodyUsesTheRightBucket() {
         val anime = Json.parseToJsonElement(buildSimklRatingBody(animeRef, 8, Json)).jsonObject
-        val animeItem = anime.getValue("anime").jsonArray.single().jsonObject
+        val animeItem = anime.getValue("shows").jsonArray.single().jsonObject
         assertEquals(8, animeItem.getValue("rating").jsonPrimitive.content.toInt())
         assertEquals(16498L, animeItem.getValue("ids").jsonObject.getValue("mal").jsonPrimitive.content.toLong())
-        assertNull(anime["movies"])
+        assertNull(anime["anime"])
 
         val movie = Json.parseToJsonElement(buildSimklRatingBody(movieRef, 6, Json)).jsonObject
         assertEquals(6, movie.getValue("movies").jsonArray.single().jsonObject.getValue("rating").jsonPrimitive.content.toInt())
@@ -49,7 +49,8 @@ class SimklRatingMutationTest {
     @Test
     fun removalBodyOmitsRating() {
         val body = Json.parseToJsonElement(buildSimklRatingBody(animeRef, 0, Json)).jsonObject
-        assertNull(body.getValue("anime").jsonArray.single().jsonObject["rating"])
+        assertNull(body.getValue("shows").jsonArray.single().jsonObject["rating"])
+        assertNull(body["anime"])
     }
 
     @Test
@@ -71,11 +72,44 @@ class SimklRatingMutationTest {
         assertFailsWith<IllegalArgumentException> { service.setRating(movieRef, 11) }
     }
 
-    private class RecordingEngine : SimklHttpEngine {
+    @Test
+    fun notFoundResponseDoesNotCommitLocally(): Unit = runBlocking {
+        var commits = 0
+        val engine = RecordingEngine(responseBody = """{"not_found":{"movies":[{"ids":{"simkl":53536}}]}}""")
+        val service = SimklMutationService(
+            client = SimklApiClient(
+                engine = engine,
+                accessToken = { "token" },
+                onUnauthorized = {},
+                nowEpochMs = { 0L },
+                sleep = {},
+                retryJitterMs = { 0L },
+            ),
+            onRatingCommitted = { _, _ -> commits += 1 },
+        )
+        val result = service.setRating(movieRef, 8)
+        assertEquals(1, result.notFoundCount)
+        assertEquals(0, commits)
+        val ok = SimklMutationService(
+            client = SimklApiClient(
+                engine = RecordingEngine(),
+                accessToken = { "token" },
+                onUnauthorized = {},
+                nowEpochMs = { 0L },
+                sleep = {},
+                retryJitterMs = { 0L },
+            ),
+            onRatingCommitted = { _, _ -> commits += 1 },
+        )
+        ok.setRating(movieRef, 8)
+        assertEquals(1, commits)
+    }
+
+    private class RecordingEngine(private val responseBody: String = "{}") : SimklHttpEngine {
         val paths = mutableListOf<String>()
         override suspend fun execute(method: String, url: String, headers: Map<String, String>, body: String): RawHttpResponse {
             paths += url.substringAfter("api.simkl.com").substringBefore('?')
-            return RawHttpResponse(status = 201, statusText = "", url = url, body = "{}", headers = emptyMap())
+            return RawHttpResponse(status = 201, statusText = "", url = url, body = responseBody, headers = emptyMap())
         }
     }
 }

@@ -106,6 +106,17 @@ class SimklListServiceTest {
         assertEquals(ListStatus.COMPLETED, updated.status)
     }
 
+    @Test fun completedWithMissingMetaThrowsBeforeAnyWrite(): Unit = runBlocking {
+        val port = FakeHistoryPort(meta = null)
+        val writes = RecordingWrites()
+        val svc = adapter(entries = listOf(simklEntry("Show", 1, SimklListStatus.WATCHING)), writes = writes, port = port)
+        val entry = svc.entryFor(MetaDetails(id = "tt1", type = "series", name = "Show"))!!
+        assertFailsWith<IllegalStateException> { svc.impact(entry, ListChange.SetStatus(ListStatus.COMPLETED)) }
+        assertFailsWith<IllegalStateException> { svc.apply(entry, ListChange.SetStatus(ListStatus.COMPLETED)) }
+        assertTrue(writes.calls.isEmpty())
+        assertTrue(port.calls.isEmpty())
+    }
+
     @Test fun otherStatusesOnlyMoveAndLeaveIsRejected(): Unit = runBlocking {
         val port = FakeHistoryPort(meta = seriesMeta(3))
         val writes = RecordingWrites()

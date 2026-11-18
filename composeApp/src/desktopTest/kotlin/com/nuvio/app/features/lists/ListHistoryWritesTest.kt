@@ -39,6 +39,13 @@ class ListHistoryWritesTest {
         assertFailsWith<IllegalStateException> { ListHistoryWrites(none).stepEpisodes("series", "tt1", -1) }
     }
 
+    @Test fun unknownImpactAndMissingMetaFailLoudly(): Unit = runBlocking {
+        val port = FakeHistoryPort(meta = null)
+        assertFailsWith<IllegalStateException> { ListHistoryWrites(port).completedImpact("series", "tt1") }
+        assertFailsWith<IllegalStateException> { ListHistoryWrites(port).markCompleted("series", "tt1", "Show", null) }
+        assertTrue(port.calls.isEmpty())
+    }
+
     @Test fun movieImpactIsOneUnlessWatched(): Unit = runBlocking {
         assertEquals(1, ListHistoryWrites(FakeHistoryPort()).completedImpact("movie", "tt2"))
         assertEquals(0, ListHistoryWrites(FakeHistoryPort(watched = mutableSetOf("title"))).completedImpact("movie", "tt2"))

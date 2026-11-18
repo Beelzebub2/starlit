@@ -76,7 +76,7 @@ internal class SimklMutationService(
             json.parseToJsonElement(response.body).jsonObject["not_found"]?.jsonObject
                 ?.values?.sumOf { (it as? JsonArray)?.size ?: 0 }
         }.getOrNull() ?: 0
-        onRatingCommitted(media, rating)
+        if (notFound == 0) onRatingCommitted(media, rating)
         return TrackingMutationResult(attemptedCount = 1, notFoundCount = notFound)
     }
 
@@ -270,8 +270,8 @@ internal fun buildSimklRatingBody(
 ): String {
     val bucket = when (media.kind) {
         TrackingMediaKind.MOVIE -> "movies"
-        TrackingMediaKind.ANIME -> "anime"
-        TrackingMediaKind.SHOW -> "shows"
+        // Simkl's rating endpoints accept only movies/shows; anime goes under shows, like list mutations.
+        TrackingMediaKind.ANIME, TrackingMediaKind.SHOW -> "shows"
     }
     val item = buildJsonObject {
         if (rating > 0) put("rating", rating)

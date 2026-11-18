@@ -56,13 +56,19 @@ class ListHistoryWrites(private val port: ListHistoryPort = DefaultListHistoryPo
     /** Number of history entries "Completed" would add: unwatched released main-season episodes, or 1 for an unwatched movie. */
     suspend fun completedImpact(type: String, id: String): Int {
         if (isMovie(type)) return if (port.isWatched(id = id, type = type)) 0 else 1
-        val meta = port.fetchMeta(type, id) ?: return 0
+        val meta = port.fetchMeta(type, id)
+            ?: throw IllegalStateException("Could not load episodes to count what Completed would mark as watched")
         return unwatchedReleased(meta).size
     }
 
     /** Marks the title watched exactly like the poster action, but never toggles an already-watched title off. */
     suspend fun markCompleted(type: String, id: String, name: String, poster: String?) {
         if (titleWatched(type, id)) return
+        if (!isMovie(type)) {
+            // Verify episodes load before anything is written, so a failure cannot leave the tracker and history out of sync.
+            port.fetchMeta(type, id)
+                ?: throw IllegalStateException("Could not load episodes to mark this title as watched")
+        }
         port.togglePosterWatched(MetaPreview(id = id, type = type, name = name, poster = poster))
     }
 
