@@ -34,6 +34,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
@@ -159,7 +160,10 @@ private fun DesktopThemeCard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(if (hovered || focused) tokens.colors.overlayHover else tokens.colors.surface)
+                .background(
+                    if (hovered || focused) tokens.colors.overlayHover.compositeOver(tokens.colors.surface)
+                    else tokens.colors.surface,
+                )
                 .padding(horizontal = 12.dp, vertical = 9.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically,

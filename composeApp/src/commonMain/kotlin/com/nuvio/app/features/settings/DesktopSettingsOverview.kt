@@ -35,6 +35,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
@@ -287,8 +288,10 @@ private fun OverviewStatusTile(
     val hovered by interactionSource.collectIsHoveredAsState()
     val focused by interactionSource.collectIsFocusedAsState()
     val shape = RoundedCornerShape(NuvioTokens.Radius.lg)
+    // overlayHover is translucent: layer it on the opaque surface so the animation never passes
+    // through see-through colours (which flashed the black page behind) and hover reads lighter.
     val background by animateColorAsState(
-        if (hovered || focused) tokens.colors.overlayHover else tokens.colors.surface,
+        if (hovered || focused) tokens.colors.overlayHover.compositeOver(tokens.colors.surface) else tokens.colors.surface,
         tween(NuvioTokens.Motion.fastMillis),
         label = "overview_tile_background",
     )

@@ -53,6 +53,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
@@ -317,8 +318,9 @@ private fun SidebarProfileCard(onSwitchProfile: () -> Unit) {
     val hovered by interactionSource.collectIsHoveredAsState()
     val focused by interactionSource.collectIsFocusedAsState()
     val shape = RoundedCornerShape(NuvioTokens.Radius.lg)
+    // Opaque on both ends so the hover animation cannot flash the page behind the card.
     val background by animateColorAsState(
-        if (hovered || focused) tokens.colors.overlayHover else tokens.colors.surface,
+        if (hovered || focused) tokens.colors.overlayHover.compositeOver(tokens.colors.surface) else tokens.colors.surface,
         tween(NuvioTokens.Motion.fastMillis),
         label = "settings_profile_card",
     )
