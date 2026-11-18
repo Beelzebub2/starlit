@@ -93,7 +93,7 @@ internal fun simklLibraryStatusDefinition(key: String): SimklLibraryStatusDefini
 internal fun simklLibraryStatusDefinition(status: TrackingListStatus): SimklLibraryStatusDefinition? =
     simklLibraryStatusDefinitions.firstOrNull { definition -> definition.trackingStatus == status }
 
-private fun SimklLibraryEntry.toLibraryItem(
+internal fun SimklLibraryEntry.toLibraryItem(
     listKey: String,
     lastSyncedAtEpochMs: Long?,
 ): LibraryItem? {
