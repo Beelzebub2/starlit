@@ -710,7 +710,7 @@ private fun AuthLargeLayout(
                             AuthContinueWithoutAccount(
                                 enabled = !ui.isLoading,
                                 scale = scale,
-                                inline = true,
+                                inline = false,
                                 onClick = actions.onContinueWithoutAccount,
                                 modifier = Modifier.padding(top = 24.dp * scale),
                             )

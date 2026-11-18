@@ -13,9 +13,7 @@ import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.hasSetTextAction
-import androidx.compose.ui.test.isRoot
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
@@ -26,7 +24,7 @@ import com.nuvio.app.core.network.ServerConfigurationStorage
 import com.nuvio.app.core.ui.NuvioTheme
 import com.nuvio.app.features.profiles.AvatarStorage
 import com.nuvio.app.features.profiles.NuvioProfile
-import com.nuvio.app.features.profiles.PinEntryDialog
+import com.nuvio.app.features.profiles.PinEntryContent
 import com.nuvio.app.features.profiles.PinVerifyResult
 import com.nuvio.app.features.profiles.ProfileStorage
 import com.nuvio.app.features.settings.ThemeSettingsStorage
@@ -78,9 +76,10 @@ class LoginPinPhoneAndTvCaptureTest {
         compose.waitForIdle()
     }
 
+    // Rendered without the dialog window: Robolectric captures the host window, not dialog windows.
     @Composable
     private fun pinDialog() {
-        PinEntryDialog(
+        PinEntryContent(
             profileName = "Sam",
             profile = NuvioProfile(name = "Sam", avatarColorHex = "#4B63F0"),
             onVerify = { PinVerifyResult(unlocked = false) },
@@ -105,7 +104,7 @@ class LoginPinPhoneAndTvCaptureTest {
         }
         compose.onNodeWithTag("pin-key-1").performClick()
         compose.onNodeWithTag("pin-key-2").performClick()
-        capture("phone-pin", compose.onAllNodes(isRoot()).onLast())
+        capture("phone-pin")
     }
 
     @Test
@@ -124,6 +123,6 @@ class LoginPinPhoneAndTvCaptureTest {
             pinDialog()
         }
         compose.onNodeWithTag("pin-key-4").performClick()
-        capture("tv-pin", compose.onAllNodes(isRoot()).onLast())
+        capture("tv-pin")
     }
 }

@@ -137,6 +137,32 @@ fun PinEntryDialog(
     onForgotPin: (() -> Unit)? = null,
     profile: NuvioProfile? = null,
 ) {
+    BasicAlertDialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false),
+        modifier = Modifier.fillMaxSize(),
+    ) {
+        PinEntryContent(
+            profileName = profileName,
+            onVerify = onVerify,
+            onDismiss = onDismiss,
+            onVerified = onVerified,
+            onForgotPin = onForgotPin,
+            profile = profile,
+        )
+    }
+}
+
+/** The PIN screen without its dialog window; [PinEntryDialog] hosts it, previews and tests render it directly. */
+@Composable
+internal fun PinEntryContent(
+    profileName: String,
+    onVerify: suspend (String) -> PinVerifyResult,
+    onDismiss: () -> Unit,
+    onVerified: ((String) -> Unit)? = null,
+    onForgotPin: (() -> Unit)? = null,
+    profile: NuvioProfile? = null,
+) {
     var pin by remember { mutableStateOf("") }
     var error by remember { mutableStateOf<String?>(null) }
     var errorCount by remember { mutableIntStateOf(0) }
@@ -225,50 +251,44 @@ fun PinEntryDialog(
         )
     }
 
-    BasicAlertDialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false),
-        modifier = Modifier.fillMaxSize(),
+    BoxWithConstraints(
+        modifier = Modifier
+            .fillMaxSize()
+            .then(keyEvents)
+            .testTag("pin-entry-dialog"),
     ) {
-        BoxWithConstraints(
-            modifier = Modifier
-                .fillMaxSize()
-                .then(keyEvents)
-                .testTag("pin-entry-dialog"),
-        ) {
-            LaunchedEffect(television) {
-                // TV remotes need a focused key to start from; keyboards and touch type into the container.
-                val target = if (television) firstKeyFocus else containerFocus
-                if (runCatching { target.requestFocus() }.isFailure) {
-                    withFrameNanos { }
-                    runCatching { target.requestFocus() }
-                }
+        LaunchedEffect(television) {
+            // TV remotes need a focused key to start from; keyboards and touch type into the container.
+            val target = if (television) firstKeyFocus else containerFocus
+            if (runCatching { target.requestFocus() }.isFailure) {
+                withFrameNanos { }
+                runCatching { target.requestFocus() }
             }
-            when {
-                television -> PinTelevisionLayout(
-                    heading = heading,
-                    profile = profile,
-                    state = state,
-                    keypad = keypad,
-                    onForgotPin = onForgotPin,
-                )
-                maxWidth < 600.dp -> PinPhoneLayout(
-                    heading = heading,
-                    profile = profile,
-                    state = state,
-                    keypad = keypad,
-                    onDismiss = onDismiss,
-                    onForgotPin = onForgotPin,
-                )
-                else -> PinDesktopLayout(
-                    heading = heading,
-                    profile = profile,
-                    state = state,
-                    keypad = keypad,
-                    onDismiss = onDismiss,
-                    onForgotPin = onForgotPin,
-                )
-            }
+        }
+        when {
+            television -> PinTelevisionLayout(
+                heading = heading,
+                profile = profile,
+                state = state,
+                keypad = keypad,
+                onForgotPin = onForgotPin,
+            )
+            maxWidth < 600.dp -> PinPhoneLayout(
+                heading = heading,
+                profile = profile,
+                state = state,
+                keypad = keypad,
+                onDismiss = onDismiss,
+                onForgotPin = onForgotPin,
+            )
+            else -> PinDesktopLayout(
+                heading = heading,
+                profile = profile,
+                state = state,
+                keypad = keypad,
+                onDismiss = onDismiss,
+                onForgotPin = onForgotPin,
+            )
         }
     }
 }
