@@ -79,6 +79,16 @@ internal fun buildTraktDropRequest(media: TrackingMediaReference, dropped: Boole
     return TraktJsonRequest(method = "POST", url = url, body = singleItemBody(bucket, item))
 }
 
+/**
+ * Removes every play of the title from Trakt history (a show sent with ids only clears all its episodes).
+ * Only for the explicit, confirmed "Remove from watch history" action.
+ */
+internal fun buildTraktHistoryRemoveRequest(media: TrackingMediaReference): TraktJsonRequest {
+    val bucket = traktListBucket(media)
+    val item = buildJsonObject { put("ids", traktIdsJson(media.ids, bucket)) }
+    return TraktJsonRequest(method = "POST", url = "$TRAKT_LIST_API_URL/sync/history/remove", body = singleItemBody(bucket, item))
+}
+
 internal fun buildTraktRatingsPageRequest(bucket: String, page: Int): TraktJsonRequest =
     TraktJsonRequest(method = "GET", url = "$TRAKT_LIST_API_URL/sync/ratings/$bucket?page=$page&limit=$RATINGS_PAGE_LIMIT")
 
@@ -134,7 +144,7 @@ private fun checkTraktStatus(response: RawHttpResponse) {
     }
 }
 
-/** Rating and dropped-list calls; [headers] returns null when the profile has no Trakt connection. */
+/** Rating, dropped-list and history-removal calls; [headers] returns null when the profile has no Trakt connection. */
 internal class TraktListClient(
     private val http: TraktListHttp,
     private val headers: suspend (profileId: Int) -> Map<String, String>?,
@@ -149,6 +159,9 @@ internal class TraktListClient(
 
     suspend fun setDropped(profileId: Int, media: TrackingMediaReference, dropped: Boolean) =
         write(profileId, buildTraktDropRequest(media, dropped))
+
+    suspend fun removeHistory(profileId: Int, media: TrackingMediaReference) =
+        write(profileId, buildTraktHistoryRemoveRequest(media))
 
     private suspend fun write(profileId: Int, request: TraktJsonRequest) {
         val auth = headers(profileId) ?: throw IllegalStateException("Trakt is not connected")

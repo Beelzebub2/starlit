@@ -100,6 +100,24 @@ class TraktRatingsRepositoryTest {
     }
 
     @Test
+    fun historyRemoveTargetsSyncHistoryRemove(): Unit = runBlocking {
+        val movieRequest = buildTraktHistoryRemoveRequest(movie)
+        assertEquals("POST", movieRequest.method)
+        assertEquals("https://api.trakt.tv/sync/history/remove", movieRequest.url)
+        assertEquals("""{"movies":[{"ids":{"trakt":10,"imdb":"tt1"}}]}""", movieRequest.body)
+        val showRequest = buildTraktHistoryRemoveRequest(show)
+        assertEquals("https://api.trakt.tv/sync/history/remove", showRequest.url)
+        assertEquals("""{"shows":[{"ids":{"trakt":20,"imdb":"tt2","tmdb":22}}]}""", showRequest.body)
+
+        val http = RecordingTraktHttp()
+        client(http).removeHistory(1, show)
+        assertEquals(listOf(showRequest), http.requests)
+        assertFailsWith<IllegalStateException> {
+            client(RecordingTraktHttp(), signedIn = false).removeHistory(1, show)
+        }
+    }
+
+    @Test
     fun ratingsReadKeysByTraktIdAndContentIds(): Unit = runBlocking {
         val http = RecordingTraktHttp { request ->
             when {

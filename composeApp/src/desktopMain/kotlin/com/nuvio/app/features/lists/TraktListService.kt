@@ -20,6 +20,8 @@ import com.nuvio.app.features.trakt.TraktAuthRepository
 import com.nuvio.app.features.trakt.TraktDroppedShow
 import com.nuvio.app.features.trakt.TraktProgressRepository
 import com.nuvio.app.features.trakt.TraktRatingsRepository
+import com.nuvio.app.features.trakt.TraktWatchedShowSnapshotRepository
+import com.nuvio.app.features.trakt.defaultTraktListClient
 import com.nuvio.app.features.trakt.setDropped
 import com.nuvio.app.features.watched.WatchedItem
 import com.nuvio.app.features.watched.WatchedRepository
@@ -51,6 +53,8 @@ internal data class TraktListSnapshot(
     val dropped: List<TraktDroppedShow> = emptyList(),
     /** See [TraktRatingsRepository.ratings]. */
     val ratings: Map<String, Int> = emptyMap(),
+    /** Trakt's aired episode count per watched show, keyed by content id (`tt1`, `tmdb:11`, `trakt:1`). */
+    val airedEpisodes: Map<String, Int> = emptyMap(),
 )
 
 /** Seam over Trakt's registry ports and repositories so the adapter can be tested without network or storage. */
@@ -60,6 +64,9 @@ internal interface TraktListPort {
     suspend fun setWatchlisted(item: LibraryItem, inWatchlist: Boolean)
     suspend fun setDropped(media: TrackingMediaReference, dropped: Boolean)
     suspend fun setRating(media: TrackingMediaReference, rating: Int)
+
+    /** Clears the title's whole Trakt history (`/sync/history/remove`); only for the confirmed removal action. */
+    suspend fun removeHistory(media: TrackingMediaReference)
 
     /** Metadata already in memory (never a network call); used to count aired episodes while building pages. */
     fun cachedMeta(type: String, id: String): MetaDetails?
@@ -84,10 +91,12 @@ internal data class TraktTitleState(
     val inWatchlist: Boolean,
     val dropped: Boolean,
     val watchedEpisodes: Int,
-    /** Released main-season episodes; 0 when unknown (a watched series then reads as Watching). */
+    /** Aired main-season episodes; 0 when unknown (a watched series then reads as Watching). */
     val airedEpisodes: Int,
     val score: Int,
     val updatedAtEpochMs: Long,
+    /** True when [airedEpisodes] is Trakt's own count, which matches Trakt's episode numbering. */
+    val airedFromTrakt: Boolean = false,
 ) {
     val isMovie: Boolean get() = type == ListMediaType.MOVIE
     val catalogType: String get() = if (isMovie) "movie" else "series"
@@ -194,6 +203,7 @@ internal fun buildTraktTitleStates(
         val catalogType = if (isMovie) "movie" else "series"
         val watched = if (isMovie) (if (draft.watchedMovie) 1 else 0) else draft.episodes.size
         val ratingKind = if (isMovie) "movie" else "show"
+        val traktAired = if (isMovie) null else draft.aliases.firstNotNullOfOrNull { snapshot.airedEpisodes[it] }
         TraktTitleState(
             type = draft.type,
             contentId = draft.contentId,
@@ -204,9 +214,14 @@ internal fun buildTraktTitleStates(
             inWatchlist = draft.inWatchlist,
             dropped = draft.dropped,
             watchedEpisodes = watched,
-            airedEpisodes = if (isMovie) 1 else airedEpisodes(catalogType, draft.contentId, watched),
+            airedEpisodes = when {
+                isMovie -> 1
+                traktAired != null -> traktAired
+                else -> airedEpisodes(catalogType, draft.contentId, watched)
+            },
             score = draft.aliases.firstNotNullOfOrNull { snapshot.ratings["$ratingKind:$it"] } ?: 0,
             updatedAtEpochMs = draft.updatedAtEpochMs,
+            airedFromTrakt = traktAired != null,
         )
     }
 }
@@ -301,7 +316,12 @@ internal class TraktListAdapter(
         val type = listMediaType(meta.type)
         val lookup = (contentAliases(ids) + meta.id.trim()).toSet()
         val state = states().firstOrNull { it.type == type && it.aliases.any(lookup::contains) } ?: return null
-        val aired = if (state.isMovie) 1 else meta.releasedMainSeasonEpisodes(port.todayIsoDate()).size
+        // Trakt's own aired count keeps the title page and the Lists tab on the same status; meta is the fallback.
+        val aired = when {
+            state.isMovie -> 1
+            state.airedFromTrakt -> state.airedEpisodes
+            else -> meta.releasedMainSeasonEpisodes(port.todayIsoDate()).size
+        }
         val refined = state.copy(
             airedEpisodes = if (aired > 0) aired else state.airedEpisodes,
             posterUrl = state.posterUrl ?: meta.poster,
@@ -352,19 +372,19 @@ internal class TraktListAdapter(
         )
     }
 
-    /** Removes the title's watch history through Starlit's watched actions (the only Trakt change that deletes history). */
+    /**
+     * The only Trakt change that deletes history, reached only from the confirmed "Remove from watch history" action.
+     * Starlit's own history goes first through its watched actions (so badges and Continue Watching update), then
+     * `/sync/history/remove` clears whatever exists only on Trakt. Returns the larger of the two counts.
+     */
     override suspend fun removeFromHistory(entry: ListEntry): Int {
         val (type, catalogId) = catalogOf(entry)
         val state = stateFor(entry)
-        val removed = history.removeAll(type, catalogId)
-        // Only what Starlit's own history held is removed; anything Trakt has beyond that stays until a reload shows it.
-        val remaining = if (state.isMovie) {
-            if (removed > 0) 0 else state.watchedEpisodes
-        } else {
-            (state.watchedEpisodes - removed).coerceAtLeast(0)
-        }
-        remember(state.copy(watchedEpisodes = remaining, updatedAtEpochMs = port.nowEpochMs()))
-        return removed
+        val removedLocally = history.removeAll(type, catalogId)
+        port.removeHistory(state.reference())
+        val onTrakt = if (state.isMovie) (if (entry.watchedEpisodes > 0) 1 else 0) else entry.watchedEpisodes
+        remember(state.copy(watchedEpisodes = 0, updatedAtEpochMs = port.nowEpochMs()))
+        return maxOf(removedLocally, onTrakt)
     }
 
     private suspend fun setStatus(entry: ListEntry, state: TraktTitleState, status: ListStatus): TraktTitleState {
@@ -539,6 +559,7 @@ private object DefaultTraktListPort : TraktListPort {
         }
         val dropped = async { TraktProgressRepository.droppedShows(profileId) }
         val ratings = async { TraktRatingsRepository.ratings(profileId) }
+        val aired = async { loadAiredEpisodes(profileId) }
         val progress = TrackingProviderRegistry.progressProvider(TrackingProviderId.TRAKT)?.snapshot()?.entries.orEmpty()
         TraktListSnapshot(
             watchlist = watchlist.await(),
@@ -546,7 +567,14 @@ private object DefaultTraktListPort : TraktListPort {
             progress = progress,
             dropped = dropped.await(),
             ratings = ratings.await(),
+            airedEpisodes = aired.await(),
         )
+    }
+
+    /** One `sync/watched/shows?extended=full` read (cached briefly by the snapshot repository) for aired counts. */
+    private suspend fun loadAiredEpisodes(profileId: Int): Map<String, Int> {
+        val headers = TraktAuthRepository.authorizedHeaders(profileId) ?: return emptyMap()
+        return TraktWatchedShowSnapshotRepository.airedEpisodeCounts(headers)
     }
 
     private suspend fun loadWatchlist(): List<LibraryItem> {
@@ -582,6 +610,12 @@ private object DefaultTraktListPort : TraktListPort {
 
     override suspend fun setRating(media: TrackingMediaReference, rating: Int) =
         TraktRatingsRepository.setRating(ProfileRepository.activeProfileId, media, rating)
+
+    override suspend fun removeHistory(media: TrackingMediaReference) {
+        defaultTraktListClient.removeHistory(ProfileRepository.activeProfileId, media)
+        // Same as the watched sync after its own history writes: the next read must not serve the old shows snapshot.
+        TraktWatchedShowSnapshotRepository.clear()
+    }
 
     override fun cachedMeta(type: String, id: String): MetaDetails? = MetaDetailsRepository.peek(type = type, id = id)
 

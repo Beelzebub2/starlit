@@ -45,6 +45,10 @@ private class FakeTraktPort(
         calls += "rate:$rating:${media.ids.imdb}"
     }
 
+    override suspend fun removeHistory(media: TrackingMediaReference) {
+        calls += "history:remove:${media.kind.name.lowercase()}:${media.ids.imdb}"
+    }
+
     override fun cachedMeta(type: String, id: String): MetaDetails? = metas[id]
 
     override suspend fun fetchMeta(type: String, id: String): MetaDetails? = metas[id]
@@ -233,7 +237,7 @@ class TraktListServiceTest {
         assertTrue(trakt.calls.isEmpty())
     }
 
-    @Test fun removeFromHistoryUsesSharedRemoveAll(): Unit = runBlocking {
+    @Test fun removeFromHistoryUsesStarlitPathThenTraktRemove(): Unit = runBlocking {
         val trakt = FakeTraktPort(
             snapshot = TraktListSnapshot(
                 watchlist = listOf(watchlistItem("tt1", "series", "Show")),
@@ -249,10 +253,62 @@ class TraktListServiceTest {
         assertEquals(2, svc.removeFromHistory(entry))
 
         assertEquals(listOf("episode:1:1:true", "episode:1:2:true"), history.calls)
-        assertTrue(trakt.calls.isEmpty())
+        assertEquals(listOf("history:remove:show:tt1"), trakt.calls)
         val after = svc.page(null, svc.sorts.first(), 0).entries.single()
         assertEquals(ListStatus.PLAN_TO_WATCH, after.status)
         assertEquals(0, after.watchedEpisodes)
+    }
+
+    @Test fun removeFromHistoryClearsTraktOnlyHistoryAndCountsTraktEntries(): Unit = runBlocking {
+        val trakt = FakeTraktPort(
+            snapshot = TraktListSnapshot(
+                watched = watchedEpisodes("tt1", "Show", 4) + watchedMovie("tt5", "Film"),
+            ),
+            metas = mapOf("tt1" to metaFor("tt1", 6)),
+        )
+        // Starlit's own history knows one episode and not the movie: Trakt holds the rest.
+        val history = FakeHistoryPort(meta = metaFor("tt1", 6), watched = mutableSetOf("1:1"))
+        val svc = adapter(trakt, history)
+        val show = svc.entryFor(metaFor("tt1", 6))!!
+        assertEquals(4, show.watchedEpisodes)
+
+        assertEquals(4, svc.removeFromHistory(show))
+        assertEquals(listOf("episode:1:1:true"), history.calls)
+        assertEquals(listOf("history:remove:show:tt1"), trakt.calls)
+        assertNull(svc.entryFor(metaFor("tt1", 6)), "a show with no list and no history has no Trakt entry")
+
+        history.calls.clear()
+        trakt.calls.clear()
+        val film = svc.entryFor(MetaDetails(id = "tt5", type = "movie", name = "Film"))!!
+        assertEquals(ListStatus.COMPLETED, film.status)
+        assertEquals(1, svc.removeFromHistory(film))
+        assertTrue(history.calls.isEmpty(), "Starlit's history had no watched mark for the movie")
+        assertEquals(listOf("history:remove:movie:tt5"), trakt.calls)
+    }
+
+    @Test fun removeFromHistoryStopsBeforeTraktWhenStarlitPathFails(): Unit = runBlocking {
+        val trakt = watchingShow()
+        val svc = adapter(trakt, FakeHistoryPort(meta = null, watched = mutableSetOf("1:1")))
+        val entry = svc.entryFor(metaFor("tt1", 12))!!
+        assertFailsWith<IllegalStateException> { svc.removeFromHistory(entry) }
+        assertTrue(trakt.calls.isEmpty())
+    }
+
+    @Test fun traktAiredCountsMarkFullyWatchedShowsCompletedWithoutCachedMeta(): Unit = runBlocking {
+        val trakt = FakeTraktPort(
+            snapshot = TraktListSnapshot(
+                watched = watchedEpisodes("tt9", "India", 4) + watchedEpisodes("tt8", "Hotel", 4),
+                airedEpisodes = mapOf("tt9" to 4, "trakt:9" to 4, "tt8" to 6),
+            ),
+        )
+        val svc = adapter(trakt)
+        val entries = svc.page(null, svc.sorts.first { it.label == "Title" }, 0).entries.associateBy { it.title }
+
+        assertEquals(ListStatus.COMPLETED, entries.getValue("India").status)
+        assertEquals(4, entries.getValue("India").totalEpisodes)
+        assertEquals(ListStatus.WATCHING, entries.getValue("Hotel").status)
+        assertEquals(6, entries.getValue("Hotel").totalEpisodes)
+        assertEquals(ListStatus.COMPLETED, svc.entryFor(MetaDetails(id = "tt9", type = "series", name = "India"))?.status)
     }
 
     @Test fun pageDerivesStatusesDeduplicatesAndSummarizes(): Unit = runBlocking {
