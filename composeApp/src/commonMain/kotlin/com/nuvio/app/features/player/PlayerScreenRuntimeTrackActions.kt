@@ -6,15 +6,19 @@ internal val PlayerScreenRuntime.subtitleStyle: SubtitleStyleState
 private val PlayerScreenRuntime.subtitlePreferenceItemId: String
     get() = "${playbackSession.videoId}|${activeSeasonNumber ?: -1}|${activeEpisodeNumber ?: -1}"
 
-internal val PlayerScreenRuntime.activeAddonSubtitleType: String
-    get() = contentType ?: parentMetaType
-
-internal val PlayerScreenRuntime.addonSubtitleFetchKey: String?
-    get() = buildAddonSubtitleFetchKey(
-        addons = addonsUiState.addons,
-        type = activeAddonSubtitleType,
+internal val PlayerScreenRuntime.subtitleLookup: SubtitleLookup
+    get() = SubtitleLookup(
+        type = contentType ?: parentMetaType,
         videoId = activeVideoId,
+        contentId = parentMetaId,
+        imdbId = (metaUiState.meta ?: playerMeta)?.takeIf { it.id == parentMetaId }?.imdbId,
+        season = activeSeasonNumber,
+        episode = activeEpisodeNumber,
+        extraPath = activeSubtitleRequestExtra,
     )
+
+internal val PlayerScreenRuntime.addonSubtitleFetchKey: AddonSubtitleFetchKey?
+    get() = buildAddonSubtitleFetchKey(addonsUiState.addons, subtitleLookup)
 
 internal val PlayerScreenRuntime.visibleAddonSubtitles: List<AddonSubtitle>
     get() {

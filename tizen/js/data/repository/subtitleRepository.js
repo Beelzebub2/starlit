@@ -1,8 +1,10 @@
 import { safeApiCall } from "../../core/network/safeApiCall.js";
 import { addonRepository } from "./addonRepository.js";
 import { catalogRepository } from "./catalogRepository.js";
+import { TmdbService } from "../../core/tmdb/tmdbService.js";
 import { SubtitleApi } from "../remote/api/subtitleApi.js";
 const PER_ADDON_TIMEOUT_MS = 20000;
+const RELEASE_LOOKUP_TIMEOUT_MS = 4000;
 const CINEMETA_BASE_URL = "https://v3-cinemeta.strem.io";
 function normalizeMatchText(value = "") {
   return String(value || "")
@@ -61,11 +63,12 @@ export function buildSubtitleIdCandidates({
   const seasonNumber = Number(season);
   const episodeNumber = Number(episode);
   if (normalizedType === "series") {
-    push(videoId);
+    if (videoId && !/^tt\d+$/i.test(String(videoId).trim())) push(videoId);
     if (
-      Number.isFinite(seasonNumber) &&
-      seasonNumber > 0 &&
-      Number.isFinite(episodeNumber) &&
+      season != null &&
+      Number.isInteger(seasonNumber) &&
+      seasonNumber >= 0 &&
+      Number.isInteger(episodeNumber) &&
       episodeNumber > 0
     ) {
       (ids || []).forEach((id) => {
@@ -74,98 +77,73 @@ export function buildSubtitleIdCandidates({
         }
       });
     }
-    if (!candidates.length) {
-      (ids || []).forEach(push);
-    }
   } else {
     (ids || []).forEach(push);
   }
   const prefixes = (idPrefixes || []).map((value) => String(value || "").trim()).filter(Boolean);
-  const compatible = prefixes.length
+  return prefixes.length
     ? candidates.filter((candidate) => prefixes.some((prefix) => candidate.startsWith(prefix)))
     : candidates;
-  if (compatible.length) {
-    return compatible;
-  }
-  return prefixes.length ? [] : candidates;
 }
 class SubtitleRepository {
   async getSubtitles(type, id, videoId = null, options = {}) {
     const normalizedType = this.canonicalSubtitleType(type);
     const rawId = String(id || "").trim();
-    const normalizedId = this.normalizeIdForLookup(rawId);
-    const canonicalId = /^tt\d+$/i.test(normalizedId)
-      ? normalizedId
-      : await this.resolveCanonicalId(normalizedType, options);
-    const idCandidates = this.uniqueNonEmpty([canonicalId, normalizedId, rawId]);
-    const addons = await addonRepository.getInstalledAddons({
-      cacheOnly: Boolean(options?.manifestCacheOnly)
-    });
-    const subtitleAddons = addons.filter((addon) =>
-      (addon.resources || []).some((resource) => {
-        if (!this.isSubtitleResource(resource?.name)) {
-          return false;
-        }
-        return this.supportsType(resource, normalizedType, normalizedId);
-      })
-    );
+    const existingImdb = [options.imdbId, rawId, videoId]
+      .map((candidate) => String(candidate || "").trim().split(":")[0])
+      .find((candidate) => /^tt\d+$/i.test(candidate));
+    const [canonicalId, addons] = await Promise.all([
+      existingImdb || this.resolveCanonicalId(normalizedType, options),
+      addonRepository.getInstalledAddons({ cacheOnly: Boolean(options?.manifestCacheOnly) })
+    ]);
+    const idCandidates = this.uniqueNonEmpty([rawId, canonicalId]);
     const allResults = await Promise.all(
-      subtitleAddons.map((addon) =>
-        this.fetchSubtitlesFromAddon(addon, normalizedType, idCandidates, videoId, options)
-      )
+      addons.map((addon) => this.fetchSubtitlesFromAddon(addon, normalizedType, idCandidates, videoId, options))
     );
-    const mergedResults = [];
-    allResults.forEach((items) => {
-      if (Array.isArray(items) && items.length) {
-        mergedResults.push(...items);
-      }
-    });
-    return mergedResults;
+    return allResults.flat();
   }
   async fetchSubtitlesFromAddon(addon, type, idCandidates = [], videoId, options = {}) {
-    const candidateIds = this.buildActualIdCandidates(type, idCandidates, videoId, {
-      ...options,
-      idPrefixes: addon?.idPrefixes
-    });
-    if (!candidateIds.length) {
-      return [];
-    }
-    const merged = [];
+    const candidateIds = this.uniqueNonEmpty(
+      (addon.resources || []).flatMap((resource) =>
+        this.isSubtitleResource(resource?.name) && this.supportsType(resource, type)
+          ? buildSubtitleIdCandidates({
+              ...options,
+              type,
+              ids: idCandidates,
+              videoId,
+              idPrefixes: addonRepository.getResourceIdPrefixes(addon, resource)
+            })
+          : []
+      )
+    );
+    const results = await Promise.all(candidateIds.map(async (id) => {
+      const fetchTracks = async (url, timeoutMs = PER_ADDON_TIMEOUT_MS) => {
+        const result = await this.withTimeout(safeApiCall(() => SubtitleApi.getSubtitles(url)), timeoutMs);
+        const tracks = result?.status === "success" ? result.data?.subtitles : null;
+        return Array.isArray(tracks) ? tracks.filter((track) => typeof track?.url === "string" && track.url.trim()) : [];
+      };
+      const baseUrl = this.buildSubtitlesUrl(addon.baseUrl, type, id);
+      const releaseUrl = this.buildSubtitlesUrl(addon.baseUrl, type, id, options);
+      if (releaseUrl === baseUrl) return fetchTracks(baseUrl);
+      const matched = await fetchTracks(releaseUrl, RELEASE_LOOKUP_TIMEOUT_MS);
+      return matched.length ? matched : fetchTracks(baseUrl);
+    }));
     const seen = new Set();
-    for (const actualId of candidateIds) {
-      const url = this.buildSubtitlesUrl(addon.baseUrl, type, actualId, options);
-      const result = await this.withTimeout(
-        safeApiCall(() => SubtitleApi.getSubtitles(url)),
-        PER_ADDON_TIMEOUT_MS
-      );
-      if (!result || result.status !== "success") {
-        continue;
-      }
-      const subtitles = (result.data?.subtitles || [])
-        .map((subtitle) => {
-          const headers = subtitle.headers || subtitle.behaviorHints?.proxyHeaders?.request;
-          return {
-            id:
-              subtitle.id ||
-              `${subtitle.lang || "unk"}-${this.makeDeterministicId(subtitle.url || "")}`,
-            url: subtitle.url,
-            lang: subtitle.lang || "unknown",
-            ...(headers ? { headers } : {}),
-            addonName: addon.displayName,
-            addonLogo: addon.logo
-          };
-        })
-        .filter((subtitle) => Boolean(subtitle.url));
-      subtitles.forEach((subtitle) => {
-        const key = `${subtitle.url}::${String(subtitle.lang || "").toLowerCase()}`;
-        if (seen.has(key)) {
-          return;
-        }
-        seen.add(key);
-        merged.push(subtitle);
-      });
-    }
-    return merged;
+    return results.flat().flatMap((subtitle) => {
+      const lang = subtitle.lang || subtitle.language || subtitle.languageCode || "unknown";
+      const key = JSON.stringify([subtitle.url, lang]);
+      if (seen.has(key)) return [];
+      seen.add(key);
+      const headers = subtitle.headers || subtitle.behaviorHints?.proxyHeaders?.request;
+      return [{
+        id: subtitle.id || lang + "-" + this.makeDeterministicId(subtitle.url),
+        url: subtitle.url,
+        lang,
+        ...(headers ? { headers } : {}),
+        addonName: addon.displayName,
+        addonLogo: addon.logo
+      }];
+    });
   }
   isSubtitleResource(name) {
     const resourceName = String(name || "").toLowerCase();
@@ -177,38 +155,9 @@ class SubtitleRepository {
       .toLowerCase();
     return normalized === "tv" ? "series" : normalized;
   }
-  supportsType(resource, type, id) {
-    const supportedTypes = Array.isArray(resource?.types)
-      ? resource.types.map((value) => String(value || "").toLowerCase()).filter(Boolean)
-      : [];
-    const compatibleTypes = this.compatibleTypes(type);
-    if (
-      supportedTypes.length > 0 &&
-      !compatibleTypes.some((candidateType) => supportedTypes.includes(candidateType))
-    ) {
-      return false;
-    }
-    const idPrefixes = Array.isArray(resource?.idPrefixes)
-      ? resource.idPrefixes.map((value) => String(value || "")).filter(Boolean)
-      : [];
-    if (!idPrefixes.length) {
-      return true;
-    }
-    return idPrefixes.some((prefix) => String(id || "").startsWith(prefix));
-  }
-  normalizeIdForLookup(id) {
-    const raw = String(id || "").trim();
-    if (!raw) {
-      return "";
-    }
-    return String(raw.split(":")[0] || "").trim() || raw;
-  }
-  compatibleTypes(type) {
-    const normalized = this.canonicalSubtitleType(type);
-    if (normalized === "series" || normalized === "tv") {
-      return ["series", "tv"];
-    }
-    return [normalized];
+  supportsType(resource, type) {
+    const types = addonRepository.getResourceTypes(resource).map((value) => this.canonicalSubtitleType(value));
+    return !types.length || types.includes(type);
   }
   uniqueNonEmpty(values = []) {
     const unique = [];
@@ -223,17 +172,9 @@ class SubtitleRepository {
     });
     return unique;
   }
-  buildActualIdCandidates(type, ids = [], videoId = null, options = {}) {
-    return buildSubtitleIdCandidates({
-      type,
-      ids,
-      videoId,
-      season: options.season,
-      episode: options.episode,
-      idPrefixes: options.idPrefixes
-    });
-  }
   async resolveCanonicalId(type, options = {}) {
+    const tmdbMatch = options.tmdbId ? await TmdbService.tmdbToImdb(options.tmdbId, type) : null;
+    if (tmdbMatch) return tmdbMatch;
     const title = String(options?.title || "").trim();
     const year = releaseYear(options?.year);
     if (!["movie", "series"].includes(type) || !title || !year) {

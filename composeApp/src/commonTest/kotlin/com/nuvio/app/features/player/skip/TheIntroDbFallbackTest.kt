@@ -62,6 +62,16 @@ class TheIntroDbFallbackTest {
     }
 
     @Test
+    fun partialProviderDataFillsMissingSegmentsAndProtectsEpisodeScenes() {
+        val intro = SkipInterval(25.0, 115.0, "op", "aniskip")
+        val recap = SkipInterval(0.0, 25.0, "recap", "theintrodb")
+        val credits = SkipInterval(1350.0, 1410.0, "outro", "theintrodb")
+        val scene = SkipInterval(1390.0, 1410.0, "post-credits", "introdb")
+        val result = SkipIntroRepository.mergeByPriority(listOf(scene, recap, credits), emptyList(), listOf(intro))
+        assertEquals(setOf(scene, intro, recap, credits.copy(endTime = 1390.0)), result.toSet())
+    }
+
+    @Test
     fun movieAndEpisodeUrlsUseCorrectPublicApiQuery() {
         assertEquals(
             "https://api.theintrodb.org/v4/media?imdb_id=tt9876543",

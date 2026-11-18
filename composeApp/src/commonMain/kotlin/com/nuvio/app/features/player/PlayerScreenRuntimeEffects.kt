@@ -28,7 +28,7 @@ import com.nuvio.app.features.player.skip.AutoSkipSegmentType
 import com.nuvio.app.features.player.skip.NextEpisodeInfo
 import com.nuvio.app.features.player.skip.PlayerNextEpisodeRules
 import com.nuvio.app.features.player.skip.SkipIntroRepository
-import com.nuvio.app.features.player.skip.alignOpeningsToChapters
+import com.nuvio.app.features.player.skip.resolvePlaybackSkipIntervals
 import com.nuvio.app.features.player.skip.autoSkipKey
 import com.nuvio.app.features.player.skip.autoSkipKeysCompletedBy
 import com.nuvio.app.features.player.skip.shouldAutoSkip
@@ -359,7 +359,12 @@ internal fun PlayerScreenRuntime.BindPlayerRuntimeEffects() {
         addonSubtitleFetchKey,
     ) {
         if (activeSourceUrl.startsWith("file:") && externalSubtitles.isNotEmpty()) return@LaunchedEffect
-        val fetchKey = addonSubtitleFetchKey ?: return@LaunchedEffect
+        val fetchKey = addonSubtitleFetchKey
+        if (fetchKey == null) {
+            SubtitleRepository.clear()
+            autoFetchedAddonSubtitlesForKey = null
+            return@LaunchedEffect
+        }
         if (autoFetchedAddonSubtitlesForKey == fetchKey) return@LaunchedEffect
         autoFetchedAddonSubtitlesForKey = fetchKey
         fetchAddonSubtitlesForActiveItem()
@@ -600,6 +605,7 @@ private fun PlayerScreenRuntime.BindPlayerMetadataAndSkipEffects() {
         parentMetaId,
         parentMetaType,
         contentType,
+        activeSourceUrl,
         playerSettingsUiState.skipIntroEnabled,
         playerSettingsUiState.animeSkipEnabled,
         playerSettingsUiState.animeSkipClientId,
@@ -640,16 +646,22 @@ private fun PlayerScreenRuntime.BindPlayerMetadataAndSkipEffects() {
         activeSourceUrl,
         playbackSnapshot.durationMs,
         playbackSnapshot.isLoading,
+        playerSettingsUiState.skipIntroEnabled,
     ) {
-        if (playerControllerSourceUrl != activeSourceUrl || playbackSnapshot.durationMs <= 0) {
+        if (!playerSettingsUiState.skipIntroEnabled ||
+            playerControllerSourceUrl != activeSourceUrl || playbackSnapshot.durationMs <= 0
+        ) {
             skipIntervals = emptyList()
             return@LaunchedEffect
         }
         // Keep the current file's alignment and button dismissal during buffering.
         if (playbackSnapshot.isLoading) return@LaunchedEffect
-        val chapters = playerController?.getChapterStarts().orEmpty()
-        // Keep provider data unchanged so switching sources always uses that file's chapters.
-        skipIntervals = providerSkipIntervals.alignOpeningsToChapters(chapters)
+        skipIntervals = resolvePlaybackSkipIntervals(
+            providerIntervals = providerSkipIntervals,
+            chapters = playerController?.getPlaybackChapters().orEmpty(),
+            durationMs = playbackSnapshot.durationMs,
+            isMovie = (contentType ?: parentMetaType).equals("movie", ignoreCase = true),
+        )
     }
 
     LaunchedEffect(
@@ -956,6 +968,8 @@ internal fun PlayerScreenRuntime.tryRefreshCredentialedSourceAfterError(message:
             stopActiveP2pStream()
             activeSourceUrl = refreshedUrl
             activeSourceAudioUrl = null
+            externalSubtitles = stream.externalSubtitles
+            activeSubtitleRequestExtra = stream.subtitleRequestExtra()
             activeSourceHeaders = sanitizePlaybackHeaders(stream.behaviorHints.proxyHeaders?.request)
             activeSourceResponseHeaders = sanitizePlaybackResponseHeaders(stream.behaviorHints.proxyHeaders?.response)
             activeStreamType = stream.streamType

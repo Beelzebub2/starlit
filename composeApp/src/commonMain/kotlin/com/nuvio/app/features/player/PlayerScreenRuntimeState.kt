@@ -100,6 +100,7 @@ internal class PlayerScreenRuntime(
     val initialPositionMs: Long get() = args.initialPositionMs
     val initialProgressFraction: Float? get() = args.initialProgressFraction
     var externalSubtitles by mutableStateOf(args.externalSubtitles)
+    var activeSubtitleRequestExtra by mutableStateOf(args.subtitleRequestExtra)
     val isSeries: Boolean get() = parentMetaType == "series"
 
     lateinit var scope: CoroutineScope
@@ -271,7 +272,7 @@ internal class PlayerScreenRuntime(
     var isUserExplicitAudioSelection by mutableStateOf(false)
     var isUserExplicitSubtitleSelection by mutableStateOf(false)
     var hasScannedTextTracksOnce by mutableStateOf(false)
-    var autoFetchedAddonSubtitlesForKey by mutableStateOf<String?>(null)
+    var autoFetchedAddonSubtitlesForKey by mutableStateOf<AddonSubtitleFetchKey?>(null)
     var trackPreferenceRestoreApplied by mutableStateOf(false)
     var subtitleDelayMs by mutableStateOf(0)
     var subtitleAutoSyncState by mutableStateOf(SubtitleAutoSyncUiState())

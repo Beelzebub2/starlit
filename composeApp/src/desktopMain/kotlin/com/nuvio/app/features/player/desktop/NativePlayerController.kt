@@ -34,6 +34,7 @@ import com.nuvio.app.features.player.desktop.hls.isDefaultAllowedHlsTarget
 import com.nuvio.app.features.settings.DiscordShareModeSettings
 import com.nuvio.app.features.settings.SurroundUpmixSettings
 import com.nuvio.app.features.player.toStorageHexString
+import com.nuvio.app.features.player.skip.PlaybackChapter
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
@@ -909,9 +910,14 @@ internal class NativePlayerController(
         NativePlayerBridge.setSpeed(current, next)
     }
 
-    override fun getChapterStarts(): List<Double> = handle.takeIf { it != 0L }?.let { current ->
-        runCatching { NativePlayerBridge.chapterStarts(current).toList() }.getOrDefault(emptyList())
-    }.orEmpty()
+    override fun getPlaybackChapters(): List<PlaybackChapter> {
+        val current = handle.takeIf { it != 0L } ?: return emptyList()
+        return runCatching {
+            json.decodeFromString<List<PlaybackChapter>>(NativePlayerBridge.chaptersJson(current))
+        }.getOrElse {
+            runCatching { NativePlayerBridge.chapterStarts(current).map { PlaybackChapter(it) } }.getOrDefault(emptyList())
+        }
+    }
 
     fun snapshot(): PlayerPlaybackSnapshot {
         val current = handle
