@@ -168,6 +168,25 @@ try {
     assert.equal(wrtStarts, 1);
     assert.equal(appLaunches, 0);
   });
+
+  await test("a silent launcher falls back and simultaneous callers share startup", async () => {
+    installDevice({ major: 5 });
+    globalThis.__NUVIO_TIZEN_WRT_SERVICE__ = {
+      startService(_id, success) {
+        wrtStarts++;
+        success?.();
+      }
+    };
+    const [first, second] = await Promise.all([
+      TizenEngineFsService.ensureStarted({ purpose: "p2p" }),
+      TizenEngineFsService.ensureStarted({ purpose: "p2p" })
+    ]);
+    assert.equal(first.status, "success", first.detail);
+    assert.equal(first.startMethod, "tizen-application-launch");
+    assert.deepEqual(second, first);
+    assert.equal(wrtStarts, 1);
+    assert.equal(appLaunches, 1);
+  });
 } finally {
   globalThis.fetch = original.fetch;
   if (original.tizen === undefined) delete globalThis.tizen;

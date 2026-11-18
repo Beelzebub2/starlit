@@ -29,6 +29,8 @@ export function createPlayerScreenMethods73() {
         this.webOsAddonSubtitleRestoreRequestId = Number(this.webOsAddonSubtitleRestoreRequestId || 0) + 1;
         this.pendingWebOsAddonSubtitleRestore = null;
         this.playerMountToken = Number(this.playerMountToken || 0) + 1;
+        this.abortTizenTorrentProbe?.();
+        this.abortTizenTorrentProbe = null;
         if (this.tizenAvPlayConnectionRetryTimer) {
           clearTimeout(this.tizenAvPlayConnectionRetryTimer);
           this.tizenAvPlayConnectionRetryTimer = null;

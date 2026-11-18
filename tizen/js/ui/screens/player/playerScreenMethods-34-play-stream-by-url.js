@@ -55,6 +55,11 @@ export function createPlayerScreenMethods34() {
       const sourceCandidate =
         explicitSourceCandidate || this.getStreamCandidateByUrl(normalizedStreamUrl) || this.getCurrentStreamCandidate();
       if (Environment.isTizen()) {
+        if (preservePlaybackState && !this.activePlaybackUrl) {
+          // An idle video element reports paused while the first torrent resolves.
+          preservePlaybackState = false;
+          preservePendingRestore = Boolean(this.pendingPlaybackRestore);
+        }
         // Keep one first-frame deadline across native player retries, redirects
         // and EngineFS restarts. An explicit new source or user retry gets a
         // fresh budget, but an automatic fallback cannot buy infinite time.

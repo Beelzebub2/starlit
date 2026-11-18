@@ -42,8 +42,10 @@ test("readiness probes are limited to loopback torrent playback URLs", () => {
 test("only a nonempty one-byte 206 response proves media readiness", async () => {
   assert.equal(await probeTizenTorrentFirstByte(playable, 500, createXHR(206, 1)), "ready");
   assert.equal(await probeTizenTorrentFirstByte(playable, 500, createXHR(206, 0)), "retry");
+  assert.equal(await probeTizenTorrentFirstByte(playable, 500, createXHR(206, 2)), "retry");
   assert.equal(await probeTizenTorrentFirstByte(playable, 500, createXHR(200, 20)), "retry");
-  assert.equal(await probeTizenTorrentFirstByte(playable, 500, createXHR(403, 1)), "terminal");
+  assert.equal(await probeTizenTorrentFirstByte(playable, 500, createXHR(403, 1)), "session-lost");
+  assert.equal(await probeTizenTorrentFirstByte(playable, 500, createXHR(404, 1)), "session-lost");
 });
 
 test("a cold torrent waits for actual bytes without discarding its peer connections", async () => {
@@ -53,7 +55,7 @@ test("a cold torrent waits for actual bytes without discarding its peer connecti
     retryMs: 1,
     probe: async () => (++probes === 3 ? "ready" : "retry")
   });
-  assert.equal(ready, true);
+  assert.equal(ready, "ready");
   assert.equal(probes, 3);
 });
 
@@ -62,7 +64,7 @@ test("a cold first range keeps its download window open instead of aborting ever
   assert.equal(await waitForTizenTorrentFirstByte(playable, {
     timeoutMs: 15_000,
     probe: async (_url, timeoutMs) => { probeTimeout = timeoutMs; return "ready"; }
-  }), true);
+  }), "ready");
   assert.ok(probeTimeout > 10_000, "The initial piece must retain its peer-download window");
 });
 
@@ -71,20 +73,20 @@ test("invalid playback tickets fail promptly instead of retrying", async () => {
   const ready = await waitForTizenTorrentFirstByte(playable, {
     timeoutMs: 100,
     retryMs: 1,
-    probe: async () => { probes++; return "terminal"; }
+    probe: async () => { probes++; return "session-lost"; }
   });
-  assert.equal(ready, false);
+  assert.equal(ready, "session-lost");
   assert.equal(probes, 1);
 });
 
 test("an unavailable stream times out without probing unrelated hosts", async () => {
   assert.equal(await waitForTizenTorrentFirstByte(playable, {
     timeoutMs: 20, retryMs: 1, probe: async () => "retry"
-  }), false);
+  }), "unavailable");
   let probes = 0;
   assert.equal(await waitForTizenTorrentFirstByte("http://example.com/" + hash + "/0", {
     probe: async () => { probes++; return "ready"; }
-  }), false);
+  }), "unavailable");
   assert.equal(probes, 0);
 });
 
@@ -97,6 +99,23 @@ test("a newer source cancels stale first-byte readiness before the next probe", 
     isCurrent: () => current,
     probe: async () => { probes++; current = false; return "ready"; }
   });
-  assert.equal(ready, false, "a stale response must not start the old episode");
+  assert.equal(ready, "cancelled", "a stale response must not start the old episode");
   assert.equal(probes, 1);
+});
+
+test("superseding a source aborts the outstanding range without waiting for peer data", async () => {
+  let cancel = null;
+  let sent = false;
+  let aborted = false;
+  const pending = probeTizenTorrentFirstByte(playable, 35_000, () => ({
+    open() {},
+    setRequestHeader() {},
+    send() { sent = true; },
+    abort() { aborted = true; }
+  }), (abort) => { cancel = abort; });
+  assert.equal(sent, true);
+  cancel();
+  assert.equal(await pending, "cancelled");
+  assert.equal(aborted, true);
+  assert.equal(cancel, null);
 });
