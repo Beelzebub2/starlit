@@ -485,45 +485,114 @@ class ListTrackerBarUiTest {
         onNodeWithText("Dropped").assertExists()
     }
 
+    private fun slowMalHooks(resolved: CompletableDeferred<Int?>) = MalTitleHooks(
+        connected = true, busy = false, linkRevision = 0, resolveId = { resolved.await() }, onConnect = {}, onChooseEntry = {},
+    )
+
     @Test
     fun slowMalResolveThenSwitchKeepsTheBarAndFinishesAStartedWrite() = runDesktopComposeUiTest(width = 900, height = 520) {
-        // MAL is first in the order and connected, but its id takes a while to resolve for this (non-anime-looking) title.
+        // MAL is first in the order and connected, but its id takes a while to resolve for this (non-anime-looking)
+        // title, and in the end there is no MAL entry for it.
         val resolved = CompletableDeferred<Int?>()
         val mal = FakeListService(ListServiceId.MYANIMELIST, caps = malCaps, coverage = { it.anime }, entry = null)
         val trakt = FakeListService(ListServiceId.TRAKT, caps = traktCaps, entry = entry(ListStatus.WATCHING, ListServiceId.TRAKT))
-        val hooks = MalTitleHooks(connected = true, busy = false, linkRevision = 0, resolveId = { resolved.await() },
-            onConnect = {}, onChooseEntry = {})
         var onPage by mutableStateOf(true)
-        setContent { Hero { if (onPage) ListTrackerControls(seriesMeta, hooks, listOf(mal, trakt), allOnTitlePages) } }
+        setContent { Hero { if (onPage) ListTrackerControls(seriesMeta, slowMalHooks(resolved), listOf(mal, trakt), allOnTitlePages) } }
         waitForIdle()
-        // While resolving, MyAnimeList holds the bar in its working state; no other tracker is shown or loaded.
-        onAllNodesWithContentDescription("Trakt status", substring = true).assertCountEquals(0)
-        onNodeWithContentDescription("MyAnimeList status: Set status").assertExists()
-        assertEquals(0, trakt.entryForCalls)
+        // Trakt shows (and loads) at once; the bar does not wait for the MAL id.
+        onNodeWithContentDescription("Trakt status: Watching").assertExists()
+        onAllNodesWithContentDescription("MyAnimeList", substring = true).assertCountEquals(0)
+        assertEquals(1, trakt.entryForCalls)
         assertEquals(0, mal.entryForCalls)
 
-        resolved.complete(42)
-        waitForIdle()
-        onNodeWithContentDescription("MyAnimeList status: Set status").assertExists()
-        onAllNodesWithContentDescription("Trakt status", substring = true).assertCountEquals(0)
-        assertEquals(0, trakt.entryForCalls, "Trakt was never shown, so it was never loaded and disposed")
-        assertEquals(1, mal.entryForCalls)
-
-        // The user switches to Trakt and starts a slow write, then leaves the page before it finishes.
-        onNodeWithContentDescription("MyAnimeList, switch list service").performClick()
-        onNodeWithText("Trakt").performClick()
-        waitForIdle()
-        onNodeWithContentDescription("Trakt status: Watching").assertExists()
+        // The user starts a slow write; the MAL lookup then comes back empty and Trakt stays.
         val gate = CompletableDeferred<Unit>()
         trakt.applyGate = gate
         onNodeWithContentDescription("Trakt status: Watching").performClick()
         onNodeWithText("Plan to Watch").performClick()
         waitUntil(timeoutMillis = 5_000) { trakt.applied.isNotEmpty() }
+        resolved.complete(null)
+        waitForIdle()
+        onNodeWithContentDescription("Trakt status: Watching").assertExists()
+        onAllNodesWithContentDescription("MyAnimeList", substring = true).assertCountEquals(0)
+        assertEquals(1, trakt.entryForCalls, "Trakt was never reloaded")
+
+        // Leaving the page before the write finishes does not cancel it.
         onPage = false
         waitForIdle()
         gate.complete(Unit)
         waitUntil(timeoutMillis = 5_000) { trakt.completed.isNotEmpty() }
         assertEquals(listOf<ListChange>(ListChange.SetStatus(ListStatus.PLAN_TO_WATCH)), trakt.completed)
+    }
+
+    @Test
+    fun lateMalIdKeepsTheShownServiceAndOnlyAddsMalToTheSwitcher() = runDesktopComposeUiTest(width = 900, height = 520) {
+        val resolved = CompletableDeferred<Int?>()
+        val mal = FakeListService(ListServiceId.MYANIMELIST, caps = malCaps, coverage = { it.anime }, entry = null)
+        val trakt = FakeListService(ListServiceId.TRAKT, caps = traktCaps, entry = entry(ListStatus.WATCHING, ListServiceId.TRAKT))
+        setContent { Hero { ListTrackerControls(seriesMeta, slowMalHooks(resolved), listOf(mal, trakt), allOnTitlePages) } }
+        waitForIdle()
+        onNodeWithContentDescription("Trakt status: Watching").assertExists()
+        // A write is under way when the MAL id arrives.
+        val gate = CompletableDeferred<Unit>()
+        trakt.applyGate = gate
+        onNodeWithContentDescription("Trakt status: Watching").performClick()
+        onNodeWithText("Plan to Watch").performClick()
+        waitUntil(timeoutMillis = 5_000) { trakt.applied.isNotEmpty() }
+
+        resolved.complete(42)
+        waitForIdle()
+        // MyAnimeList now ranks first but does not take over the bar, and Trakt is not reloaded.
+        onAllNodesWithContentDescription("MyAnimeList status", substring = true).assertCountEquals(0)
+        assertEquals(1, trakt.entryForCalls)
+        assertEquals(0, mal.entryForCalls)
+        gate.complete(Unit)
+        waitUntil(timeoutMillis = 5_000) { trakt.completed.isNotEmpty() }
+        waitForIdle()
+        onNodeWithContentDescription("Trakt status: Plan to Watch").assertExists()
+
+        // MyAnimeList is offered in the switcher and can be picked.
+        onNodeWithContentDescription("Trakt, switch list service").performClick()
+        onNodeWithText("MyAnimeList").performClick()
+        waitForIdle()
+        onNodeWithContentDescription("MyAnimeList status: Set status").assertExists()
+        assertEquals(1, mal.entryForCalls)
+    }
+
+    @Test
+    fun animeLookingTitleShowsMalImmediately() = runDesktopComposeUiTest(width = 900, height = 520) {
+        val resolved = CompletableDeferred<Int?>()
+        val mal = FakeListService(ListServiceId.MYANIMELIST, caps = malCaps, coverage = { it.anime }, entry = null)
+        val trakt = FakeListService(ListServiceId.TRAKT, caps = traktCaps, entry = entry(ListStatus.WATCHING, ListServiceId.TRAKT))
+        setContent { Hero { ListTrackerControls(animeMeta, slowMalHooks(resolved), listOf(mal, trakt), allOnTitlePages) } }
+        waitForIdle()
+        // MyAnimeList is on the bar (waiting for its id) and Trakt is only in the switcher, never loaded.
+        onNodeWithContentDescription("MyAnimeList status: Set status").assertExists()
+        onAllNodesWithContentDescription("Trakt status", substring = true).assertCountEquals(0)
+        assertEquals(0, trakt.entryForCalls)
+        assertEquals(0, mal.entryForCalls)
+        resolved.complete(42)
+        waitForIdle()
+        onNodeWithContentDescription("MyAnimeList status: Set status").assertExists()
+        onNodeWithContentDescription("Rate on MyAnimeList").assertExists()
+        assertEquals(1, mal.entryForCalls)
+        assertEquals(0, trakt.entryForCalls)
+    }
+
+    @Test
+    fun malWaitsForItsIdOnlyWhenNoOtherServiceCanShow() = runDesktopComposeUiTest(width = 900, height = 520) {
+        val resolved = CompletableDeferred<Int?>()
+        val mal = FakeListService(ListServiceId.MYANIMELIST, caps = malCaps, coverage = { it.anime }, entry = null)
+        setContent { Hero { ListTrackerControls(seriesMeta, slowMalHooks(resolved), listOf(mal), allOnTitlePages) } }
+        waitForIdle()
+        // Nothing else covers the title, so MyAnimeList holds the bar in its waiting state.
+        onNodeWithContentDescription("MyAnimeList status: Set status").assertExists()
+        assertEquals(0, mal.entryForCalls)
+        resolved.complete(42)
+        waitForIdle()
+        onNodeWithContentDescription("MyAnimeList status: Set status").assertExists()
+        onNodeWithContentDescription("Rate on MyAnimeList").assertExists()
+        assertEquals(1, mal.entryForCalls)
     }
 
     @Test

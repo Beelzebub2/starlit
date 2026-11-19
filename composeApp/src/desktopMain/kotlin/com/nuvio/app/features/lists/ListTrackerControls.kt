@@ -7,6 +7,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -88,18 +89,28 @@ internal fun ensureListServicesLoaded() {
         malId = try { mal.resolveId(meta) } catch (e: CancellationException) { throw e } catch (_: Exception) { null }
         malResolving = false
     }
+    // Until the MAL id resolves the kind is what the title looks like (anime-looking titles get MAL at once).
     val resolvedKind = titleKind(meta, malResolved = malId != null)
     // Page-local choice; when the chosen service disconnects it drops out of the candidates and the next one shows.
     var chosen by remember(meta.type, meta.id) { mutableStateOf<ListServiceId?>(null) }
-    fun pick(candidates: List<ListService>) = candidates.firstOrNull { it.id == chosen } ?: candidates.firstOrNull()
-    // While the MAL id is still resolving, a MyAnimeList that would win once the id arrives holds the bar (working,
-    // nothing loaded) so that a late id never swaps out, and cancels, a tracker the user has already started using.
+    // The service the bar is showing. It stays for the page: a late MAL id only adds MyAnimeList to the switcher and
+    // never swaps out (and cancels) a tracker the user may already be using. A disconnect still moves to the next one.
+    var shown by remember(meta.type, meta.id) { mutableStateOf<ListServiceId?>(null) }
+    fun pick(candidates: List<ListService>) = candidates.firstOrNull { it.id == chosen }
+        ?: candidates.firstOrNull { it.id == shown }
+        ?: candidates.firstOrNull()
+    val resolvedCandidates = titleCandidates(services, prefs, resolvedKind, meta)
+    // Only when nothing else can be shown does a MyAnimeList that would win once the id arrives hold the bar in its
+    // waiting state (working, nothing loaded) while the id resolves.
     val malKind = titleKind(meta, malResolved = true)
-    val malCandidates = if (malResolving && malId == null && mal.connected) titleCandidates(services, prefs, malKind, meta) else emptyList()
+    val malCandidates = if (resolvedCandidates.isEmpty() && malResolving && malId == null && mal.connected) {
+        titleCandidates(services, prefs, malKind, meta)
+    } else emptyList()
     val holdForMal = pick(malCandidates)?.id == ListServiceId.MYANIMELIST
     val kind = if (holdForMal) malKind else resolvedKind
-    val candidates = if (holdForMal) malCandidates else titleCandidates(services, prefs, kind, meta)
+    val candidates = if (holdForMal) malCandidates else resolvedCandidates
     val current = pick(candidates)
+    SideEffect { if (current != null) shown = current.id }
     if (current == null) {
         if (kind.anime && !mal.connected) ListConnectPrompt(ListServiceId.MYANIMELIST, mal.onConnect, enabled = !mal.busy)
         return
