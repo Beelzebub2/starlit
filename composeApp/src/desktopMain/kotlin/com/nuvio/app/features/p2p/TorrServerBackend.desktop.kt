@@ -146,10 +146,12 @@ private class TorrServerBinary(
     private val suppliedBinary: File?,
 ) {
     private val log = Logger.withTag("TorrServerBinary")
-    private val healthClient = HttpClient.newBuilder()
-        .version(HttpClient.Version.HTTP_1_1)
-        .connectTimeout(Duration.ofSeconds(2))
-        .build()
+    private val healthClient by lazy {
+        HttpClient.newBuilder()
+            .version(HttpClient.Version.HTTP_1_1)
+            .connectTimeout(Duration.ofSeconds(2))
+            .build()
+    }
     @Volatile private var process: Process? = null
     val processId: Long? get() = process?.takeIf { it.isAlive }?.pid()
     private var port = 0
@@ -419,11 +421,13 @@ private class TorrServerApi(
     private val cacheDirectory: File,
 ) {
     private val json = Json { ignoreUnknownKeys = true }
-    private val client = HttpClient.newBuilder()
+    private val client by lazy {
         // TorrServer serves cleartext HTTP/1.1; avoid an h2c upgrade on the first POST.
-        .version(HttpClient.Version.HTTP_1_1)
-        .connectTimeout(Duration.ofSeconds(2))
-        .build()
+        HttpClient.newBuilder()
+            .version(HttpClient.Version.HTTP_1_1)
+            .connectTimeout(Duration.ofSeconds(2))
+            .build()
+    }
 
     private val baseUrl: String get() = binary.baseUrl
 

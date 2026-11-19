@@ -79,6 +79,10 @@ struct mpv_node_list {
 typedef enum mpv_event_id {
     MPV_EVENT_NONE = 0,
     MPV_EVENT_SHUTDOWN = 1,
+    MPV_EVENT_END_FILE = 7,
+    MPV_EVENT_FILE_LOADED = 8,
+    MPV_EVENT_PROPERTY_CHANGE = 22,
+    MPV_EVENT_QUEUE_OVERFLOW = 24,
 } mpv_event_id;
 
 typedef struct mpv_event {
@@ -534,6 +538,7 @@ struct MpvApi {
     using mpv_error_string_fn = const char *(*)(int);
     using mpv_free_fn = void (*)(void *);
     using mpv_free_node_contents_fn = void (*)(mpv_node *);
+    using mpv_observe_property_fn = int (*)(mpv_handle *, uint64_t, const char *, mpv_format);
     using mpv_wait_event_fn = mpv_event *(*)(mpv_handle *, double);
     using mpv_wakeup_fn = void (*)(mpv_handle *);
 
@@ -554,6 +559,7 @@ struct MpvApi {
     mpv_error_string_fn errorString = nullptr;
     mpv_free_fn freeValue = nullptr;
     mpv_free_node_contents_fn freeNodeContents = nullptr;
+    mpv_observe_property_fn observeProperty = nullptr;
     mpv_wait_event_fn waitEvent = nullptr;
     mpv_wakeup_fn wakeup = nullptr;
 
@@ -615,6 +621,7 @@ struct MpvApi {
         errorString = loadSymbol<mpv_error_string_fn>("mpv_error_string");
         freeValue = loadSymbol<mpv_free_fn>("mpv_free");
         freeNodeContents = loadSymbol<mpv_free_node_contents_fn>("mpv_free_node_contents");
+        observeProperty = loadSymbol<mpv_observe_property_fn>("mpv_observe_property");
         waitEvent = loadSymbol<mpv_wait_event_fn>("mpv_wait_event");
         wakeup = loadSymbol<mpv_wakeup_fn>("mpv_wakeup");
     }
@@ -1706,6 +1713,11 @@ private:
     mpv_handle *mpv = nullptr;
     bool rtxVideoConfigured = false;
     std::thread eventThread;
+    std::atomic_bool controlsTracksDirty = true;
+    std::atomic_bool observingControlsTracks = false;
+    std::string controlsAudioTracks;
+    std::string controlsSubtitleTracks;
+    std::wstring lastControlsUpdate;
     std::atomic_bool stopping = false;
     std::atomic_bool shuttingDown = false;
     std::atomic_bool hwdecLogged = false;  // one-shot log for hwdec-current
@@ -2466,6 +2478,14 @@ private:
         }
 
         setPaused(!playWhenReady);
+        {
+            std::lock_guard<std::mutex> lock(mpvMutex);
+            // Invalidate on list and selection changes without querying each track every tick.
+            observingControlsTracks.store(
+                api.observeProperty(mpv, 0, "track-list", MPV_FORMAT_NONE) >= 0 &&
+                api.observeProperty(mpv, 0, "aid", MPV_FORMAT_NONE) >= 0 &&
+                api.observeProperty(mpv, 0, "sid", MPV_FORMAT_NONE) >= 0);
+        }
         auto self = shared_from_this();
         eventThread = std::thread([self]() { self->drainMpvEvents(); });
     }
@@ -2531,7 +2551,7 @@ private:
     }
 
     void syncControls() {
-        if (!webView) return;
+        if (!webView || !controlsWebReady.load()) return;
         double duration = doubleProperty("duration", 0.0);
         double position = doubleProperty("time-pos", 0.0);
         double volumeLevel = volume();
@@ -2543,8 +2563,10 @@ private:
         }
         bool paused = isPaused();
         bool loading = isLoading();
-        std::string audioTracks = audioTracksJson();
-        std::string subtitleTracks = subtitleTracksJson();
+        if (!observingControlsTracks.load() || controlsTracksDirty.exchange(false)) {
+            controlsAudioTracks = audioTracksJson();
+            controlsSubtitleTracks = subtitleTracksJson();
+        }
 
         std::ostringstream script;
         script << "window.playerUpdate({duration:" << duration
@@ -2558,11 +2580,13 @@ private:
                << ",seeking:" << (diagnostics.seeking ? "true" : "false")
                << ",paused:" << (paused ? "true" : "false")
                << ",loading:" << (loading ? "true" : "false")
-               << ",audioTracks:" << audioTracks
-               << ",subtitleTracks:" << subtitleTracks
+               << ",audioTracks:" << controlsAudioTracks
+               << ",subtitleTracks:" << controlsSubtitleTracks
                << "})";
         std::wstring wideScript = toWide(script.str());
-        webView->ExecuteScript(wideScript.c_str(), nullptr);
+        if (wideScript != lastControlsUpdate && SUCCEEDED(webView->ExecuteScript(wideScript.c_str(), nullptr))) {
+            lastControlsUpdate = std::move(wideScript);
+        }
     }
 
     void handleWebMessage(const std::wstring &messageJson) {
@@ -2577,17 +2601,21 @@ private:
         }
         if (type == "controlsReady") {
             controlsWebReady.store(true);
+            controlsTracksDirty.store(true);
+            lastControlsUpdate.clear();
             flushPendingControlsJsonIfReady();
             syncControls();
             return;
         }
         if (type == "selectAudioTrack") {
             selectAudioTrackId((int)std::llround(value));
+            controlsTracksDirty.store(true);
             syncControls();
             return;
         }
         if (type == "selectSubtitleTrack") {
             selectSubtitleTrackId((int)std::llround(value));
+            controlsTracksDirty.store(true);
             syncControls();
             return;
         }
@@ -2687,10 +2715,14 @@ private:
                 return;
             }
 
-            mpv_event *event = mpvApi().waitEvent(current, 0.5);
+            mpv_event *event = mpvApi().waitEvent(current, -1);
             if (!event) continue;
             if (event->event_id == MPV_EVENT_SHUTDOWN) {
                 return;
+            }
+            if (event->event_id == MPV_EVENT_PROPERTY_CHANGE || event->event_id == MPV_EVENT_FILE_LOADED ||
+                event->event_id == MPV_EVENT_END_FILE || event->event_id == MPV_EVENT_QUEUE_OVERFLOW) {
+                controlsTracksDirty.store(true);
             }
         }
     }

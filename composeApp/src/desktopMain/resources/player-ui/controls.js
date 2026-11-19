@@ -3784,12 +3784,18 @@ window.playerUpdate = update => {
     window.clearTimeout(pendingPlaybackTimer);
     pendingPlaybackTimer = 0;
   }
+  const isPlaying = pendingIsPlaying === null ? nativeIsPlaying : pendingIsPlaying;
+  const isLoading = Boolean(update.loading || update.isLoading);
+  const progressOnly = hasReceivedPlayerControls && state.isPlaying && isPlaying &&
+    !state.isLoading && !isLoading && !state.controlsVisible && !activeModal &&
+    !audioTracksChanged && !subtitleTracksChanged &&
+    durationMs === state.durationMs && volumeLevel === state.volumeLevel;
   state = {
     ...state,
     durationMs,
     positionMs,
-    isPlaying: pendingIsPlaying === null ? nativeIsPlaying : pendingIsPlaying,
-    isLoading: Boolean(update.loading || update.isLoading),
+    isPlaying,
+    isLoading,
     volumeLevel,
     audioTracks,
     subtitleTracks,
@@ -3808,7 +3814,11 @@ window.playerUpdate = update => {
       pendingSubtitleOptionId = selected.id;
     }
   }
-  renderChrome();
+  if (progressOnly) {
+    setProgress(isScrubbing ? scrubPositionMs : positionMs, durationMs);
+  } else {
+    renderChrome();
+  }
   if ((audioTracksChanged && activeModal === "audio") ||
       (subtitleTracksChanged && activeModal === "subtitles")) {
     renderActiveModal();

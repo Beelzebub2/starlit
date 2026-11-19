@@ -319,13 +319,14 @@ class DesktopP2pSessionTest {
         } finally { engine.stopStream().join() }
     }
 
-    @Test fun startupPreparationAndSourceChangesReuseTheReadyEngine() = runTest {
+    @Test fun firstPlaybackStartsTheEngineAndQuickSourceChangesReuseIt() = runTest {
         val backend = Backend()
         val engine = engine(backend)
-        engine.prepare().join()
-        assertEquals(1, backend.starts)
+        advanceTimeBy(120_001L)
+        assertEquals(0, backend.starts)
         assertIs<P2pStreamingState.Idle>(engine.state.value)
         engine.startStream(request)
+        assertEquals(1, backend.starts)
         engine.stopStream().join()
         assertTrue(backend.running)
         assertTrue(backend.dropped.isEmpty(), "Quick episode switches should retain peers")
@@ -339,7 +340,7 @@ class DesktopP2pSessionTest {
     @Test fun lateStartCannotInvalidateQueuedShutdownCleanup() = runTest {
         val backend = Backend()
         val engine = engine(backend)
-        engine.prepare().join()
+        engine.startStream(request)
         assertTrue(backend.running)
         val shutdown = engine.shutdown()
         val lateStart = async(start = CoroutineStart.UNDISPATCHED) { engine.startStream(request) }
@@ -351,10 +352,10 @@ class DesktopP2pSessionTest {
         assertEquals(1, backend.starts)
     }
 
-    @Test fun ordinaryStopAfterShutdownStillClosesThePreparedBackend() = runTest {
+    @Test fun ordinaryStopAfterShutdownStillClosesTheBackend() = runTest {
         val backend = Backend()
         val engine = engine(backend)
-        engine.prepare().join()
+        engine.startStream(request)
         val shutdown = engine.shutdown()
         val lateStop = engine.stopStream()
         lateStop.join()
@@ -363,7 +364,7 @@ class DesktopP2pSessionTest {
         assertIs<P2pStreamingState.Idle>(engine.state.value)
     }
 
-    @Test fun repeatedEpisodeUsesWarmTorrentAndInactiveTorrentIsEventuallyDropped() = runTest {
+    @Test fun repeatedEpisodeReusesWarmTorrentAndInactivityStopsTheBackend() = runTest {
         val backend = Backend().apply {
             files = listOf(TorrServerFile(1, "Show.S01E01.mkv", 400), TorrServerFile(2, "Show.S01E02.mkv", 500))
         }
@@ -380,6 +381,9 @@ class DesktopP2pSessionTest {
         engine.stopStream().join()
         advanceTimeBy(90_001L)
         assertEquals(listOf(request.infoHash), backend.dropped)
+        assertFalse(backend.running)
+        engine.startStream(episode2)
+        assertEquals(2, backend.starts)
         engine.shutdown().join()
     }
 
@@ -412,89 +416,46 @@ class DesktopP2pSessionTest {
         engine.shutdown().join()
     }
 
-    @Test fun networkChangeWhileIdleRebuildsTheWarmedEngine() = runTest {
+    @Test fun networkChangeWhileIdleReleasesTheEngineUntilPlaybackNeedsIt() = runTest {
         val backend = Backend()
         val environment = Environment()
         val engine = engine(backend, environment)
-        engine.prepare().join()
-        environment.network = setOf("vpn:192.0.2.8")
         engine.startStream(request)
-        assertEquals(2, backend.starts)
-        engine.shutdown().join()
-    }
-
-    @Test fun ordinaryIdleTimeAndLongPlaybackDoNotRebuildTheWarmedEngine() = runTest {
-        val backend = Backend()
-        val engine = engine(backend)
-        engine.prepare().join()
-        advanceTimeBy(120_001L)
-        assertEquals(1, backend.starts)
-        engine.startStream(request)
-        assertEquals(1, backend.starts)
-        advanceTimeBy(120_001L)
         engine.stopStream().join()
-        advanceTimeBy(60_001L)
-        engine.startStream(request.copy(infoHash = "b".repeat(40)))
+        environment.network = setOf("vpn:192.0.2.8")
+        advanceTimeBy(6_001L)
         assertEquals(1, backend.starts)
+        assertFalse(backend.running)
+        engine.startStream(request)
+        assertEquals(2, backend.starts)
         engine.shutdown().join()
     }
 
-    @Test fun sleepWhileIdleRebuildsBeforeTheNextPlayback() = runTest {
+    @Test fun sleepDuringWarmRetentionStopsTheEngineWithoutAnIdleRestart() = runTest {
         val backend = Backend()
         val environment = Environment()
         val engine = engine(backend, environment)
-        engine.prepare().join()
+        engine.startStream(request)
+        engine.stopStream().join()
         environment.sleepMs += 120_000L
-        advanceTimeBy(6_001L)
-        assertEquals(2, backend.starts)
+        advanceTimeBy(4_001L)
+        assertEquals(1, backend.starts)
+        assertFalse(backend.running)
         assertIs<P2pStreamingState.Idle>(engine.state.value)
         engine.startStream(request)
         assertEquals(2, backend.starts)
         engine.shutdown().join()
     }
 
-    @Test fun idleRecoveryWaitsForAUsableStableNetworkAndStopsOnShutdown() = runTest {
-        val backend = Backend()
-        val environment = Environment()
-        val engine = engine(backend, environment)
-        engine.prepare().join()
-        environment.network = emptySet()
-        advanceTimeBy(30_001L)
-        assertEquals(1, backend.starts)
-        environment.network = setOf("ethernet:192.0.2.2")
-        advanceTimeBy(6_001L)
-        assertEquals(2, backend.starts)
-        engine.shutdown().join()
-        environment.sleepMs += 120_000L
-        environment.network = setOf("wifi:192.0.2.8")
-        advanceTimeBy(30_001L)
-        assertEquals(2, backend.starts)
-        assertFalse(backend.running)
-    }
-
-    @Test fun shutdownCancelsAnIdleRecoveryThatIsStarting() = runTest {
-        val backend = Backend()
-        val environment = Environment()
-        val engine = engine(backend, environment)
-        engine.prepare().join()
-        backend.startGate = CompletableDeferred()
-        environment.sleepMs += 120_000L
-        advanceTimeBy(6_001L)
-        assertEquals(2, backend.starts)
-        engine.shutdown().join()
-        backend.startGate!!.complete(Unit)
-        advanceTimeBy(30_001L)
-        assertFalse(backend.running)
-        assertEquals(2, backend.starts)
-    }
-
-    @Test fun changedProfileSettingsReprepareEvenWhenP2pRemainsEnabled() = runTest {
+    @Test fun changedSettingsApplyWhenPlaybackNextUsesTheBackend() = runTest {
         val backend = Backend()
         var settings = P2pSettingsUiState(p2pEnabled = true, enableUpload = false)
         val engine = DesktopP2pSession(backend, backgroundScope, { settings })
-        engine.prepare().join()
+        engine.startStream(request)
+        engine.stopStream().join()
         settings = settings.copy(cacheSize = P2pCacheSize.NONE, torrentProfile = P2pTorrentProfile.FAST)
-        engine.prepare().join()
+        assertEquals(1, backend.starts)
+        engine.startStream(request)
         assertEquals(2, backend.starts)
         engine.shutdown().join()
     }
