@@ -1571,6 +1571,8 @@ internal fun PlayerControlsState.toControlsJson(
         append(',')
         appendJsonField("longSeekSeconds", longSeekSeconds)
         append(',')
+        appendJsonField("controlsScalePercent", controlsScalePercent)
+        append(',')
         appendJsonField("episodeText", episodeText)
         append(',')
         appendJsonField("streamTitle", streamTitle)

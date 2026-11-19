@@ -269,6 +269,7 @@ internal fun PlayerScreenRuntime.RenderPlayerRuntimeUi() {
         shortSeekSeconds = playerSettingsUiState.shortSeekSeconds,
         mediumSeekSeconds = playerSettingsUiState.mediumSeekSeconds,
         longSeekSeconds = playerSettingsUiState.longSeekSeconds,
+        controlsScalePercent = playerSettingsUiState.controlsScalePercent,
         episodeText = if (hasPlaybackStarted) episodeText else "",
         streamTitle = activeStreamTitle,
         providerName = activeProviderName,

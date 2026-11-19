@@ -29,6 +29,8 @@ internal expect object PlayerSettingsStorage {
     fun saveMediumSeekSeconds(seconds: Int)
     fun loadLongSeekSeconds(): Int?
     fun saveLongSeekSeconds(seconds: Int)
+    fun loadControlsScalePercent(): Int?
+    fun saveControlsScalePercent(percent: Int)
     fun loadTouchGesturesEnabled(): Boolean?
     fun saveTouchGesturesEnabled(enabled: Boolean)
     fun loadExternalPlayerEnabled(): Boolean?

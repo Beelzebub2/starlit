@@ -1134,6 +1134,12 @@
     <string name="settings_playback_seek_medium">Avanço médio (Shift + setas)</string>
     <string name="settings_playback_seek_long">Avanço longo (Ctrl + setas)</string>
     <string name="settings_playback_seek_seconds">%1$d segundos</string>
+    <string name="settings_playback_section_player_controls">CONTROLES DO PLAYER</string>
+    <string name="settings_playback_controls_size">Tamanho dos controles</string>
+    <string name="settings_playback_controls_size_description">Ajusta o tamanho dos botões e ícones do player. Tamanhos grandes diminuem em janelas pequenas para a barra caber.</string>
+    <string name="settings_playback_controls_size_value">%1$d%</string>
+    <string name="settings_playback_controls_size_preview">Pré-visualização</string>
+    <string name="settings_playback_controls_size_reset">Redefinir</string>
     <string name="settings_playback_section_skip_segments">PULAR SEGMENTOS</string>
     <string name="settings_playback_section_stream_auto_play">REPRODUÇÃO AUTOMÁTICA DE STREAM</string>
     <string name="settings_playback_section_stream_selection">SELEÇÃO DE STREAM</string>

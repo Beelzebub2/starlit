@@ -38,9 +38,7 @@ const playbackMetadata = document.querySelector(".metadata");
 const streamTitle = document.getElementById("streamTitle");
 const providerName = document.getElementById("providerName");
 const resizeLabel = document.getElementById("resizeLabel");
-const speedLabel = document.getElementById("speedLabel");
 const subtitlesLabel = document.getElementById("subtitlesLabel");
-const audioLabel = document.getElementById("audioLabel");
 const sourcesLabel = document.getElementById("sourcesLabel");
 const episodesLabel = document.getElementById("episodesLabel");
 const submitIntroButton = document.getElementById("submitIntroButton");
@@ -91,9 +89,11 @@ const tracksSyncLabel = document.getElementById("tracksSyncLabel");
 const tracksSyncMinus = document.getElementById("tracksSyncMinus");
 const tracksSyncValue = document.getElementById("tracksSyncValue");
 const tracksSyncPlus = document.getElementById("tracksSyncPlus");
-const speedModal = document.getElementById("speedModal");
 const speedOptionList = document.getElementById("speedOptionList");
-const speedPanelTitle = document.getElementById("speedPanelTitle");
+const speedOptionsHeading = document.getElementById("speedOptionsHeading");
+const speedOptionsValue = document.getElementById("speedOptionsValue");
+const speedOptionsDivider = document.getElementById("speedOptionsDivider");
+const playbackTogglesHeading = document.getElementById("playbackTogglesHeading");
 const audioPanelTitle = document.getElementById("audioPanelTitle");
 const audioTrackList = document.getElementById("audioTrackList");
 const subtitleTrackList = document.getElementById("subtitleTrackList");
@@ -210,8 +210,6 @@ const volumeValue = document.getElementById("volumeValue");
 const statusChips = document.getElementById("statusChips");
 const subtitlesButton = document.getElementById("subtitlesButton");
 const subtitlesIcon = document.getElementById("subtitlesIcon");
-const audioButton = document.getElementById("audioButton");
-const speedButton = document.getElementById("speedButton");
 const speedBadge = document.getElementById("speedBadge");
 const resizeButton = document.getElementById("resizeButton");
 const libraryDivider = document.getElementById("libraryDivider");
@@ -226,7 +224,6 @@ const moreMenu = document.getElementById("moreMenu");
 const moreEpisodes = document.getElementById("moreEpisodes");
 const moreSources = document.getElementById("moreSources");
 const moreLibraryDivider = document.getElementById("moreLibraryDivider");
-const moreSpeedValue = document.getElementById("moreSpeedValue");
 const moreResizeValue = document.getElementById("moreResizeValue");
 const moreOptions = document.getElementById("moreOptions");
 const moreOptionsValue = document.getElementById("moreOptionsValue");
@@ -1229,7 +1226,6 @@ const rangePositionMs = () => {
 const modalByName = {
   diagnostics: diagnosticsModal,
   subtitles: subtitleModal,
-  speed: speedModal,
   sources: sourceModal,
   episodes: episodesModal,
   submitIntro: submitIntroModal,
@@ -1329,6 +1325,28 @@ const openPlayerModal = requestedModal => {
   if (modal === "subtitles") focusTracksColumn(tracksColumn);
 };
 
+// Scrolls only the list that holds the row. scrollIntoView would also scroll the page while the
+// panel is still sliding in from off-screen, which shoved the whole player sideways.
+const revealInOwnList = element => {
+  const list = element.closest(".tracks-scroll, .track-list, .subs-view");
+  if (!list) return;
+  const row = element.getBoundingClientRect();
+  const box = list.getBoundingClientRect();
+  if (row.top < box.top) list.scrollTop -= box.top - row.top;
+  else if (row.bottom > box.bottom) list.scrollTop += row.bottom - box.bottom;
+};
+
+// The overlay is never a scrolling page; undo any scroll the browser makes to reveal focus.
+const pinPlayerScroll = () => {
+  [document.documentElement, document.body, root].forEach(element => {
+    if (element && (element.scrollLeft || element.scrollTop)) {
+      element.scrollLeft = 0;
+      element.scrollTop = 0;
+    }
+  });
+};
+document.addEventListener("scroll", pinPlayerScroll, true);
+
 // Brings the playing track of the requested column into view and gives it keyboard focus.
 const focusTracksColumn = column => {
   window.requestAnimationFrame(() => {
@@ -1336,7 +1354,7 @@ const focusTracksColumn = column => {
     if (!container) return;
     const target = container.querySelector(".subs-option.selected") || container.querySelector(".subs-option");
     if (!target) return;
-    target.scrollIntoView({ block: "nearest" });
+    revealInOwnList(target);
     target.focus({ preventScroll: true });
   });
 };
@@ -1376,32 +1394,57 @@ const speedOptions = [
   { value: 2.0, label: "2x" },
 ];
 
+const speedChipLabel = option => `${option.value}×`;
+
+const currentSpeedIndex = () => {
+  if (pendingSpeedIndex !== null) return pendingSpeedIndex;
+  const current = parseFloat(String(state.playbackSpeedLabel || "1x").replace(/x.*$/i, "")) || 1;
+  const index = speedOptions.findIndex(option => Math.abs(option.value - current) < 0.05);
+  return index >= 0 ? index : speedOptions.findIndex(option => option.value === 1.0);
+};
+
+const selectSpeedIndex = index => {
+  if (index < 0 || index >= speedOptions.length) return;
+  pendingSpeedIndex = index;
+  window.clearTimeout(pendingSpeedTimer);
+  pendingSpeedTimer = window.setTimeout(() => {
+    pendingSpeedIndex = null;
+    renderSpeedOptionList();
+  }, 1000);
+  send("setPlaybackSpeed", speedOptions[index].value);
+  renderSpeedOptionList();
+};
+
+// Speed lives in Playback options as one row of choices; picking one keeps the menu open.
 const renderSpeedOptionList = () => {
   if (!speedOptionList) return;
-  speedOptionList.textContent = "";
-  if (speedPanelTitle) {
-    speedPanelTitle.textContent = state.speedPanelTitle || "Playback Speed";
+  if (speedOptionsHeading) speedOptionsHeading.textContent = state.speedPanelTitle || "Speed";
+  const selectedIndex = currentSpeedIndex();
+  if (speedOptionsValue) {
+    speedOptionsValue.textContent = selectedIndex >= 0 ? speedChipLabel(speedOptions[selectedIndex]) : "";
   }
-
-  const currentSpeedStr = String(state.playbackSpeedLabel || "1x");
-  const currentSpeedNum = parseFloat(currentSpeedStr.replace("x", "")) || 1.0;
-
-  speedOptions.forEach(opt => {
-    const isSelected = Math.abs(currentSpeedNum - opt.value) < 0.05;
-    const row = document.createElement("button");
-    row.type = "button";
-    row.className = `track-row${isSelected ? " selected" : ""}`;
-    row.addEventListener("click", event => {
-      event.stopPropagation();
-      send("setPlaybackSpeed", opt.value);
-      window.setTimeout(closePlayerModal, 120);
+  if (speedOptionList.childElementCount !== speedOptions.length) {
+    speedOptionList.textContent = "";
+    speedOptions.forEach((option, index) => {
+      const chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "speed-option";
+      chip.setAttribute("role", "radio");
+      chip.textContent = speedChipLabel(option);
+      chip.setAttribute("aria-label", option.label);
+      chip.addEventListener("click", event => {
+        event.stopPropagation();
+        noteChromeActivity(true);
+        selectSpeedIndex(index);
+      });
+      speedOptionList.appendChild(chip);
     });
-    const labelElement = document.createElement("span");
-    labelElement.className = "track-label";
-    labelElement.textContent = opt.label;
-    row.appendChild(labelElement);
-    row.appendChild(buildCheckIcon());
-    speedOptionList.appendChild(row);
+  }
+  Array.from(speedOptionList.children).forEach((chip, index) => {
+    const selected = index === selectedIndex;
+    chip.classList.toggle("selected", selected);
+    chip.setAttribute("aria-checked", selected ? "true" : "false");
+    chip.tabIndex = selected ? 0 : -1;
   });
 };
 
@@ -2470,7 +2513,7 @@ const renderDiagnosticsModal = () => {
 const renderActiveModal = () => {
   if (activeModal === "diagnostics") renderDiagnosticsModal();
   if (activeModal === "subtitles") renderSubtitleModal();
-  if (activeModal === "speed") renderSpeedOptionList();
+  renderSpeedOptionList();
   if (activeModal === "sources") renderSourceModal();
   if (activeModal === "episodes") renderEpisodesModal();
   if (activeModal === "submitIntro") renderSubmitIntroModal();
@@ -2914,6 +2957,17 @@ const openOptionsPopover = () => {
   noteChromeActivity(true);
 };
 
+// Opens Playback options with the current speed focused (Backquote and the More menu use this).
+const openSpeedOptions = () => {
+  if (activeModal) closePlayerModal(true);
+  openOptionsPopover();
+  renderSpeedOptionList();
+  window.requestAnimationFrame(() => {
+    const chip = speedOptionList && speedOptionList.querySelector(".speed-option.selected");
+    if (chip) chip.focus({ preventScroll: true });
+  });
+};
+
 const openMoreMenu = () => {
   closeOptionsPopover();
   moreMenuOpen = true;
@@ -2928,22 +2982,54 @@ const syncPlaybackOptions = () => {
   const onCount = visibleToggles.filter(button => button.getAttribute("aria-pressed") === "true").length;
   const hasRtx = Boolean(rtxCompareButton && !rtxCompareButton.hidden);
   const hasVideoSettings = Boolean(videoSettingsButton && !videoSettingsButton.hidden);
-  const hasAny = visibleToggles.length > 0 || hasRtx || hasVideoSettings;
-  playbackOptionsAnchor.hidden = !hasAny;
-  if (optionsDivider) optionsDivider.hidden = !hasAny;
+  const hasAny = true; // Speed is always available.
+  playbackOptionsAnchor.hidden = false;
+  if (optionsDivider) optionsDivider.hidden = false;
+  if (playbackTogglesHeading) playbackTogglesHeading.hidden = visibleToggles.length === 0;
+  if (speedOptionsDivider) speedOptionsDivider.hidden = !(visibleToggles.length || hasRtx || hasVideoSettings);
   if (playbackOptionsDivider) playbackOptionsDivider.hidden = !(visibleToggles.length && (hasRtx || hasVideoSettings));
   if (playbackOptionsBadge) {
     playbackOptionsBadge.hidden = onCount === 0;
     playbackOptionsBadge.textContent = String(onCount);
   }
-  const label = onCount ? `Playback options, ${onCount} on` : "Playback options";
+  const speedText = state.playbackSpeedLabel || "1x";
+  const speedNote = isDefaultSpeedLabel(speedText) ? "" : `, speed ${speedText}`;
+  const label = (onCount ? `Playback options, ${onCount} on` : "Playback options") + speedNote;
   playbackOptionsButton.setAttribute("aria-label", label);
   if (moreOptions) moreOptions.hidden = !hasAny;
-  if (moreOptionsValue) moreOptionsValue.textContent = onCount ? `${onCount} on` : "";
+  if (moreOptionsValue) {
+    moreOptionsValue.textContent = [isDefaultSpeedLabel(speedText) ? "" : speedText, onCount ? `${onCount} on` : ""]
+      .filter(Boolean).join(" · ");
+  }
   if (!hasAny) closeOptionsPopover();
 };
 
+const minControlsScale = 0.75;
+const maxControlsScale = 1.6;
+// Width the full control bar needs at 100%, plus breathing room for the side padding.
+const controlsBarBaseWidth = 820;
+let appliedControlsScale = "";
+
+const effectiveControlsScale = () => {
+  const requested = Number(state.controlsScalePercent) / 100;
+  const scale = Number.isFinite(requested) && requested > 0
+    ? Math.max(minControlsScale, Math.min(maxControlsScale, requested))
+    : 1;
+  if (scale <= 1) return scale;
+  const fit = Math.max(1, (window.innerWidth - 96) / controlsBarBaseWidth);
+  return Math.min(scale, fit);
+};
+
+const syncControlsScale = () => {
+  const value = effectiveControlsScale().toFixed(3);
+  if (value === appliedControlsScale) return;
+  appliedControlsScale = value;
+  document.documentElement.style.setProperty("--controls-scale", value);
+};
+window.addEventListener("resize", syncControlsScale);
+
 const syncRedesignedChrome = hideStatus => {
+  syncControlsScale();
   const seconds = seekStepSeconds();
   if (seekBackButton) {
     seekBackAmount.textContent = String(seconds);
@@ -2959,14 +3045,15 @@ const syncRedesignedChrome = hideStatus => {
     speedBadge.hidden = !changedSpeed;
     speedBadge.textContent = speedText.replace(/\s*\(.*\)\s*$/, "").replace(/x$/i, "×");
   }
-  if (speedButton) speedButton.setAttribute("data-tip", `Speed · ${speedText}`);
+  if (playbackOptionsButton) {
+    playbackOptionsButton.setAttribute("data-tip", changedSpeed ? `Playback options · ${speedText}` : "Playback options");
+  }
   if (resizeButton) resizeButton.setAttribute("data-tip", `Aspect · ${state.resizeModeLabel || "Fit"}`);
   if (subtitlesButton) {
     const subtitlesOff = (state.selectedSubtitleLanguageKey || subtitleOffKey) === subtitleOffKey;
     if (subtitlesIcon) subtitlesIcon.setAttribute("href", subtitlesOff ? "#icon-subs-off" : "#icon-subs");
-    subtitlesButton.setAttribute("data-tip", state.subtitlesPanelTitle || "Subtitles");
+    subtitlesButton.setAttribute("data-tip", state.tracksPanelTitle || "Audio & subtitles");
   }
-  if (audioButton) audioButton.setAttribute("data-tip", state.audioTracksPanelTitle || "Audio");
   if (episodesButton) episodesButton.setAttribute("data-tip", state.episodesLabel || "Episodes");
   if (sourcesButton) sourcesButton.setAttribute("data-tip", state.sourcesLabel || "Sources");
   if (backButton) backButton.setAttribute("data-tip", state.backLabel || "Back");
@@ -2976,7 +3063,6 @@ const syncRedesignedChrome = hideStatus => {
   if (moreEpisodes) moreEpisodes.hidden = !state.showEpisodes;
   if (moreSources) moreSources.hidden = !state.showSources;
   if (moreLibraryDivider) moreLibraryDivider.hidden = !hasLibrary;
-  if (moreSpeedValue) moreSpeedValue.textContent = speedText;
   if (moreResizeValue) moreResizeValue.textContent = state.resizeModeLabel || "Fit";
   syncPlaybackOptions();
   renderStatusChips(hideStatus);
@@ -3023,15 +3109,11 @@ const renderChrome = () => {
   setText(streamTitle, state.streamTitle);
   setText(providerName, state.providerName);
   resizeLabel.textContent = state.resizeModeLabel || "Fit";
-  speedLabel.textContent = state.playbackSpeedLabel || "1x";
-  subtitlesLabel.textContent = state.subtitlesLabel || "Subs";
-  audioLabel.textContent = state.audioLabel || "Audio";
+  subtitlesLabel.textContent = state.tracksPanelTitle || "Audio & subtitles";
   sourcesLabel.textContent = state.sourcesLabel || "Sources";
   episodesLabel.textContent = state.episodesLabel || "Episodes";
   setActionButtonLabel("resize", state.resizeModeLabel || "Fit");
-  setActionButtonLabel("speed", state.playbackSpeedLabel || "1x");
-  setActionButtonLabel("subtitles", state.subtitlesLabel || "Subs");
-  setActionButtonLabel("audio", state.audioLabel || "Audio");
+  setActionButtonLabel("subtitles", state.tracksPanelTitle || "Audio & subtitles");
   setActionButtonLabel("sources", state.sourcesLabel || "Sources");
   setActionButtonLabel("episodes", state.episodesLabel || "Episodes");
   const showRtxCompare = Boolean(state.rtxComparisonAvailable && !showError && !showOpening);
@@ -3461,7 +3543,7 @@ document.querySelectorAll("[data-command]").forEach(button => {
       return;
     }
     if (command === "speed") {
-      openPlayerModal("speed");
+      openSpeedOptions();
       return;
     }
     if (command === "diagnostics") {
@@ -4415,22 +4497,14 @@ document.addEventListener("keydown", event => {
     }
   }
 
-  if (activeModal === "speed" && (event.code === "ArrowUp" || event.code === "ArrowDown")) {
+  if (optionsPopoverOpen && speedOptionList && speedOptionList.contains(document.activeElement)
+      && event.code.startsWith("Arrow")) {
     event.preventDefault();
-    const currentSpeedStr = String(state.playbackSpeedLabel || "1x");
-    let currentIndex = pendingSpeedIndex !== null ? pendingSpeedIndex : speedOptions.findIndex(o => currentSpeedStr.startsWith(o.label.split(" ")[0]));
-    if (currentIndex >= 0) {
-      if (event.code === "ArrowUp") {
-        currentIndex = currentIndex > 0 ? currentIndex - 1 : speedOptions.length - 1;
-      } else {
-        currentIndex = currentIndex < speedOptions.length - 1 ? currentIndex + 1 : 0;
-      }
-      pendingSpeedIndex = currentIndex;
-      window.clearTimeout(pendingSpeedTimer);
-      pendingSpeedTimer = window.setTimeout(() => pendingSpeedIndex = null, 1000);
-      queueSettingToast("speed");
-      send("setPlaybackSpeed", speedOptions[currentIndex].value);
-    }
+    const step = event.code === "ArrowLeft" || event.code === "ArrowUp" ? -1 : 1;
+    const nextIndex = Math.max(0, Math.min(speedOptions.length - 1, currentSpeedIndex() + step));
+    selectSpeedIndex(nextIndex);
+    const chip = speedOptionList.children[nextIndex];
+    if (chip) chip.focus({ preventScroll: true });
     return;
   }
 
@@ -4453,7 +4527,8 @@ document.addEventListener("keydown", event => {
         nextIndex = selectedIndex > 0 ? selectedIndex - 1 : items.length - 1;
       }
       event.preventDefault();
-      items[nextIndex].focus();
+      items[nextIndex].focus({ preventScroll: true });
+      revealInOwnList(items[nextIndex]);
       return;
     }
   }
@@ -4469,13 +4544,15 @@ document.addEventListener("keydown", event => {
         if (event.code === 'ArrowRight' || event.code === 'ArrowDown') {
           event.preventDefault();
           const next = (currentIndex + 1) % focusable.length;
-          focusable[next].focus();
+          focusable[next].focus({ preventScroll: true });
+          revealInOwnList(focusable[next]);
           return;
         }
         if (event.code === 'ArrowLeft' || event.code === 'ArrowUp') {
           event.preventDefault();
           const next = currentIndex > 0 ? currentIndex - 1 : focusable.length - 1;
-          focusable[next].focus();
+          focusable[next].focus({ preventScroll: true });
+          revealInOwnList(focusable[next]);
           return;
         }
       }
@@ -4484,8 +4561,12 @@ document.addEventListener("keydown", event => {
 
   if (event.code === "Backquote") {
     event.preventDefault();
-    if (activeModal === "speed") closePlayerModal(true);
-    else openPlayerModal("speed");
+    if (optionsPopoverOpen) {
+      closeOptionsPopover();
+      focusShortcutRoot();
+    } else {
+      openSpeedOptions();
+    }
     return;
   }
 

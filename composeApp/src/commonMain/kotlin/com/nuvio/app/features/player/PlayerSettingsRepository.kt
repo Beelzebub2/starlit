@@ -46,6 +46,7 @@ data class PlayerSettingsUiState(
     val shortSeekSeconds: Int = DEFAULT_SHORT_SEEK_SECONDS,
     val mediumSeekSeconds: Int = DEFAULT_MEDIUM_SEEK_SECONDS,
     val longSeekSeconds: Int = DEFAULT_LONG_SEEK_SECONDS,
+    val controlsScalePercent: Int = DEFAULT_PLAYER_CONTROLS_SCALE_PERCENT,
     val touchGesturesEnabled: Boolean = true,
     val externalPlayerEnabled: Boolean = false,
     val externalPlayerForwardSubtitles: Boolean = false,
@@ -121,6 +122,7 @@ object PlayerSettingsRepository {
     private var shortSeekSeconds = DEFAULT_SHORT_SEEK_SECONDS
     private var mediumSeekSeconds = DEFAULT_MEDIUM_SEEK_SECONDS
     private var longSeekSeconds = DEFAULT_LONG_SEEK_SECONDS
+    private var controlsScalePercent = DEFAULT_PLAYER_CONTROLS_SCALE_PERCENT
     private var touchGesturesEnabled = true
     private var externalPlayerEnabled = false
     private var externalPlayerForwardSubtitles = false
@@ -201,6 +203,7 @@ object PlayerSettingsRepository {
         shortSeekSeconds = DEFAULT_SHORT_SEEK_SECONDS
         mediumSeekSeconds = DEFAULT_MEDIUM_SEEK_SECONDS
         longSeekSeconds = DEFAULT_LONG_SEEK_SECONDS
+        controlsScalePercent = DEFAULT_PLAYER_CONTROLS_SCALE_PERCENT
         touchGesturesEnabled = true
         externalPlayerEnabled = false
         externalPlayerForwardSubtitles = false
@@ -281,6 +284,9 @@ object PlayerSettingsRepository {
         )
         longSeekSeconds = normalizedSeekSeconds(
             PlayerSettingsStorage.loadLongSeekSeconds() ?: DEFAULT_LONG_SEEK_SECONDS,
+        )
+        controlsScalePercent = normalizedPlayerControlsScalePercent(
+            PlayerSettingsStorage.loadControlsScalePercent() ?: DEFAULT_PLAYER_CONTROLS_SCALE_PERCENT,
         )
         touchGesturesEnabled = PlayerSettingsStorage.loadTouchGesturesEnabled() ?: true
         externalPlayerEnabled = if (AppFeaturePolicy.externalPlayerSupported) {
@@ -514,6 +520,15 @@ object PlayerSettingsRepository {
         longSeekSeconds = normalized
         publish()
         PlayerSettingsStorage.saveLongSeekSeconds(normalized)
+    }
+
+    fun setControlsScalePercent(percent: Int) {
+        ensureLoaded()
+        val normalized = normalizedPlayerControlsScalePercent(percent)
+        if (controlsScalePercent == normalized) return
+        controlsScalePercent = normalized
+        publish()
+        PlayerSettingsStorage.saveControlsScalePercent(normalized)
     }
 
     fun setTouchGesturesEnabled(enabled: Boolean) {
@@ -1068,6 +1083,7 @@ object PlayerSettingsRepository {
             shortSeekSeconds = shortSeekSeconds,
             mediumSeekSeconds = mediumSeekSeconds,
             longSeekSeconds = longSeekSeconds,
+            controlsScalePercent = controlsScalePercent,
             touchGesturesEnabled = touchGesturesEnabled,
             externalPlayerEnabled = externalPlayerEnabled && AppFeaturePolicy.externalPlayerSupported,
             externalPlayerForwardSubtitles = externalPlayerForwardSubtitles && AppFeaturePolicy.externalPlayerSupported,
