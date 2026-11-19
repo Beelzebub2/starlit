@@ -7,7 +7,7 @@ object ListServices {
     internal var overrideForTests: List<ListService>? = null
 
     // Adapters are added as Tasks 3-6 land.
-    private val registered: List<ListService> = listOf(MalListService, SimklListService, TraktListService)
+    private val registered: List<ListService> = listOf(MalListService, SimklListService, TraktListService, MdbListListService)
 
     fun all(): List<ListService> = overrideForTests ?: registered
 
