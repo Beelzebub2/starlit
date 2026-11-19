@@ -218,7 +218,7 @@ private fun runDesktopApplication(args: Array<String>, singleInstance: DesktopSi
                 // Optional services and their class initializers must not delay the first frame.
                 withFrameNanos { }
                 launch(Dispatchers.IO) { SentryInitializer.start() }
-                launch(Dispatchers.IO) { P2pStreamingEngine.prepare() }
+                launch(Dispatchers.IO) { P2pStreamingEngine.watchSettings() }
                 launch(Dispatchers.IO) { DiscordPresenceManager.start() }
                 if (DesktopHostOs.current == DesktopHostOs.LINUX) {
                     launch(Dispatchers.IO) { LinuxMprisService.start() }

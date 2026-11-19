@@ -134,6 +134,8 @@ internal object NativePlayerBridge {
     fun ensureLoaded() = Unit
 
     fun preloadAsync() {
+        // Load the bridge for window chrome, but start WebView2 only when a player needs it.
+        if (DesktopHostOs.current == DesktopHostOs.WINDOWS) return
         if (!preloadStarted.compareAndSet(false, true)) return
         Thread {
             val controlsPage = runCatching { controlsPageAssets }
@@ -141,9 +143,7 @@ internal object NativePlayerBridge {
                 ?: return@Thread
             // Linux warms the WebKitGTK engine through the same entry point
             // (the bridge maps warmupWebView2 to a hidden WebKitGTK view).
-            if (DesktopHostOs.current == DesktopHostOs.WINDOWS ||
-                DesktopHostOs.current == DesktopHostOs.LINUX
-            ) {
+            if (DesktopHostOs.current == DesktopHostOs.LINUX) {
                 runCatching { warmupWebView2(controlsPage.url) }
             }
         }.apply {
@@ -151,9 +151,7 @@ internal object NativePlayerBridge {
             isDaemon = true
             start()
         }
-        if (DesktopHostOs.current == DesktopHostOs.WINDOWS ||
-            DesktopHostOs.current == DesktopHostOs.LINUX
-        ) {
+        if (DesktopHostOs.current == DesktopHostOs.LINUX) {
             Runtime.getRuntime().addShutdownHook(
                 Thread {
                     runCatching { shutdownWebView2Warmup() }
