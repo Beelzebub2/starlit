@@ -2902,6 +2902,7 @@
     <string name="home.removeContinueWatching">Видалити з «Продовжити перегляд»</string>
     <string name="player.track.audioDescription">Аудіоопис</string>
     <string name="player.track.commentary">Коментар</string>
+    <string name="player.track.original">Оригінал</string>
     <string name="player.track.stereo">Стерео</string>
     <string name="player.track.surround">Об\'ємний звук</string>
     <string name="sidebar.profileFallback">Профіль</string>

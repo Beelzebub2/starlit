@@ -3060,6 +3060,7 @@
     <string name="home.removeContinueWatching">Удалить из списка «Продолжить просмотр»</string>
     <string name="player.track.audioDescription">Аудиоописание</string>
     <string name="player.track.commentary">Комментарий</string>
+    <string name="player.track.original">Оригинал</string>
     <string name="player.track.stereo">Стерео</string>
     <string name="player.track.surround">Объемный звук</string>
     <string name="sidebar.profileFallback">Профиль</string>

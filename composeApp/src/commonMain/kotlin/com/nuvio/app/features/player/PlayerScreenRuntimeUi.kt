@@ -333,6 +333,12 @@ internal fun PlayerScreenRuntime.RenderPlayerRuntimeUi() {
         speedPanelTitle = stringResource(Res.string.compose_player_playback_speed),
         audioTracksPanelTitle = stringResource(Res.string.compose_player_audio_tracks),
         noAudioTracksLabel = stringResource(Res.string.compose_player_no_audio_tracks_available),
+        tracksPanelTitle = stringResource(Res.string.player_tracks_title),
+        audioSectionLabel = stringResource(Res.string.compose_player_audio),
+        trackBadgeSdhLabel = stringResource(Res.string.player_track_badge_sdh),
+        trackBadgeCommentaryLabel = stringResource(Res.string.player_track_badge_commentary),
+        trackBadgeOriginalLabel = stringResource(Res.string.player_track_badge_original),
+        trackBadgeDescriptionLabel = stringResource(Res.string.player_track_badge_description),
         subtitlesPanelTitle = stringResource(Res.string.compose_player_subtitles),
         subtitleLanguagesLabel = stringResource(Res.string.compose_player_languages),
         subtitleBuiltInTabLabel = stringResource(Res.string.compose_player_built_in),
@@ -2076,13 +2082,8 @@ private fun PlayerScreenRuntime.RenderPlayerModals(displayedPositionMs: Long) {
         showAudioModal = showAudioModal,
         audioTracks = audioTracks,
         selectedAudioIndex = selectedAudioIndex,
-        onAudioTrackSelected = { index ->
-            selectUserAudioTrack(index)
-            scope.launch {
-                kotlinx.coroutines.delay(200)
-                showAudioModal = false
-            }
-        },
+        // Audio and subtitles share one panel, so choosing audio keeps it open for subtitles.
+        onAudioTrackSelected = { index -> selectUserAudioTrack(index) },
         onAudioModalDismissed = { showAudioModal = false },
         showSubtitleModal = showSubtitleModal,
         subtitleTracks = subtitleTracks,

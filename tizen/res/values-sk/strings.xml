@@ -2333,6 +2333,7 @@
     <string name="home.removeContinueWatching">Odstrániť z pokračovať v sledovaní</string>
     <string name="player.track.audioDescription">Audio popis</string>
     <string name="player.track.commentary">Komentár</string>
+    <string name="player.track.original">Originál</string>
     <string name="player.track.stereo">Stereo</string>
     <string name="player.track.surround">Surround</string>
     <string name="sidebar.profileFallback">Profil</string>

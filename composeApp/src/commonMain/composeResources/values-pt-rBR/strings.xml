@@ -412,6 +412,11 @@
     <string name="compose_nav_search">Busca</string>
     <string name="compose_nav_settings">Configurações</string>
     <string name="compose_player_audio_tracks">Faixas de Áudio</string>
+    <string name="player_tracks_title">Áudio e legendas</string>
+    <string name="player_track_badge_sdh">SDH</string>
+    <string name="player_track_badge_commentary">Comentários</string>
+    <string name="player_track_badge_original">Original</string>
+    <string name="player_track_badge_description">Audiodescrição</string>
     <string name="compose_player_audio">Áudio</string>
     <string name="compose_player_built_in">Incorporado</string>
     <string name="compose_player_bottom_offset">Deslocamento Inferior</string>

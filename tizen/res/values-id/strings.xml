@@ -2921,6 +2921,7 @@
     <string name="home.removeContinueWatching">Hapus dari Lanjutkan Menonton</string>
     <string name="player.track.audioDescription">Deskripsi audio</string>
     <string name="player.track.commentary">Komentar</string>
+    <string name="player.track.original">Asli</string>
     <string name="player.track.stereo">Stereo</string>
     <string name="player.track.surround">Surround</string>
     <string name="sidebar.profileFallback">Profil</string>

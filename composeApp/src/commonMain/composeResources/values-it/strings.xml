@@ -154,6 +154,11 @@
   <string name="compose_nav_search">Cerca</string>
   <string name="compose_nav_settings">Impostazioni</string>
   <string name="compose_player_audio_tracks">Tracce audio</string>
+  <string name="player_tracks_title">Audio e sottotitoli</string>
+  <string name="player_track_badge_sdh">SDH</string>
+  <string name="player_track_badge_commentary">Commento</string>
+  <string name="player_track_badge_original">Originale</string>
+  <string name="player_track_badge_description">Audiodescrizione</string>
   <string name="compose_player_audio">Audio</string>
   <string name="compose_player_auto_sync">Auto Sync</string>
   <string name="compose_player_bold">Bold</string>

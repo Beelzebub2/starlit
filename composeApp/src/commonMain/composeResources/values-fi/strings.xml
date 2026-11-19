@@ -504,6 +504,11 @@
     <string name="compose_nav_settings">Asetukset</string>
     <string name="compose_nav_search">Haku</string>
     <string name="compose_player_audio_tracks">Ääniraidat</string>
+    <string name="player_tracks_title">Ääni ja tekstitykset</string>
+    <string name="player_track_badge_sdh">SDH</string>
+    <string name="player_track_badge_commentary">Kommentaari</string>
+    <string name="player_track_badge_original">Alkuperäinen</string>
+    <string name="player_track_badge_description">Kuvailutulkkaus</string>
     <string name="compose_player_audio">Ääni</string>
     <string name="compose_player_auto_sync">Automaattinen synkronointi</string>
     <string name="compose_player_bold">Lihavoitu</string>

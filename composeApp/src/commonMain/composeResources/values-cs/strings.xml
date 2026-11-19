@@ -342,6 +342,11 @@
     <string name="compose_nav_search">Hledat</string>
     <string name="compose_nav_settings">Nastavení</string>
     <string name="compose_player_audio_tracks">Zvukové stopy</string>
+    <string name="player_tracks_title">Zvuk a titulky</string>
+    <string name="player_track_badge_sdh">SDH</string>
+    <string name="player_track_badge_commentary">Komentář</string>
+    <string name="player_track_badge_original">Originál</string>
+    <string name="player_track_badge_description">Zvukový popis</string>
     <string name="compose_player_audio">Zvuk</string>
     <string name="compose_player_auto_sync">Automatická synchronizace</string>
     <string name="compose_player_bold">Tučné</string>

@@ -986,6 +986,7 @@
     <string name="home.removeContinueWatching">जारी देखें से हटाएँ</string>
     <string name="player.track.audioDescription">ऑडियो विवरण</string>
     <string name="player.track.commentary">टिप्पणी</string>
+    <string name="player.track.original">मूल</string>
     <string name="player.track.stereo">स्टीरियो</string>
     <string name="player.track.surround">सराउंड</string>
     <string name="sidebar.profileFallback">प्रोफ़ाइल</string>

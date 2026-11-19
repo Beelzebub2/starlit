@@ -3073,6 +3073,7 @@
     <string name="home.removeContinueWatching">從「繼續觀看」中移除</string>
     <string name="player.track.audioDescription">音訊描述</string>
     <string name="player.track.commentary">評註</string>
+    <string name="player.track.original">原聲</string>
     <string name="player.track.stereo">立體聲</string>
     <string name="player.track.surround">環繞音效</string>
     <string name="sidebar.profileFallback">個人檔案</string>

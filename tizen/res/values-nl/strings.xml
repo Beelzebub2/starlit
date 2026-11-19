@@ -856,6 +856,7 @@
     <string name="home.removeContinueWatching">Verwijderen uit \'Verder kijken\'</string>
     <string name="player.track.audioDescription">Audiodescriptie</string>
     <string name="player.track.commentary">Commentaar</string>
+    <string name="player.track.original">Origineel</string>
     <string name="player.track.stereo">Stereo</string>
     <string name="player.track.surround">Surround</string>
     <string name="sidebar.profileFallback">Profiel</string>

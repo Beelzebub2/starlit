@@ -879,6 +879,7 @@
     <string name="home.removeContinueWatching">Xóa khỏi danh sách "Tiếp tục xem"</string>
     <string name="player.track.audioDescription">Mô tả bằng âm thanh</string>
     <string name="player.track.commentary">Bình luận</string>
+    <string name="player.track.original">Gốc</string>
     <string name="player.track.stereo">Âm thanh nổi</string>
     <string name="player.track.surround">Âm thanh vòm</string>
     <string name="sidebar.profileFallback">Hồ sơ</string>

@@ -2050,6 +2050,7 @@
     <string name="player.track.stereo">ستيريو</string>
     <string name="player.track.surround">صوت محيطي</string>
     <string name="player.track.commentary">تعليق صوتي</string>
+    <string name="player.track.original">أصلي</string>
     <string name="player.track.audioDescription">وصف صوتي</string>
     <string name="streams_size">الحجم %1$s</string>
     <string name="common.unknown">غير معروف</string>

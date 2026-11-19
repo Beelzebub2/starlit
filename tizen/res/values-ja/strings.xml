@@ -1166,6 +1166,7 @@
     <string name="home.removeContinueWatching">「続きを見る」から削除</string>
     <string name="player.track.audioDescription">音声解説</string>
     <string name="player.track.commentary">解説</string>
+    <string name="player.track.original">オリジナル</string>
     <string name="player.track.stereo">ステレオ</string>
     <string name="player.track.surround">サラウンド</string>
     <string name="sidebar.profileFallback">プロフィール</string>

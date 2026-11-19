@@ -207,6 +207,11 @@
     <string name="compose_nav_search">Αναζήτηση</string>
     <string name="compose_nav_settings">Ρυθμίσεις</string>
     <string name="compose_player_audio_tracks">Κομμάτια ήχου</string>
+    <string name="player_tracks_title">Ήχος και υπότιτλοι</string>
+    <string name="player_track_badge_sdh">SDH</string>
+    <string name="player_track_badge_commentary">Σχολιασμός</string>
+    <string name="player_track_badge_original">Πρωτότυπο</string>
+    <string name="player_track_badge_description">Ακουστική περιγραφή</string>
     <string name="compose_player_audio">Ήχος</string>
     <string name="compose_player_built_in">Ενσωματωμένο</string>
     <string name="compose_player_bottom_offset">Κατώτατη μετατόπιση</string>

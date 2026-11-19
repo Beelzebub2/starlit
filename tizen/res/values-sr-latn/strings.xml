@@ -3030,6 +3030,7 @@
     <string name="home.removeContinueWatching">Ukloni iz nastavka gledanja</string>
     <string name="player.track.audioDescription">Audio opis</string>
     <string name="player.track.commentary">Komentar</string>
+    <string name="player.track.original">Original</string>
     <string name="player.track.stereo">Stereo</string>
     <string name="player.track.surround">Saraund</string>
     <string name="sidebar.profileFallback">Profil</string>

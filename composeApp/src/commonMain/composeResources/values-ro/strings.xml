@@ -341,6 +341,11 @@
     <string name="compose_nav_search">Caută</string>
     <string name="compose_nav_settings">Setări</string>
     <string name="compose_player_audio_tracks">Piste audio</string>
+    <string name="player_tracks_title">Audio și subtitrări</string>
+    <string name="player_track_badge_sdh">SDH</string>
+    <string name="player_track_badge_commentary">Comentariu</string>
+    <string name="player_track_badge_original">Original</string>
+    <string name="player_track_badge_description">Descriere audio</string>
     <string name="compose_player_audio">Audio</string>
     <string name="compose_player_auto_sync">Sincronizare automată</string>
     <string name="compose_player_bold">Aldin</string>

@@ -3114,6 +3114,7 @@
     <string name="home.removeContinueWatching">Премахване от „Продължи гледането“</string>
     <string name="player.track.audioDescription">Аудиоописание</string>
     <string name="player.track.commentary">Коментар</string>
+    <string name="player.track.original">Оригинал</string>
     <string name="player.track.stereo">Стерео</string>
     <string name="player.track.surround">Surround</string>
     <string name="sidebar.profileFallback">Профил</string>

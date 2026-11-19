@@ -2344,3 +2344,154 @@ body .nuvio-dialog-button.focused {
   -webkit-transform: scale(1.08);
   transform: scale(1.08);
 }
+
+/* ---- Player audio & subtitle menus ----------------------------------------
+ * Same row anatomy as the phone, desktop and Android TV panels: a radio on the
+ * left, the language on line 1, the facts on line 2. The selection is a
+ * radio plus a quiet fill instead of a solid accent bar, and focus keeps the
+ * theme ring. No colour-mix (Chromium 56), so the tint is neutral white.
+ */
+#app .player-audio-modal,
+#app .player-subtitle-modal {
+  border: 2px solid rgba(255, 255, 255, 0.08);
+  border-radius: 32px;
+  background: rgba(17, 18, 22, 0.94);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55);
+}
+
+#app .player-audio-modal {
+  padding: 36px 40px;
+}
+
+/* The subtitle rails have fixed column widths, so the panel grows by its padding. */
+#app .player-subtitle-modal {
+  width: 1696px;
+  padding: 32px 40px;
+}
+
+#app .player-audio-modal .player-dialog-title,
+#app .player-subtitle-modal .player-dialog-title {
+  font-size: 40px;
+  font-weight: 600;
+  letter-spacing: -0.2px;
+  color: #f5f7f8;
+}
+
+#app .player-audio-track-list .player-dialog-item,
+#app .player-subtitle-options-rail .player-dialog-item {
+  position: relative;
+  min-height: 112px;
+  padding-left: 88px;
+  border-color: transparent;
+  border-radius: 24px;
+  background: transparent;
+  color: #f5f7f8;
+  transition: transform var(--tv-dur-focus) var(--tv-ease-glide);
+}
+
+#app .player-audio-track-list .player-dialog-item::before,
+#app .player-subtitle-options-rail .player-dialog-item::before {
+  content: "";
+  position: absolute;
+  left: 28px;
+  top: 50%;
+  width: 36px;
+  height: 36px;
+  margin-top: -18px;
+  box-sizing: border-box;
+  border: 5px solid rgba(255, 255, 255, 0.36);
+  border-radius: 50%;
+}
+
+#app .player-audio-track-list .player-dialog-item.selected,
+#app .player-subtitle-options-rail .player-dialog-item.selected {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: transparent;
+  color: #f5f7f8;
+}
+
+#app .player-audio-track-list .player-dialog-item.selected::before,
+#app .player-subtitle-options-rail .player-dialog-item.selected::before {
+  border-color: var(--player-secondary, #f5f7f8);
+  background: var(--player-secondary, #f5f7f8);
+  box-shadow: inset 0 0 0 7px rgba(17, 18, 22, 0.94);
+}
+
+#app .player-audio-track-list .player-dialog-item.focused,
+#app .player-subtitle-options-rail .player-dialog-item.focused {
+  border-color: var(--tv-ring, #f5f7f8);
+  background: rgba(255, 255, 255, 0.14);
+  color: #f5f7f8;
+  transform: scale(1.02);
+}
+
+#app .player-audio-track-list .player-dialog-item .player-dialog-item-main,
+#app .player-subtitle-options-rail .player-dialog-item .player-dialog-item-main {
+  font-size: 34px;
+  font-weight: 600;
+  color: #f5f7f8;
+}
+
+#app .player-audio-track-list .player-dialog-item .player-dialog-item-sub,
+#app .player-subtitle-options-rail .player-dialog-item .player-dialog-item-sub {
+  font-size: 26px;
+  color: #a3a9b0;
+}
+
+/* The radio already marks the choice; only a pending "..." keeps the column. */
+#app .player-audio-track-list .player-dialog-item:not(.pending) .player-dialog-item-check,
+#app .player-subtitle-options-rail .player-dialog-item .player-dialog-item-check {
+  display: none;
+}
+
+#app .player-track-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#app .player-track-badge {
+  display: inline-block;
+  margin-left: 16px;
+  padding: 4px 14px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #c9ced4;
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.3;
+  vertical-align: middle;
+}
+
+#app .player-subtitle-options-rail .player-subtitle-source-chip {
+  background: rgba(255, 255, 255, 0.08);
+  color: #c9ced4;
+}
+
+/* Language rail: a chip-like white fill marks the language being browsed. */
+#app .player-subtitle-language-rail .player-dialog-item {
+  border-color: transparent;
+  background: transparent;
+  color: #c9ced4;
+}
+
+#app .player-subtitle-language-rail .player-dialog-item.selected {
+  background: #f5f7f8;
+  color: #111111;
+}
+
+#app .player-subtitle-language-rail .player-dialog-item.selected .player-dialog-item-main,
+#app .player-subtitle-language-rail .player-dialog-item.selected .player-subtitle-language-count {
+  color: #111111;
+}
+
+#app .player-subtitle-language-rail .player-dialog-item.focused {
+  border-color: var(--tv-ring);
+}
+
+.tv-reduce-motion #app .player-audio-track-list .player-dialog-item.focused,
+.tv-reduce-motion #app .player-subtitle-options-rail .player-dialog-item.focused,
+#app.tv-reduce-motion .player-audio-track-list .player-dialog-item.focused,
+#app.tv-reduce-motion .player-subtitle-options-rail .player-dialog-item.focused {
+  transform: none;
+}

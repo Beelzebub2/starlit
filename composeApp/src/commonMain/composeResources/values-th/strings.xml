@@ -504,6 +504,11 @@
     <string name="compose_nav_settings">การตั้งค่า</string>
     <string name="compose_nav_search">ค้นหา</string>
     <string name="compose_player_audio_tracks">แทร็กเสียง</string>
+    <string name="player_tracks_title">เสียงและคำบรรยาย</string>
+    <string name="player_track_badge_sdh">SDH</string>
+    <string name="player_track_badge_commentary">คอมเมนทารี</string>
+    <string name="player_track_badge_original">ต้นฉบับ</string>
+    <string name="player_track_badge_description">เสียงบรรยายภาพ</string>
     <string name="compose_player_audio">เสียง</string>
     <string name="compose_player_auto_sync">ซิงค์อัตโนมัติ</string>
     <string name="compose_player_bold">ตัวหนา</string>

@@ -323,6 +323,11 @@
     <string name="compose_nav_search">Szukaj</string>
     <string name="compose_nav_settings">Ustawienia</string>
     <string name="compose_player_audio_tracks">Ścieżki audio</string>
+    <string name="player_tracks_title">Dźwięk i napisy</string>
+    <string name="player_track_badge_sdh">SDH</string>
+    <string name="player_track_badge_commentary">Komentarz</string>
+    <string name="player_track_badge_original">Oryginał</string>
+    <string name="player_track_badge_description">Audiodeskrypcja</string>
     <string name="compose_player_audio">Audio</string>
     <string name="compose_player_auto_sync">Automatyczna synchronizacja</string>
     <string name="compose_player_bold">Pogrubienie</string>
