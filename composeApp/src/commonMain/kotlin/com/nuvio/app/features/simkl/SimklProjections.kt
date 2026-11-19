@@ -506,7 +506,7 @@ internal fun SimklLibraryEntry.matchesContentId(contentId: String): Boolean {
         (parsed.kitsu != null && parsed.kitsu == candidateIds.kitsu)
 }
 
-private fun TrackingExternalIds.sharesIdentityWith(other: TrackingExternalIds): Boolean =
+internal fun TrackingExternalIds.sharesIdentityWith(other: TrackingExternalIds): Boolean =
     (simkl != null && simkl == other.simkl) ||
         (!imdb.isNullOrBlank() && imdb.equals(other.imdb, ignoreCase = true)) ||
         (tmdb != null && tmdb == other.tmdb) ||

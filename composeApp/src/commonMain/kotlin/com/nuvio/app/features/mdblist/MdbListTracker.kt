@@ -27,6 +27,7 @@ object MdbListTracker : TrackingAuthProvider {
     val sync = MdbListSyncRepository(PlatformMdbListSyncStorage, store, api, activeProfile, coroutineScope)
     val library = MdbListLibraryService(api, sync, store, activeProfile, coroutineScope)
     private val history = MdbListHistoryService(api, sync)
+    val dropped = MdbListDroppedService(api, sync)
     private val scrobble = MdbListScrobbleService(api, sync)
     val account = MdbListAccountController(auth, store, coroutineScope, { api.refreshUser(it) })
     private val authenticated = MutableStateFlow(store.state.value.isAuthenticated)

@@ -20,7 +20,9 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import kotlin.math.round
@@ -28,6 +30,7 @@ import kotlin.math.round
 internal class SimklMutationService(
     private val client: SimklApiClient,
     private val onMutationCommitted: suspend (SimklMutationReceipt) -> Unit = {},
+    private val onRatingCommitted: suspend (TrackingMediaReference, Int) -> Unit = { _, _ -> },
 ) {
     private val json = Json {
         ignoreUnknownKeys = true
@@ -56,6 +59,26 @@ internal class SimklMutationService(
 
     suspend fun removeFromList(items: Collection<TrackingMediaReference>): TrackingMutationResult =
         removeFromHistory(items)
+
+    /** Rating 1..10 adds a rating; 0 clears it. */
+    suspend fun setRating(media: TrackingMediaReference, rating: Int): TrackingMutationResult {
+        require(rating in 0..10) { "Simkl rating must be between 0 and 10" }
+        require(media.hasResolvableIdentity) { "Simkl mutation requires a media ID or title" }
+        val response = client.execute(
+            SimklApiRequest(
+                method = SimklHttpMethod.POST,
+                path = if (rating == 0) "/sync/ratings/remove" else "/sync/ratings",
+                body = buildSimklRatingBody(media, rating, json),
+                retryPolicy = SimklRetryPolicy.SYNC_WRITE,
+            ),
+        )
+        val notFound = runCatching {
+            json.parseToJsonElement(response.body).jsonObject["not_found"]?.jsonObject
+                ?.values?.sumOf { (it as? JsonArray)?.size ?: 0 }
+        }.getOrNull() ?: 0
+        if (notFound == 0) onRatingCommitted(media, rating)
+        return TrackingMutationResult(attemptedCount = 1, notFoundCount = notFound)
+    }
 
     suspend fun addToHistory(items: Collection<TrackingHistoryItem>): TrackingMutationResult {
         val candidates = items.toList().also { historyItems ->
@@ -137,6 +160,7 @@ object SimklMutationRepository : TrackingListWriter, TrackingHistoryWriter, Trac
                     )
                 }
             },
+            onRatingCommitted = { media, rating -> SimklSyncRepository.commitRating(media, rating) },
         )
     }
 
@@ -155,6 +179,15 @@ object SimklMutationRepository : TrackingListWriter, TrackingHistoryWriter, Trac
     ): TrackingMutationResult {
         if (!isActiveProfile(profileId)) return TrackingMutationResult(attemptedCount = 0)
         return service.moveToList(items, destination)
+    }
+
+    suspend fun setRating(
+        profileId: Int,
+        media: TrackingMediaReference,
+        rating: Int,
+    ): TrackingMutationResult {
+        if (!isActiveProfile(profileId)) return TrackingMutationResult(attemptedCount = 0)
+        return service.setRating(media, rating)
     }
 
     override suspend fun removeFromList(
@@ -228,6 +261,23 @@ internal fun buildSimklListMutationBody(
             shows = requestItems.filter { (item, _) -> item.kind != TrackingMediaKind.MOVIE }.map { it.second },
         ),
     )
+}
+
+internal fun buildSimklRatingBody(
+    media: TrackingMediaReference,
+    rating: Int,
+    json: Json = SimklMutationJson,
+): String {
+    val bucket = when (media.kind) {
+        TrackingMediaKind.MOVIE -> "movies"
+        // Simkl's rating endpoints accept only movies/shows; anime goes under shows, like list mutations.
+        TrackingMediaKind.ANIME, TrackingMediaKind.SHOW -> "shows"
+    }
+    val item = buildJsonObject {
+        if (rating > 0) put("rating", rating)
+        media.ids.toSimklJsonObjectOrNull()?.let { put("ids", it) }
+    }
+    return json.encodeToString(JsonObject.serializer(), buildJsonObject { put(bucket, JsonArray(listOf(item))) })
 }
 
 internal fun buildSimklHistoryMutationBody(

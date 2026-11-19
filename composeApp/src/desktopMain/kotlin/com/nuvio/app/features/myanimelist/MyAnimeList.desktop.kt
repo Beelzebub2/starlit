@@ -4,14 +4,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.ExpandMore
-import androidx.compose.material.icons.filled.Link
-import androidx.compose.material.icons.filled.PlaylistAddCheck
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Replay
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -19,10 +11,11 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import kotlin.math.roundToInt
-import com.nuvio.app.core.ui.NuvioToastController
-import com.nuvio.app.core.ui.NuvioCompactActionButton
-import com.nuvio.app.core.ui.NuvioCompactActionTone
 import com.nuvio.app.features.details.MetaDetails
+import com.nuvio.app.features.lists.ListTrackerControls
+import com.nuvio.app.features.lists.listsTabTitle
+import com.nuvio.app.features.lists.rememberListsTabServices
+import com.nuvio.app.features.lists.MalTitleHooks
 import com.nuvio.app.features.profiles.ProfileRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
@@ -35,10 +28,11 @@ import org.jetbrains.compose.resources.stringResource
     LaunchedEffect(profile.activeProfile) { MyAnimeListRepository.ensureLoaded() }
     return MyAnimeListRepository.state.collectAsState().value
 }
-@Composable internal actual fun MyAnimeListTabVisible(): Boolean {
-    val connection = rememberMalConnection()
-    return connection.connected && connection.showTab
-}
+/** The lists tab shows when at least one connected service is chosen for it. */
+@Composable internal actual fun MyAnimeListTabVisible(): Boolean = rememberListsTabServices().isNotEmpty()
+
+/** The only tab service's name, or "Lists" when several share the tab. */
+@Composable internal actual fun listsTabLabel(): String = listsTabTitle(rememberListsTabServices())
 
 internal actual fun myAnimeListPlaybackUpdateThresholdPercent(): Int =
     MyAnimeListRepository.playbackUpdateThresholdPercent()
@@ -86,17 +80,6 @@ internal actual suspend fun markMyAnimeListRewatchOnPlayback(
                 Text(stringResource(Res.string.mal_tv_sync_description), style = MaterialTheme.typography.bodySmall)
                 tvSyncMessage?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
             }
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Column(Modifier.weight(1f)) {
-                    Text("Show MyAnimeList tab", style = MaterialTheme.typography.bodyMedium)
-                    Text("Browse your MAL anime list from the Starlit navigation bar.", style = MaterialTheme.typography.bodySmall)
-                }
-                Switch(
-                    checked = connection.showTab && connection.connected,
-                    onCheckedChange = MyAnimeListRepository::setTabVisible,
-                    enabled = connection.connected && !connection.busy,
-                )
-            }
             Text("Automatic MAL update: ${connection.playbackUpdateThresholdPercent}%", style = MaterialTheme.typography.bodyMedium)
             Slider(
                 value = connection.playbackUpdateThresholdPercent.toFloat(),
@@ -117,124 +100,34 @@ internal actual suspend fun markMyAnimeListRewatchOnPlayback(
     if (setup) MalSetupDialog(connection, onDismiss = { setup = false })
 }
 
-@Composable internal actual fun MyAnimeListControls(meta: MetaDetails) {
-    val connection = rememberMalConnection()
-    key(meta.type, meta.id, connection.profileId, connection.revision) { MalControls(meta, connection) }
-}
+@Composable internal actual fun ListServicesSettingsCard() = com.nuvio.app.features.lists.ListServicesSettingsCard()
 
-@Composable private fun MalControls(meta: MetaDetails, connection: MalConnectionState) {
-    val scope = rememberCoroutineScope()
-    var malId by remember(meta.id, connection.profileId) { mutableStateOf<Int?>(null) }
-    var status by remember(meta.id, connection.profileId) { mutableStateOf<MalListStatus?>(null) }
-    var busy by remember(meta.id, connection.profileId) { mutableStateOf(false) }
-    var error by remember(meta.id, connection.profileId) { mutableStateOf<String?>(null) }
+@Composable internal actual fun MyAnimeListControls(meta: MetaDetails) = ListTrackerControls(meta)
+
+/**
+ * Supplies the MyAnimeList-only hooks of the generic title tracker (id resolution, connect and link entry) and
+ * hosts the dialogs behind them, keyed so a MAL reconnect or profile change starts the tracker afresh.
+ */
+@Composable internal fun MalTitleLinkHost(meta: MetaDetails, content: @Composable (MalTitleHooks) -> Unit) {
+    val connection = rememberMalConnection()
     var setup by remember { mutableStateOf(false) }
     var search by remember { mutableStateOf(false) }
-    var statusMenu by remember { mutableStateOf(false) }
-    var ratingMenu by remember { mutableStateOf(false) }
-    LaunchedEffect(meta.id, connection.profileId, connection.connected, connection.busy) {
-        if (connection.busy) return@LaunchedEffect
-        busy = true; error = null
-        try {
-            malId = withTimeoutOrNull(20_000L) { MyAnimeListRepository.resolveId(meta) }
-            if (connection.connected) malId?.let { status = MyAnimeListRepository.listStatus(it) }
-        } catch (e: CancellationException) { throw e } catch (e: Exception) { error = e.message }
-        finally { busy = false }
-    }
-    val anime = malId != null || isLikelyMyAnimeListAnime(meta)
-    if (!anime) return
-    fun update(newStatus: MalStatus? = null, score: Int? = null, isRewatching: Boolean? = null) {
-        val id = malId ?: return
-        if (busy || connection.busy) return
-        scope.launch {
-            busy = true; error = null
-            try { status = MyAnimeListRepository.update(id, newStatus, score, isRewatching); NuvioToastController.show("MyAnimeList updated") }
-            catch (e: CancellationException) { throw e } catch (e: Exception) { error = e.message }
-            finally { busy = false }
-        }
-    }
-    fun finishRewatch() {
-        val id = malId ?: return
-        if (busy || connection.busy) return
-        scope.launch {
-            busy = true; error = null
-            try {
-                status = MyAnimeListRepository.finishRewatch(id)
-                NuvioToastController.show("MyAnimeList updated")
-            } catch (e: CancellationException) { throw e }
-            catch (e: Exception) { error = e.message }
-            finally { busy = false }
-        }
-    }
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            if (!connection.connected) NuvioCompactActionButton(
-                label = "Connect MyAnimeList", icon = Icons.Default.Link,
-                enabled = !connection.busy, onClick = { setup = true },
-            )
-            else {
-                Box {
-                    NuvioCompactActionButton(
-                        label = "MAL · ${status?.status?.label ?: "Set status"}", icon = Icons.Default.PlaylistAddCheck,
-                        accessibilityLabel = "MyAnimeList status: ${status?.status?.label ?: "Set status"}",
-                        trailingIcon = Icons.Default.ExpandMore, enabled = !busy && !connection.busy && malId != null,
-                        onClick = { statusMenu = true },
-                    )
-                    DropdownMenu(expanded = statusMenu, onDismissRequest = { statusMenu = false }) {
-                        MalStatus.entries.forEach { option -> DropdownMenuItem(text = { Text(option.label) },
-                            onClick = { statusMenu = false; update(newStatus = option) }) }
-                    }
-                }
-                Box {
-                    NuvioCompactActionButton(
-                        label = status?.score?.takeIf { it > 0 }?.let { "Rating · $it/10" } ?: "Rate on MAL",
-                        accessibilityLabel = status?.score?.takeIf { it > 0 }?.let { "MyAnimeList rating: $it out of 10" } ?: "Rate on MyAnimeList",
-                        icon = Icons.Default.Star, trailingIcon = Icons.Default.ExpandMore,
-                        enabled = !busy && !connection.busy && malId != null, onClick = { ratingMenu = true },
-                    )
-                    DropdownMenu(expanded = ratingMenu, onDismissRequest = { ratingMenu = false }) {
-                        (10 downTo 0).forEach { score -> DropdownMenuItem(text = { Text(if (score == 0) "Clear rating" else "$score / 10") },
-                            onClick = { ratingMenu = false; update(score = score) }) }
-                    }
-                }
-                NuvioCompactActionButton(
-                    label = if (malId == null) "Link MAL entry" else "Change MAL entry",
-                    icon = Icons.Default.Edit, tone = NuvioCompactActionTone.Quiet,
-                    enabled = !busy && !connection.busy, onClick = { search = true },
-                )
-                if (status?.status == MalStatus.COMPLETED) {
-                    val rewatching = status?.isRewatching == true
-                    NuvioCompactActionButton(
-                        label = if (rewatching) stringResource(Res.string.mal_rewatch_in_progress) else "Mark rewatching",
-                        icon = Icons.Default.Replay,
-                        enabled = !busy && !connection.busy,
-                        onClick = { update(isRewatching = !rewatching) },
-                    )
-                    if (rewatching) NuvioCompactActionButton(
-                        label = stringResource(Res.string.mal_rewatch_finish),
-                        icon = Icons.Default.Replay,
-                        enabled = !busy && !connection.busy,
-                        onClick = ::finishRewatch,
-                    )
-                }
-                status?.let { Text(
-                    stringResource(Res.string.mal_rewatch_count, it.numTimesRewatched),
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(top = 9.dp),
-                ) }
-            }
-        }
-        if (busy) LinearProgressIndicator(Modifier.width(220.dp))
-        error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
-            NuvioCompactActionButton(label = stringResource(Res.string.action_retry), icon = Icons.Default.Refresh,
-                enabled = !busy && !connection.busy,
-                onClick = { scope.launch { busy = true; try { malId?.let { status = MyAnimeListRepository.listStatus(it); error = null } }
-                    catch (e: CancellationException) { throw e } catch (e: Exception) { error = e.message } finally { busy = false } } }) }
-    }
+    var linkRevision by remember(meta.type, meta.id) { mutableIntStateOf(0) }
+    val hooks = MalTitleHooks(
+        connected = connection.connected,
+        busy = connection.busy,
+        linkRevision = linkRevision,
+        resolveId = { withTimeoutOrNull(20_000L) { MyAnimeListRepository.resolveId(it) } },
+        onConnect = { setup = true },
+        onChooseEntry = { search = true },
+        revision = connection.revision,
+    )
+    key(meta.type, meta.id, connection.profileId) { content(hooks) }
     if (setup) MalSetupDialog(connection, onDismiss = { setup = false })
     if (search) MalSearchDialog(meta, onDismiss = { search = false }, onSelect = { selected ->
-        MyAnimeListRepository.link(meta, selected.id); malId = selected.id; search = false
-        scope.launch { try { status = MyAnimeListRepository.listStatus(selected.id) } catch (e: CancellationException) { throw e } catch (e: Exception) { error = e.message } }
+        MyAnimeListRepository.link(meta, selected.id)
+        linkRevision++
+        search = false
     })
 }
 

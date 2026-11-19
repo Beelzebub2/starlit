@@ -6,6 +6,8 @@ import com.nuvio.app.features.addons.httpRequestRaw
 import com.nuvio.app.features.details.MetaDetails
 import com.nuvio.app.features.details.MetaDetailsRepository
 import com.nuvio.app.features.tmdb.TmdbService
+import com.nuvio.app.features.tracking.TrackingExternalIds
+import com.nuvio.app.features.tracking.TrackingMediaReference
 import com.nuvio.app.features.watchprogress.ContinueWatchingPreferencesRepository
 import com.nuvio.app.features.watchprogress.WatchProgressEntry
 import com.nuvio.app.features.watchprogress.WatchProgressSourceTraktHistory
@@ -656,6 +658,25 @@ object TraktProgressRepository {
 
     private suspend fun fetchHiddenShowIds(headers: Map<String, String>): Set<String> {
         val allIds = mutableSetOf<String>()
+        for (item in fetchDroppedShowItems(headers, strict = false)) {
+            val ids = item.show?.ids ?: continue
+            ids.imdb?.takeIf { it.isNotBlank() }?.let { allIds.add(it) }
+            ids.tmdb?.let { allIds.add("tmdb:$it") }
+            ids.trakt?.let { allIds.add("trakt:$it") }
+        }
+        return allIds
+    }
+
+    /**
+     * Pages through `users/hidden/dropped`. The progress refresh reads leniently (stops at the first page
+     * that fails and keeps what it read); [strict] throws instead, so the Trakt list never shows a dropped
+     * show as merely watched.
+     */
+    private suspend fun fetchDroppedShowItems(
+        headers: Map<String, String>,
+        strict: Boolean,
+    ): List<TraktHiddenItem> {
+        val allItems = mutableListOf<TraktHiddenItem>()
         var page = 1
         val limit = 1000
         while (true) {
@@ -665,23 +686,43 @@ object TraktProgressRepository {
                     url = endpoint,
                     headers = headers,
                 )
-            }.getOrNull() ?: break
+            }.onFailure { error -> if (strict) throw error }.getOrNull() ?: break
 
             val items = runCatching {
                 json.decodeFromString<List<TraktHiddenItem>>(payload)
-            }.getOrNull() ?: break
+            }.onFailure { error -> if (strict) throw error }.getOrNull() ?: break
 
             if (items.isEmpty()) break
-            for (item in items) {
-                val ids = item.show?.ids ?: continue
-                ids.imdb?.takeIf { it.isNotBlank() }?.let { allIds.add(it) }
-                ids.tmdb?.let { allIds.add("tmdb:$it") }
-                ids.trakt?.let { allIds.add("trakt:$it") }
-            }
+            allItems += items
             if (items.size < limit) break
             page++
         }
-        return allIds
+        return allItems
+    }
+
+    /** The user's Trakt dropped shows, read fresh from Trakt; throws when Trakt cannot be read. */
+    suspend fun droppedShows(profileId: Int): List<TraktDroppedShow> {
+        val headers = TraktAuthRepository.authorizedHeaders(profileId) ?: return emptyList()
+        return fetchDroppedShowItems(headers, strict = true).mapNotNull { item ->
+            val show = item.show ?: return@mapNotNull null
+            val ids = TrackingExternalIds(
+                imdb = show.ids?.imdb?.takeIf { it.isNotBlank() },
+                tmdb = show.ids?.tmdb?.toLong(),
+                trakt = show.ids?.trakt?.toLong(),
+            )
+            TraktDroppedShow(title = show.title, ids = ids).takeIf { ids.hasAny }
+        }
+    }
+
+    /** Mirrors a successful drop / undrop into the hidden set Continue Watching reads, until the next refresh. */
+    internal fun applyDroppedLocally(ids: TrackingExternalIds, dropped: Boolean) {
+        val keys = buildSet {
+            ids.imdb?.takeIf { it.isNotBlank() }?.let { add(it) }
+            ids.tmdb?.let { add("tmdb:$it") }
+            ids.trakt?.let { add("trakt:$it") }
+        }
+        if (keys.isEmpty()) return
+        hiddenProgressShowIds.update { current -> if (dropped) current + keys else current - keys }
     }
 
     private suspend fun fetchPlaybackEntries(headers: Map<String, String>): List<WatchProgressEntry> = withContext(Dispatchers.Default) {
@@ -1547,6 +1588,18 @@ object TraktProgressRepository {
             ?.let { return it }
         return TraktPlatformClock.nowEpochMs() - (fallbackIndex * 1_000L)
     }
+}
+
+/** A show on the user's Trakt dropped list (`users/hidden/dropped`). */
+data class TraktDroppedShow(val title: String?, val ids: TrackingExternalIds)
+
+/**
+ * Adds the show to (or removes it from) Trakt's dropped list. Dropping also hides the show from
+ * Trakt progress, so Continue Watching stops offering it; nothing is removed from watch history.
+ */
+suspend fun TraktProgressRepository.setDropped(profileId: Int, media: TrackingMediaReference, dropped: Boolean) {
+    defaultTraktListClient.setDropped(profileId, media, dropped)
+    applyDroppedLocally(media.ids, dropped)
 }
 
 internal fun hasCompleteTraktEpisodeContext(

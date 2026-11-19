@@ -6,8 +6,12 @@ import com.nuvio.app.features.details.MetaDetails
 
 @Composable internal expect fun MyAnimeListControls(meta: MetaDetails)
 @Composable internal expect fun MyAnimeListSettingsCard()
+/** Settings card to order connected list services and choose where each shows (desktop only). */
+@Composable internal expect fun ListServicesSettingsCard()
 @Composable internal expect fun MyAnimeListTabVisible(): Boolean
 @Composable internal expect fun MyAnimeListTabContent(topChromePadding: Dp? = null)
+/** Navigation label of the lists tab (desktop: the single service's name or "Lists"; other platforms never show it). */
+@Composable internal expect fun listsTabLabel(): String
 internal expect fun myAnimeListPlaybackUpdateThresholdPercent(): Int
 internal expect suspend fun markMyAnimeListRewatchOnPlayback(
     meta: MetaDetails,

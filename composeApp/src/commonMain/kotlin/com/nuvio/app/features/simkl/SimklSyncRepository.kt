@@ -237,6 +237,32 @@ object SimklSyncRepository : TrackingProfileStore {
         }
     }
 
+    /** Reflects a committed rating write in the local snapshot (0 clears the rating). */
+    internal suspend fun commitRating(media: com.nuvio.app.features.tracking.TrackingMediaReference, rating: Int) {
+        ensureLoaded()
+        val generation = profileGeneration
+        val profileId = ProfileRepository.activeProfileId
+        snapshotMutex.withLock {
+            if (generation != profileGeneration || profileId != ProfileRepository.activeProfileId) return@withLock
+            val current = _state.value
+            val newRating = rating.takeIf { it > 0 }
+            var changed = false
+            val entries = current.snapshot.entries.map { entry ->
+                val matches = entry.media?.toTrackingExternalIds()?.sharesIdentityWith(media.ids) == true
+                if (matches && entry.userRating != newRating) {
+                    changed = true
+                    entry.copy(userRating = newRating)
+                } else {
+                    entry
+                }
+            }
+            if (!changed) return@withLock
+            val snapshot = current.snapshot.copy(entries = entries)
+            SimklSyncStorage.savePayload(json.encodeToString(snapshot))
+            _state.value = current.copy(snapshot = snapshot)
+        }
+    }
+
     override fun onProfileChanged() {
         profileGeneration += 1L
         hasLoaded = false
