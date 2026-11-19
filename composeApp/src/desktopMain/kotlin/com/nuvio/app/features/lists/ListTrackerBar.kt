@@ -143,7 +143,7 @@ import org.jetbrains.compose.resources.stringResource
                 }
             } else {
                 val canEdit = !working && linked
-                ListStatusSegment(service, capabilities, entry?.status, canEdit, onChange)
+                ListStatusSegment(service, capabilities, entry, canEdit, onChange)
                 if (capabilities.score) {
                     ListBarDivider()
                     ListScoreSegment(service, entry?.score?.takeIf { it > 0 }, canEdit, onChange)
@@ -208,9 +208,17 @@ private fun ListStatus.dotColor(): Color = when (this) {
     ListStatus.PLAN_TO_WATCH -> Color(0xFFB8BEC5)
 }
 
-/** Pickable statuses in the service's own order; derived-only statuses (Trakt/MDBList Watching) are never offered. */
-internal fun pickerStatuses(capabilities: ListCapabilities): List<ListStatus> =
-    (capabilities.statuses + ListStatus.entries).distinct().filter { it in capabilities.pickableStatuses }
+/**
+ * Pickable statuses in the service's own order; derived-only statuses (Trakt/MDBList Watching) are never offered.
+ * Where Dropped needs watched history (MDBList), it is offered only once the title has some (or is already Dropped).
+ */
+internal fun pickerStatuses(capabilities: ListCapabilities, entry: ListEntry?): List<ListStatus> {
+    val dropUnavailable = capabilities.dropRequiresHistory && entry?.status != ListStatus.DROPPED &&
+        (entry == null || entry.watchedEpisodes == 0)
+    return (capabilities.statuses + ListStatus.entries).distinct()
+        .filter { it in capabilities.pickableStatuses }
+        .filterNot { it == ListStatus.DROPPED && dropUnavailable }
+}
 
 @Composable private fun ListServiceSwitcher(
     service: ListServiceId,
@@ -264,10 +272,11 @@ internal fun pickerStatuses(capabilities: ListCapabilities): List<ListStatus> =
 @Composable private fun ListStatusSegment(
     service: ListServiceId,
     capabilities: ListCapabilities,
-    current: ListStatus?,
+    entry: ListEntry?,
     enabled: Boolean,
     onChange: (ListChange) -> Unit,
 ) {
+    val current = entry?.status
     var menu by remember { mutableStateOf(false) }
     val label = current?.let { listStatusLabel(it) } ?: stringResource(Res.string.lists_set_status)
     val colors = MaterialTheme.nuvio.colors
@@ -282,7 +291,7 @@ internal fun pickerStatuses(capabilities: ListCapabilities): List<ListStatus> =
             ListBarChevron()
         }
         ListMenu(expanded = menu, onDismiss = { menu = false }) {
-            pickerStatuses(capabilities).forEach { option ->
+            pickerStatuses(capabilities, entry).forEach { option ->
                 ListMenuItem(
                     text = listStatusLabel(option),
                     selected = option == current,

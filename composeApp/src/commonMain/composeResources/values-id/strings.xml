@@ -3418,6 +3418,7 @@
     <plurals name="lists_remove_history_message">
         <item quantity="other">Ini menghapus %1$d entri tontonan “%2$s” dari Starlit dan layanan yang terhubung. Statusnya di %3$s bisa berubah.</item>
     </plurals>
+    <string name="lists_remove_history_all_plays">Di %1$s, ini juga menghapus setiap tontonan judul ini, termasuk tontonan ulang dan episode spesial.</string>
     <plurals name="lists_removed_history">
         <item quantity="other">%1$d entri dihapus dari riwayat tontonan</item>
     </plurals>

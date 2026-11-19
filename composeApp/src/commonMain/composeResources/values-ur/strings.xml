@@ -3461,6 +3461,7 @@
         <item quantity="one">اس سے &quot;%2$s&quot; کی %1$d دیکھی ہوئی اندراج Starlit اور آپ کی منسلک سروسز سے ہٹ جائے گی۔ %3$s پر اس کی حیثیت بدل سکتی ہے۔</item>
         <item quantity="other">اس سے &quot;%2$s&quot; کے %1$d دیکھے ہوئے اندراجات Starlit اور آپ کی منسلک سروسز سے ہٹ جائیں گے۔ %3$s پر اس کی حیثیت بدل سکتی ہے۔</item>
     </plurals>
+    <string name="lists_remove_history_all_plays">%1$s پر یہ اس عنوان کو دیکھنے کا ہر ریکارڈ بھی ہٹا دیتا ہے، بشمول دوبارہ دیکھنا اور خصوصی اقساط۔</string>
     <plurals name="lists_removed_history">
         <item quantity="one">دیکھنے کی تاریخ سے %1$d اندراج ہٹا دیا گیا</item>
         <item quantity="other">دیکھنے کی تاریخ سے %1$d اندراجات ہٹا دیے گئے</item>

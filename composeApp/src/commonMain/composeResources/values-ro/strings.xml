@@ -3432,6 +3432,7 @@
         <item quantity="few">Se elimină %1$d înregistrări de vizionare pentru „%2$s” din Starlit și din serviciile tale conectate. Starea pe %3$s se poate schimba.</item>
         <item quantity="other">Se elimină %1$d de înregistrări de vizionare pentru „%2$s” din Starlit și din serviciile tale conectate. Starea pe %3$s se poate schimba.</item>
     </plurals>
+    <string name="lists_remove_history_all_plays">Pe %1$s, aceasta elimină și fiecare vizionare a titlului, inclusiv revizionările și episoadele speciale.</string>
     <plurals name="lists_removed_history">
         <item quantity="one">S-a eliminat %1$d înregistrare din istoricul de vizionare</item>
         <item quantity="few">S-au eliminat %1$d înregistrări din istoricul de vizionare</item>

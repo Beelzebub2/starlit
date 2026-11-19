@@ -3469,6 +3469,7 @@
         <item quantity="many">Týmto sa zo Starlitu a pripojených služieb odstráni %1$d záznamu o pozretí titulu „%2$s“. Stav na %3$s sa môže zmeniť.</item>
         <item quantity="other">Týmto sa zo Starlitu a pripojených služieb odstráni %1$d záznamov o pozretí titulu „%2$s“. Stav na %3$s sa môže zmeniť.</item>
     </plurals>
+    <string name="lists_remove_history_all_plays">Na %1$s sa tým odstráni aj každé pozretie tohto titulu vrátane opakovaných pozretí a špeciálov.</string>
     <plurals name="lists_removed_history">
         <item quantity="one">Z histórie pozerania bol odstránený %1$d záznam</item>
         <item quantity="few">Z histórie pozerania boli odstránené %1$d záznamy</item>

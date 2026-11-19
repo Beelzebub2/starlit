@@ -3437,6 +3437,7 @@
         <item quantity="one">Verrà rimossa %1$d voce di visione di «%2$s» da Starlit e dai tuoi servizi collegati. Il suo stato su %3$s potrebbe cambiare.</item>
         <item quantity="other">Verranno rimosse %1$d voci di visione di «%2$s» da Starlit e dai tuoi servizi collegati. Il suo stato su %3$s potrebbe cambiare.</item>
     </plurals>
+    <string name="lists_remove_history_all_plays">Su %1$s questo rimuove anche ogni visione del titolo, comprese le visioni ripetute e gli speciali.</string>
     <plurals name="lists_removed_history">
         <item quantity="one">Rimossa %1$d voce dalla cronologia di visione</item>
         <item quantity="other">Rimosse %1$d voci dalla cronologia di visione</item>

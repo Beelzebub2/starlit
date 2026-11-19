@@ -5,20 +5,34 @@ import com.nuvio.app.features.details.MetaDetailsRepository
 import com.nuvio.app.features.details.MetaVideo
 import com.nuvio.app.features.home.MetaPreview
 import com.nuvio.app.features.watched.WatchedRepository
+import com.nuvio.app.features.watched.episodePlaybackId
 import com.nuvio.app.features.watched.releasedMainSeasonEpisodes
+import com.nuvio.app.features.watched.toEpisodeWatchedItem
+import com.nuvio.app.features.watched.toSeriesWatchedItem
+import com.nuvio.app.features.watched.toWatchedItem
 import com.nuvio.app.features.watchprogress.CurrentDateProvider
+import com.nuvio.app.features.watchprogress.WatchProgressRepository
 import com.nuvio.app.features.watching.application.WatchingActions
 import com.nuvio.app.features.watching.domain.isSeriesLikeWatchingContentType
 
 /**
  * Seam over the title page's own watched actions so history-derived list services
- * (Simkl and Trakt now, MDBList later) can be tested without repositories or network.
+ * (Simkl, Trakt and MDBList) can be tested without repositories or network.
  */
 interface ListHistoryPort {
     suspend fun fetchMeta(type: String, id: String): MetaDetails?
     fun isWatched(id: String, type: String, season: Int? = null, episode: Int? = null): Boolean
     fun isFullyWatchedSeries(id: String, type: String): Boolean
     suspend fun togglePosterWatched(preview: MetaPreview)
+
+    /** Marks a movie watched; never a toggle, so it cannot unmark a movie that became watched meanwhile. */
+    fun markMovieWatched(preview: MetaPreview)
+
+    /**
+     * Marks the series and its released main-season episodes watched: the poster action's mark branch, without its
+     * toggle, so a series that became watched meanwhile (e.g. by a background sync) is never unmarked.
+     */
+    fun markSeriesWatched(meta: MetaDetails)
     fun toggleEpisodeWatched(meta: MetaDetails, episode: MetaVideo, isCurrentlyWatched: Boolean)
     fun todayIsoDate(): String
 }
@@ -34,6 +48,18 @@ object DefaultListHistoryPort : ListHistoryPort {
         WatchedRepository.isFullyWatchedSeries(id = id, type = type)
 
     override suspend fun togglePosterWatched(preview: MetaPreview) = WatchingActions.togglePosterWatched(preview)
+
+    override fun markMovieWatched(preview: MetaPreview) =
+        WatchedRepository.markWatched(preview.toWatchedItem(markedAtEpochMs = 0L))
+
+    override fun markSeriesWatched(meta: MetaDetails) {
+        // Same items, flags and progress clearing as WatchingActions.togglePosterWatched marking a series.
+        val released = meta.releasedMainSeasonEpisodes(todayIsoDate())
+        if (released.isEmpty()) return
+        WatchedRepository.markWatched(listOf(meta.toSeriesWatchedItem()) + released.map(meta::toEpisodeWatchedItem))
+        WatchedRepository.updateFullyWatchedSeries(id = meta.id, type = meta.type, isFullyWatched = true)
+        WatchProgressRepository.clearProgress(videoIds = released.map(meta::episodePlaybackId), parentMetaId = meta.id)
+    }
 
     override fun toggleEpisodeWatched(meta: MetaDetails, episode: MetaVideo, isCurrentlyWatched: Boolean) =
         WatchingActions.toggleEpisodeWatched(meta, episode, isCurrentlyWatched)
@@ -61,15 +87,19 @@ class ListHistoryWrites(private val port: ListHistoryPort = DefaultListHistoryPo
         return unwatchedReleased(meta).size
     }
 
-    /** Marks the title watched exactly like the poster action, but never toggles an already-watched title off. */
+    /** Marks the title watched like the poster action does, but only ever marks: an already-watched title is left alone. */
     suspend fun markCompleted(type: String, id: String, name: String, poster: String?) {
         if (titleWatched(type, id)) return
-        if (!isMovie(type)) {
-            // Verify episodes load before anything is written, so a failure cannot leave the tracker and history out of sync.
-            port.fetchMeta(type, id)
-                ?: throw IllegalStateException("Could not load episodes to mark this title as watched")
+        if (isMovie(type)) {
+            port.markMovieWatched(MetaPreview(id = id, type = type, name = name, poster = poster))
+            return
         }
-        port.togglePosterWatched(MetaPreview(id = id, type = type, name = name, poster = poster))
+        // Episodes must load before anything is written, so a failure cannot leave the tracker and history out of sync.
+        val meta = port.fetchMeta(type, id)
+            ?: throw IllegalStateException("Could not load episodes to mark this title as watched")
+        // Marking is idempotent; skipping a title that became watched while loading just avoids rewriting it.
+        if (titleWatched(type, id)) return
+        port.markSeriesWatched(meta)
     }
 
     /** +n marks the next n released unwatched episodes; -n unmarks the last n watched ones. */

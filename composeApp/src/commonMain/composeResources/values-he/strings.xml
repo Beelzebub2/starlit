@@ -3425,6 +3425,7 @@
         <item quantity="many">פעולה זו תסיר %1$d רשומות צפייה של &quot;%2$s&quot; מ-Starlit ומהשירותים המחוברים שלך. הסטטוס ב-%3$s עשוי להשתנות.</item>
         <item quantity="other">פעולה זו תסיר %1$d רשומות צפייה של &quot;%2$s&quot; מ-Starlit ומהשירותים המחוברים שלך. הסטטוס ב-%3$s עשוי להשתנות.</item>
     </plurals>
+    <string name="lists_remove_history_all_plays">ב-%1$s פעולה זו מסירה גם כל צפייה בכותר הזה, כולל צפיות חוזרות ופרקים מיוחדים.</string>
     <plurals name="lists_removed_history">
         <item quantity="one">הוסרה רשומה אחת (%1$d) מהיסטוריית הצפייה</item>
         <item quantity="two">הוסרו %1$d רשומות מהיסטוריית הצפייה</item>

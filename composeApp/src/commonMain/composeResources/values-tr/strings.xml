@@ -3468,6 +3468,7 @@ Bu özelliği tamamen kendi sorumluluğunuzda kullanırsınız. P2P istediğiniz
         <item quantity="one">Bu işlem, “%2$s” için %1$d izleme kaydını Starlit’ten ve bağlı hizmetlerinizden kaldırır. %3$s üzerindeki durumu değişebilir.</item>
         <item quantity="other">Bu işlem, “%2$s” için %1$d izleme kaydını Starlit’ten ve bağlı hizmetlerinizden kaldırır. %3$s üzerindeki durumu değişebilir.</item>
     </plurals>
+    <string name="lists_remove_history_all_plays">%1$s üzerinde bu, yeniden izlemeler ve özel bölümler dahil bu yapımın tüm izlenmelerini de kaldırır.</string>
     <plurals name="lists_removed_history">
         <item quantity="one">İzleme geçmişinden %1$d kayıt kaldırıldı</item>
         <item quantity="other">İzleme geçmişinden %1$d kayıt kaldırıldı</item>

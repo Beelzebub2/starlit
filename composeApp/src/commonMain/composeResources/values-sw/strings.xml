@@ -3417,6 +3417,7 @@
         <item quantity="one">Hii inaondoa rekodi %1$d ya kutazama ya “%2$s” kutoka Starlit na huduma zako zilizounganishwa. Hali yake kwenye %3$s inaweza kubadilika.</item>
         <item quantity="other">Hii inaondoa rekodi %1$d za kutazama za “%2$s” kutoka Starlit na huduma zako zilizounganishwa. Hali yake kwenye %3$s inaweza kubadilika.</item>
     </plurals>
+    <string name="lists_remove_history_all_plays">Kwenye %1$s, hii pia huondoa kila utazamaji wa kichwa hiki, ikiwemo kutazama tena na vipindi maalum.</string>
     <plurals name="lists_removed_history">
         <item quantity="one">Rekodi %1$d imeondolewa kwenye historia ya kutazama</item>
         <item quantity="other">Rekodi %1$d zimeondolewa kwenye historia ya kutazama</item>

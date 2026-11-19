@@ -25,7 +25,10 @@ import com.nuvio.app.features.profiles.ProfileRepository
 import com.nuvio.app.features.simkl.SimklAuthRepository
 import com.nuvio.app.features.trakt.TraktAuthRepository
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import nuvio.composeapp.generated.resources.Res
 import nuvio.composeapp.generated.resources.action_cancel
 import nuvio.composeapp.generated.resources.action_continue
@@ -85,11 +88,18 @@ internal fun ensureListServicesLoaded() {
         malId = try { mal.resolveId(meta) } catch (e: CancellationException) { throw e } catch (_: Exception) { null }
         malResolving = false
     }
-    val kind = titleKind(meta, malResolved = malId != null)
-    val candidates = titleCandidates(services, prefs, kind, meta)
+    val resolvedKind = titleKind(meta, malResolved = malId != null)
     // Page-local choice; when the chosen service disconnects it drops out of the candidates and the next one shows.
     var chosen by remember(meta.type, meta.id) { mutableStateOf<ListServiceId?>(null) }
-    val current = candidates.firstOrNull { it.id == chosen } ?: candidates.firstOrNull()
+    fun pick(candidates: List<ListService>) = candidates.firstOrNull { it.id == chosen } ?: candidates.firstOrNull()
+    // While the MAL id is still resolving, a MyAnimeList that would win once the id arrives holds the bar (working,
+    // nothing loaded) so that a late id never swaps out, and cancels, a tracker the user has already started using.
+    val malKind = titleKind(meta, malResolved = true)
+    val malCandidates = if (malResolving && malId == null && mal.connected) titleCandidates(services, prefs, malKind, meta) else emptyList()
+    val holdForMal = pick(malCandidates)?.id == ListServiceId.MYANIMELIST
+    val kind = if (holdForMal) malKind else resolvedKind
+    val candidates = if (holdForMal) malCandidates else titleCandidates(services, prefs, kind, meta)
+    val current = pick(candidates)
     if (current == null) {
         if (kind.anime && !mal.connected) ListConnectPrompt(ListServiceId.MYANIMELIST, mal.onConnect, enabled = !mal.busy)
         return
@@ -105,6 +115,33 @@ internal fun ensureListServicesLoaded() {
             malResolving = malResolving,
             onSwitch = { chosen = it },
         )
+    }
+}
+
+/**
+ * Runs a title-bar write on [detachedListWrites] so that switching service or leaving the page cannot cancel it
+ * halfway (e.g. between Simkl's history mark and its list move). When the bar goes away before the write finishes,
+ * [onAbandoned] reports the outcome (null on success), since the bar can no longer show it.
+ */
+internal suspend fun <T> detachedListWrite(onAbandoned: (Exception?) -> Unit, write: suspend () -> T): T {
+    val job = detachedListWrites.async { withContext(NonCancellable) { write() } }
+    try {
+        return job.await()
+    } catch (e: CancellationException) {
+        if (job.isActive) {
+            detachedListWrites.launch {
+                val failure = try {
+                    job.await()
+                    null
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
+                } catch (error: Exception) {
+                    error
+                }
+                onAbandoned(failure)
+            }
+        }
+        throw e
     }
 }
 
@@ -156,7 +193,8 @@ internal fun newListEntryFor(service: ListServiceId, meta: MetaDetails, kind: Li
     var reload by remember { mutableIntStateOf(0) }
     val updatedText = stringResource(Res.string.lists_updated, service.id.displayName)
 
-    LaunchedEffect(malId, waitingForMal, reload) {
+    // Only MyAnimeList's entry depends on the MAL id; other services must not reload when it arrives.
+    LaunchedEffect(if (isMal) malId else null, waitingForMal, reload) {
         if (waitingForMal) return@LaunchedEffect
         if (!linked) {
             entry = null
@@ -179,7 +217,9 @@ internal fun newListEntryFor(service: ListServiceId, meta: MetaDetails, kind: Li
     val working = loading || busy || waitingForMal || (isMal && mal.busy)
 
     suspend fun commit(target: ListEntry, change: ListChange) {
-        entry = service.apply(target, change)
+        entry = detachedListWrite(onAbandoned = { failure -> NuvioToastController.show(failure?.readableMessage() ?: updatedText) }) {
+            service.apply(target, change)
+        }
         NuvioToastController.show(updatedText)
     }
 

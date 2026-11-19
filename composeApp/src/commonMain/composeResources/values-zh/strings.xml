@@ -3440,6 +3440,7 @@
     <plurals name="lists_remove_history_message">
         <item quantity="other">这会从 Starlit 和你已连接的服务中移除“%2$s”的 %1$d 条观看记录。它在 %3$s 上的状态可能会改变。</item>
     </plurals>
+    <string name="lists_remove_history_all_plays">在 %1$s 上，这也会删除该作品的每一次观看记录，包括重看和特别篇。</string>
     <plurals name="lists_removed_history">
         <item quantity="other">已从观看历史中移除 %1$d 条记录</item>
     </plurals>

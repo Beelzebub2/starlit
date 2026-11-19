@@ -3419,6 +3419,7 @@
         <item quantity="one">Isso remove %1$d registro assistido de “%2$s” do Starlit e dos seus serviços conectados. O status no %3$s pode mudar.</item>
         <item quantity="other">Isso remove %1$d registros assistidos de “%2$s” do Starlit e dos seus serviços conectados. O status no %3$s pode mudar.</item>
     </plurals>
+    <string name="lists_remove_history_all_plays">No %1$s, isso também remove todas as exibições deste título, incluindo as reassistidas e os episódios especiais.</string>
     <plurals name="lists_removed_history">
         <item quantity="one">%1$d registro removido do histórico de reprodução</item>
         <item quantity="other">%1$d registros removidos do histórico de reprodução</item>

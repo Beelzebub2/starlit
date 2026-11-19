@@ -68,6 +68,8 @@ private class TabFakeService(
     override val connected = MutableStateFlow(connected)
     val applied = mutableListOf<AppliedChange>()
     val removedFromHistory = mutableListOf<ListEntry>()
+    var refreshes = 0
+    var pageReads = 0
     var running = 0
     var maxRunning = 0
     override val sorts = listOf(ListSort("updated", "Last updated"), ListSort("title", "Title"))
@@ -79,8 +81,13 @@ private class TabFakeService(
         counts = entries.groupingBy { it.status }.eachCount() + (null to entries.size),
         extra = listOf("episodes watched" to "1234"),
     )
-    override suspend fun page(status: ListStatus?, sort: ListSort, offset: Int) =
-        ListPage(entries.filter { status == null || it.status == status }, nextOffset = null)
+    override suspend fun page(status: ListStatus?, sort: ListSort, offset: Int): ListPage {
+        pageReads++
+        return ListPage(entries.filter { status == null || it.status == status }, nextOffset = null)
+    }
+    override suspend fun refresh() {
+        refreshes++
+    }
     override suspend fun entryFor(meta: MetaDetails): ListEntry? = null
     override suspend fun impact(entry: ListEntry, change: ListChange) = impactOf(entry, change)
     override suspend fun apply(entry: ListEntry, change: ListChange): ListEntry {
@@ -126,13 +133,13 @@ private val traktTabCaps = { type: ListMediaType ->
     if (type == ListMediaType.MOVIE) {
         ListCapabilities(listOf(ListStatus.COMPLETED, ListStatus.PLAN_TO_WATCH), setOf(ListStatus.PLAN_TO_WATCH, ListStatus.COMPLETED),
             score = true, episodeProgress = false, rewatch = false, changeEntry = false, removeFromHistory = true,
-            leavableStatuses = setOf(ListStatus.PLAN_TO_WATCH))
+            leavableStatuses = setOf(ListStatus.PLAN_TO_WATCH), removeHistoryClearsAllPlays = true)
     } else {
         ListCapabilities(
             listOf(ListStatus.WATCHING, ListStatus.COMPLETED, ListStatus.DROPPED, ListStatus.PLAN_TO_WATCH),
             setOf(ListStatus.PLAN_TO_WATCH, ListStatus.DROPPED, ListStatus.COMPLETED),
             score = true, episodeProgress = true, rewatch = false, changeEntry = false, removeFromHistory = true,
-            leavableStatuses = setOf(ListStatus.PLAN_TO_WATCH, ListStatus.DROPPED),
+            leavableStatuses = setOf(ListStatus.PLAN_TO_WATCH, ListStatus.DROPPED), removeHistoryClearsAllPlays = true,
         )
     }
 }
@@ -146,7 +153,7 @@ private val mdbListTabCaps = { type: ListMediaType ->
             listOf(ListStatus.WATCHING, ListStatus.COMPLETED, ListStatus.DROPPED, ListStatus.PLAN_TO_WATCH),
             setOf(ListStatus.PLAN_TO_WATCH, ListStatus.COMPLETED, ListStatus.DROPPED),
             score = false, episodeProgress = false, rewatch = false, changeEntry = false, removeFromHistory = true,
-            leavableStatuses = setOf(ListStatus.PLAN_TO_WATCH, ListStatus.DROPPED),
+            leavableStatuses = setOf(ListStatus.PLAN_TO_WATCH, ListStatus.DROPPED), dropRequiresHistory = true,
         )
     }
 }
@@ -367,6 +374,34 @@ class ListsTabUiTest {
     }
 
     @Test
+    fun mdbListCardOffersDroppedOnlyWithWatchedHistory() = runDesktopComposeUiTest(width = 900, height = 700) {
+        val unwatched = mdbListService().entries.single().copy(status = ListStatus.PLAN_TO_WATCH, watchedEpisodes = 0)
+        setContent {
+            Page {
+                Column(Modifier.padding(24.dp).width(560.dp)) {
+                    ListEntryCard(unwatched, mdbListTabCaps(unwatched.type), saving = false, onChange = {}, onOpen = {}, onRemoveFromHistory = {}, onEditDetails = null)
+                }
+            }
+        }
+        onNodeWithContentDescription("Status: Plan to Watch. Change status").performClick()
+        // MDBList rejects a drop for a show with no watched history, so the card does not offer it.
+        onNodeWithText("Completed").assertExists()
+        onAllNodesWithText("Dropped").assertCountEquals(0)
+    }
+
+    @Test
+    fun refreshAsksTheServiceForFreshDataBeforeReloading() = runDesktopComposeUiTest(width = 1280, height = 760) {
+        val trakt = traktService()
+        setContent { Page { ListsTabContent(null, listOf(trakt), prefsFor(ListServiceId.TRAKT), profileId = 1, activeProfile = { 1 }) } }
+        waitFor { onAllNodesWithText("The Bear").fetchSemanticsNodes().isNotEmpty() }
+        val readsBefore = trakt.pageReads
+        assertEquals(0, trakt.refreshes)
+        onNodeWithText("Refresh").performClick()
+        waitFor { trakt.pageReads > readsBefore }
+        assertEquals(1, trakt.refreshes)
+    }
+
+    @Test
     fun malCardKeepsItsMenu() = runDesktopComposeUiTest(width = 900, height = 700) {
         val mal = malService().entries.first()
         var edits by mutableIntStateOf(0)
@@ -445,6 +480,8 @@ class ListsTabUiTest {
         onNodeWithText("Remove from watch history…").performClick()
         onNodeWithText("Remove from watch history?").assertExists()
         onNodeWithText("6 watched entries", substring = true).assertExists()
+        // Trakt's removal clears every play, which the count alone would understate.
+        onNodeWithText("On Trakt this also removes every play of this title, including rewatches and specials.", substring = true).assertExists()
         capture("remove-from-history-confirmation")
         assertTrue(trakt.removedFromHistory.isEmpty(), "Nothing is removed before the user confirms")
         onNodeWithText("Remove").performClick()

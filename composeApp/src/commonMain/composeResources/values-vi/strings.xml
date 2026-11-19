@@ -3458,6 +3458,7 @@
     <plurals name="lists_remove_history_message">
         <item quantity="other">Thao tác này xóa %1$d mục đã xem của “%2$s” khỏi Starlit và các dịch vụ đã kết nối của bạn. Trạng thái trên %3$s có thể thay đổi.</item>
     </plurals>
+    <string name="lists_remove_history_all_plays">Trên %1$s, thao tác này cũng xóa mọi lượt xem của tựa này, bao gồm cả lượt xem lại và các tập đặc biệt.</string>
     <plurals name="lists_removed_history">
         <item quantity="other">Đã xóa %1$d mục khỏi lịch sử xem</item>
     </plurals>

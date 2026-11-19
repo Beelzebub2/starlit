@@ -3425,6 +3425,7 @@
         <item quantity="one">Isto remove %1$d registo visto de «%2$s» do Starlit e dos teus serviços ligados. O estado no %3$s pode mudar.</item>
         <item quantity="other">Isto remove %1$d registos vistos de «%2$s» do Starlit e dos teus serviços ligados. O estado no %3$s pode mudar.</item>
     </plurals>
+    <string name="lists_remove_history_all_plays">No %1$s isto também remove todas as visualizações deste título, incluindo revisualizações e episódios especiais.</string>
     <plurals name="lists_removed_history">
         <item quantity="one">Removido %1$d registo do histórico de visualização</item>
         <item quantity="other">Removidos %1$d registos do histórico de visualização</item>

@@ -16,6 +16,7 @@ import com.nuvio.app.features.tracking.TrackingListStatus
 import com.nuvio.app.features.tracking.TrackingMediaKind
 import com.nuvio.app.features.tracking.TrackingMediaReference
 import com.nuvio.app.features.tracking.TrackingMutationResult
+import com.nuvio.app.features.tracking.TrackingRefreshIntent
 import com.nuvio.app.features.tracking.buildTrackingMediaReference
 import kotlinx.coroutines.flow.StateFlow
 
@@ -79,6 +80,18 @@ private fun SimklLibraryEntry.trackingReference(): TrackingMediaReference? {
     )
 }
 
+/**
+ * Whether a Simkl entry can be the title of a Starlit catalog type: a movie only matches a movie entry and a series
+ * only a show/anime entry, so a TMDB movie and show that share a number never match each other. Other catalog types
+ * (e.g. "anime", which can be either) are not narrowed.
+ */
+private fun SimklLibraryEntry.matchesCatalogType(catalogType: String): Boolean =
+    when (catalogType.trim().lowercase()) {
+        "movie", "film" -> isMovieEntry()
+        "series", "show", "tv" -> !isMovieEntry()
+        else -> true
+    }
+
 private fun SimklLibraryEntry.updatedAtEpochMs(): Long =
     parseSimklUtcEpochMs(lastWatchedAt) ?: parseSimklUtcEpochMs(addedToWatchlistAt) ?: 0L
 
@@ -114,6 +127,8 @@ class SimklListAdapter(
     private val writes: SimklListWrites,
     private val history: ListHistoryWrites,
     private val signedInAs: () -> String?,
+    /** Pulls Simkl again into the local snapshot that [entries] reads. */
+    private val refreshSnapshot: suspend () -> Unit = {},
 ) : ListService {
     override val id = ListServiceId.SIMKL
 
@@ -152,6 +167,8 @@ class SimklListAdapter(
 
     override fun profileUrl(): String? = "https://simkl.com/"
 
+    override suspend fun refresh() = refreshSnapshot()
+
     override suspend fun summary(): ListSummary {
         val all = entries()
         val counts = buildMap<ListStatus?, Int> {
@@ -188,7 +205,9 @@ class SimklListAdapter(
     override suspend fun entryFor(meta: MetaDetails): ListEntry? {
         val ids = buildTrackingMediaReference(meta.type, meta.id).ids
         if (!ids.hasAny) return null
-        val match = entries().firstOrNull { it.media?.toTrackingExternalIds()?.sharesIdentityWith(ids) == true }
+        val match = entries()
+            .filter { it.matchesCatalogType(meta.type) }
+            .firstOrNull { it.media?.toTrackingExternalIds()?.sharesIdentityWith(ids) == true }
             ?: return null
         return match.toListEntry()?.copy(catalogType = meta.type, catalogId = meta.id)
     }
@@ -253,7 +272,9 @@ class SimklListAdapter(
         if (type != null && catalogId != null) {
             val fromCatalog = buildTrackingMediaReference(type, catalogId, title = entry.title)
             if (fromCatalog.ids.hasAny) {
-                return all.firstOrNull { it.media?.toTrackingExternalIds()?.sharesIdentityWith(fromCatalog.ids) == true }
+                return all
+                    .filter { it.matchesCatalogType(type) }
+                    .firstOrNull { it.media?.toTrackingExternalIds()?.sharesIdentityWith(fromCatalog.ids) == true }
                     ?.trackingReference()
                     ?: fromCatalog
             }
@@ -276,4 +297,5 @@ object SimklListService : ListService by SimklListAdapter(
     writes = DefaultSimklListWrites,
     history = ListHistoryWrites(),
     signedInAs = { null },
+    refreshSnapshot = { SimklSyncRepository.refresh(TrackingRefreshIntent.USER_INITIATED) },
 )

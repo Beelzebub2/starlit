@@ -3417,6 +3417,7 @@
         <item quantity="one">Detta tar bort %1$d visningspost för ”%2$s” från Starlit och dina anslutna tjänster. Statusen på %3$s kan ändras.</item>
         <item quantity="other">Detta tar bort %1$d visningsposter för ”%2$s” från Starlit och dina anslutna tjänster. Statusen på %3$s kan ändras.</item>
     </plurals>
+    <string name="lists_remove_history_all_plays">På %1$s tar detta även bort varje visning av titeln, inklusive omtittningar och specialavsnitt.</string>
     <plurals name="lists_removed_history">
         <item quantity="one">%1$d post togs bort från tittarhistoriken</item>
         <item quantity="other">%1$d poster togs bort från tittarhistoriken</item>

@@ -25,6 +25,7 @@ private class FakeTraktPort(
     var loads = 0
     var profile = 1
     var now = 1_000L
+    var invalidations = 0
 
     override fun activeProfileId(): Int = profile
 
@@ -58,6 +59,10 @@ private class FakeTraktPort(
     override fun todayIsoDate(): String = "2026-01-01"
 
     override fun nowEpochMs(): Long = now
+
+    override fun invalidate() {
+        invalidations += 1
+    }
 }
 
 private fun metaFor(id: String, episodes: Int) = seriesMeta(episodes).copy(id = id)
@@ -195,7 +200,7 @@ class TraktListServiceTest {
         assertFalse(impact.hidesFromContinueWatching, "Completed never warns about Continue Watching")
         val completed = svc.apply(entry, ListChange.SetStatus(ListStatus.COMPLETED))
 
-        assertEquals(listOf("poster:tt1"), history.calls)
+        assertEquals(listOf("mark:series:tt1"), history.calls)
         assertTrue(trakt.calls.isEmpty())
         assertEquals(ListStatus.COMPLETED, completed.status)
         assertEquals(12, completed.watchedEpisodes)
@@ -443,7 +448,7 @@ class TraktListServiceTest {
         val fresh = newListEntryFor(ListServiceId.TRAKT, meta, titleKind(meta, malResolved = false), malId = null)
         assertEquals(ListChangeImpact(4, hidesFromContinueWatching = false), svc.impact(fresh, ListChange.SetStatus(ListStatus.COMPLETED)))
         svc.apply(fresh, ListChange.SetStatus(ListStatus.COMPLETED))
-        assertEquals(listOf("poster:tt9"), history.calls)
+        assertEquals(listOf("mark:series:tt9"), history.calls)
     }
 
     @Test fun completingAMovieNeedsNoConfirmation(): Unit = runBlocking {
@@ -456,5 +461,24 @@ class TraktListServiceTest {
         assertFalse(impact.needsConfirmation())
         svc.apply(stub, ListChange.SetStatus(ListStatus.PLAN_TO_WATCH))
         assertEquals(listOf("watchlist:add:tt8"), trakt.calls)
+    }
+
+    @Test fun refreshDropsTheCachedSnapshotSoTheNextReadLoadsAgain(): Unit = runBlocking {
+        val trakt = watchingShow()
+        val svc = adapter(trakt)
+        svc.page(null, svc.sorts.first(), 0)
+        svc.page(null, svc.sorts.first(), 0)
+        assertEquals(1, trakt.loads, "within the TTL the snapshot is served from the cache")
+        svc.refresh()
+        assertEquals(1, trakt.invalidations)
+        svc.page(null, svc.sorts.first(), 0)
+        assertEquals(2, trakt.loads)
+    }
+
+    @Test fun historyRemovalIsDeclaredToClearEveryPlay() {
+        val svc = adapter()
+        assertTrue(svc.capabilities(ListMediaType.SERIES).removeHistoryClearsAllPlays)
+        assertTrue(svc.capabilities(ListMediaType.MOVIE).removeHistoryClearsAllPlays)
+        assertFalse(svc.capabilities(ListMediaType.SERIES).dropRequiresHistory)
     }
 }

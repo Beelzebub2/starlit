@@ -3445,6 +3445,7 @@
         <item quantity="many">سيؤدي هذا إلى إزالة %1$d سجل مشاهدة لـ «%2$s» من Starlit وخدماتك المرتبطة. قد تتغير حالته على %3$s.</item>
         <item quantity="other">سيؤدي هذا إلى إزالة %1$d سجل مشاهدة لـ «%2$s» من Starlit وخدماتك المرتبطة. قد تتغير حالته على %3$s.</item>
     </plurals>
+    <string name="lists_remove_history_all_plays">على %1$s يزيل هذا أيضًا كل مرات مشاهدة هذا العنوان، بما في ذلك إعادة المشاهدة والحلقات الخاصة.</string>
     <plurals name="lists_removed_history">
         <item quantity="zero">لم تتم إزالة أي سجل (%1$d) من سجل المشاهدة</item>
         <item quantity="one">تمت إزالة سجل واحد (%1$d) من سجل المشاهدة</item>

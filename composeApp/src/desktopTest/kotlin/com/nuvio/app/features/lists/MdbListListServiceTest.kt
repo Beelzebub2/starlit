@@ -215,7 +215,7 @@ class MdbListListServiceTest {
         assertEquals(9, svc.impact(seed, ListChange.SetStatus(ListStatus.COMPLETED)).episodesMarked)
         val completed = svc.apply(seed, ListChange.SetStatus(ListStatus.COMPLETED))
 
-        assertEquals(listOf("poster:tt1"), history.calls)
+        assertEquals(listOf("mark:series:tt1"), history.calls)
         assertTrue(port.calls.isEmpty())
         assertEquals(ListStatus.COMPLETED, completed.status)
         assertFailsWith<IllegalArgumentException> { svc.apply(seed, ListChange.SetScore(5)) }
@@ -278,6 +278,25 @@ class MdbListListServiceTest {
         val fresh = newListEntryFor(ListServiceId.MDBLIST, meta, titleKind(meta, malResolved = false), malId = null)
         assertEquals(ListChangeImpact(4, hidesFromContinueWatching = false), svc.impact(fresh, ListChange.SetStatus(ListStatus.COMPLETED)))
         svc.apply(fresh, ListChange.SetStatus(ListStatus.COMPLETED))
-        assertEquals(listOf("poster:tt9"), history.calls)
+        assertEquals(listOf("mark:series:tt9"), history.calls)
+    }
+
+    @Test fun droppedNeedsWatchedHistoryOnlyForShows() {
+        val svc = adapter()
+        assertTrue(svc.capabilities(ListMediaType.SERIES).dropRequiresHistory)
+        assertFalse(svc.capabilities(ListMediaType.MOVIE).dropRequiresHistory)
+        assertFalse(svc.capabilities(ListMediaType.SERIES).removeHistoryClearsAllPlays)
+    }
+
+    @Test fun refreshDropsTheCachedSnapshotSoTheNextReadLoadsAgain(): Unit = runBlocking {
+        val port = FakeMdbListPort(MdbListListSnapshot(watchlist = listOf(watchlist("tt1", "series", "Alpha"))))
+        val svc = adapter(port)
+        svc.page(null, svc.sorts.first(), 0)
+        svc.page(null, svc.sorts.first(), 0)
+        assertEquals(1, port.loads, "within the TTL the snapshot is served from the cache")
+        port.snapshot = MdbListListSnapshot(watchlist = listOf(watchlist("tt1", "series", "Alpha"), watchlist("tt2", "series", "Bravo")))
+        svc.refresh()
+        assertEquals(listOf("Alpha", "Bravo"), svc.page(null, svc.sorts.first { it.label == "Title" }, 0).entries.map { it.title })
+        assertEquals(2, port.loads)
     }
 }

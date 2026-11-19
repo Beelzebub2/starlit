@@ -3461,6 +3461,7 @@ Nagbalik ang</string>
         <item quantity="one">Aalisin nito ang %1$d entry ng panonood ng “%2$s” sa Starlit at sa mga nakakonekta mong serbisyo. Maaaring magbago ang status nito sa %3$s.</item>
         <item quantity="other">Aalisin nito ang %1$d entry ng panonood ng “%2$s” sa Starlit at sa mga nakakonekta mong serbisyo. Maaaring magbago ang status nito sa %3$s.</item>
     </plurals>
+    <string name="lists_remove_history_all_plays">Sa %1$s, inaalis din nito ang bawat panonood ng pamagat na ito, kasama ang mga muling panonood at specials.</string>
     <plurals name="lists_removed_history">
         <item quantity="one">Inalis ang %1$d entry sa kasaysayan ng panonood</item>
         <item quantity="other">Inalis ang %1$d entry sa kasaysayan ng panonood</item>

@@ -3451,6 +3451,7 @@
     <plurals name="lists_remove_history_message">
         <item quantity="other">「%2$s」の視聴履歴%1$d件を、Starlitと接続済みのサービスから削除します。%3$sでのステータスが変わる場合があります。</item>
     </plurals>
+    <string name="lists_remove_history_all_plays">%1$s では、再視聴やスペシャルを含め、この作品のすべての視聴記録も削除されます。</string>
     <plurals name="lists_removed_history">
         <item quantity="other">視聴履歴から%1$d件を削除しました</item>
     </plurals>

@@ -3417,6 +3417,7 @@
         <item quantity="one">Tämä poistaa %1$d katselumerkinnän nimikkeestä ”%2$s” Starlitista ja yhdistetyistä palveluistasi. Tila palvelussa %3$s voi muuttua.</item>
         <item quantity="other">Tämä poistaa %1$d katselumerkintää nimikkeestä ”%2$s” Starlitista ja yhdistetyistä palveluistasi. Tila palvelussa %3$s voi muuttua.</item>
     </plurals>
+    <string name="lists_remove_history_all_plays">Palvelussa %1$s tämä poistaa myös nimikkeen jokaisen katselukerran, myös uudelleenkatselut ja erikoisjaksot.</string>
     <plurals name="lists_removed_history">
         <item quantity="one">%1$d merkintä poistettu katseluhistoriasta</item>
         <item quantity="other">%1$d merkintää poistettu katseluhistoriasta</item>

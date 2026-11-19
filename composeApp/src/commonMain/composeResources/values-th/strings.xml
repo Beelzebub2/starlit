@@ -3440,6 +3440,7 @@
     <plurals name="lists_remove_history_message">
         <item quantity="other">การดำเนินการนี้จะลบรายการรับชมของ “%2$s” จำนวน %1$d รายการออกจาก Starlit และบริการที่เชื่อมต่อของคุณ สถานะบน %3$s อาจเปลี่ยนไป</item>
     </plurals>
+    <string name="lists_remove_history_all_plays">บน %1$s การดำเนินการนี้จะลบการรับชมทุกครั้งของรายการนี้ด้วย รวมถึงการดูซ้ำและตอนพิเศษ</string>
     <plurals name="lists_removed_history">
         <item quantity="other">ลบ %1$d รายการออกจากประวัติการรับชมแล้ว</item>
     </plurals>

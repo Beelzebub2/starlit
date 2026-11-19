@@ -3421,6 +3421,7 @@
         <item quantity="one">این کار %1$d مورد تماشای «%2$s» را از Starlit و سرویس‌های متصل شما حذف می‌کند. وضعیت آن در %3$s ممکن است تغییر کند.</item>
         <item quantity="other">این کار %1$d مورد تماشای «%2$s» را از Starlit و سرویس‌های متصل شما حذف می‌کند. وضعیت آن در %3$s ممکن است تغییر کند.</item>
     </plurals>
+    <string name="lists_remove_history_all_plays">در %1$s این کار همهٔ دفعات تماشای این عنوان را هم حذف می‌کند، از جمله تماشای دوباره و قسمت‌های ویژه.</string>
     <plurals name="lists_removed_history">
         <item quantity="one">%1$d مورد از تاریخچه تماشا حذف شد</item>
         <item quantity="other">%1$d مورد از تاریخچه تماشا حذف شد</item>

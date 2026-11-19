@@ -411,7 +411,7 @@ fun DesktopDetailHero(
                     )
                 }
             }
-            // Emits nothing for non-anime titles, so the hero gets no empty spaced slot.
+            // Emits nothing when no list service tracks the title, so the hero gets no empty spaced slot.
             com.nuvio.app.features.myanimelist.MyAnimeListControls(meta)
         }
 

@@ -3455,6 +3455,7 @@ Had permintaan</string>
     <plurals name="lists_remove_history_message">
         <item quantity="other">Ini mengalih keluar %1$d entri tontonan “%2$s” daripada Starlit dan perkhidmatan anda yang disambungkan. Statusnya di %3$s mungkin berubah.</item>
     </plurals>
+    <string name="lists_remove_history_all_plays">Di %1$s, ini turut membuang setiap tontonan tajuk ini, termasuk tontonan semula dan episod khas.</string>
     <plurals name="lists_removed_history">
         <item quantity="other">%1$d entri dialih keluar daripada sejarah tontonan</item>
     </plurals>

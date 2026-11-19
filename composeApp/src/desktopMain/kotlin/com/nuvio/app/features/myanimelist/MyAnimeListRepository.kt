@@ -18,7 +18,6 @@ import java.util.concurrent.ConcurrentHashMap
 internal data class MalConnectionState(val profileId: Int = -1, val connected: Boolean = false,
     val username: String = "", val clientId: String = "", val busy: Boolean = false,
     val connecting: Boolean = false, val revision: Long = 0, val error: String? = null,
-    val showTab: Boolean = false,
     val playbackUpdateThresholdPercent: Int = DefaultMalPlaybackUpdateThresholdPercent)
 
 internal object MyAnimeListRepository {
@@ -44,7 +43,6 @@ internal object MyAnimeListRepository {
         val expected = generation
         mutableState.value = MalConnectionState(profileId = profile, revision = expected,
             clientId = store.getString("client_$profile").orEmpty(), busy = true,
-            showTab = store.getString("show_tab_$profile") == "true",
             playbackUpdateThresholdPercent = normalizeMalPlaybackUpdateThresholdPercent(
                 store.getString("playback_update_threshold_$profile")?.toIntOrNull()
                     ?: DefaultMalPlaybackUpdateThresholdPercent,
@@ -81,15 +79,6 @@ internal object MyAnimeListRepository {
         store.remove("tokens_$profile"); store.remove("username_$profile"); store.remove("sync_owner_$profile")
         store.remove("rewatch_epoch_$profile")
         ensureLoaded()
-    }
-
-    /** Visibility is optional and local to the Starlit profile; it never changes the MAL account. */
-    @Synchronized fun setTabVisible(visible: Boolean) {
-        ensureLoaded()
-        val profile = ProfileRepository.activeProfileId
-        if (visible) check(mutableState.value.connected) { "Connect MyAnimeList before showing its tab." }
-        store.putString("show_tab_$profile", visible.toString())
-        mutableState.value = mutableState.value.copy(showTab = visible)
     }
 
     @Synchronized fun playbackUpdateThresholdPercent(): Int {
@@ -248,8 +237,6 @@ internal object MyAnimeListRepository {
     suspend fun animeList(status: MalStatus? = null, offset: Int = 0, sort: MalListSort = MalListSort.UPDATED) =
         authorized { client.animeList(it, status, offset, sort = sort) }
 
-    /** Runs list writes that must finish even after the MyAnimeList tab is closed. */
-    internal fun launchDetached(block: suspend CoroutineScope.() -> Unit): Job = scope.launch(block = block)
     suspend fun search(name: String) = authorized { client.search(name, it) }
 
     private fun rewatchProgressKey(profile: Int, id: Int) =

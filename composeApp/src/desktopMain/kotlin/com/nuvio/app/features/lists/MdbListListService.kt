@@ -103,6 +103,8 @@ internal class MdbListListAdapter(
             changeEntry = false,
             removeFromHistory = true,
             leavableStatuses = setOf(ListStatus.PLAN_TO_WATCH, ListStatus.DROPPED),
+            // MDBList rejects a drop for a show with no watched history.
+            dropRequiresHistory = true,
         )
         ListMediaType.MOVIE -> ListCapabilities(
             statuses = listOf(ListStatus.COMPLETED, ListStatus.PLAN_TO_WATCH),
@@ -117,6 +119,11 @@ internal class MdbListListAdapter(
     }
 
     override fun profileUrl(): String? = "https://mdblist.com/"
+
+    /** The next read loads again; that load refreshes the MDBList library and watched snapshot itself. */
+    override suspend fun refresh() {
+        cacheMutex.withLock { cache = null }
+    }
 
     override suspend fun summary(): ListSummary {
         val all = visibleStates()

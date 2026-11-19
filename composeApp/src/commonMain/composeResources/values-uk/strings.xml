@@ -3465,6 +3465,7 @@
         <item quantity="many">Буде видалено %1$d записів про перегляд «%2$s» зі Starlit і підключених сервісів. Статус на %3$s може змінитися.</item>
         <item quantity="other">Буде видалено %1$d запису про перегляд «%2$s» зі Starlit і підключених сервісів. Статус на %3$s може змінитися.</item>
     </plurals>
+    <string name="lists_remove_history_all_plays">У %1$s це також видаляє кожен перегляд цього тайтлу, зокрема повторні перегляди та спецвипуски.</string>
     <plurals name="lists_removed_history">
         <item quantity="one">З історії переглядів видалено %1$d запис</item>
         <item quantity="few">З історії переглядів видалено %1$d записи</item>

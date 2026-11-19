@@ -3226,6 +3226,7 @@
         <item quantity="one">This removes %1$d watched entry of &quot;%2$s&quot; from Starlit and your connected services. Its status on %3$s may change.</item>
         <item quantity="other">This removes %1$d watched entries of &quot;%2$s&quot; from Starlit and your connected services. Its status on %3$s may change.</item>
     </plurals>
+    <string name="lists_remove_history_all_plays">On %1$s this also removes every play of this title, including rewatches and specials.</string>
     <plurals name="lists_removed_history">
         <item quantity="one">Removed %1$d entry from watch history</item>
         <item quantity="other">Removed %1$d entries from watch history</item>

@@ -194,7 +194,7 @@ internal val ListServiceId.tagPrefix: String get() = if (this == ListServiceId.M
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    ListStatusPicker(entry.status, capabilities, onChange, Modifier.weight(1f, fill = false))
+                    ListStatusPicker(entry, capabilities, onChange, Modifier.weight(1f, fill = false))
                     if (capabilities.score) ListScorePicker(entry.score, onSelect = { onChange(ListChange.SetScore(it)) })
                 }
                 if (series && capabilities.episodeProgress) {
@@ -349,11 +349,12 @@ internal val ListServiceId.tagPrefix: String get() = if (this == ListServiceId.M
 }
 
 @Composable private fun ListStatusPicker(
-    status: ListStatus?,
+    entry: ListEntry,
     capabilities: ListCapabilities,
     onChange: (ListChange) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val status = entry.status
     val colors = MaterialTheme.nuvio.colors
     val accent = listStatusAccent(status)
     var open by remember { mutableStateOf(false) }
@@ -377,7 +378,7 @@ internal val ListServiceId.tagPrefix: String get() = if (this == ListServiceId.M
             Icon(Icons.Rounded.ExpandMore, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(16.dp))
         }
         ListMenu(expanded = open, onDismiss = { open = false }) {
-            pickerStatuses(capabilities).forEach { option ->
+            pickerStatuses(capabilities, entry).forEach { option ->
                 ListMenuItem(
                     text = listStatusLabel(option),
                     selected = option == status,

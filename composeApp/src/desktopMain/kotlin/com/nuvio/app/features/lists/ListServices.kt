@@ -6,13 +6,9 @@ object ListServices {
     /** Tests (and later UI tests) inject fakes here. */
     internal var overrideForTests: List<ListService>? = null
 
-    // Adapters are added as Tasks 3-6 land.
     private val registered: List<ListService> = listOf(MalListService, SimklListService, TraktListService, MdbListListService)
 
     fun all(): List<ListService> = overrideForTests ?: registered
-
-    fun service(id: ListServiceId): ListService =
-        all().firstOrNull { it.id == id } ?: error("No list service registered for $id")
 }
 
 fun titleCandidates(

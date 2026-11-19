@@ -3460,6 +3460,7 @@
         <item quantity="one">Hiermee wordt %1$d kijkvermelding van ‘%2$s’ verwijderd uit Starlit en je gekoppelde services. De status op %3$s kan veranderen.</item>
         <item quantity="other">Hiermee worden %1$d kijkvermeldingen van ‘%2$s’ verwijderd uit Starlit en je gekoppelde services. De status op %3$s kan veranderen.</item>
     </plurals>
+    <string name="lists_remove_history_all_plays">Op %1$s verwijdert dit ook elke weergave van deze titel, inclusief herhaalde kijkbeurten en specials.</string>
     <plurals name="lists_removed_history">
         <item quantity="one">%1$d vermelding uit kijkgeschiedenis verwijderd</item>
         <item quantity="other">%1$d vermeldingen uit kijkgeschiedenis verwijderd</item>

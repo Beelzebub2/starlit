@@ -23,6 +23,10 @@ data class ListCapabilities(
     val removeFromHistory: Boolean,
     /** Statuses a user can leave without picking another (watchlist/dropped on history-derived services). */
     val leavableStatuses: Set<ListStatus> = emptySet(),
+    /** Dropped is only accepted for titles with watched history (MDBList), so it is not offered without any. */
+    val dropRequiresHistory: Boolean = false,
+    /** Removing watch history clears every play of the title, rewatches included (Trakt's `/sync/history/remove`). */
+    val removeHistoryClearsAllPlays: Boolean = false,
 )
 
 data class ListSort(val key: String, val label: String)
@@ -83,4 +87,7 @@ interface ListService {
     suspend fun impact(entry: ListEntry, change: ListChange): ListChangeImpact
     suspend fun apply(entry: ListEntry, change: ListChange): ListEntry
     suspend fun removeFromHistory(entry: ListEntry): Int
+
+    /** Drops anything cached so the next read is fresh from the service; called by the lists tab's Refresh. */
+    suspend fun refresh() {}
 }

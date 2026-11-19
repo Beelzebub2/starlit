@@ -3471,6 +3471,7 @@
         <item quantity="one">এতে Starlit ও আপনার সংযুক্ত সেবা থেকে “%2$s”-এর %1$d টি দেখার এন্ট্রি সরে যাবে। %3$s-এ এর স্ট্যাটাস বদলাতে পারে।</item>
         <item quantity="other">এতে Starlit ও আপনার সংযুক্ত সেবা থেকে “%2$s”-এর %1$d টি দেখার এন্ট্রি সরে যাবে। %3$s-এ এর স্ট্যাটাস বদলাতে পারে।</item>
     </plurals>
+    <string name="lists_remove_history_all_plays">%1$s-এ এটি এই শিরোনামের প্রতিটি দেখাও মুছে দেয়, পুনরায় দেখা ও বিশেষ পর্বসহ।</string>
     <plurals name="lists_removed_history">
         <item quantity="one">দেখার ইতিহাস থেকে %1$d টি এন্ট্রি সরানো হয়েছে</item>
         <item quantity="other">দেখার ইতিহাস থেকে %1$d টি এন্ট্রি সরানো হয়েছে</item>

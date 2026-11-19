@@ -3436,6 +3436,7 @@ Du bruker denne funksjonen helt på eget ansvar. P2P kan deaktiveres når som he
         <item quantity="one">Dette fjerner %1$d visningsoppføring for «%2$s» fra Starlit og de tilkoblede tjenestene dine. Statusen på %3$s kan endres.</item>
         <item quantity="other">Dette fjerner %1$d visningsoppføringer for «%2$s» fra Starlit og de tilkoblede tjenestene dine. Statusen på %3$s kan endres.</item>
     </plurals>
+    <string name="lists_remove_history_all_plays">På %1$s fjerner dette også hver avspilling av tittelen, inkludert gjensyn og spesialepisoder.</string>
     <plurals name="lists_removed_history">
         <item quantity="one">Fjernet %1$d oppføring fra visningsloggen</item>
         <item quantity="other">Fjernet %1$d oppføringer fra visningsloggen</item>

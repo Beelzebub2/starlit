@@ -16,10 +16,25 @@ class ListHistoryWritesTest {
         assertTrue(movie.calls.isEmpty())
     }
 
-    @Test fun completedTogglesAnUnwatchedTitleOnce(): Unit = runBlocking {
+    @Test fun completedMarksAnUnwatchedTitleOnceWithoutToggling(): Unit = runBlocking {
         val port = FakeHistoryPort(meta = seriesMeta(2))
         ListHistoryWrites(port).markCompleted("series", "tt1", "Show", null)
-        assertEquals(listOf("poster:tt1"), port.calls)
+        assertEquals(listOf("mark:series:tt1"), port.calls)
+        val movie = FakeHistoryPort()
+        ListHistoryWrites(movie).markCompleted("movie", "tt2", "Film", null)
+        assertEquals(listOf("mark:movie:tt2"), movie.calls)
+    }
+
+    @Test fun completedNeverUnmarksASeriesThatBecameWatchedWhileEpisodesLoaded(): Unit = runBlocking {
+        // A background sync completes the series between the "not watched" check and the write.
+        val port = FakeHistoryPort(meta = seriesMeta(3))
+        port.onFetch = { port.fullyWatched = true }
+        ListHistoryWrites(port).markCompleted("series", "tt1", "Show", null)
+        assertTrue(port.calls.isEmpty(), "nothing may be toggled or unmarked: ${port.calls}")
+        // Marking never goes through the poster toggle, so even a stale "not watched" check can only mark.
+        val stale = FakeHistoryPort(meta = seriesMeta(3), watched = mutableSetOf("1:1", "1:2", "1:3"))
+        ListHistoryWrites(stale).markCompleted("series", "tt1", "Show", null)
+        assertEquals(listOf("mark:series:tt1"), stale.calls)
     }
 
     @Test fun plusAndMinusTargetTheRightEpisodes(): Unit = runBlocking {

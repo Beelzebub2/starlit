@@ -66,12 +66,14 @@ class SimklListServiceTest {
         entries: List<SimklLibraryEntry> = emptyList(),
         writes: SimklListWrites = RecordingWrites(),
         port: FakeHistoryPort = FakeHistoryPort(),
+        refreshSnapshot: suspend () -> Unit = {},
     ) = SimklListAdapter(
         entries = { entries },
         connected = MutableStateFlow(true),
         writes = writes,
         history = ListHistoryWrites(port),
         signedInAs = { null },
+        refreshSnapshot = refreshSnapshot,
     )
 
     @Test fun moviesHaveNoWatchingOrOnHold() {
@@ -104,7 +106,7 @@ class SimklListServiceTest {
         val svc = adapter(entries = listOf(simklEntry("Show", 1, SimklListStatus.WATCHING)), writes = writes, port = port)
         val entry = svc.entryFor(MetaDetails(id = "tt1", type = "series", name = "Show"))!!
         val updated = svc.apply(entry, ListChange.SetStatus(ListStatus.COMPLETED))
-        assertEquals(listOf("poster:tt1"), port.calls)
+        assertEquals(listOf("mark:series:tt1"), port.calls)
         assertEquals(listOf("move:COMPLETED"), writes.calls)
         assertEquals(ListStatus.COMPLETED, updated.status)
     }
@@ -212,5 +214,41 @@ class SimklListServiceTest {
         val stub = newListEntryFor(ListServiceId.SIMKL, meta, titleKind(meta, malResolved = false), malId = null)
         assertFailsWith<IllegalStateException> { svc.apply(stub, ListChange.SetStatus(ListStatus.PLAN_TO_WATCH)) }
         assertTrue(writes.calls.isEmpty())
+    }
+
+    @Test fun refreshPullsSimklAgain(): Unit = runBlocking {
+        var refreshes = 0
+        adapter(refreshSnapshot = { refreshes++ }).refresh()
+        assertEquals(1, refreshes)
+    }
+
+    @Test fun aMovieAndAShowSharingATmdbNumberNeverMatchEachOther(): Unit = runBlocking {
+        fun tmdbEntry(title: String, simklId: Long, type: SimklMediaType): SimklLibraryEntry {
+            val media = SimklMedia(
+                title = title,
+                ids = mapOf("simkl" to JsonPrimitive(simklId), "imdb" to JsonPrimitive("tt$simklId"), "tmdb" to JsonPrimitive(100)),
+            )
+            return SimklLibraryEntry(
+                mediaType = type,
+                status = SimklListStatus.PLAN_TO_WATCH,
+                show = media.takeIf { type != SimklMediaType.MOVIES },
+                movie = media.takeIf { type == SimklMediaType.MOVIES },
+            )
+        }
+        // The show is listed first, so an unfiltered match would hand it to the movie (and the other way round).
+        val writes = RecordingWrites()
+        val svc = adapter(
+            entries = listOf(tmdbEntry("A Show", 2, SimklMediaType.SHOWS), tmdbEntry("A Movie", 1, SimklMediaType.MOVIES)),
+            writes = writes,
+        )
+        val movieMeta = MetaDetails(id = "tmdb:100", type = "movie", name = "A Movie")
+        val showMeta = MetaDetails(id = "tmdb:100", type = "series", name = "A Show")
+        assertEquals("A Movie", svc.entryFor(movieMeta)?.title)
+        assertEquals("A Show", svc.entryFor(showMeta)?.title)
+
+        // A title that is not keyed by its Simkl id yet is still sent as the right media type.
+        val stub = newListEntryFor(ListServiceId.SIMKL, movieMeta, titleKind(movieMeta, malResolved = false), malId = null)
+        svc.apply(stub, ListChange.SetStatus(ListStatus.PLAN_TO_WATCH))
+        assertEquals(1L, writes.media.single().ids.simkl)
     }
 }

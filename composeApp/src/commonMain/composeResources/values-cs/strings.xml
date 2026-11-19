@@ -3468,6 +3468,7 @@
         <item quantity="many">Tím se ze Starlit a připojených služeb odebere %1$d záznamu o zhlédnutí titulu „%2$s“. Stav na %3$s se může změnit.</item>
         <item quantity="other">Tím se ze Starlit a připojených služeb odebere %1$d záznamů o zhlédnutí titulu „%2$s“. Stav na %3$s se může změnit.</item>
     </plurals>
+    <string name="lists_remove_history_all_plays">Na %1$s se tím odstraní i každé zhlédnutí tohoto titulu, včetně opakovaných zhlédnutí a speciálů.</string>
     <plurals name="lists_removed_history">
         <item quantity="one">Z historie sledování byl odebrán %1$d záznam</item>
         <item quantity="few">Z historie sledování byly odebrány %1$d záznamy</item>

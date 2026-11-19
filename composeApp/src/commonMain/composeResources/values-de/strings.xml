@@ -3424,6 +3424,7 @@
         <item quantity="one">Dadurch wird %1$d Verlaufseintrag zu „%2$s“ aus Starlit und deinen verbundenen Diensten entfernt. Der Status auf %3$s kann sich ändern.</item>
         <item quantity="other">Dadurch werden %1$d Verlaufseinträge zu „%2$s“ aus Starlit und deinen verbundenen Diensten entfernt. Der Status auf %3$s kann sich ändern.</item>
     </plurals>
+    <string name="lists_remove_history_all_plays">Auf %1$s werden dabei auch alle Wiedergaben dieses Titels entfernt, einschließlich erneuter Ansichten und Specials.</string>
     <plurals name="lists_removed_history">
         <item quantity="one">%1$d Eintrag aus dem Verlauf entfernt</item>
         <item quantity="other">%1$d Einträge aus dem Verlauf entfernt</item>

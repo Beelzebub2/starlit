@@ -62,6 +62,9 @@ internal interface TraktListPort {
     fun isFullyWatchedLocally(type: String, id: String): Boolean
     fun todayIsoDate(): String
     fun nowEpochMs(): Long
+
+    /** Drops Trakt reads cached outside the adapter (the watched-shows snapshot behind aired counts). */
+    fun invalidate() {}
 }
 
 /** Trakt can only look titles up by its own, IMDb, TMDB or TVDB ids (not MAL, Kitsu, AniList, AniDB, Simkl, MDBList). */
@@ -108,6 +111,7 @@ internal class TraktListAdapter(
             changeEntry = false,
             removeFromHistory = true,
             leavableStatuses = setOf(ListStatus.PLAN_TO_WATCH, ListStatus.DROPPED),
+            removeHistoryClearsAllPlays = true,
         )
         ListMediaType.MOVIE -> ListCapabilities(
             statuses = listOf(ListStatus.COMPLETED, ListStatus.PLAN_TO_WATCH),
@@ -118,10 +122,16 @@ internal class TraktListAdapter(
             changeEntry = false,
             removeFromHistory = true,
             leavableStatuses = setOf(ListStatus.PLAN_TO_WATCH),
+            removeHistoryClearsAllPlays = true,
         )
     }
 
     override fun profileUrl(): String? = "https://trakt.tv/dashboard"
+
+    override suspend fun refresh() {
+        cacheMutex.withLock { cache = null }
+        port.invalidate()
+    }
 
     override suspend fun summary(): ListSummary {
         val all = visibleStates()
@@ -459,6 +469,8 @@ private object DefaultTraktListPort : TraktListPort {
     override fun todayIsoDate(): String = CurrentDateProvider.todayIsoDate()
 
     override fun nowEpochMs(): Long = System.currentTimeMillis()
+
+    override fun invalidate() = TraktWatchedShowSnapshotRepository.clear()
 }
 
 object TraktListService : ListService by TraktListAdapter(

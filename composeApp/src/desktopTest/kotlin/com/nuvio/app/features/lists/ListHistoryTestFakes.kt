@@ -9,10 +9,15 @@ internal class FakeHistoryPort(
     var meta: MetaDetails? = null,
     val watched: MutableSet<String> = mutableSetOf(),
     var fullyWatched: Boolean = false,
+    /** Runs while episodes load, e.g. to simulate a background sync finishing in that window. */
+    var onFetch: () -> Unit = {},
 ) : ListHistoryPort {
     val calls = mutableListOf<String>()
 
-    override suspend fun fetchMeta(type: String, id: String): MetaDetails? = meta
+    override suspend fun fetchMeta(type: String, id: String): MetaDetails? {
+        onFetch()
+        return meta
+    }
 
     override fun isWatched(id: String, type: String, season: Int?, episode: Int?): Boolean =
         watched.contains(if (season == null && episode == null) "title" else "$season:$episode")
@@ -21,6 +26,14 @@ internal class FakeHistoryPort(
 
     override suspend fun togglePosterWatched(preview: MetaPreview) {
         calls += "poster:${preview.id}"
+    }
+
+    override fun markMovieWatched(preview: MetaPreview) {
+        calls += "mark:movie:${preview.id}"
+    }
+
+    override fun markSeriesWatched(meta: MetaDetails) {
+        calls += "mark:series:${meta.id}"
     }
 
     override fun toggleEpisodeWatched(meta: MetaDetails, episode: MetaVideo, isCurrentlyWatched: Boolean) {

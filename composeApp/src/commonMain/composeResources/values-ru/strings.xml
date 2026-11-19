@@ -3474,6 +3474,7 @@
         <item quantity="many">Будут удалены %1$d записей о просмотре «%2$s» из Starlit и с подключённых сервисов. Статус на %3$s может измениться.</item>
         <item quantity="other">Будут удалены %1$d записи о просмотре «%2$s» из Starlit и с подключённых сервисов. Статус на %3$s может измениться.</item>
     </plurals>
+    <string name="lists_remove_history_all_plays">В %1$s также удаляются все просмотры этого тайтла, включая повторные просмотры и спецвыпуски.</string>
     <plurals name="lists_removed_history">
         <item quantity="one">Из истории просмотров удалена %1$d запись</item>
         <item quantity="few">Из истории просмотров удалены %1$d записи</item>

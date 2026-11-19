@@ -3460,6 +3460,7 @@
         <item quantity="one">Това премахва %1$d запис за гледане на „%2$s“ от Starlit и свързаните услуги. Статусът в %3$s може да се промени.</item>
         <item quantity="other">Това премахва %1$d записа за гледане на „%2$s“ от Starlit и свързаните услуги. Статусът в %3$s може да се промени.</item>
     </plurals>
+    <string name="lists_remove_history_all_plays">В %1$s това премахва и всяко гледане на заглавието, включително повторните гледания и специалните епизоди.</string>
     <plurals name="lists_removed_history">
         <item quantity="one">Премахнат е %1$d запис от историята на гледане</item>
         <item quantity="other">Премахнати са %1$d записа от историята на гледане</item>

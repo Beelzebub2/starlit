@@ -3467,6 +3467,7 @@
         <item quantity="many">Cela supprime %1$d d’entrées de visionnage de « %2$s » de Starlit et de vos services connectés. Son statut sur %3$s peut changer.</item>
         <item quantity="other">Cela supprime %1$d entrées de visionnage de « %2$s » de Starlit et de vos services connectés. Son statut sur %3$s peut changer.</item>
     </plurals>
+    <string name="lists_remove_history_all_plays">Sur %1$s, cela supprime aussi chaque visionnage de ce titre, y compris les revisionnages et les épisodes spéciaux.</string>
     <plurals name="lists_removed_history">
         <item quantity="one">%1$d entrée supprimée de l’historique de visionnage</item>
         <item quantity="many">%1$d d’entrées supprimées de l’historique de visionnage</item>

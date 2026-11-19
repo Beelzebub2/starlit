@@ -3446,6 +3446,7 @@
         <item quantity="many">Spowoduje to usunięcie %1$d wpisów o obejrzeniu „%2$s” ze Starlit i połączonych serwisów. Status w %3$s może się zmienić.</item>
         <item quantity="other">Spowoduje to usunięcie %1$d wpisu o obejrzeniu „%2$s” ze Starlit i połączonych serwisów. Status w %3$s może się zmienić.</item>
     </plurals>
+    <string name="lists_remove_history_all_plays">W %1$s usuwa to także każde obejrzenie tego tytułu, w tym powtórne obejrzenia i odcinki specjalne.</string>
     <plurals name="lists_removed_history">
         <item quantity="one">Usunięto %1$d wpis z historii oglądania</item>
         <item quantity="few">Usunięto %1$d wpisy z historii oglądania</item>

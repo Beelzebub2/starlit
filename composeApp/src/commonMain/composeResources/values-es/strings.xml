@@ -3436,6 +3436,7 @@ Utilizas esta función bajo tu propia responsabilidad. P2P se puede desactivar e
         <item quantity="one">Esto quita %1$d entrada vista de «%2$s» de Starlit y de tus servicios conectados. Su estado en %3$s puede cambiar.</item>
         <item quantity="other">Esto quita %1$d entradas vistas de «%2$s» de Starlit y de tus servicios conectados. Su estado en %3$s puede cambiar.</item>
     </plurals>
+    <string name="lists_remove_history_all_plays">En %1$s también se elimina cada reproducción de este título, incluidos los visionados repetidos y los especiales.</string>
     <plurals name="lists_removed_history">
         <item quantity="one">Se quitó %1$d entrada del historial de reproducción</item>
         <item quantity="other">Se quitaron %1$d entradas del historial de reproducción</item>

@@ -3431,6 +3431,7 @@
         <item quantity="one">Ez %1$d megtekintési bejegyzést töröl a(z) „%2$s” címhez a Starlitból és a csatlakoztatott szolgáltatásaidból. Az állapota itt: %3$s megváltozhat.</item>
         <item quantity="other">Ez %1$d megtekintési bejegyzést töröl a(z) „%2$s” címhez a Starlitból és a csatlakoztatott szolgáltatásaidból. Az állapota itt: %3$s megváltozhat.</item>
     </plurals>
+    <string name="lists_remove_history_all_plays">A(z) %1$s szolgáltatásban ez a cím minden megtekintését is eltávolítja, az újranézéseket és a különkiadásokat is beleértve.</string>
     <plurals name="lists_removed_history">
         <item quantity="one">%1$d bejegyzés eltávolítva a megtekintési előzményekből</item>
         <item quantity="other">%1$d bejegyzés eltávolítva a megtekintési előzményekből</item>

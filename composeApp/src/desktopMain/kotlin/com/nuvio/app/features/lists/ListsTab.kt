@@ -119,6 +119,7 @@ import nuvio.composeapp.generated.resources.lists_no_services_title
 import nuvio.composeapp.generated.resources.lists_open_on
 import nuvio.composeapp.generated.resources.lists_remove_entry_message
 import nuvio.composeapp.generated.resources.lists_remove_entry_title
+import nuvio.composeapp.generated.resources.lists_remove_history_all_plays
 import nuvio.composeapp.generated.resources.lists_remove_history_message
 import nuvio.composeapp.generated.resources.lists_remove_history_title
 import nuvio.composeapp.generated.resources.lists_removed_from
@@ -135,8 +136,11 @@ import org.jetbrains.compose.resources.stringResource
 
 private val CardMinWidth = 500.dp
 
-/** Writes started from the tab that must finish after it closes (pending edits flushed on dispose). */
-private val detachedListWrites = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+/**
+ * Writes that must finish after the tab or title bar that started them goes away (pending edits flushed on dispose,
+ * confirmed removals, title-bar changes).
+ */
+internal val detachedListWrites = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
 /** What MyAnimeList's full entry editor needs from the tab. */
 internal class ListEntryDetailsRequest(
@@ -270,6 +274,7 @@ internal fun historyEntryCount(entry: ListEntry): Int =
     val selectedStatus = statuses.firstOrNull { it.name == statusKey }
     val sort = service.sorts.firstOrNull { it.key == sortKey } ?: service.sorts.firstOrNull() ?: ListSort("", "")
     var refreshId by remember { mutableIntStateOf(0) }
+    var refreshing by remember { mutableStateOf(false) }
     var summaryVersion by remember { mutableIntStateOf(0) }
     val loadFailed = stringResource(Res.string.lists_load_failed, name)
     val removedText = stringResource(Res.string.lists_removed_from, name)
@@ -384,8 +389,25 @@ internal fun historyEntryCount(entry: ListEntry): Int =
                 NuvioCompactActionButton(
                     label = stringResource(Res.string.airing_action_refresh),
                     icon = Icons.Rounded.Refresh,
-                    onClick = { refreshId++ },
-                    enabled = !loading && !editor.hasPendingWork,
+                    onClick = {
+                        if (!refreshing) {
+                            refreshing = true
+                            scope.launch {
+                                // Drop the service's cached reads first, so the reload asks the service again.
+                                try {
+                                    service.refresh()
+                                } catch (e: CancellationException) {
+                                    throw e
+                                } catch (e: Exception) {
+                                    NuvioToastController.show(e.readableMessage())
+                                } finally {
+                                    refreshing = false
+                                }
+                                refreshId++
+                            }
+                        }
+                    },
+                    enabled = !loading && !refreshing && !editor.hasPendingWork,
                     tone = NuvioCompactActionTone.Secondary,
                     size = NuvioActionSize.Small,
                 )
@@ -544,9 +566,16 @@ internal fun historyEntryCount(entry: ListEntry): Int =
             removingHistoryKey = null
         } else {
             val count = historyEntryCount(entry)
+            val message = pluralStringResource(Res.plurals.lists_remove_history_message, count, count, entry.title, name)
+            // Trakt removes every play of the title, rewatches and specials included, not only the entries counted.
+            val allPlays = if (service.capabilities(entry.type).removeHistoryClearsAllPlays) {
+                "\n\n" + stringResource(Res.string.lists_remove_history_all_plays, name)
+            } else {
+                ""
+            }
             ListsConfirmDialog(
                 title = stringResource(Res.string.lists_remove_history_title),
-                message = pluralStringResource(Res.plurals.lists_remove_history_message, count, count, entry.title, name),
+                message = message + allPlays,
                 onDismiss = { removingHistoryKey = null },
                 onConfirm = {
                     removingHistoryKey = null

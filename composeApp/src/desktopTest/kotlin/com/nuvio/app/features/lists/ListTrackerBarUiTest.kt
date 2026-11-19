@@ -29,6 +29,10 @@ import androidx.compose.ui.test.runDesktopComposeUiTest
 import androidx.compose.ui.unit.dp
 import com.nuvio.app.core.ui.NuvioTheme
 import com.nuvio.app.features.details.MetaDetails
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.MutableStateFlow
 import java.io.File
 import java.util.Locale
@@ -46,19 +50,28 @@ private class FakeListService(
     private val coverage: (ListTitleKind) -> Boolean = { true },
     var entry: ListEntry? = null,
     var impactOf: (ListChange) -> ListChangeImpact = { ListChangeImpact(0, false) },
+    /** When set, a write waits for it before finishing, like a slow multi-step service write. */
+    var applyGate: CompletableDeferred<Unit>? = null,
 ) : ListService {
     override val connected = MutableStateFlow(connected)
     val applied = mutableListOf<ListChange>()
+    val completed = mutableListOf<ListChange>()
+    var entryForCalls = 0
     override val sorts: List<ListSort> = emptyList()
     override fun covers(kind: ListTitleKind, meta: MetaDetails) = coverage(kind)
     override fun capabilities(type: ListMediaType) = caps(type)
     override fun profileUrl(): String? = null
     override suspend fun summary(): ListSummary? = null
     override suspend fun page(status: ListStatus?, sort: ListSort, offset: Int): ListPage = error("unused")
-    override suspend fun entryFor(meta: MetaDetails): ListEntry? = entry
+    override suspend fun entryFor(meta: MetaDetails): ListEntry? {
+        entryForCalls++
+        return entry
+    }
     override suspend fun impact(entry: ListEntry, change: ListChange): ListChangeImpact = impactOf(change)
     override suspend fun apply(entry: ListEntry, change: ListChange): ListEntry {
         applied += change
+        applyGate?.await()
+        completed += change
         return when (change) {
             is ListChange.SetStatus -> entry.copy(status = change.status)
             is ListChange.SetScore -> entry.copy(score = change.score)
@@ -90,7 +103,7 @@ private val mdbListCaps = { _: ListMediaType ->
         statuses = listOf(ListStatus.WATCHING, ListStatus.COMPLETED, ListStatus.DROPPED, ListStatus.PLAN_TO_WATCH),
         pickableStatuses = setOf(ListStatus.PLAN_TO_WATCH, ListStatus.COMPLETED, ListStatus.DROPPED),
         score = false, episodeProgress = false, rewatch = false, changeEntry = false, removeFromHistory = true,
-        leavableStatuses = setOf(ListStatus.PLAN_TO_WATCH, ListStatus.DROPPED),
+        leavableStatuses = setOf(ListStatus.PLAN_TO_WATCH, ListStatus.DROPPED), dropRequiresHistory = true,
     )
 }
 
@@ -449,6 +462,68 @@ class ListTrackerBarUiTest {
         onNodeWithContentDescription("Simkl status: On Hold").assertExists()
         onAllNodesWithContentDescription("Trakt", substring = true).assertCountEquals(0)
         assertTrue(trakt.applied.isEmpty() && simkl.applied.isEmpty())
+    }
+
+    @Test
+    fun mdbListOffersDroppedOnlyOnceTheTitleHasWatchedHistory() = runDesktopComposeUiTest(width = 900, height = 520) {
+        var shown by mutableStateOf<ListEntry?>(null)
+        setContent { Hero { Bar(shown, service = ListServiceId.MDBLIST) } }
+        // Not on the list yet: MDBList would reject a drop, so it is not offered.
+        onNodeWithContentDescription("MDBList status: Set status").performClick()
+        onNodeWithText("Completed").assertExists()
+        onAllNodesWithText("Dropped").assertCountEquals(0)
+        onNodeWithText("Plan to Watch").performClick()
+        shown = entry(ListStatus.PLAN_TO_WATCH, ListServiceId.MDBLIST, watched = 0)
+        waitForIdle()
+        onNodeWithContentDescription("MDBList status: Plan to Watch").performClick()
+        onNodeWithText("Completed").assertExists()
+        onAllNodesWithText("Dropped").assertCountEquals(0)
+        onAllNodesWithText("Plan to Watch").onLast().performClick()
+        shown = entry(ListStatus.WATCHING, ListServiceId.MDBLIST, watched = 3)
+        waitForIdle()
+        onNodeWithContentDescription("MDBList status: Watching").performClick()
+        onNodeWithText("Dropped").assertExists()
+    }
+
+    @Test
+    fun slowMalResolveThenSwitchKeepsTheBarAndFinishesAStartedWrite() = runDesktopComposeUiTest(width = 900, height = 520) {
+        // MAL is first in the order and connected, but its id takes a while to resolve for this (non-anime-looking) title.
+        val resolved = CompletableDeferred<Int?>()
+        val mal = FakeListService(ListServiceId.MYANIMELIST, caps = malCaps, coverage = { it.anime }, entry = null)
+        val trakt = FakeListService(ListServiceId.TRAKT, caps = traktCaps, entry = entry(ListStatus.WATCHING, ListServiceId.TRAKT))
+        val hooks = MalTitleHooks(connected = true, busy = false, linkRevision = 0, resolveId = { resolved.await() },
+            onConnect = {}, onChooseEntry = {})
+        var onPage by mutableStateOf(true)
+        setContent { Hero { if (onPage) ListTrackerControls(seriesMeta, hooks, listOf(mal, trakt), allOnTitlePages) } }
+        waitForIdle()
+        // While resolving, MyAnimeList holds the bar in its working state; no other tracker is shown or loaded.
+        onAllNodesWithContentDescription("Trakt status", substring = true).assertCountEquals(0)
+        onNodeWithContentDescription("MyAnimeList status: Set status").assertExists()
+        assertEquals(0, trakt.entryForCalls)
+        assertEquals(0, mal.entryForCalls)
+
+        resolved.complete(42)
+        waitForIdle()
+        onNodeWithContentDescription("MyAnimeList status: Set status").assertExists()
+        onAllNodesWithContentDescription("Trakt status", substring = true).assertCountEquals(0)
+        assertEquals(0, trakt.entryForCalls, "Trakt was never shown, so it was never loaded and disposed")
+        assertEquals(1, mal.entryForCalls)
+
+        // The user switches to Trakt and starts a slow write, then leaves the page before it finishes.
+        onNodeWithContentDescription("MyAnimeList, switch list service").performClick()
+        onNodeWithText("Trakt").performClick()
+        waitForIdle()
+        onNodeWithContentDescription("Trakt status: Watching").assertExists()
+        val gate = CompletableDeferred<Unit>()
+        trakt.applyGate = gate
+        onNodeWithContentDescription("Trakt status: Watching").performClick()
+        onNodeWithText("Plan to Watch").performClick()
+        waitUntil(timeoutMillis = 5_000) { trakt.applied.isNotEmpty() }
+        onPage = false
+        waitForIdle()
+        gate.complete(Unit)
+        waitUntil(timeoutMillis = 5_000) { trakt.completed.isNotEmpty() }
+        assertEquals(listOf<ListChange>(ListChange.SetStatus(ListStatus.PLAN_TO_WATCH)), trakt.completed)
     }
 
     @Test
