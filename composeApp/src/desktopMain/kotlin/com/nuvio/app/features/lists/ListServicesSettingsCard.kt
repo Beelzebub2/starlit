@@ -24,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import com.nuvio.app.core.ui.nuvioSwitchColors
 import com.nuvio.app.features.profiles.ProfileRepository
 import nuvio.composeapp.generated.resources.Res
 import nuvio.composeapp.generated.resources.lists_settings_hint
@@ -117,6 +118,6 @@ private fun moveAmongConnected(id: ListServiceId, visible: List<ListServiceId>, 
 @Composable private fun SettingsSwitchRow(label: String, description: String, checked: Boolean, onChange: (Boolean) -> Unit) {
     Row(Modifier.fillMaxWidth().padding(start = 30.dp), verticalAlignment = Alignment.CenterVertically) {
         Text(label, style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
-        Switch(checked = checked, onCheckedChange = onChange, modifier = Modifier.semantics { contentDescription = description })
+        Switch(checked = checked, onCheckedChange = onChange, colors = nuvioSwitchColors(), modifier = Modifier.semantics { contentDescription = description })
     }
 }

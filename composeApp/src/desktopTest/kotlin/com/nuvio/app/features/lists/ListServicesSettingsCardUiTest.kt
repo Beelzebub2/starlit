@@ -116,6 +116,19 @@ class ListServicesSettingsCardUiTest {
         onNodeWithText("MyAnimeList").assertDoesNotExist()
     }
 
+    @Test fun movingStepsOverDisconnectedServices() = runDesktopComposeUiTest(900, 700) {
+        connected(ListServiceId.MYANIMELIST, ListServiceId.SIMKL, ListServiceId.TRAKT, disconnected = setOf(ListServiceId.SIMKL))
+        setContent { NuvioTheme { Surface { Box(Modifier.size(900.dp, 700.dp)) { ListServicesSettingsCard() } } } }
+        waitForIdle()
+        onNodeWithContentDescription("Move Trakt up").assertIsEnabled().performClick()
+        waitForIdle()
+        val order = ListPreferencesRepository.state.value.order
+        assertEquals(ListServiceId.entries.toSet(), order.toSet())
+        assertTrue(order.indexOf(ListServiceId.TRAKT) < order.indexOf(ListServiceId.MYANIMELIST))
+        onNodeWithContentDescription("Move Trakt up").assertIsNotEnabled()
+        onNodeWithContentDescription("Move MyAnimeList down").assertIsNotEnabled()
+    }
+
     @Test fun hintShownWhenNothingIsConnected() = runDesktopComposeUiTest(900, 700) {
         connected(ListServiceId.SIMKL, disconnected = setOf(ListServiceId.SIMKL))
         setContent { NuvioTheme { Surface { Box(Modifier.size(900.dp, 700.dp)) { ListServicesSettingsCard() } } } }
