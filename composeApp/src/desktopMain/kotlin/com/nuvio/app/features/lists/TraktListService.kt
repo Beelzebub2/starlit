@@ -42,26 +42,11 @@ private const val SORT_UPDATED = "UPDATED"
 private const val SORT_TITLE = "TITLE"
 private const val SORT_SCORE = "SCORE"
 
-/** Everything the Trakt list is derived from; one load feeds every page, the summary and title lookups. */
-internal data class TraktListSnapshot(
-    /** Trakt watchlist (Plan to Watch). */
-    val watchlist: List<LibraryItem> = emptyList(),
-    /** Trakt watched history: movies (no season) and single episodes. */
-    val watched: List<WatchedItem> = emptyList(),
-    /** Trakt progress rows; only used for display details (title, poster, recency) of titles already listed. */
-    val progress: List<WatchProgressEntry> = emptyList(),
-    /** Trakt dropped list. */
-    val dropped: List<TraktDroppedShow> = emptyList(),
-    /** See [TraktRatingsRepository.ratings]. */
-    val ratings: Map<String, Int> = emptyMap(),
-    /** Trakt's aired episode count per watched show, keyed by content id (`tt1`, `tmdb:11`, `trakt:1`). */
-    val airedEpisodes: Map<String, Int> = emptyMap(),
-)
 
 /** Seam over Trakt's registry ports and repositories so the adapter can be tested without network or storage. */
 internal interface TraktListPort {
     fun activeProfileId(): Int
-    suspend fun load(): TraktListSnapshot
+    suspend fun load(): HistoryListSnapshot
     suspend fun setWatchlisted(item: LibraryItem, inWatchlist: Boolean)
     suspend fun setDropped(media: TrackingMediaReference, dropped: Boolean)
     suspend fun setRating(media: TrackingMediaReference, rating: Int)
@@ -79,157 +64,11 @@ internal interface TraktListPort {
     fun nowEpochMs(): Long
 }
 
-/** One title as Trakt sees it: list memberships plus history counts. The status is always derived, never stored. */
-internal data class TraktTitleState(
-    val type: ListMediaType,
-    /** Starlit content id, the same form the Trakt library/watched projections use (IMDb, else `tmdb:`, else `trakt:`). */
-    val contentId: String,
-    /** Every content-id form known for the title, [contentId] included. */
-    val aliases: Set<String>,
-    val title: String,
-    val posterUrl: String?,
-    val year: Int?,
-    val inWatchlist: Boolean,
-    val dropped: Boolean,
-    val watchedEpisodes: Int,
-    /** Aired main-season episodes; 0 when unknown (a watched series then reads as Watching). */
-    val airedEpisodes: Int,
-    val score: Int,
-    val updatedAtEpochMs: Long,
-    /** True when [airedEpisodes] is Trakt's own count, which matches Trakt's episode numbering. */
-    val airedFromTrakt: Boolean = false,
-) {
-    val isMovie: Boolean get() = type == ListMediaType.MOVIE
-    val catalogType: String get() = if (isMovie) "movie" else "series"
-    val key: String get() = "$catalogType:$contentId"
-    val status: ListStatus?
-        get() = derivedHistoryStatus(inWatchlist, dropped, watchedEpisodes, airedEpisodes, isMovie)
-}
-
-private class TraktTitleDraft(val type: ListMediaType, val contentId: String) {
-    val aliases = linkedSetOf(contentId)
-    var title: String? = null
-    var posterUrl: String? = null
-    var year: Int? = null
-    var inWatchlist = false
-    var dropped = false
-    var watchedMovie = false
-    val episodes = mutableSetOf<Pair<Int, Int>>()
-    var updatedAtEpochMs = 0L
-
-    fun offer(title: String?, poster: String?, year: Int?, updatedAtEpochMs: Long) {
-        if (this.title.isNullOrBlank() && !title.isNullOrBlank()) this.title = title
-        if (posterUrl.isNullOrBlank() && !poster.isNullOrBlank()) posterUrl = poster
-        if (this.year == null) this.year = year
-        if (updatedAtEpochMs > this.updatedAtEpochMs) this.updatedAtEpochMs = updatedAtEpochMs
-    }
-}
-
-private fun listMediaType(type: String): ListMediaType =
-    if (type.trim().lowercase() in setOf("movie", "film")) ListMediaType.MOVIE else ListMediaType.SERIES
-
-private fun contentAliases(imdb: String?, tmdb: Long?, trakt: Long?): List<String> = buildList {
-    imdb?.trim()?.takeIf(String::isNotBlank)?.let(::add)
-    tmdb?.let { add("tmdb:$it") }
-    trakt?.let { add("trakt:$it") }
-}
-
-private fun contentAliases(ids: TrackingExternalIds): List<String> = contentAliases(ids.imdb, ids.tmdb, ids.trakt)
-
 /** Trakt can only look titles up by its own, IMDb, TMDB or TVDB ids (not MAL, Kitsu, AniList, AniDB, Simkl, MDBList). */
 internal fun TrackingExternalIds.isTraktAddressable(): Boolean =
     trakt != null || !imdb.isNullOrBlank() || tmdb != null || !tvdb.isNullOrBlank()
 
-private fun idsOf(aliases: Collection<String>): TrackingExternalIds =
-    aliases.fold(TrackingExternalIds()) { ids, alias -> ids.mergeMissing(parseTrackingExternalIds(alias)) }
 
-/**
- * Merges watchlist, dropped list, watched history and progress into one state per title, de-duplicated across
- * every id form. Progress rows only enrich titles already present: a paused, never-finished title has no status.
- */
-internal fun buildTraktTitleStates(
-    snapshot: TraktListSnapshot,
-    airedEpisodes: (catalogType: String, contentId: String, watchedEpisodes: Int) -> Int,
-): List<TraktTitleState> {
-    val drafts = mutableListOf<TraktTitleDraft>()
-    val byAlias = mutableMapOf<String, TraktTitleDraft>()
-    fun find(type: ListMediaType, aliases: Collection<String>): TraktTitleDraft? =
-        aliases.firstNotNullOfOrNull { byAlias["${type.name}:$it"] }
-    fun draftFor(type: ListMediaType, primary: String, aliases: Collection<String>): TraktTitleDraft {
-        val all = (listOf(primary) + aliases).map(String::trim).filter(String::isNotBlank).distinct()
-        val draft = find(type, all) ?: TraktTitleDraft(type, primary.trim()).also(drafts::add)
-        all.forEach { alias ->
-            draft.aliases += alias
-            byAlias["${type.name}:$alias"] = draft
-        }
-        return draft
-    }
-
-    snapshot.watchlist.forEach { item ->
-        if (item.id.isBlank()) return@forEach
-        val draft = draftFor(
-            listMediaType(item.type),
-            item.id,
-            contentAliases(item.imdbId, item.tmdbId?.toLong(), item.traktId?.toLong()),
-        )
-        draft.inWatchlist = true
-        draft.offer(item.name, item.poster, extractTrackingYear(item.releaseInfo), item.savedAtEpochMs)
-    }
-    snapshot.dropped.forEach { show ->
-        val aliases = contentAliases(show.ids)
-        val primary = aliases.firstOrNull() ?: return@forEach
-        val draft = draftFor(ListMediaType.SERIES, primary, aliases)
-        draft.dropped = true
-        draft.offer(show.title, null, null, 0L)
-    }
-    snapshot.watched.forEach { item ->
-        if (item.id.isBlank()) return@forEach
-        val year = extractTrackingYear(item.releaseInfo)
-        if (listMediaType(item.type) == ListMediaType.MOVIE) {
-            val draft = draftFor(ListMediaType.MOVIE, item.id, emptyList())
-            draft.watchedMovie = true
-            draft.offer(item.name, item.poster, year, item.markedAtEpochMs)
-        } else {
-            val season = item.season ?: return@forEach
-            val episode = item.episode ?: return@forEach
-            if (season <= 0 || episode <= 0) return@forEach
-            val draft = draftFor(ListMediaType.SERIES, item.id, emptyList())
-            draft.episodes += season to episode
-            draft.offer(item.name, item.poster, year, item.markedAtEpochMs)
-        }
-    }
-    snapshot.progress.forEach { entry ->
-        val draft = find(listMediaType(entry.parentMetaType), listOf(entry.parentMetaId.trim())) ?: return@forEach
-        draft.offer(entry.title, entry.poster, null, entry.lastUpdatedEpochMs)
-    }
-
-    return drafts.map { draft ->
-        val isMovie = draft.type == ListMediaType.MOVIE
-        val catalogType = if (isMovie) "movie" else "series"
-        val watched = if (isMovie) (if (draft.watchedMovie) 1 else 0) else draft.episodes.size
-        val ratingKind = if (isMovie) "movie" else "show"
-        val traktAired = if (isMovie) null else draft.aliases.firstNotNullOfOrNull { snapshot.airedEpisodes[it] }
-        TraktTitleState(
-            type = draft.type,
-            contentId = draft.contentId,
-            aliases = draft.aliases.toSet(),
-            title = draft.title?.takeIf(String::isNotBlank) ?: draft.contentId,
-            posterUrl = draft.posterUrl,
-            year = draft.year,
-            inWatchlist = draft.inWatchlist,
-            dropped = draft.dropped,
-            watchedEpisodes = watched,
-            airedEpisodes = when {
-                isMovie -> 1
-                traktAired != null -> traktAired
-                else -> airedEpisodes(catalogType, draft.contentId, watched)
-            },
-            score = draft.aliases.firstNotNullOfOrNull { snapshot.ratings["$ratingKind:$it"] } ?: 0,
-            updatedAtEpochMs = draft.updatedAtEpochMs,
-            airedFromTrakt = traktAired != null,
-        )
-    }
-}
 
 /**
  * Trakt list service. Statuses are derived from the watchlist, the dropped list and watch history (Dropped >
@@ -251,7 +90,7 @@ internal class TraktListAdapter(
         ListSort(SORT_SCORE, "Your score"),
     )
 
-    private data class Cache(val profileId: Int, val loadedAtEpochMs: Long, val states: List<TraktTitleState>)
+    private data class Cache(val profileId: Int, val loadedAtEpochMs: Long, val states: List<HistoryTitleState>)
 
     private val cacheMutex = Mutex()
     private var cache: Cache? = null
@@ -303,11 +142,11 @@ internal class TraktListAdapter(
 
     override suspend fun page(status: ListStatus?, sort: ListSort, offset: Int): ListPage {
         val matching = visibleStates().filter { status == null || it.status == status }
-        val title = { state: TraktTitleState -> state.title.lowercase() }
+        val title = { state: HistoryTitleState -> state.title.lowercase() }
         val sorted = when (sort.key) {
             SORT_TITLE -> matching.sortedBy(title)
-            SORT_SCORE -> matching.sortedWith(compareByDescending<TraktTitleState> { it.score }.thenBy(title))
-            else -> matching.sortedWith(compareByDescending<TraktTitleState> { it.updatedAtEpochMs }.thenBy(title))
+            SORT_SCORE -> matching.sortedWith(compareByDescending<HistoryTitleState> { it.score }.thenBy(title))
+            else -> matching.sortedWith(compareByDescending<HistoryTitleState> { it.updatedAtEpochMs }.thenBy(title))
         }
         val start = offset.coerceAtLeast(0)
         val slice = sorted.drop(start).take(TRAKT_PAGE_SIZE).map { it.toEntry() }
@@ -392,7 +231,7 @@ internal class TraktListAdapter(
         return maxOf(removedLocally, onTrakt)
     }
 
-    private suspend fun setStatus(entry: ListEntry, state: TraktTitleState, status: ListStatus): TraktTitleState {
+    private suspend fun setStatus(entry: ListEntry, state: HistoryTitleState, status: ListStatus): HistoryTitleState {
         require(status in capabilities(state.type).pickableStatuses) { "Trakt does not offer $status for this title" }
         return when (status) {
             ListStatus.PLAN_TO_WATCH -> {
@@ -419,7 +258,7 @@ internal class TraktListAdapter(
         }
     }
 
-    private suspend fun leaveStatus(state: TraktTitleState, status: ListStatus): TraktTitleState {
+    private suspend fun leaveStatus(state: HistoryTitleState, status: ListStatus): HistoryTitleState {
         require(status in capabilities(state.type).leavableStatuses) { "Trakt cannot leave $status for this title" }
         return when (status) {
             ListStatus.PLAN_TO_WATCH -> {
@@ -441,27 +280,27 @@ internal class TraktListAdapter(
         return type to catalogId
     }
 
-    private suspend fun visibleStates(): List<TraktTitleState> = states().filter { it.status != null }
+    private suspend fun visibleStates(): List<HistoryTitleState> = states().filter { it.status != null }
 
-    private suspend fun states(): List<TraktTitleState> = cacheMutex.withLock {
+    private suspend fun states(): List<HistoryTitleState> = cacheMutex.withLock {
         val profileId = port.activeProfileId()
         val now = port.nowEpochMs()
         cache
             ?.takeIf { it.profileId == profileId && now - it.loadedAtEpochMs in 0 until cacheTtlMs }
             ?.let { return@withLock it.states }
-        val states = buildTraktTitleStates(port.load(), ::airedEpisodesFor)
+        val states = buildHistoryTitleStates(port.load(), ::airedEpisodesFor)
         cache = Cache(profileId, now, states)
         states
     }
 
     /** Keeps a write visible in pages until the next reload (Trakt and history mirroring can lag behind). */
-    private suspend fun remember(state: TraktTitleState) = cacheMutex.withLock {
+    private suspend fun remember(state: HistoryTitleState) = cacheMutex.withLock {
         val current = cache ?: return@withLock
         if (current.profileId != port.activeProfileId()) return@withLock
         cache = current.copy(states = current.states.filterNot { it.key == state.key } + state)
     }
 
-    private suspend fun stateFor(entry: ListEntry): TraktTitleState =
+    private suspend fun stateFor(entry: ListEntry): HistoryTitleState =
         states().firstOrNull { it.key == entry.key.id } ?: entry.toFallbackState()
 
     private fun airedEpisodesFor(catalogType: String, contentId: String, watchedEpisodes: Int): Int {
@@ -472,9 +311,9 @@ internal class TraktListAdapter(
         return if (watchedEpisodes > 0 && port.isFullyWatchedLocally(catalogType, contentId)) watchedEpisodes else 0
     }
 
-    private fun ListEntry.toFallbackState(): TraktTitleState {
+    private fun ListEntry.toFallbackState(): HistoryTitleState {
         val contentId = catalogId ?: key.id.substringAfter(':')
-        return TraktTitleState(
+        return HistoryTitleState(
             type = type,
             contentId = contentId,
             aliases = (listOf(contentId) + contentAliases(parseTrackingExternalIds(contentId))).toSet(),
@@ -491,7 +330,7 @@ internal class TraktListAdapter(
     }
 }
 
-private fun TraktTitleState.reference(): TrackingMediaReference = TrackingMediaReference(
+private fun HistoryTitleState.reference(): TrackingMediaReference = TrackingMediaReference(
     kind = if (isMovie) TrackingMediaKind.MOVIE else TrackingMediaKind.SHOW,
     title = title,
     year = year,
@@ -499,7 +338,7 @@ private fun TraktTitleState.reference(): TrackingMediaReference = TrackingMediaR
     catalog = TrackingCatalogReference(contentId = contentId, contentType = catalogType),
 )
 
-private fun TraktTitleState.libraryItem(nowEpochMs: Long): LibraryItem {
+private fun HistoryTitleState.libraryItem(nowEpochMs: Long): LibraryItem {
     val ids = idsOf(aliases)
     return LibraryItem(
         id = contentId,
@@ -514,7 +353,7 @@ private fun TraktTitleState.libraryItem(nowEpochMs: Long): LibraryItem {
     )
 }
 
-private fun TraktTitleState.siteUrl(): String? {
+private fun HistoryTitleState.siteUrl(): String? {
     val ids = idsOf(aliases)
     val idType = if (isMovie) "movie" else "show"
     return when {
@@ -525,7 +364,7 @@ private fun TraktTitleState.siteUrl(): String? {
     }
 }
 
-private fun TraktTitleState.toEntry(
+private fun HistoryTitleState.toEntry(
     catalogType: String = this.catalogType,
     catalogId: String = contentId,
     anime: Boolean = false,
@@ -554,7 +393,7 @@ private fun TraktTitleState.toEntry(
 private object DefaultTraktListPort : TraktListPort {
     override fun activeProfileId(): Int = ProfileRepository.activeProfileId
 
-    override suspend fun load(): TraktListSnapshot = coroutineScope {
+    override suspend fun load(): HistoryListSnapshot = coroutineScope {
         val profileId = ProfileRepository.activeProfileId
         val watchlist = async { loadWatchlist() }
         val watched = async {
@@ -566,7 +405,7 @@ private object DefaultTraktListPort : TraktListPort {
         val ratings = async { TraktRatingsRepository.ratings(profileId) }
         val aired = async { loadAiredEpisodes(profileId) }
         val progress = TrackingProviderRegistry.progressProvider(TrackingProviderId.TRAKT)?.snapshot()?.entries.orEmpty()
-        TraktListSnapshot(
+        HistoryListSnapshot(
             watchlist = watchlist.await(),
             watched = watched.await(),
             progress = progress,

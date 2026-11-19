@@ -65,8 +65,8 @@ internal interface MdbListListPort {
 
 /**
  * MDBList list service. Statuses are derived from the watchlist, the dropped list and watch history (Dropped >
- * Completed > Plan to Watch); a partly watched show derives to Watching, which MDBList has no tab for, so it is
- * not listed. Picking a status only ever adds (watchlist, dropped, or history through the title page's own
+ * Completed > Watching > Plan to Watch). Watching is derived only: shown as a tab but never pickable or leavable.
+ * Picking a status only ever adds (watchlist, dropped, or history through the title page's own
  * actions) and never deletes history. Title state building is shared with the Trakt adapter.
  */
 internal class MdbListListAdapter(
@@ -83,7 +83,7 @@ internal class MdbListListAdapter(
         ListSort(SORT_TITLE, "Title"),
     )
 
-    private data class Cache(val profileId: Int, val loadedAtEpochMs: Long, val states: List<TraktTitleState>)
+    private data class Cache(val profileId: Int, val loadedAtEpochMs: Long, val states: List<HistoryTitleState>)
 
     private val cacheMutex = Mutex()
     private var cache: Cache? = null
@@ -95,7 +95,7 @@ internal class MdbListListAdapter(
     override fun capabilities(type: ListMediaType): ListCapabilities = when (type) {
         // MDBList documents dropped writes (POST /sync/dropped and /sync/dropped/remove) for shows only.
         ListMediaType.SERIES -> ListCapabilities(
-            statuses = listOf(ListStatus.COMPLETED, ListStatus.DROPPED, ListStatus.PLAN_TO_WATCH),
+            statuses = listOf(ListStatus.WATCHING, ListStatus.COMPLETED, ListStatus.DROPPED, ListStatus.PLAN_TO_WATCH),
             pickableStatuses = setOf(ListStatus.PLAN_TO_WATCH, ListStatus.COMPLETED, ListStatus.DROPPED),
             score = false,
             episodeProgress = false,
@@ -136,10 +136,10 @@ internal class MdbListListAdapter(
 
     override suspend fun page(status: ListStatus?, sort: ListSort, offset: Int): ListPage {
         val matching = visibleStates().filter { status == null || it.status == status }
-        val title = { state: TraktTitleState -> state.title.lowercase() }
+        val title = { state: HistoryTitleState -> state.title.lowercase() }
         val sorted = when (sort.key) {
             SORT_TITLE -> matching.sortedBy(title)
-            else -> matching.sortedWith(compareByDescending<TraktTitleState> { it.updatedAtEpochMs }.thenBy(title))
+            else -> matching.sortedWith(compareByDescending<HistoryTitleState> { it.updatedAtEpochMs }.thenBy(title))
         }
         val start = offset.coerceAtLeast(0)
         val slice = sorted.drop(start).take(MDBLIST_PAGE_SIZE).map { it.toEntry() }
@@ -164,7 +164,7 @@ internal class MdbListListAdapter(
             posterUrl = state.posterUrl ?: meta.poster,
         )
         if (refined != state) remember(refined)
-        if (!refined.isListed()) return null
+        if (refined.status == null) return null
         return refined.toEntry(catalogType = meta.type, catalogId = meta.id, anime = isLikelyMyAnimeListAnime(meta))
     }
 
@@ -210,7 +210,7 @@ internal class MdbListListAdapter(
         return maxOf(removedLocally, onMdbList)
     }
 
-    private suspend fun setStatus(entry: ListEntry, state: TraktTitleState, status: ListStatus): TraktTitleState {
+    private suspend fun setStatus(entry: ListEntry, state: HistoryTitleState, status: ListStatus): HistoryTitleState {
         require(status in capabilities(state.type).pickableStatuses) { "MDBList does not offer $status for this title" }
         return when (status) {
             ListStatus.PLAN_TO_WATCH -> {
@@ -237,7 +237,7 @@ internal class MdbListListAdapter(
         }
     }
 
-    private suspend fun leaveStatus(state: TraktTitleState, status: ListStatus): TraktTitleState {
+    private suspend fun leaveStatus(state: HistoryTitleState, status: ListStatus): HistoryTitleState {
         require(status in capabilities(state.type).leavableStatuses) { "MDBList cannot leave $status for this title" }
         return when (status) {
             ListStatus.PLAN_TO_WATCH -> {
@@ -259,19 +259,17 @@ internal class MdbListListAdapter(
         return type to catalogId
     }
 
-    private fun TraktTitleState.isListed(): Boolean = status.let { it != null && it != ListStatus.WATCHING }
+    private suspend fun visibleStates(): List<HistoryTitleState> = states().filter { it.status != null }
 
-    private suspend fun visibleStates(): List<TraktTitleState> = states().filter { it.isListed() }
-
-    private suspend fun states(): List<TraktTitleState> = cacheMutex.withLock {
+    private suspend fun states(): List<HistoryTitleState> = cacheMutex.withLock {
         val profileId = port.activeProfileId()
         val now = port.nowEpochMs()
         cache
             ?.takeIf { it.profileId == profileId && now - it.loadedAtEpochMs in 0 until cacheTtlMs }
             ?.let { return@withLock it.states }
         val snapshot = port.load()
-        val states = buildTraktTitleStates(
-            TraktListSnapshot(
+        val states = buildHistoryTitleStates(
+            HistoryListSnapshot(
                 watchlist = snapshot.watchlist,
                 watched = snapshot.watched,
                 dropped = snapshot.dropped.map { TraktDroppedShow(null, it.toExternalIds()) },
@@ -283,13 +281,13 @@ internal class MdbListListAdapter(
     }
 
     /** Keeps a write visible in pages until the next reload (MDBList and history mirroring can lag behind). */
-    private suspend fun remember(state: TraktTitleState) = cacheMutex.withLock {
+    private suspend fun remember(state: HistoryTitleState) = cacheMutex.withLock {
         val current = cache ?: return@withLock
         if (current.profileId != port.activeProfileId()) return@withLock
         cache = current.copy(states = current.states.filterNot { it.key == state.key } + state)
     }
 
-    private suspend fun stateFor(entry: ListEntry): TraktTitleState =
+    private suspend fun stateFor(entry: ListEntry): HistoryTitleState =
         states().firstOrNull { it.key == entry.key.id } ?: entry.toFallbackState()
 
     private fun airedEpisodesFor(catalogType: String, contentId: String, watchedEpisodes: Int): Int {
@@ -300,9 +298,9 @@ internal class MdbListListAdapter(
         return if (watchedEpisodes > 0 && port.isFullyWatchedLocally(catalogType, contentId)) watchedEpisodes else 0
     }
 
-    private fun ListEntry.toFallbackState(): TraktTitleState {
+    private fun ListEntry.toFallbackState(): HistoryTitleState {
         val contentId = catalogId ?: key.id.substringAfter(':')
-        return TraktTitleState(
+        return HistoryTitleState(
             type = type,
             contentId = contentId,
             aliases = setOf(contentId),
@@ -322,10 +320,10 @@ internal class MdbListListAdapter(
 private fun MdbListIds.toExternalIds() =
     TrackingExternalIds(imdb = imdb, tmdb = tmdb, tvdb = tvdb?.toString(), trakt = trakt)
 
-private fun TraktTitleState.ids(): TrackingExternalIds =
+private fun HistoryTitleState.ids(): TrackingExternalIds =
     aliases.fold(TrackingExternalIds()) { ids, alias -> ids.mergeMissing(parseTrackingExternalIds(alias)) }
 
-private fun TraktTitleState.reference(): TrackingMediaReference = TrackingMediaReference(
+private fun HistoryTitleState.reference(): TrackingMediaReference = TrackingMediaReference(
     kind = if (isMovie) TrackingMediaKind.MOVIE else TrackingMediaKind.SHOW,
     title = title,
     year = year,
@@ -333,7 +331,7 @@ private fun TraktTitleState.reference(): TrackingMediaReference = TrackingMediaR
     catalog = TrackingCatalogReference(contentId = contentId, contentType = catalogType),
 )
 
-private fun TraktTitleState.libraryItem(nowEpochMs: Long): LibraryItem {
+private fun HistoryTitleState.libraryItem(nowEpochMs: Long): LibraryItem {
     val ids = ids()
     return LibraryItem(
         id = contentId,
@@ -348,7 +346,7 @@ private fun TraktTitleState.libraryItem(nowEpochMs: Long): LibraryItem {
     )
 }
 
-private fun TraktTitleState.toEntry(
+private fun HistoryTitleState.toEntry(
     catalogType: String = this.catalogType,
     catalogId: String = contentId,
     anime: Boolean = false,

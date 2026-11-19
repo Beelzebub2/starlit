@@ -73,7 +73,7 @@ class MdbListListServiceTest {
     @Test fun mdbListHasNoScoreOrStepper() {
         val svc = adapter()
         val series = svc.capabilities(ListMediaType.SERIES)
-        assertEquals(listOf(ListStatus.COMPLETED, ListStatus.DROPPED, ListStatus.PLAN_TO_WATCH), series.statuses)
+        assertEquals(listOf(ListStatus.WATCHING, ListStatus.COMPLETED, ListStatus.DROPPED, ListStatus.PLAN_TO_WATCH), series.statuses)
         assertEquals(setOf(ListStatus.PLAN_TO_WATCH, ListStatus.COMPLETED, ListStatus.DROPPED), series.pickableStatuses)
         assertEquals(setOf(ListStatus.PLAN_TO_WATCH, ListStatus.DROPPED), series.leavableStatuses)
         val movie = svc.capabilities(ListMediaType.MOVIE)
@@ -83,7 +83,7 @@ class MdbListListServiceTest {
         listOf(series, movie).forEach { caps ->
             assertFalse(caps.score || caps.episodeProgress || caps.rewatch || caps.changeEntry)
             assertTrue(caps.removeFromHistory)
-            assertFalse(ListStatus.WATCHING in caps.statuses || ListStatus.ON_HOLD in caps.statuses)
+            assertFalse(ListStatus.WATCHING in caps.pickableStatuses || ListStatus.WATCHING in caps.leavableStatuses || ListStatus.ON_HOLD in caps.statuses)
         }
     }
 
@@ -101,13 +101,18 @@ class MdbListListServiceTest {
         val byTitle = svc.sorts.first { it.label == "Title" }
 
         val all = svc.page(null, byTitle, 0).entries
-        // Hotel is watchlisted but only partly watched: derived Watching has no MDBList tab, so it is not listed.
-        assertEquals(listOf("Alpha", "Bravo", "Charlie", "Echo"), all.map { it.title })
+        // Hotel is watchlisted but only partly watched: derived Watching, listed under the Watching tab.
+        assertEquals(listOf("Alpha", "Bravo", "Charlie", "Echo", "Hotel"), all.map { it.title })
         val status = all.associate { it.title to it.status }
         assertEquals(ListStatus.PLAN_TO_WATCH, status["Alpha"])
         assertEquals(ListStatus.COMPLETED, status["Bravo"])
         assertEquals(ListStatus.DROPPED, status["Charlie"])
         assertEquals(ListStatus.COMPLETED, status["Echo"])
+        assertEquals(ListStatus.WATCHING, status["Hotel"])
+        assertEquals(listOf("Hotel"), svc.page(ListStatus.WATCHING, byTitle, 0).entries.map { it.title })
+        val hotel = svc.entryFor(show("tt9", 8))!!
+        assertEquals(ListStatus.WATCHING, hotel.status)
+        assertEquals(1, hotel.watchedEpisodes)
         assertTrue(all.all { it.score == 0 })
         assertEquals(listOf("Bravo", "Echo"), svc.page(ListStatus.COMPLETED, byTitle, 0).entries.map { it.title })
 
@@ -115,8 +120,8 @@ class MdbListListServiceTest {
         assertEquals(1, summary.counts[ListStatus.PLAN_TO_WATCH])
         assertEquals(2, summary.counts[ListStatus.COMPLETED])
         assertEquals(1, summary.counts[ListStatus.DROPPED])
-        assertEquals(0, summary.counts[ListStatus.WATCHING])
-        assertEquals(4, summary.counts[null])
+        assertEquals(1, summary.counts[ListStatus.WATCHING])
+        assertEquals(5, summary.counts[null])
         assertEquals("tester", summary.signedInAs)
         assertEquals(1, port.loads)
     }
@@ -160,7 +165,9 @@ class MdbListListServiceTest {
         val history = FakeHistoryPort(meta = show("tt1", 12))
         val svc = adapter(port, history)
         val dropShow = svc.entryFor(show("tt1", 12))
-        assertNull(dropShow, "a partly watched, unlisted show has no MDBList status")
+        assertEquals(ListStatus.WATCHING, dropShow?.status, "a partly watched show is listed as Watching")
+        assertFailsWith<IllegalArgumentException> { svc.apply(dropShow!!, ListChange.SetStatus(ListStatus.WATCHING)) }
+        assertFailsWith<IllegalArgumentException> { svc.apply(dropShow!!, ListChange.LeaveStatus(ListStatus.WATCHING)) }
 
         val fresh = adapter(FakeMdbListPort(
             MdbListListSnapshot(watched = episodes("tt1", "Show", 12), dropped = emptyList()),
@@ -197,7 +204,7 @@ class MdbListListServiceTest {
         )
         val history = FakeHistoryPort(meta = show("tt1", 12), watched = (1..3).map { "1:$it" }.toMutableSet())
         val svc = adapter(port, history)
-        // Watchlisted and partly watched shows are not listed, so the title bar starts from a fallback entry.
+        // A seed entry without a status, as the title bar builds for a title MDBList does not know.
         val seed = ListEntry(
             key = ListEntryKey(ListServiceId.MDBLIST, "series:tt1"), title = "Show", subtitle = null, posterUrl = null,
             type = ListMediaType.SERIES, anime = false, facts = emptyList(), communityScore = null, status = null,

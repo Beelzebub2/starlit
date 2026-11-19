@@ -17,7 +17,7 @@ import kotlin.test.assertTrue
 
 /** Records Trakt writes and serves a fixed snapshot; never touches the network or repositories. */
 private class FakeTraktPort(
-    var snapshot: TraktListSnapshot = TraktListSnapshot(),
+    var snapshot: HistoryListSnapshot = HistoryListSnapshot(),
     val metas: Map<String, MetaDetails> = emptyMap(),
     val fullyWatched: Set<String> = emptySet(),
 ) : TraktListPort {
@@ -28,7 +28,7 @@ private class FakeTraktPort(
 
     override fun activeProfileId(): Int = profile
 
-    override suspend fun load(): TraktListSnapshot {
+    override suspend fun load(): HistoryListSnapshot {
         loads += 1
         return snapshot
     }
@@ -91,7 +91,7 @@ class TraktListServiceTest {
 
     /** A show watched 3 of 12 episodes, i.e. Watching on Trakt. */
     private fun watchingShow(): FakeTraktPort = FakeTraktPort(
-        snapshot = TraktListSnapshot(watched = watchedEpisodes("tt1", "Show", 3)),
+        snapshot = HistoryListSnapshot(watched = watchedEpisodes("tt1", "Show", 3)),
         metas = mapOf("tt1" to metaFor("tt1", 12)),
     )
 
@@ -155,7 +155,7 @@ class TraktListServiceTest {
 
     @Test fun leavingAListRemovesOnlyThatList(): Unit = runBlocking {
         val trakt = FakeTraktPort(
-            snapshot = TraktListSnapshot(
+            snapshot = HistoryListSnapshot(
                 watchlist = listOf(watchlistItem("tt1", "series", "Show"), watchlistItem("tt5", "movie", "Film")),
                 dropped = listOf(TraktDroppedShow(title = "Show", ids = TrackingExternalIds(imdb = "tt1", trakt = 1))),
                 watched = watchedEpisodes("tt1", "Show", 2),
@@ -213,7 +213,7 @@ class TraktListServiceTest {
 
     @Test fun scoreWritesRatingAndZeroClearsIt(): Unit = runBlocking {
         val trakt = FakeTraktPort(
-            snapshot = TraktListSnapshot(watched = watchedEpisodes("tt1", "Show", 3), ratings = mapOf("show:tt1" to 7)),
+            snapshot = HistoryListSnapshot(watched = watchedEpisodes("tt1", "Show", 3), ratings = mapOf("show:tt1" to 7)),
             metas = mapOf("tt1" to metaFor("tt1", 12)),
         )
         val svc = adapter(trakt)
@@ -239,7 +239,7 @@ class TraktListServiceTest {
 
     @Test fun removeFromHistoryUsesStarlitPathThenTraktRemove(): Unit = runBlocking {
         val trakt = FakeTraktPort(
-            snapshot = TraktListSnapshot(
+            snapshot = HistoryListSnapshot(
                 watchlist = listOf(watchlistItem("tt1", "series", "Show")),
                 watched = watchedEpisodes("tt1", "Show", 2),
             ),
@@ -261,7 +261,7 @@ class TraktListServiceTest {
 
     @Test fun removeFromHistoryClearsTraktOnlyHistoryAndCountsTraktEntries(): Unit = runBlocking {
         val trakt = FakeTraktPort(
-            snapshot = TraktListSnapshot(
+            snapshot = HistoryListSnapshot(
                 watched = watchedEpisodes("tt1", "Show", 4) + watchedMovie("tt5", "Film"),
             ),
             metas = mapOf("tt1" to metaFor("tt1", 6)),
@@ -296,7 +296,7 @@ class TraktListServiceTest {
 
     @Test fun traktAiredCountsMarkFullyWatchedShowsCompletedWithoutCachedMeta(): Unit = runBlocking {
         val trakt = FakeTraktPort(
-            snapshot = TraktListSnapshot(
+            snapshot = HistoryListSnapshot(
                 watched = watchedEpisodes("tt9", "India", 4) + watchedEpisodes("tt8", "Hotel", 4),
                 airedEpisodes = mapOf("tt9" to 4, "trakt:9" to 4, "tt8" to 6),
             ),
@@ -313,7 +313,7 @@ class TraktListServiceTest {
 
     @Test fun pageDerivesStatusesDeduplicatesAndSummarizes(): Unit = runBlocking {
         val trakt = FakeTraktPort(
-            snapshot = TraktListSnapshot(
+            snapshot = HistoryListSnapshot(
                 watchlist = listOf(
                     watchlistItem("tt10", "series", "Alpha"),
                     watchlistItem("tt4", "series", "Delta"),
@@ -377,7 +377,7 @@ class TraktListServiceTest {
 
     @Test fun entryForMatchesAnyIdOfTheSameTypeAndIsNullOtherwise(): Unit = runBlocking {
         val trakt = FakeTraktPort(
-            snapshot = TraktListSnapshot(watchlist = listOf(watchlistItem("tt10", "series", "Alpha", tmdbId = 1010))),
+            snapshot = HistoryListSnapshot(watchlist = listOf(watchlistItem("tt10", "series", "Alpha", tmdbId = 1010))),
         )
         val svc = adapter(trakt)
         val found = svc.entryFor(MetaDetails(id = "tmdb:1010", type = "series", name = "Alpha"))!!
@@ -408,7 +408,7 @@ class TraktListServiceTest {
 
     @Test fun coversOnlyIdsTraktCanAddress(): Unit = runBlocking {
         val svc = adapter(
-            FakeTraktPort(snapshot = TraktListSnapshot(watchlist = listOf(watchlistItem("tt1", "series", "Show")))),
+            FakeTraktPort(snapshot = HistoryListSnapshot(watchlist = listOf(watchlistItem("tt1", "series", "Show")))),
         )
         val kind = ListTitleKind(ListMediaType.SERIES, anime = true)
         listOf("tt1", "tmdb:2", "tvdb:3", "trakt:4").forEach { id ->
