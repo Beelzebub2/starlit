@@ -143,7 +143,10 @@ const wchar_t* phaseName(Phase phase) {
     switch (phase) {
         case Phase::Closing: return L"closing";
         case Phase::Downloading: return L"downloading";
+        case Phase::UnpackingTv: return L"unpacking-tv";
         case Phase::Extracting: return L"extracting";
+        case Phase::Installing: return L"installing";
+        case Phase::InstallingTv: return L"installing-tv";
         case Phase::Legacy: return L"legacy";
         case Phase::Finishing: return L"finishing";
         case Phase::Removing: return L"removing";
@@ -194,8 +197,8 @@ void sendProgress(bool force) {
     Json message(L"progress");
     message.str(L"phase", phaseName(phase))
         .number(L"value", std::round(progress * 10000.0) / 10000.0)
-        .number(L"done", static_cast<double>(gEngine->doneBytes.load()))
-        .number(L"total", static_cast<double>(gEngine->source().index.totalRaw))
+        .number(L"done", phase == Phase::Extracting ? static_cast<double>(gEngine->doneBytes.load()) : 0)
+        .number(L"total", phase == Phase::Extracting ? static_cast<double>(gEngine->source().index.totalRaw) : 0)
         .str(L"file", gEngine->currentFile());
     std::wstring text = message.text();
     if (!force && text == gLastProgress) return;

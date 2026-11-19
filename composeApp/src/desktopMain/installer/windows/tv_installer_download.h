@@ -35,4 +35,8 @@ bool downloadUnpackedInstaller(
     const std::function<void(uint64_t, uint64_t)>& onProgress,
     std::wstring& error);
 
+// Extracts the verified runtime into staging and reports the percentage of entries unpacked.
+bool unpackInstaller(const std::wstring& archive, const std::wstring& destination,
+                     const std::function<void(unsigned)>& onProgress, std::wstring& error);
+
 }  // namespace setup::tvdownload
