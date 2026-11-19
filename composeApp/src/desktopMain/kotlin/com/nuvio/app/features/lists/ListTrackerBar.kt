@@ -199,6 +199,9 @@ import org.jetbrains.compose.resources.stringResource
 
 private val ListStarColor = Color(0xFFF5C451)
 
+/** Debug label for the segment hover animation (never shown to users). */
+private const val SegmentBackgroundAnimationLabel = "list_bar_segment_background"
+
 /** MyAnimeList's list colours, lifted slightly so they read on the dark hero; shared by every service. */
 private fun ListStatus.dotColor(): Color = when (this) {
     ListStatus.WATCHING -> Color(0xFF2DB039)
@@ -491,7 +494,7 @@ internal fun pickerStatuses(capabilities: ListCapabilities, entry: ListEntry?): 
             else -> Color.Transparent
         },
         animationSpec = tween(NuvioTokens.Motion.fastMillis),
-        label = "list_bar_segment_background",
+        label = SegmentBackgroundAnimationLabel,
     )
     val click = if (onClick != null) {
         Modifier.clickable(

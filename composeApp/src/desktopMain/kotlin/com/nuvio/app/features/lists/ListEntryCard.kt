@@ -457,8 +457,10 @@ internal val ListServiceId.tagPrefix: String get() = if (this == ListServiceId.M
         verticalAlignment = Alignment.CenterVertically,
     ) {
         ListStepButton(Icons.Rounded.Remove, stringResource(Res.string.lists_episode_less), enabled = watched > 0, size = ListControlHeight) { onStep(-1) }
+        // Numbers only ("7 / 12", or "7 / ?" while the total is unknown): nothing to translate.
+        val totalLabel = if (total > 0) total.toString() else "?"
         Text(
-            "$watched / ${if (total > 0) total else "?"}",
+            "$watched / $totalLabel",
             style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.SemiBold,
             color = colors.textPrimary,
