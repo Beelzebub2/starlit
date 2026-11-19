@@ -3469,4 +3469,10 @@
     <string name="lists_stat_episodes_watched">episodi visti</string>
     <string name="lists_stat_movies_watched">film visti</string>
     <string name="lists_stat_rated_titles">titoli valutati</string>
+    <string name="settings_playback_section_player_controls">CONTROLLI DEL LETTORE</string>
+    <string name="settings_playback_controls_size">Dimensione dei controlli</string>
+    <string name="settings_playback_controls_size_description">Ridimensiona i pulsanti e le icone del lettore. Le dimensioni grandi si riducono nelle finestre piccole per consentire alla barra di entrare.</string>
+    <string name="settings_playback_controls_size_value">%1$d%</string>
+    <string name="settings_playback_controls_size_preview">Anteprima</string>
+    <string name="settings_playback_controls_size_reset">Reimposta</string>
 </resources>

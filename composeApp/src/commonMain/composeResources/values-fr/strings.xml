@@ -3500,4 +3500,10 @@
     <string name="lists_stat_episodes_watched">épisodes vus</string>
     <string name="lists_stat_movies_watched">films vus</string>
     <string name="lists_stat_rated_titles">titres notés</string>
+    <string name="settings_playback_section_player_controls">COMMANDES DU LECTEUR</string>
+    <string name="settings_playback_controls_size">Taille des commandes</string>
+    <string name="settings_playback_controls_size_description">Redimensionne les boutons et les icônes du lecteur. Les grandes tailles sont réduites dans les petites fenêtres pour que la barre tienne.</string>
+    <string name="settings_playback_controls_size_value">%1$d%</string>
+    <string name="settings_playback_controls_size_preview">Aperçu</string>
+    <string name="settings_playback_controls_size_reset">Réinitialiser</string>
 </resources>

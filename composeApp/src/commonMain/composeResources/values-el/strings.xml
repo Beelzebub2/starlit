@@ -3461,4 +3461,10 @@
     <string name="lists_stat_episodes_watched">επεισόδια που προβλήθηκαν</string>
     <string name="lists_stat_movies_watched">ταινίες που προβλήθηκαν</string>
     <string name="lists_stat_rated_titles">τίτλοι με βαθμολογία</string>
+    <string name="settings_playback_section_player_controls">ΣΤΟΙΧΕΙΑ ΕΛΕΓΧΟΥ ΑΝΑΠΑΡΑΓΩΓΕΑ</string>
+    <string name="settings_playback_controls_size">Μέγεθος στοιχείων ελέγχου</string>
+    <string name="settings_playback_controls_size_description">Αλλάζει το μέγεθος των κουμπιών και των εικονιδίων του αναπαραγωγέα. Τα μεγάλα μεγέθη συρρικνώνονται σε μικρά παράθυρα ώστε να χωρά η γραμμή.</string>
+    <string name="settings_playback_controls_size_value">%1$d%</string>
+    <string name="settings_playback_controls_size_preview">Προεπισκόπηση</string>
+    <string name="settings_playback_controls_size_reset">Επαναφορά</string>
 </resources>

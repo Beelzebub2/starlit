@@ -3465,4 +3465,10 @@
     <string name="lists_stat_episodes_watched">episoade vizionate</string>
     <string name="lists_stat_movies_watched">filme vizionate</string>
     <string name="lists_stat_rated_titles">titluri notate</string>
+    <string name="settings_playback_section_player_controls">CONTROALELE PLAYERULUI</string>
+    <string name="settings_playback_controls_size">Dimensiunea comenzilor</string>
+    <string name="settings_playback_controls_size_description">Redimensionează butoanele și pictogramele playerului. Dimensiunile mari se reduc în ferestrele mici pentru ca bara să încapă.</string>
+    <string name="settings_playback_controls_size_value">%1$d%</string>
+    <string name="settings_playback_controls_size_preview">Previzualizare</string>
+    <string name="settings_playback_controls_size_reset">Resetează</string>
 </resources>

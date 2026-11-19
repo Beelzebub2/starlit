@@ -3503,4 +3503,10 @@
     <string name="lists_stat_episodes_watched">দেখা পর্ব</string>
     <string name="lists_stat_movies_watched">দেখা সিনেমা</string>
     <string name="lists_stat_rated_titles">রেটিং দেওয়া শিরোনাম</string>
+    <string name="settings_playback_section_player_controls">প্লেয়ার নিয়ন্ত্রণ</string>
+    <string name="settings_playback_controls_size">নিয়ন্ত্রণের আকার</string>
+    <string name="settings_playback_controls_size_description">প্লেয়ারের বোতাম ও আইকনের আকার পরিবর্তন করে। ছোট উইন্ডোতে বারটি ফিট রাখতে বড় আকার ছোট হয়ে যায়।</string>
+    <string name="settings_playback_controls_size_value">%1$d%</string>
+    <string name="settings_playback_controls_size_preview">পূর্বরূপ</string>
+    <string name="settings_playback_controls_size_reset">রিসেট</string>
 </resources>

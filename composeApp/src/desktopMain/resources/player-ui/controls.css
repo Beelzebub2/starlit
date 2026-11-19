@@ -149,6 +149,9 @@ button:disabled {
   position: relative;
   width: 100%;
   height: 100%;
+  /* clip, not hidden: a clipped box cannot be scrolled, so revealing an off-screen panel row
+     can never shift the player. */
+  overflow: clip;
 }
 
 .player.cursor-hidden {
@@ -1953,6 +1956,7 @@ button:disabled {
   position: absolute;
   inset: 0;
   z-index: 30;
+  overflow: clip;
   display: grid;
   place-items: center;
   padding: 24px;
@@ -3945,10 +3949,15 @@ svg {
    popover. Icons share one 1.8px stroke family. */
 
 :root {
-  --overlay-bottom: calc(var(--slider-bottom) + 124px);
-  --bar-button: 44px;
-  --bar-icon: 22px;
-  --bar-play: 56px;
+  /* Set from Settings > Playback > Player controls; controls.js caps it so the bar fits. */
+  --controls-scale: 1;
+  /* Text grows at half the rate of icons so labels stay balanced. */
+  --controls-text-scale: calc(1 + (var(--controls-scale) - 1) * .5);
+  --overlay-bottom: calc(var(--slider-bottom) + 124px * var(--controls-scale));
+  --bar-button: calc(44px * var(--controls-scale));
+  --bar-icon: calc(22px * var(--controls-scale));
+  --bar-play: calc(56px * var(--controls-scale));
+  --header-icon: calc(22px * var(--controls-scale));
   --popover-surface: rgba(17, 18, 23, .95);
   --popover-border: rgba(255, 255, 255, .08);
 }
@@ -4045,8 +4054,8 @@ svg {
 }
 
 .header-button svg {
-  width: 21px;
-  height: 21px;
+  width: calc(21px * var(--controls-scale));
+  height: calc(21px * var(--controls-scale));
 }
 
 .header-button.back-button {
@@ -4078,10 +4087,10 @@ svg {
 
 .scrub-row .time-pill {
   flex: 0 0 auto;
-  min-width: 48px;
+  min-width: calc(48px * var(--controls-text-scale));
   color: #fff;
-  font-size: 13px;
-  line-height: 16px;
+  font-size: calc(13px * var(--controls-text-scale));
+  line-height: calc(16px * var(--controls-text-scale));
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
@@ -4242,7 +4251,7 @@ svg {
 .action-divider {
   flex: 0 0 auto;
   width: 1px;
-  height: 24px;
+  height: calc(24px * var(--controls-scale));
   margin: 0 8px;
   background: rgba(255, 255, 255, .18);
 }
@@ -4331,8 +4340,8 @@ svg {
 }
 
 .action-group .action.playback-action svg {
-  width: 24px;
-  height: 24px;
+  width: calc(24px * var(--controls-scale));
+  height: calc(24px * var(--controls-scale));
 }
 
 .seek-amount {
@@ -4340,7 +4349,7 @@ svg {
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  font-size: 7.5px;
+  font-size: calc(7.5px * var(--controls-scale));
   line-height: 1;
   font-weight: 800;
   letter-spacing: -.03em;
@@ -4364,12 +4373,62 @@ svg {
   pointer-events: none;
 }
 
+/* On Playback options the speed badge sits bottom-right so it never covers the toggle count. */
 .action-badge.speed-badge {
-  top: 2px;
+  top: auto;
+  bottom: 2px;
   right: -3px;
   height: 14px;
   border-radius: 6px;
   line-height: 14px;
+}
+
+/* Speed: one row of choices at the top of Playback options. */
+.popover-heading.speed-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.speed-heading-value {
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.speed-options {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 4px;
+  padding: 2px 8px 6px;
+}
+
+.speed-option {
+  height: 34px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, .06);
+  color: rgba(255, 255, 255, .86);
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  transition: background-color var(--motion-fast) ease, color var(--motion-fast) ease;
+}
+
+.speed-option:hover {
+  background: rgba(255, 255, 255, .12);
+  color: #fff;
+}
+
+.speed-option.selected {
+  background: var(--theme-accent);
+  color: var(--theme-on-accent);
+}
+
+.speed-option:focus-visible {
+  outline: 2px solid var(--theme-focus);
+  outline-offset: 2px;
 }
 
 /* Volume: 0-200%; a tick marks 100% and boost fills in the accent. */
@@ -4405,7 +4464,7 @@ svg {
 }
 
 .action-group .volume-slider {
-  width: 112px;
+  width: calc(112px * var(--controls-text-scale));
   height: 24px;
 }
 
@@ -4427,9 +4486,9 @@ svg {
 }
 
 .volume-value {
-  min-width: 40px;
+  min-width: calc(40px * var(--controls-text-scale));
   color: rgba(255, 255, 255, .72);
-  font-size: 12px;
+  font-size: calc(12px * var(--controls-text-scale));
   line-height: 16px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;

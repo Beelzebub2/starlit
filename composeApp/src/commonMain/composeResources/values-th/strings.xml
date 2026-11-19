@@ -3471,4 +3471,10 @@
     <string name="lists_stat_episodes_watched">ตอนที่ดูแล้ว</string>
     <string name="lists_stat_movies_watched">ภาพยนตร์ที่ดูแล้ว</string>
     <string name="lists_stat_rated_titles">เรื่องที่ให้คะแนน</string>
+    <string name="settings_playback_section_player_controls">ตัวควบคุมเครื่องเล่น</string>
+    <string name="settings_playback_controls_size">ขนาดตัวควบคุม</string>
+    <string name="settings_playback_controls_size_description">ปรับขนาดปุ่มและไอคอนของเครื่องเล่น ขนาดใหญ่จะถูกย่อลงในหน้าต่างเล็กเพื่อให้แถบพอดี</string>
+    <string name="settings_playback_controls_size_value">%1$d%</string>
+    <string name="settings_playback_controls_size_preview">ดูตัวอย่าง</string>
+    <string name="settings_playback_controls_size_reset">รีเซ็ต</string>
 </resources>

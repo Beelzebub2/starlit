@@ -3444,4 +3444,10 @@
     <string name="lists_stat_episodes_watched">시청한 에피소드</string>
     <string name="lists_stat_movies_watched">시청한 영화</string>
     <string name="lists_stat_rated_titles">평점을 준 작품</string>
+    <string name="settings_playback_section_player_controls">플레이어 컨트롤</string>
+    <string name="settings_playback_controls_size">컨트롤 크기</string>
+    <string name="settings_playback_controls_size_description">플레이어 버튼과 아이콘의 크기를 조정합니다. 작은 창에서는 큰 크기가 줄어들어 바가 맞습니다.</string>
+    <string name="settings_playback_controls_size_value">%1$d%</string>
+    <string name="settings_playback_controls_size_preview">미리보기</string>
+    <string name="settings_playback_controls_size_reset">재설정</string>
 </resources>

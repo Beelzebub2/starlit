@@ -3456,4 +3456,10 @@
     <string name="lists_stat_episodes_watched">gesehene Folgen</string>
     <string name="lists_stat_movies_watched">gesehene Filme</string>
     <string name="lists_stat_rated_titles">bewertete Titel</string>
+    <string name="settings_playback_section_player_controls">PLAYER-STEUERUNG</string>
+    <string name="settings_playback_controls_size">Größe der Steuerelemente</string>
+    <string name="settings_playback_controls_size_description">Passt die Größe der Player-Schaltflächen und -Symbole an. Große Größen werden in kleinen Fenstern verkleinert, damit die Leiste hineinpasst.</string>
+    <string name="settings_playback_controls_size_value">%1$d%</string>
+    <string name="settings_playback_controls_size_preview">Vorschau</string>
+    <string name="settings_playback_controls_size_reset">Zurücksetzen</string>
 </resources>

@@ -3493,4 +3493,10 @@ Nagbalik ang</string>
     <string name="lists_stat_episodes_watched">mga napanood na episode</string>
     <string name="lists_stat_movies_watched">mga napanood na pelikula</string>
     <string name="lists_stat_rated_titles">mga pamagat na may rating</string>
+    <string name="settings_playback_section_player_controls">MGA KONTROL NG PLAYER</string>
+    <string name="settings_playback_controls_size">Laki ng mga kontrol</string>
+    <string name="settings_playback_controls_size_description">Binabago ang laki ng mga button at icon ng player. Ang malalaking sukat ay lumiliit sa maliliit na window para magkasya ang bar.</string>
+    <string name="settings_playback_controls_size_value">%1$d%</string>
+    <string name="settings_playback_controls_size_preview">Preview</string>
+    <string name="settings_playback_controls_size_reset">I-reset</string>
 </resources>

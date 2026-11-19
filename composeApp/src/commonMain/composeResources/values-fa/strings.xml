@@ -3453,4 +3453,10 @@
     <string name="lists_stat_episodes_watched">قسمت دیده‌شده</string>
     <string name="lists_stat_movies_watched">فیلم دیده‌شده</string>
     <string name="lists_stat_rated_titles">عنوان امتیازدهی‌شده</string>
+    <string name="settings_playback_section_player_controls">کنترل‌های پخش‌کننده</string>
+    <string name="settings_playback_controls_size">اندازه کنترل‌ها</string>
+    <string name="settings_playback_controls_size_description">اندازه دکمه‌ها و نمادهای پخش‌کننده را تغییر می‌دهد. اندازه‌های بزرگ در پنجره‌های کوچک کاهش می‌یابند تا نوار جا شود.</string>
+    <string name="settings_playback_controls_size_value">%1$d%</string>
+    <string name="settings_playback_controls_size_preview">پیش‌نمایش</string>
+    <string name="settings_playback_controls_size_reset">بازنشانی</string>
 </resources>

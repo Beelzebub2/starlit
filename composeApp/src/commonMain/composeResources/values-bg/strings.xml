@@ -3492,4 +3492,10 @@
     <string name="lists_stat_episodes_watched">гледани епизода</string>
     <string name="lists_stat_movies_watched">гледани филма</string>
     <string name="lists_stat_rated_titles">оценени заглавия</string>
+    <string name="settings_playback_section_player_controls">КОНТРОЛИ НА ПЛЕЙЪРА</string>
+    <string name="settings_playback_controls_size">Размер на контролите</string>
+    <string name="settings_playback_controls_size_description">Преоразмерява бутоните и иконите на плейъра. Големите размери се свиват в малки прозорци, за да се побере лентата.</string>
+    <string name="settings_playback_controls_size_value">%1$d%</string>
+    <string name="settings_playback_controls_size_preview">Преглед</string>
+    <string name="settings_playback_controls_size_reset">Нулиране</string>
 </resources>

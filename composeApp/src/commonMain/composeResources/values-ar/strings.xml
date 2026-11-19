@@ -3481,4 +3481,10 @@
     <string name="lists_stat_episodes_watched">حلقة مشاهَدة</string>
     <string name="lists_stat_movies_watched">فيلم مشاهَد</string>
     <string name="lists_stat_rated_titles">عنوان مقيَّم</string>
+    <string name="settings_playback_section_player_controls">عناصر تحكم المشغل</string>
+    <string name="settings_playback_controls_size">حجم عناصر التحكم</string>
+    <string name="settings_playback_controls_size_description">يغيّر حجم أزرار المشغل وأيقوناته. تتقلص الأحجام الكبيرة في النوافذ الصغيرة لتظل الشريط مناسبًا.</string>
+    <string name="settings_playback_controls_size_value">%1$d%</string>
+    <string name="settings_playback_controls_size_preview">معاينة</string>
+    <string name="settings_playback_controls_size_reset">إعادة ضبط</string>
 </resources>

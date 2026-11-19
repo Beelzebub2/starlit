@@ -85,6 +85,7 @@ data class PlayerControlsState(
     val shortSeekSeconds: Int = DEFAULT_SHORT_SEEK_SECONDS,
     val mediumSeekSeconds: Int = DEFAULT_MEDIUM_SEEK_SECONDS,
     val longSeekSeconds: Int = DEFAULT_LONG_SEEK_SECONDS,
+    val controlsScalePercent: Int = DEFAULT_PLAYER_CONTROLS_SCALE_PERCENT,
     val episodeText: String = "",
     val streamTitle: String = "",
     val providerName: String = "",

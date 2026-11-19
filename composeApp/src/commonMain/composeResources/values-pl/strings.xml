@@ -3480,4 +3480,10 @@
     <string name="lists_stat_episodes_watched">obejrzanych odcinków</string>
     <string name="lists_stat_movies_watched">obejrzanych filmów</string>
     <string name="lists_stat_rated_titles">ocenionych tytułów</string>
+    <string name="settings_playback_section_player_controls">ELEMENTY STEROWANIA ODTWARZACZA</string>
+    <string name="settings_playback_controls_size">Rozmiar elementów sterowania</string>
+    <string name="settings_playback_controls_size_description">Zmienia rozmiar przycisków i ikon odtwarzacza. Duże rozmiary są zmniejszane w małych oknach, aby pasek się zmieścił.</string>
+    <string name="settings_playback_controls_size_value">%1$d%</string>
+    <string name="settings_playback_controls_size_preview">Podgląd</string>
+    <string name="settings_playback_controls_size_reset">Resetuj</string>
 </resources>

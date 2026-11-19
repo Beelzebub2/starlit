@@ -3463,4 +3463,10 @@
     <string name="lists_stat_episodes_watched">megtekintett epizód</string>
     <string name="lists_stat_movies_watched">megtekintett film</string>
     <string name="lists_stat_rated_titles">értékelt cím</string>
+    <string name="settings_playback_section_player_controls">LEJÁTSZÓ VEZÉRLŐI</string>
+    <string name="settings_playback_controls_size">Vezérlők mérete</string>
+    <string name="settings_playback_controls_size_description">Átméretezi a lejátszó gombjait és ikonjait. A nagy méretek kis ablakokban csökkennek, hogy a sáv elférjen.</string>
+    <string name="settings_playback_controls_size_value">%1$d%</string>
+    <string name="settings_playback_controls_size_preview">Előnézet</string>
+    <string name="settings_playback_controls_size_reset">Visszaállítás</string>
 </resources>

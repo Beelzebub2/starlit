@@ -1590,6 +1590,12 @@
     <string name="settings_playback_seek_medium">Medium seek (Shift + arrows)</string>
     <string name="settings_playback_seek_long">Long seek (Ctrl + arrows)</string>
     <string name="settings_playback_seek_seconds">%1$d seconds</string>
+    <string name="settings_playback_section_player_controls">PLAYER CONTROLS</string>
+    <string name="settings_playback_controls_size">Control size</string>
+    <string name="settings_playback_controls_size_description">Resizes the player buttons and icons. Large sizes shrink in small windows so the bar still fits.</string>
+    <string name="settings_playback_controls_size_value">%1$d%</string>
+    <string name="settings_playback_controls_size_preview">Preview</string>
+    <string name="settings_playback_controls_size_reset">Reset</string>
     <string name="settings_playback_section_skip_segments">SKIP SEGMENTS</string>
     <string name="settings_playback_section_stream_auto_play">STREAM AUTO-PLAY</string>
     <string name="settings_playback_section_stream_selection">STREAM SELECTION</string>

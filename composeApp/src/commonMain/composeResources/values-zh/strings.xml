@@ -3471,4 +3471,10 @@
     <string name="lists_stat_episodes_watched">已看集数</string>
     <string name="lists_stat_movies_watched">已看电影</string>
     <string name="lists_stat_rated_titles">已评分作品</string>
+    <string name="settings_playback_section_player_controls">播放器控件</string>
+    <string name="settings_playback_controls_size">控件大小</string>
+    <string name="settings_playback_controls_size_description">调整播放器按钮和图标的大小。在小窗口中，大尺寸会缩小以确保控制栏适合显示。</string>
+    <string name="settings_playback_controls_size_value">%1$d%</string>
+    <string name="settings_playback_controls_size_preview">预览</string>
+    <string name="settings_playback_controls_size_reset">重置</string>
 </resources>

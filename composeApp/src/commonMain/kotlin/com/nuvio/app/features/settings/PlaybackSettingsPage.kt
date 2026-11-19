@@ -485,6 +485,20 @@ private fun PlaybackSettingsSection(
             }
         }
 
+        // The desktop player overlay is the one that reads this size today.
+        if (isDesktop && showTab(PlaybackSettingsTab.Player)) SettingsSection(
+            title = stringResource(Res.string.settings_playback_section_player_controls),
+            isTablet = isTablet,
+        ) {
+            SettingsGroup(isTablet = isTablet) {
+                PlayerControlsSizeSetting(
+                    scalePercent = autoPlayPlayerSettings.controlsScalePercent,
+                    isTablet = isTablet,
+                    onScalePercentChange = PlayerSettingsRepository::setControlsScalePercent,
+                )
+            }
+        }
+
         if (showTab(PlaybackSettingsTab.Player)) SettingsSection(
             title = stringResource(Res.string.settings_playback_section_seek),
             isTablet = isTablet,

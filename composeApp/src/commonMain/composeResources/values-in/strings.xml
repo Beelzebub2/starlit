@@ -3449,4 +3449,10 @@
     <string name="lists_stat_episodes_watched">episode ditonton</string>
     <string name="lists_stat_movies_watched">film ditonton</string>
     <string name="lists_stat_rated_titles">judul dinilai</string>
+    <string name="settings_playback_section_player_controls">KONTROL PEMUTAR</string>
+    <string name="settings_playback_controls_size">Ukuran kontrol</string>
+    <string name="settings_playback_controls_size_description">Mengubah ukuran tombol dan ikon pemutar. Ukuran besar diperkecil di jendela kecil agar bilah tetap muat.</string>
+    <string name="settings_playback_controls_size_value">%1$d%</string>
+    <string name="settings_playback_controls_size_preview">Pratinjau</string>
+    <string name="settings_playback_controls_size_reset">Atur ulang</string>
 </resources>
