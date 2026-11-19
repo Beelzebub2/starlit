@@ -1,3 +1,20 @@
+## Starlit 1.32.0
+
+### Audio and subtitle menus
+
+- **One panel for audio and subtitles:** The desktop player, phones, tablets, iOS source builds and Android TV now open a single Audio & subtitles panel from either player button. Wide screens show both lists side by side; phones switch between them with tabs. Choosing an audio track keeps the panel open so subtitles can be changed in the same place.
+- **Readable track names:** Long release titles such as "Japanese / Opus / 2.0 / 48 kHz / 192 kbps / JPBD" now appear as the language followed by a short line of stream facts: codec, channels, bitrate and edition. Common codecs use familiar names, and forced, SDH, commentary, original-language and audio-description tracks are labelled.
+- **Clearer selection:** The playing track is marked with a radio button and a light tint instead of a solid colour bar. On TVs, remote focus uses its own outline so it is never confused with the selected track.
+- **Quick subtitle timing:** A subtitle delay control sits under the subtitle list in 0.1-second steps. The existing style and timing options remain available.
+- **Samsung and LG TV preview:** The developer-preview TV app's audio and subtitle dialogs use the same row style and track names while keeping their existing remote navigation.
+
+### Compatibility and distribution
+
+- New interface strings have entries in every supported Compose and TV catalog; native-speaker review remains outstanding.
+- Track names depend on the metadata each stream provides. The new menus were checked in automated desktop, Compose and TV-web tests and rendered previews; playback on physical phones, Android TV and Samsung/LG TVs has not been independently accepted.
+- Stable packages for Windows, signed Android phone and Android TV, and Linux are published only after required build, signing, smoke-test, checksum and provenance gates. Matching Samsung Tizen, LG webOS and Windows TV Installer packages remain separate unaccepted developer previews under `tv-preview-v1.32.0`.
+- No iOS App Store release or macOS installer publication is included.
+
 ## Starlit 1.31.0
 
 ### Lists and tracking integrations
