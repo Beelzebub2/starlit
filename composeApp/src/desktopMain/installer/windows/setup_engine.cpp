@@ -32,8 +32,11 @@ constexpr wchar_t kShortcutDescription[] = L"Browse, organize, and play media fr
 
 // Share of the progress bar each install phase owns.
 constexpr double kExtractStart = 0.02;
+constexpr double kTvDownloadEnd = 0.10;
+constexpr double kTvUnpackEnd = 0.50;
 constexpr double kExtractEnd = 0.90;
 constexpr double kLegacyEnd = 0.96;
+constexpr double kInstallEnd = 0.98;
 
 std::mutex gLogMutex;
 
@@ -674,6 +677,10 @@ bool Engine::canDownloadTvInstaller() const {
 }
 
 bool Engine::install(const InstallRequest& request) {
+    phase = Phase::Idle;
+    progress = 0.0;
+    doneBytes = 0;
+    setFile({});
     const std::wstring dir = normalizeDir(request.dir);
     log(L"Install %s %s to %s (start menu %d, desktop %d, sandbox %d)", identity_.product.name.c_str(),
         identity_.product.version.c_str(), dir.c_str(), request.startMenu, request.desktop, identity_.sandbox);
@@ -704,15 +711,15 @@ bool Engine::install(const InstallRequest& request) {
             fail(L"Setup couldn't create the optional TV installer download folder.");
             return false;
         }
+        progress = kExtractStart;
         phase = Phase::Downloading;
-        progress = 0.02;
         setFile(L"Starlit TV Installer");
         std::wstring downloadError;
         const std::wstring archive = staging + L"\\starlit-tv-runtime.zip";
         const bool downloaded = tvdownload::downloadUnpackedInstaller(
             identity_.product.version, archive,
             [&](uint64_t done, uint64_t total) {
-                progress = 0.02 + 0.08 * static_cast<double>(done) /
+                progress = kExtractStart + (kTvDownloadEnd - kExtractStart) * static_cast<double>(done) /
                     static_cast<double>(total ? total : tvdownload::kMaxUnpackedArchiveBytes);
                 setFile(L"TV installer: " + megabytes(done) + (total ? L" / " + megabytes(total) : L""));
             }, downloadError);
@@ -721,60 +728,18 @@ bool Engine::install(const InstallRequest& request) {
             deleteTree(staging);
             return false;
         }
-        // PowerShell's ZIP extraction handles the Electron runtime's deeply
-        // nested files (Windows bsdtar rejects some entries in this archive).
-        // The download is SHA-256 verified; no downloaded binary runs in setup.
-        wchar_t systemDir[MAX_PATH]{};
-        const UINT systemLen = GetSystemDirectoryW(systemDir, MAX_PATH);
-        if (!systemLen || systemLen >= MAX_PATH) {
-            fail(L"Couldn't locate the Windows archive extraction tool.");
+        progress = kTvDownloadEnd;
+        setFile({});
+        phase = Phase::UnpackingTv;
+        if (!tvdownload::unpackInstaller(archive, tools, [&](unsigned percent) {
+                progress = kTvDownloadEnd + (kTvUnpackEnd - kTvDownloadEnd) * percent / 100;
+                setFile(L"TV Installer: " + std::to_wstring(percent) + L"% unpacked");
+            }, downloadError)) {
+            fail(downloadError);
             deleteTree(staging);
             return false;
         }
-        const std::wstring powershell = std::wstring(systemDir) +
-            L"\\WindowsPowerShell\\v1.0\\powershell.exe";
-        // Windows filenames cannot contain double quotes. Single-quote the
-        // PowerShell literals and double embedded apostrophes to avoid treating
-        // the installation path as script source.
-        const auto psQuote = [](const std::wstring& path) {
-            std::wstring quoted = L"'";
-            for (const wchar_t ch : path) {
-                if (ch == L'\'') quoted += L"''";
-                else quoted += ch;
-            }
-            return quoted + L"'";
-        };
-        const std::wstring script = L"Expand-Archive -LiteralPath " + psQuote(archive) +
-            L" -DestinationPath " + psQuote(tools) + L" -Force -ErrorAction Stop";
-        std::wstring command = L"\"" + powershell +
-            L"\" -NoProfile -NonInteractive -Command \"" + script + L"\"";
-        STARTUPINFOW startup{};
-        startup.cb = sizeof startup;
-        PROCESS_INFORMATION process{};
-        if (!CreateProcessW(powershell.c_str(), command.data(), nullptr, nullptr, FALSE,
-                            CREATE_NO_WINDOW, nullptr, nullptr, &startup, &process)) {
-            fail(L"Couldn't start Windows archive extraction.");
-            deleteTree(staging);
-            return false;
-        }
-        CloseHandle(process.hThread);
-        const DWORD wait = WaitForSingleObject(process.hProcess, 120000);
-        DWORD exitCode = 1;
-        if (wait != WAIT_OBJECT_0) {
-            TerminateProcess(process.hProcess, 1);
-            WaitForSingleObject(process.hProcess, INFINITE);
-        } else {
-            GetExitCodeProcess(process.hProcess, &exitCode);
-        }
-        CloseHandle(process.hProcess);
         DeleteFileW(archive.c_str());
-        if (wait != WAIT_OBJECT_0 || exitCode != 0 ||
-            !fileExists(tools + L"\\Starlit TV Installer.exe")) {
-            fail(L"The verified TV installer runtime couldn't be extracted. Try the installation again.");
-            deleteTree(staging);
-            return false;
-        }
-        progress = 0.10;
     }
 
     phase = Phase::Closing;
@@ -791,9 +756,10 @@ bool Engine::install(const InstallRequest& request) {
     // Unpack next to the target first so a failed or cancelled run never
     // leaves a half-written app behind; the old version is only touched once
     // every new file is on disk.
-    phase = Phase::Extracting;
-    const double extractStart = downloadTv ? 0.10 : kExtractStart;
+    const double extractStart = downloadTv ? kTvUnpackEnd : kExtractStart;
     progress = extractStart;
+    setFile({});
+    phase = Phase::Extracting;
     if (!extract(staging, extractStart) || !writeUninstaller(staging)) {
         deleteTree(staging);
         return false;
@@ -823,16 +789,18 @@ bool Engine::install(const InstallRequest& request) {
     }
     progress = kLegacyEnd;
 
-    phase = Phase::Finishing;
+    setFile({});
+    phase = request.tvInstaller ? Phase::InstallingTv : Phase::Installing;
     if (!swapInto(staging, dir, request.tvInstaller)) {
         deleteTree(staging);
         return false;
     }
+    progress = kInstallEnd;
     if (legacyOwned && !legacyFirst) {
         phase = Phase::Legacy;
         removeLegacyMsi();
-        phase = Phase::Finishing;
     }
+    phase = Phase::Finishing;
     const std::wstring earlierLauncher = existing_.launcher.empty() ? identity_.product.exe : existing_.launcher;
     if (existing_.ours && !samePath(existing_.location, dir) &&
         fileExists(existing_.location + L"\\" + earlierLauncher)) {
@@ -846,7 +814,6 @@ bool Engine::install(const InstallRequest& request) {
     InstallRequest applied = request;
     applied.dir = dir;
     writeShortcuts(applied);
-    progress = 0.98;
     registerUninstall(applied);
     SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST, nullptr, nullptr);
     progress = 1.0;
@@ -1029,6 +996,7 @@ bool Engine::mergeInto(const std::wstring& staging, const std::wstring& dir, boo
         }
     }
     shipped.push_back(identity_.uninstallerFileName());
+    size_t installed = 0;
     for (const auto& relative : shipped) {
         const std::wstring from = staging + L"\\" + relative;
         const std::wstring to = dir + L"\\" + relative;
@@ -1039,6 +1007,10 @@ bool Engine::mergeInto(const std::wstring& staging, const std::wstring& dir, boo
                  identity_.product.name + L", then select Try again.");
             return false;
         }
+        ++installed;
+        progress = kLegacyEnd + (kInstallEnd - kLegacyEnd) * static_cast<double>(installed) /
+            static_cast<double>(shipped.size());
+        setFile(std::to_wstring(installed) + L" / " + std::to_wstring(shipped.size()) + L" files installed");
     }
     // Drop what the previous version shipped and this one doesn't (jar names change between builds).
     std::vector<std::wstring> present;

@@ -21,11 +21,14 @@
 
   const PHASES = {
     downloading: 'Downloading the TV Installer from GitHub…',
+    'unpacking-tv': 'Unpacking TV Installer files…',
     idle: 'Getting ready…',
     closing: 'Closing the app…',
     extracting: 'Unpacking files…',
     legacy: 'Removing the previous version…',
-    finishing: 'Creating shortcuts…',
+    installing: 'Installing Starlit files…',
+    'installing-tv': 'Installing Starlit and the TV Installer…',
+    finishing: 'Finishing setup…',
     removing: 'Removing files…',
     done: 'Done',
   };
@@ -35,8 +38,8 @@
   const MILESTONES = {
     install: [
       { label: 'Prepare', from: 0, phases: ['idle', 'downloading', 'closing'] },
-      { label: 'Unpack files', from: 0.03, phases: ['extracting'] },
-      { label: 'Finish up', from: 0.9, phases: ['legacy', 'finishing'] },
+      { label: 'Unpack files', from: 0.02, phases: ['unpacking-tv', 'extracting'] },
+      { label: 'Finish up', from: 0.9, phases: ['legacy', 'installing', 'installing-tv', 'finishing'] },
       { label: 'Ready', from: 1, phases: ['done'] },
     ],
     uninstall: [
@@ -421,7 +424,7 @@
   }
 
   const progress = {
-    reported: 0, shown: 0, phase: 'idle', done: 0, total: 0, last: 0, running: false, unpackFrom: 0.03,
+    reported: 0, shown: 0, phase: 'idle', done: 0, total: 0, last: 0, running: false, milestone: 0, unpackFrom: 0.02,
   };
 
   function milestoneIndex(milestones) {
@@ -431,7 +434,9 @@
 
   function paintMilestones() {
     const milestones = MILESTONES[state.mode === 'uninstall' ? 'uninstall' : 'install'];
-    const active = milestoneIndex(milestones);
+    // The app can close after the optional archive finishes unpacking.
+    progress.milestone = Math.max(progress.milestone, milestoneIndex(milestones));
+    const active = progress.milestone;
     sky.milestones.forEach((entry, i) => {
       const next = i < active ? 'is-past' : i === active ? (i === milestones.length - 1 ? 'is-past' : 'is-current') : '';
       if (entry.state !== next) {
@@ -511,7 +516,9 @@
     const dt = Math.min(64, now - progress.last);
     progress.last = now;
     // Removing the old MSI reports nothing while it runs; ease forward inside its slice.
-    if (progress.phase === 'legacy') progress.reported = Math.min(0.955, progress.reported + dt * 0.000004);
+    if (progress.phase === 'legacy' && progress.reported < 0.955) {
+      progress.reported = Math.min(0.955, progress.reported + dt * 0.000004);
+    }
     const target = progress.reported;
     progress.shown += (target - progress.shown) * (1 - Math.exp(-dt / 160));
     if (Math.abs(target - progress.shown) < 0.0004) progress.shown = target;
@@ -528,23 +535,23 @@
   }
 
   function onProgress(message) {
-    if (message.phase === 'extracting' && progress.phase !== 'extracting') {
-      progress.unpackFrom = Math.max(0.001, Math.min(0.5, message.value));
-    }
     progress.reported = Math.max(progress.reported, message.value);
     progress.phase = message.phase;
     progress.done = message.done;
     progress.total = message.total;
-    $('progress-status').textContent = message.phase === 'closing' ? `Closing ${state.name}…` : PHASES[message.phase] || PHASES.idle;
-    $('progress-file').textContent = message.phase === 'extracting' || message.phase === 'downloading'
-      ? message.file : '';
+    const status = message.phase === 'closing' ? `Closing ${state.name}…` : PHASES[message.phase] || PHASES.idle;
+    const statusElement = $('progress-status');
+    if (statusElement.textContent !== status) statusElement.textContent = status;
+    $('progress-file').textContent = ['downloading', 'unpacking-tv', 'extracting', 'installing', 'installing-tv']
+      .includes(message.phase) ? message.file : '';
     animateProgress();
   }
 
   function begin() {
     if (state.busy) return;
     setBusy(true);
-    Object.assign(progress, { reported: 0, shown: 0, phase: 'idle', done: 0, total: 0, unpackFrom: 0.03 });
+    const unpackFrom = state.tvInstallerAvailable && state.tvInstaller && !state.tvInstallerBundled ? 0.10 : 0.02;
+    Object.assign(progress, { reported: 0, shown: 0, phase: 'idle', done: 0, total: 0, milestone: 0, unpackFrom });
     app.classList.remove('is-error', 'is-landed', 'is-complete');
     app.classList.add('is-installing');
     buildMilestones();

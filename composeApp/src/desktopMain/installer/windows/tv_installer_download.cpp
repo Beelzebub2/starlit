@@ -287,4 +287,82 @@ bool downloadUnpackedInstaller(const std::wstring& version, const std::wstring& 
                                           destination, kMaxUnpackedArchiveBytes, onProgress, error);
 }
 
+bool unpackInstaller(const std::wstring& archive, const std::wstring& destination,
+                     const std::function<void(unsigned)>& onProgress, std::wstring& error) {
+    // Expand-Archive handles nested runtime files that Windows bsdtar rejects.
+    wchar_t systemDir[MAX_PATH]{};
+    const UINT systemLen = GetSystemDirectoryW(systemDir, MAX_PATH);
+    if (!systemLen || systemLen >= MAX_PATH) {
+        error = L"Couldn't locate the Windows archive extraction tool.";
+        return false;
+    }
+    const std::wstring powershell = std::wstring(systemDir) +
+        L"\\WindowsPowerShell\\v1.0\\powershell.exe";
+    const auto psQuote = [](const std::wstring& path) {
+        std::wstring quoted = L"'";
+        for (const wchar_t ch : path) {
+            // PowerShell also treats typographic single quotes as delimiters.
+            if (ch == L'\'' || ch == L'\u2018' || ch == L'\u2019' || ch == L'\u201a' || ch == L'\u201b') quoted += ch;
+            quoted += ch;
+        }
+        return quoted + L"'";
+    };
+    const std::wstring progressFile = archive + L".progress";
+    // Read the cmdlet's progress stream in the headless PowerShell process.
+    // Each one-byte sample is the latest percentage of archive entries unpacked.
+    const std::wstring script = L"$ErrorActionPreference='Stop'; $ps=[PowerShell]::Create(); try {"
+        L"$null=$ps.AddCommand('Expand-Archive').AddParameter('LiteralPath'," + psQuote(archive) +
+        L").AddParameter('DestinationPath'," + psQuote(destination) +
+        L").AddParameter('Force').AddParameter('ErrorAction','Stop');"
+        L"$job=$ps.BeginInvoke(); while (!$job.AsyncWaitHandle.WaitOne(100)) {"
+        L"$updates=$ps.Streams.Progress.ReadAll();"
+        L"if ($updates.Count -and $updates[-1].PercentComplete -ge 0) {"
+        L"try { [IO.File]::WriteAllBytes(" + psQuote(progressFile) + L",[byte[]]@($updates[-1].PercentComplete)) }"
+        L"catch [IO.IOException] {} catch [UnauthorizedAccessException] {}"
+        L"}}; $null=$ps.EndInvoke($job); if ($ps.HadErrors) { exit 1 }"
+        L"} finally { $ps.Dispose() }";
+    std::wstring command = L"\"" + powershell +
+        L"\" -NoProfile -NonInteractive -Command \"" + script + L"\"";
+    STARTUPINFOW startup{};
+    startup.cb = sizeof startup;
+    PROCESS_INFORMATION process{};
+    if (!CreateProcessW(powershell.c_str(), command.data(), nullptr, nullptr, FALSE,
+                        CREATE_NO_WINDOW, nullptr, nullptr, &startup, &process)) {
+        error = L"Couldn't start Windows archive extraction.";
+        return false;
+    }
+    CloseHandle(process.hThread);
+    const ULONGLONG deadline = GetTickCount64() + 120000;
+    unsigned reported = 0;
+    DWORD wait;
+    while ((wait = WaitForSingleObject(process.hProcess, 100)) == WAIT_TIMEOUT &&
+           GetTickCount64() < deadline) {
+        FileHandle sample(CreateFileW(progressFile.c_str(), GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE,
+                                      nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr));
+        BYTE percent = 0;
+        DWORD read = 0;
+        if (sample.valid() && ReadFile(sample.handle, &percent, sizeof percent, &read, nullptr) &&
+            read == sizeof percent && percent > reported && percent < 100) {
+            reported = percent;
+            onProgress(reported);
+        }
+    }
+    DWORD exitCode = 1;
+    if (wait != WAIT_OBJECT_0) {
+        TerminateProcess(process.hProcess, 1);
+        WaitForSingleObject(process.hProcess, INFINITE);
+    } else {
+        GetExitCodeProcess(process.hProcess, &exitCode);
+    }
+    CloseHandle(process.hProcess);
+    DeleteFileW(progressFile.c_str());
+    const DWORD launcher = GetFileAttributesW((destination + L"\\Starlit TV Installer.exe").c_str());
+    if (exitCode != 0 || launcher == INVALID_FILE_ATTRIBUTES || (launcher & FILE_ATTRIBUTE_DIRECTORY)) {
+        error = L"The verified TV installer runtime couldn't be extracted. Try the installation again.";
+        return false;
+    }
+    onProgress(100);
+    return true;
+}
+
 }  // namespace setup::tvdownload

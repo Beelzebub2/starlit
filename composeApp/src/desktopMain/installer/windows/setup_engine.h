@@ -77,7 +77,9 @@ struct PayloadSource {
     std::wstring problem;
 };
 
-enum class Phase { Idle, Downloading, Closing, Extracting, Legacy, Finishing, Removing, Done };
+enum class Phase {
+    Idle, Downloading, UnpackingTv, Closing, Extracting, Legacy, Installing, InstallingTv, Finishing, Removing, Done
+};
 
 struct InstallRequest {
     std::wstring dir;
