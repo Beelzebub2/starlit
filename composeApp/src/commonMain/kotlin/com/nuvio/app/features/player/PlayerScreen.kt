@@ -45,6 +45,7 @@ internal fun PlayerScreen(
     contentLanguage: String? = null,
     launchId: Long? = null,
     privatePlayback: Boolean = false,
+    subtitleRequestExtra: String? = null,
 ) {
     PlayerScreenContent(
         PlayerScreenArgs(
@@ -55,6 +56,7 @@ internal fun PlayerScreen(
             sourceHeaders = sourceHeaders,
             sourceResponseHeaders = sourceResponseHeaders,
             externalSubtitles = externalSubtitles,
+            subtitleRequestExtra = subtitleRequestExtra,
             streamType = streamType,
             providerName = providerName,
             streamTitle = streamTitle,

@@ -1,6 +1,6 @@
 package com.nuvio.app.features.player
 
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.withTimeoutOrNull
 
 object SubtitleForwarder {
@@ -16,21 +16,14 @@ object SubtitleForwarder {
         preferredLanguage: String,
         secondaryLanguage: String?,
         timeoutMs: Long = 10_000L,
+        contentId: String? = null,
+        season: Int? = null,
+        episode: Int? = null,
     ): List<SubtitleInput>? {
         return try {
             withTimeoutOrNull(timeoutMs) {
-                SubtitleRepository.fetchAddonSubtitles(type, videoId)
-
-                // Give the internal coroutine a chance to start and set isLoading = true
-                kotlinx.coroutines.delay(50)
-
-                // Wait for loading to complete (isLoading goes from true back to false)
-                // If it's already false (fetch completed very quickly or never started), skip waiting
-                if (SubtitleRepository.isLoading.value) {
-                    SubtitleRepository.isLoading.first { !it }
-                }
-
-                val allSubtitles = SubtitleRepository.addonSubtitles.value
+                val lookup = SubtitleLookup(type, videoId, contentId, season = season, episode = episode)
+                val allSubtitles = loadAddonSubtitles(addonSubtitleRequests(lookup.resolve()))
 
                 val filtered = allSubtitles.filter { subtitle ->
                     languageMatchesPreference(subtitle.language, preferredLanguage) ||
@@ -46,6 +39,8 @@ object SubtitleForwarder {
                     )
                 }
             }
+        } catch (cancelled: CancellationException) {
+            throw cancelled
         } catch (_: Exception) {
             null
         }

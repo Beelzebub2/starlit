@@ -41,7 +41,7 @@ export function normalizeChapters(chapters = []) {
     .filter((chapter, index, list) => index === 0 || chapter.startMs !== list[index - 1].startMs);
 }
 /** Android ChapterSkipIntervals: derive OP/ED/recap intervals from container chapters. */
-export function chapterSkipIntervals(chapters = [], durationMs = 0) {
+export function chapterSkipIntervals(chapters = [], durationMs = 0, isMovie = false) {
   const normalized = normalizeChapters(chapters);
   const duration = Number(durationMs);
   if (normalized.length < 2 || !Number.isFinite(duration) || duration <= 0) {
@@ -50,6 +50,7 @@ export function chapterSkipIntervals(chapters = [], durationMs = 0) {
   const classified = normalized.map((chapter, index) => ({
     chapter,
     endMs: index + 1 < normalized.length ? normalized[index + 1].startMs : duration,
+    isLast: index === normalized.length - 1,
     type: classifyTitle(chapter.title)
   }));
   const hasExplicitOpening = classified.some((entry) => entry.type === "opening");
@@ -59,16 +60,15 @@ export function chapterSkipIntervals(chapters = [], durationMs = 0) {
       if (type === "intro") {
         type = hasExplicitOpening ? null : "opening";
       }
-      if (!type || type === "post-credits") {
-        return null;
-      }
+      if (!type || entry.endMs > duration || entry.endMs <= entry.chapter.startMs ||
+          (isMovie && type === "ending" && entry.isLast)) return null;
       const startSec = entry.chapter.startMs / 1000;
       const endSec = entry.endMs / 1000;
       const seconds = endSec - startSec;
-      if (seconds < MIN_DURATION_SEC || seconds > MAX_DURATION_SEC) {
-        return null;
-      }
-      const skipType = type === "opening" ? "intro" : type === "ending" ? "outro" : "recap";
+      const maxDuration = isMovie && type === "ending" ? 900 : MAX_DURATION_SEC;
+      if (type !== "post-credits" && (seconds < MIN_DURATION_SEC || seconds > maxDuration)) return null;
+      const skipType = type === "opening" ? "intro" : type === "ending"
+        ? (isMovie ? "movie-credits" : "outro") : type;
       return {
         startTime: startSec,
         endTime: endSec,
@@ -78,28 +78,16 @@ export function chapterSkipIntervals(chapters = [], durationMs = 0) {
     })
     .filter(Boolean);
 }
-/** Chapters win per category; API fills gaps; unknown API types stay after. */
-export function mergeSkipIntervals(apiIntervals = [], chapterIntervals = [], isMovie = false) {
-  const api = Array.isArray(apiIntervals) ? apiIntervals : [];
-  const chapters = Array.isArray(chapterIntervals) ? chapterIntervals : [];
-  if (!chapters.length) {
-    return api;
-  }
-  if (!api.length) {
-    return chapters;
-  }
-  if (isMovie) {
-    return api;
-  }
-  const chosen = new Map();
-  [...chapters, ...api].forEach((interval) => {
-    const category = segmentCategory(interval?.type);
-    if (category && !chosen.has(category)) {
-      chosen.set(category, interval);
-    }
+/** Chapters describe the active file. Provider data fills in unmarked segments. */
+export function mergeSkipIntervals(apiIntervals = [], chapterIntervals = []) {
+  const categoryFor = (interval) => segmentCategory(interval?.type);
+  const chapterCategories = new Set(chapterIntervals.map(categoryFor));
+  const intervals = [...chapterIntervals, ...apiIntervals.filter((interval) => !chapterCategories.has(categoryFor(interval)))];
+  const scenes = intervals.filter((interval) => interval.type === "post-credits");
+  return intervals.flatMap((interval) => {
+    if (categoryFor(interval) !== "ending" && interval.type !== "movie-credits") return [interval];
+    const endTime = scenes.reduce((end, scene) =>
+      scene.startTime < end && scene.endTime > interval.startTime ? scene.startTime : end, interval.endTime);
+    return endTime > interval.startTime ? [{ ...interval, endTime }] : [];
   });
-  const uncategorized = [...chapters, ...api].filter(
-    (interval) => segmentCategory(interval?.type) == null
-  );
-  return [...chosen.values(), ...uncategorized];
 }

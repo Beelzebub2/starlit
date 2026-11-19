@@ -52,6 +52,7 @@ object StreamParser {
                 peers = obj.int("peers")?.takeIf { it in 0..999_999 },
                 streamType = normalizeStreamType(obj.string("type")),
                 clientResolve = clientResolve,
+                externalSubtitles = obj.subtitleList(),
                 behaviorHints = StreamBehaviorHints(
                     bingeGroup = hintsObj?.string("bingeGroup"),
                     notWebReady = (hintsObj?.boolean("notWebReady") ?: false) || proxyHeaders != null,
@@ -63,6 +64,24 @@ object StreamParser {
             )
         }
     }
+
+    private fun JsonObject.subtitleList(): List<StreamSubtitle> =
+        (this["subtitles"] as? JsonArray).orEmpty().mapNotNull { element ->
+            val subtitle = element as? JsonObject ?: return@mapNotNull null
+            fun text(key: String) =
+                (subtitle[key] as? JsonPrimitive)?.contentOrNull?.trim()?.takeIf(String::isNotEmpty)
+            val url = text("url")?.takeIf {
+                it.startsWith("https://", ignoreCase = true) || it.startsWith("http://", ignoreCase = true)
+            } ?: return@mapNotNull null
+            val headers = subtitle.objectValue("headers")
+                ?: subtitle.objectValue("behaviorHints")?.objectValue("proxyHeaders")?.objectValue("request")
+            StreamSubtitle(
+                url = url,
+                language = text("lang") ?: text("language") ?: "unknown",
+                name = text("label") ?: text("name") ?: text("title"),
+                headers = headers?.stringMap()?.takeIf { it.isNotEmpty() },
+            )
+        }
 
     private fun JsonObject.string(name: String): String? =
         this[name]?.jsonPrimitive?.contentOrNull

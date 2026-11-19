@@ -17,6 +17,9 @@ export function segmentCategory(type) {
       return "ending";
     case "recap":
       return "recap";
+    case "movie-credits":
+    case "post-credits":
+      return String(type).trim().toLowerCase();
     default:
       return null;
   }
@@ -92,7 +95,8 @@ export function getSkipIntervalTargetSeconds(interval, intervals = [], durationS
   }
   const followingScene = findFollowingPostCreditsScene(interval, intervals, durationSeconds);
   const target = followingScene?.startTime ?? interval.endTime;
-  return Number.isFinite(Number(target)) ? Number(target) : null;
+  return Number.isFinite(Number(target)) && (!durationSeconds || Number(target) <= durationSeconds)
+    ? Number(target) : null;
 }
 function normalizeMovieThreshold(value) {
   const threshold = Number(value);
