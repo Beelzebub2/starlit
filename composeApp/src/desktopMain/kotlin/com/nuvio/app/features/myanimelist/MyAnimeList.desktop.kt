@@ -12,8 +12,6 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import kotlin.math.roundToInt
 import com.nuvio.app.features.details.MetaDetails
-import com.nuvio.app.features.lists.ListPreferencesRepository
-import com.nuvio.app.features.lists.ListServiceId
 import com.nuvio.app.features.lists.ListTrackerControls
 import com.nuvio.app.features.lists.listsTabTitle
 import com.nuvio.app.features.lists.rememberListsTabServices
@@ -82,22 +80,6 @@ internal actual suspend fun markMyAnimeListRewatchOnPlayback(
                 Text(stringResource(Res.string.mal_tv_sync_description), style = MaterialTheme.typography.bodySmall)
                 tvSyncMessage?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
             }
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Column(Modifier.weight(1f)) {
-                    Text("Show MyAnimeList tab", style = MaterialTheme.typography.bodyMedium)
-                    Text("Browse your MAL anime list from the Starlit navigation bar.", style = MaterialTheme.typography.bodySmall)
-                }
-                // Until the lists settings card replaces this switch, it also chooses MyAnimeList for the lists tab.
-                val listPrefs by ListPreferencesRepository.state.collectAsState()
-                Switch(
-                    checked = ListServiceId.MYANIMELIST in listPrefs.inTab && connection.connected,
-                    onCheckedChange = { visible ->
-                        MyAnimeListRepository.setTabVisible(visible)
-                        ListPreferencesRepository.setInTab(ListServiceId.MYANIMELIST, visible)
-                    },
-                    enabled = connection.connected && !connection.busy,
-                )
-            }
             Text("Automatic MAL update: ${connection.playbackUpdateThresholdPercent}%", style = MaterialTheme.typography.bodyMedium)
             Slider(
                 value = connection.playbackUpdateThresholdPercent.toFloat(),
@@ -117,6 +99,8 @@ internal actual suspend fun markMyAnimeListRewatchOnPlayback(
     }
     if (setup) MalSetupDialog(connection, onDismiss = { setup = false })
 }
+
+@Composable internal actual fun ListServicesSettingsCard() = com.nuvio.app.features.lists.ListServicesSettingsCard()
 
 @Composable internal actual fun MyAnimeListControls(meta: MetaDetails) = ListTrackerControls(meta)
 

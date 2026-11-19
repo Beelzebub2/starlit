@@ -3232,4 +3232,13 @@
         <item quantity="other">Removed %1$d entries from watch history</item>
     </plurals>
     <string name="lists_change_check_failed">Couldn't check this change: %1$s</string>
+    <string name="lists_settings_title">Lists</string>
+    <string name="lists_settings_subtitle">Order your connected services and choose where each one shows.</string>
+    <string name="lists_settings_hint">Connect a service above to choose where your lists show.</string>
+    <string name="lists_settings_in_tab">Show in Lists tab</string>
+    <string name="lists_settings_in_tab_for">Show %1$s in Lists tab</string>
+    <string name="lists_settings_on_titles">Show on title pages</string>
+    <string name="lists_settings_on_titles_for">Show %1$s on title pages</string>
+    <string name="lists_settings_move_up">Move %1$s up</string>
+    <string name="lists_settings_move_down">Move %1$s down</string>
 </resources>
