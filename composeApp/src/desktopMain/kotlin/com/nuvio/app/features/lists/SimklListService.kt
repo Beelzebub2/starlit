@@ -196,7 +196,7 @@ class SimklListAdapter(
     override suspend fun impact(entry: ListEntry, change: ListChange): ListChangeImpact = when (change) {
         is ListChange.SetStatus ->
             if (change.status == ListStatus.COMPLETED && entry.catalogType != null && entry.catalogId != null) {
-                ListChangeImpact(history.completedImpact(entry.catalogType, entry.catalogId), hidesFromContinueWatching = true)
+                ListChangeImpact(history.completedImpact(entry.catalogType, entry.catalogId), hidesFromContinueWatching = false)
             } else {
                 ListChangeImpact(0, false)
             }
@@ -241,10 +241,24 @@ class SimklListAdapter(
     override suspend fun removeFromHistory(entry: ListEntry): Int =
         throw UnsupportedOperationException("Simkl removes history when leaving a list; use Starlit's watched controls instead")
 
+    /**
+     * The snapshot entry when the title is on the Simkl list; otherwise (the title bar's new entry for a title not on
+     * the list yet) the title's own ids from its Starlit catalog id, so Set status / Rate can add it.
+     */
     private fun referenceFor(entry: ListEntry): TrackingMediaReference {
-        val snapshotEntry = entries().firstOrNull { it.simklId() == entry.key.id }
-        return snapshotEntry?.trackingReference()
-            ?: throw IllegalStateException("This title is no longer in your Simkl list")
+        val all = entries()
+        all.firstOrNull { it.simklId() == entry.key.id }?.trackingReference()?.let { return it }
+        val type = entry.catalogType
+        val catalogId = entry.catalogId
+        if (type != null && catalogId != null) {
+            val fromCatalog = buildTrackingMediaReference(type, catalogId, title = entry.title)
+            if (fromCatalog.ids.hasAny) {
+                return all.firstOrNull { it.media?.toTrackingExternalIds()?.sharesIdentityWith(fromCatalog.ids) == true }
+                    ?.trackingReference()
+                    ?: fromCatalog
+            }
+        }
+        throw IllegalStateException("Simkl cannot identify this title")
     }
 
     private fun checkWritten(result: TrackingMutationResult) {

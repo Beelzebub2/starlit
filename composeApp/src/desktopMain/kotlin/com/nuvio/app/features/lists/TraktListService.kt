@@ -179,8 +179,9 @@ internal class TraktListAdapter(
         is ListChange.SetStatus -> when (change.status) {
             ListStatus.COMPLETED -> {
                 val (type, catalogId) = catalogOf(entry)
-                ListChangeImpact(history.completedImpact(type, catalogId), hidesFromContinueWatching = true)
+                ListChangeImpact(history.completedImpact(type, catalogId), hidesFromContinueWatching = false)
             }
+            // Trakt's dropped list also hides the show from Continue Watching; only this change warns about it.
             ListStatus.DROPPED -> ListChangeImpact(0, hidesFromContinueWatching = true)
             else -> ListChangeImpact(0, hidesFromContinueWatching = false)
         }

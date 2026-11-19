@@ -20,13 +20,16 @@ import kotlin.test.assertTrue
 
 private class RecordingWrites : SimklListWrites {
     val calls = mutableListOf<String>()
+    val media = mutableListOf<TrackingMediaReference>()
 
     override suspend fun moveToList(media: TrackingMediaReference, status: TrackingListStatus): TrackingMutationResult {
+        this.media += media
         calls += "move:${status.name}"
         return TrackingMutationResult(attemptedCount = 1)
     }
 
     override suspend fun setRating(media: TrackingMediaReference, rating: Int): TrackingMutationResult {
+        this.media += media
         calls += "rate:$rating"
         return TrackingMutationResult(attemptedCount = 1)
     }
@@ -92,7 +95,7 @@ class SimklListServiceTest {
         val entry = svc.entryFor(MetaDetails(id = "tt1", type = "series", name = "Show"))!!
         val impact = svc.impact(entry, ListChange.SetStatus(ListStatus.COMPLETED))
         assertEquals(5, impact.episodesMarked)
-        assertTrue(impact.hidesFromContinueWatching)
+        assertFalse(impact.hidesFromContinueWatching, "only Trakt's Dropped warns about Continue Watching")
     }
 
     @Test fun completedMarksWatchedThenMovesToList(): Unit = runBlocking {
@@ -181,5 +184,33 @@ class SimklListServiceTest {
         assertEquals(3, found.watchedEpisodes)
         assertEquals("tt1", found.catalogId)
         assertNull(svc.entryFor(MetaDetails(id = "tt999", type = "series", name = "Other")))
+    }
+
+    @Test fun titleNotOnTheListIsAddedAndRatedByItsOwnIds(): Unit = runBlocking {
+        val writes = RecordingWrites()
+        val svc = adapter(entries = listOf(simklEntry("Other", 1, SimklListStatus.WATCHING)), writes = writes)
+        val meta = MetaDetails(id = "tt9", type = "series", name = "New Show")
+        assertNull(svc.entryFor(meta))
+        val stub = newListEntryFor(ListServiceId.SIMKL, meta, titleKind(meta, malResolved = false), malId = null)
+
+        val planned = svc.apply(stub, ListChange.SetStatus(ListStatus.PLAN_TO_WATCH))
+        val rated = svc.apply(planned, ListChange.SetScore(8))
+
+        assertEquals(listOf("move:PLAN_TO_WATCH", "rate:8"), writes.calls)
+        writes.media.forEach { media ->
+            assertEquals("tt9", media.ids.imdb)
+            assertEquals("New Show", media.title)
+        }
+        assertEquals(ListStatus.PLAN_TO_WATCH, rated.status)
+        assertEquals(8, rated.score)
+    }
+
+    @Test fun titleWithoutUsableIdsIsNotWritten(): Unit = runBlocking {
+        val writes = RecordingWrites()
+        val svc = adapter(writes = writes)
+        val meta = MetaDetails(id = "custom-addon-id", type = "series", name = "Unknown")
+        val stub = newListEntryFor(ListServiceId.SIMKL, meta, titleKind(meta, malResolved = false), malId = null)
+        assertFailsWith<IllegalStateException> { svc.apply(stub, ListChange.SetStatus(ListStatus.PLAN_TO_WATCH)) }
+        assertTrue(writes.calls.isEmpty())
     }
 }

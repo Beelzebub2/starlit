@@ -172,9 +172,9 @@ internal class MdbListListAdapter(
         is ListChange.SetStatus -> when (change.status) {
             ListStatus.COMPLETED -> {
                 val (type, catalogId) = catalogOf(entry)
-                ListChangeImpact(history.completedImpact(type, catalogId), hidesFromContinueWatching = true)
+                ListChangeImpact(history.completedImpact(type, catalogId), hidesFromContinueWatching = false)
             }
-            ListStatus.DROPPED -> ListChangeImpact(0, hidesFromContinueWatching = true)
+            // Only Trakt's dropped list hides a show from Continue Watching.
             else -> ListChangeImpact(0, hidesFromContinueWatching = false)
         }
         else -> ListChangeImpact(0, hidesFromContinueWatching = false)

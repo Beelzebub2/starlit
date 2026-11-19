@@ -192,6 +192,7 @@ class TraktListServiceTest {
 
         val impact = svc.impact(entry, ListChange.SetStatus(ListStatus.COMPLETED))
         assertEquals(9, impact.episodesMarked)
+        assertFalse(impact.hidesFromContinueWatching, "Completed never warns about Continue Watching")
         val completed = svc.apply(entry, ListChange.SetStatus(ListStatus.COMPLETED))
 
         assertEquals(listOf("poster:tt1"), history.calls)
@@ -418,5 +419,42 @@ class TraktListServiceTest {
             assertFalse(svc.covers(kind, MetaDetails(id = id, type = "series", name = "X")), "$id should not be covered")
             assertNull(svc.entryFor(MetaDetails(id = id, type = "series", name = "X")))
         }
+    }
+
+    @Test fun titleNotOnTheListIsWritableByItsOwnIds(): Unit = runBlocking {
+        val meta = metaFor("tt9", 4)
+        val trakt = FakeTraktPort(
+            snapshot = HistoryListSnapshot(watched = watchedEpisodes("tt1", "Show", 3)),
+            metas = mapOf("tt1" to metaFor("tt1", 12), "tt9" to meta),
+        )
+        val history = FakeHistoryPort(meta = meta)
+        val svc = adapter(trakt, history)
+        assertNull(svc.entryFor(meta))
+        val stub = newListEntryFor(ListServiceId.TRAKT, meta, titleKind(meta, malResolved = false), malId = null)
+
+        val planned = svc.apply(stub, ListChange.SetStatus(ListStatus.PLAN_TO_WATCH))
+        assertEquals(ListStatus.PLAN_TO_WATCH, planned.status)
+        val rated = svc.apply(planned, ListChange.SetScore(8))
+        assertEquals(ListChangeImpact(0, hidesFromContinueWatching = true), svc.impact(rated, ListChange.SetStatus(ListStatus.DROPPED)))
+        val dropped = svc.apply(rated, ListChange.SetStatus(ListStatus.DROPPED))
+        assertEquals(listOf("watchlist:add:tt9", "rate:8:tt9", "dropped:add:tt9"), trakt.calls)
+        assertEquals(ListStatus.DROPPED, dropped.status)
+
+        val fresh = newListEntryFor(ListServiceId.TRAKT, meta, titleKind(meta, malResolved = false), malId = null)
+        assertEquals(ListChangeImpact(4, hidesFromContinueWatching = false), svc.impact(fresh, ListChange.SetStatus(ListStatus.COMPLETED)))
+        svc.apply(fresh, ListChange.SetStatus(ListStatus.COMPLETED))
+        assertEquals(listOf("poster:tt9"), history.calls)
+    }
+
+    @Test fun completingAMovieNeedsNoConfirmation(): Unit = runBlocking {
+        val trakt = FakeTraktPort()
+        val svc = adapter(trakt)
+        val film = MetaDetails(id = "tt8", type = "movie", name = "Film")
+        val stub = newListEntryFor(ListServiceId.TRAKT, film, titleKind(film, malResolved = false), malId = null)
+        val impact = svc.impact(stub, ListChange.SetStatus(ListStatus.COMPLETED))
+        assertEquals(ListChangeImpact(1, hidesFromContinueWatching = false), impact)
+        assertFalse(impact.needsConfirmation())
+        svc.apply(stub, ListChange.SetStatus(ListStatus.PLAN_TO_WATCH))
+        assertEquals(listOf("watchlist:add:tt8"), trakt.calls)
     }
 }

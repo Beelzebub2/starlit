@@ -355,7 +355,7 @@ class ListTrackerBarUiTest {
     @Test
     fun completedOnSeriesAsksForConfirmation() = runDesktopComposeUiTest(width = 900, height = 560) {
         val trakt = FakeListService(ListServiceId.TRAKT, caps = traktCaps, entry = entry(ListStatus.WATCHING, ListServiceId.TRAKT, watched = 7),
-            impactOf = { if (it == ListChange.SetStatus(ListStatus.COMPLETED)) ListChangeImpact(5, true) else ListChangeImpact(0, false) })
+            impactOf = { if (it == ListChange.SetStatus(ListStatus.COMPLETED)) ListChangeImpact(5, false) else ListChangeImpact(0, false) })
         setContent { Hero { ListTrackerControls(seriesMeta, malHooks(null, connected = false), listOf(trakt), allOnTitlePages) } }
         onNodeWithContentDescription("Trakt status: Watching").performClick()
         onNodeWithText("Completed").performClick()
@@ -373,13 +373,28 @@ class ListTrackerBarUiTest {
     }
 
     @Test
+    fun completingAMovieAppliesWithoutConfirmation() = runDesktopComposeUiTest(width = 900, height = 560) {
+        val film = MetaDetails(id = "tt0000003", type = "movie", name = "Film")
+        val trakt = FakeListService(ListServiceId.TRAKT, caps = traktCaps,
+            entry = entry(ListStatus.PLAN_TO_WATCH, ListServiceId.TRAKT, type = ListMediaType.MOVIE),
+            impactOf = { if (it == ListChange.SetStatus(ListStatus.COMPLETED)) ListChangeImpact(1, false) else ListChangeImpact(0, false) })
+        setContent { Hero { ListTrackerControls(film, malHooks(null, connected = false), listOf(trakt), allOnTitlePages) } }
+        onNodeWithContentDescription("Trakt status: Plan to Watch").performClick()
+        onNodeWithText("Completed").performClick()
+        waitForIdle()
+        onAllNodesWithText("Update Trakt?").assertCountEquals(0)
+        assertEquals(listOf<ListChange>(ListChange.SetStatus(ListStatus.COMPLETED)), trakt.applied)
+        onNodeWithContentDescription("Trakt status: Completed").assertExists()
+    }
+
+    @Test
     fun droppingThatHidesFromContinueWatchingSaysSo() = runDesktopComposeUiTest(width = 900, height = 560) {
         val trakt = FakeListService(ListServiceId.TRAKT, caps = traktCaps, entry = entry(ListStatus.WATCHING, ListServiceId.TRAKT, watched = 7),
             impactOf = { ListChangeImpact(0, it == ListChange.SetStatus(ListStatus.DROPPED)) })
         setContent { Hero { ListTrackerControls(seriesMeta, malHooks(null, connected = false), listOf(trakt), allOnTitlePages) } }
         onNodeWithContentDescription("Trakt status: Watching").performClick()
         onNodeWithText("Dropped").performClick()
-        onNodeWithText("Continue Watching", substring = true).assertExists()
+        onNodeWithText("Dropping also hides it from Continue Watching.").assertExists()
         onNodeWithText("Cancel").performClick()
         waitForIdle()
         assertTrue(trakt.applied.isEmpty())

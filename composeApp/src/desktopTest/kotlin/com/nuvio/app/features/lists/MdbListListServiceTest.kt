@@ -174,7 +174,7 @@ class MdbListListServiceTest {
             metas = mapOf("tt1" to show("tt1", 12)),
         ).also { it.calls.clear() })
         val completed = fresh.entryFor(show("tt1", 12))!!
-        assertEquals(ListChangeImpact(0, true), fresh.impact(completed, ListChange.SetStatus(ListStatus.DROPPED)))
+        assertEquals(ListChangeImpact(0, false), fresh.impact(completed, ListChange.SetStatus(ListStatus.DROPPED)))
         val dropped = fresh.apply(completed, ListChange.SetStatus(ListStatus.DROPPED))
         assertEquals(ListStatus.DROPPED, dropped.status)
         assertEquals(ListStatus.COMPLETED, fresh.apply(dropped, ListChange.LeaveStatus(ListStatus.DROPPED)).status)
@@ -258,5 +258,26 @@ class MdbListListServiceTest {
         assertNotNull(film.status)
         assertEquals(1, svc.removeFromHistory(film))
         assertEquals(listOf("history:remove:movie:tt5"), port.calls)
+    }
+
+    @Test fun titleNotOnTheListIsWritableByItsOwnIds(): Unit = runBlocking {
+        val meta = show("tt9", 4)
+        val port = FakeMdbListPort(MdbListListSnapshot(watched = episodes("tt1", "Show", 3)), metas = mapOf("tt9" to meta))
+        val history = FakeHistoryPort(meta = meta)
+        val svc = adapter(port, history)
+        assertNull(svc.entryFor(meta))
+        val stub = newListEntryFor(ListServiceId.MDBLIST, meta, titleKind(meta, malResolved = false), malId = null)
+
+        val planned = svc.apply(stub, ListChange.SetStatus(ListStatus.PLAN_TO_WATCH))
+        assertEquals(ListStatus.PLAN_TO_WATCH, planned.status)
+        assertEquals(ListChangeImpact(0, hidesFromContinueWatching = false), svc.impact(planned, ListChange.SetStatus(ListStatus.DROPPED)))
+        val dropped = svc.apply(planned, ListChange.SetStatus(ListStatus.DROPPED))
+        assertEquals(listOf("watchlist:add:tt9", "dropped:add:tt9"), port.calls)
+        assertEquals(ListStatus.DROPPED, dropped.status)
+
+        val fresh = newListEntryFor(ListServiceId.MDBLIST, meta, titleKind(meta, malResolved = false), malId = null)
+        assertEquals(ListChangeImpact(4, hidesFromContinueWatching = false), svc.impact(fresh, ListChange.SetStatus(ListStatus.COMPLETED)))
+        svc.apply(fresh, ListChange.SetStatus(ListStatus.COMPLETED))
+        assertEquals(listOf("poster:tt9"), history.calls)
     }
 }
