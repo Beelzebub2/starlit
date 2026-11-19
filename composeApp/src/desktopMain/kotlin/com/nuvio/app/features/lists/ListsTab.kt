@@ -271,7 +271,15 @@ internal fun historyEntryCount(entry: ListEntry): Int =
             apply = { entry, change -> service.apply(entry, change) },
             activeProfile = activeProfile,
             onFailure = { NuvioToastController.show(it) },
-            onCommitted = { before, after -> if (before.status != after.status) summaryVersion++ },
+            onCommitted = { before, after, change ->
+                if (change == ListChange.FinishRewatch) {
+                    // A finished rewatch changes the totals and can move the title in the list; read both again.
+                    refreshId++
+                    summaryVersion++
+                } else if (before.status != after.status) {
+                    summaryVersion++
+                }
+            },
         )
     }
     DisposableEffect(editor) {
@@ -327,6 +335,8 @@ internal fun historyEntryCount(entry: ListEntry): Int =
         if (confirming != null) return
         scope.launch {
             impactLock.withLock {
+                // A change that waited for the lock must not apply or replace a confirmation that opened meanwhile.
+                if (confirming != null) return@withLock
                 val target = editor.entry(key) ?: return@withLock
                 val impact = try {
                     service.impact(target, change)
@@ -510,7 +520,8 @@ internal fun historyEntryCount(entry: ListEntry): Int =
                 onConfirm = {
                     removingKey = null
                     editingKey = null
-                    editor.remove(key, delete = removeEntry) {
+                    // A confirmed removal finishes even if the tab closes right away.
+                    editor.remove(key, delete = removeEntry, launch = { block -> detachedListWrites.launch { block() } }) {
                         summaryVersion++
                         NuvioToastController.show(removedText)
                     }
@@ -530,7 +541,8 @@ internal fun historyEntryCount(entry: ListEntry): Int =
                 onDismiss = { removingHistoryKey = null },
                 onConfirm = {
                     removingHistoryKey = null
-                    scope.launch {
+                    // A confirmed removal finishes even if the tab closes right away.
+                    detachedListWrites.launch {
                         withContext(NonCancellable) {
                             try {
                                 val removed = editor.afterEdits(key) { service.removeFromHistory(it) } ?: return@withContext

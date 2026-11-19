@@ -11,9 +11,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toAwtImage
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsNodeInteractionCollection
@@ -38,6 +40,7 @@ import com.nuvio.app.core.ui.NuvioTheme
 import com.nuvio.app.core.ui.NuvioToastController
 import com.nuvio.app.core.ui.nuvio
 import com.nuvio.app.features.details.MetaDetails
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import java.io.File
@@ -59,7 +62,7 @@ private class TabFakeService(
     connected: Boolean = true,
     private val applyDelayMillis: Long = 0,
     private val profile: () -> Int = { 1 },
-    var impactOf: (ListEntry, ListChange) -> ListChangeImpact = { _, _ -> ListChangeImpact(0, false) },
+    var impactOf: suspend (ListEntry, ListChange) -> ListChangeImpact = { _, _ -> ListChangeImpact(0, false) },
     var historyRemoved: Int = 0,
 ) : ListService {
     override val connected = MutableStateFlow(connected)
@@ -234,6 +237,18 @@ class ListsTabUiTest {
         val directory = File("build/lists-tab-capture").apply { mkdirs() }
         // An open menu or dialog is its own popup root; the last root captures the scene with it on top.
         ImageIO.write(onAllNodes(isRoot()).onLast().captureToImage().toAwtImage(), "png", File(directory, "$name.png"))
+    }
+
+    /**
+     * Presses the dialog's Remove and closes the tab in one UI-thread task, so the tab is gone before anything the
+     * click launched on the tab's own scope could start.
+     */
+    private fun ComposeUiTest.confirmAndCloseAtOnce(close: () -> Unit) {
+        val remove = onNodeWithText("Remove").fetchSemanticsNode()
+        runOnIdle {
+            remove.config[SemanticsActions.OnClick].action!!.invoke()
+            close()
+        }
     }
 
     private fun ComposeUiTest.waitFor(timeoutMillis: Long = 5_000, condition: () -> Boolean) =
@@ -486,5 +501,77 @@ class ListsTabUiTest {
         onAllNodesWithText("The Bear").assertCountEquals(0)
         capture("trakt-disconnected")
         assertTrue(trakt.applied.isEmpty())
+    }
+
+    @Test
+    fun changeWaitingForTheImpactCheckDoesNotBypassAnOpenConfirmation() = runDesktopComposeUiTest(width = 1280, height = 760) {
+        val trakt = traktService()
+        val completedImpact = CompletableDeferred<Unit>()
+        trakt.impactOf = { _, change ->
+            if (change == ListChange.SetStatus(ListStatus.COMPLETED)) {
+                completedImpact.await()
+                ListChangeImpact(22, false)
+            } else {
+                ListChangeImpact(1, false)
+            }
+        }
+        setContent { Page { ListsTabContent(null, listOf(trakt), prefsFor(ListServiceId.TRAKT), profileId = 1, activeProfile = { 1 }) } }
+        waitFor { onAllNodesWithText("The Bear").fetchSemanticsNodes().isNotEmpty() }
+        // Completed is still being checked when the user also steps an episode.
+        onNodeWithContentDescription("Status: Watching. Change status").performClick()
+        onNode(hasText("Completed") and hasAnyAncestor(isPopup())).performClick()
+        onNodeWithContentDescription("One more episode").performClick()
+        completedImpact.complete(Unit)
+        waitFor { onAllNodesWithText("This marks 22 episodes as watched in Starlit and on your connected services.").fetchSemanticsNodes().isNotEmpty() }
+        mainClock.advanceTimeBy(2_000)
+        waitForIdle()
+        // The step that waited behind the check is dropped instead of being written under the open dialog.
+        assertTrue(trakt.applied.isEmpty(), "Nothing may be written while the confirmation is open")
+        onNodeWithText("6 / 28").assertExists()
+        onNodeWithText("Cancel").performClick()
+        mainClock.advanceTimeBy(2_000)
+        waitForIdle()
+        assertTrue(trakt.applied.isEmpty())
+    }
+
+    @Test
+    fun confirmedRemovalFromTheListRunsEvenIfTheTabClosesAtOnce() = runDesktopComposeUiTest(width = 1280, height = 760) {
+        val trakt = traktService()
+        val removed = mutableListOf<String>()
+        var open by mutableStateOf(true)
+        setContent {
+            Page {
+                if (open) {
+                    ListsTabContent(
+                        null, listOf(trakt), prefsFor(ListServiceId.TRAKT),
+                        hooks = mapOf(ListServiceId.TRAKT to ListTabServiceHooks(removeEntry = { removed += it.key.id })),
+                        profileId = 1, activeProfile = { 1 },
+                    )
+                }
+            }
+        }
+        waitFor { onAllNodesWithText("The Bear").fetchSemanticsNodes().isNotEmpty() }
+        onNodeWithContentDescription("More actions").performClick()
+        onNode(hasText("Remove from list") and hasAnyAncestor(isPopup())).performClick()
+        onNodeWithText("Remove from Trakt?").assertExists()
+        confirmAndCloseAtOnce { open = false }
+        waitFor { removed.isNotEmpty() }
+        assertEquals(listOf("t1"), removed)
+    }
+
+    @Test
+    fun confirmedHistoryRemovalRunsEvenIfTheTabClosesAtOnce() = runDesktopComposeUiTest(width = 1280, height = 760) {
+        val trakt = traktService()
+        var open by mutableStateOf(true)
+        setContent {
+            Page { if (open) ListsTabContent(null, listOf(trakt), prefsFor(ListServiceId.TRAKT), profileId = 1, activeProfile = { 1 }) }
+        }
+        waitFor { onAllNodesWithText("The Bear").fetchSemanticsNodes().isNotEmpty() }
+        onNodeWithContentDescription("More actions").performClick()
+        onNodeWithText("Remove from watch history…").performClick()
+        onNodeWithText("Remove from watch history?").assertExists()
+        confirmAndCloseAtOnce { open = false }
+        waitFor { trakt.removedFromHistory.isNotEmpty() }
+        assertEquals("t1", trakt.removedFromHistory.single().key.id)
     }
 }

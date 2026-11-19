@@ -64,7 +64,8 @@ internal class ListEditor(
     private val debounceMillis: Long = 600,
     private val activeProfile: () -> Int = { ProfileRepository.activeProfileId },
     private val onFailure: (String) -> Unit = {},
-    private val onCommitted: (before: ListEntry, after: ListEntry) -> Unit = { _, _ -> },
+    /** Called after each successful write; [change] is null for an edit that is not a single [ListChange]. */
+    private val onCommitted: (before: ListEntry, after: ListEntry, change: ListChange?) -> Unit = { _, _, _ -> },
 ) {
     private class Edit(
         val change: ListChange?,
@@ -145,12 +146,20 @@ internal class ListEditor(
         }
     }
 
-    /** Removes the entry from the service's list with [delete], then from the tab. */
-    fun remove(key: ListEntryKey, delete: suspend (ListEntry) -> Unit, onRemoved: () -> Unit = {}) {
+    /**
+     * Removes the entry from the service's list with [delete], then from the tab. [launch] runs the removal; pass a
+     * scope that outlives the screen so a confirmed removal still happens if the tab closes right away.
+     */
+    fun remove(
+        key: ListEntryKey,
+        delete: suspend (ListEntry) -> Unit,
+        launch: (suspend () -> Unit) -> Unit = { block -> scope.launch { block() } },
+        onRemoved: () -> Unit = {},
+    ) {
         if (entry(key) == null) return
         waiting.remove(key)?.cancel()
         busy[key] = true
-        scope.launch {
+        launch {
             withContext(NonCancellable) {
                 lockFor(key).withLock {
                     if (activeProfile() != profileId) {
@@ -170,7 +179,8 @@ internal class ListEditor(
                     } catch (e: CancellationException) {
                         throw e
                     } catch (e: Exception) {
-                        busy.remove(key)
+                        // Keep the saving state while an interrupted edit is still waiting to be written.
+                        if (queued[key].isNullOrEmpty()) busy.remove(key)
                         onFailure(e.readableMessage())
                     }
                 }
@@ -205,7 +215,7 @@ internal class ListEditor(
             try {
                 val result = edit.write(base)
                 confirmed[key] = result
-                onCommitted(base, result)
+                onCommitted(base, result, edit.change)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {

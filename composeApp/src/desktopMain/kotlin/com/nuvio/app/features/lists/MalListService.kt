@@ -110,6 +110,28 @@ internal fun malProfileUrlFor(username: String): String =
         ?.let { "https://myanimelist.net/animelist/$it" }
         ?: "https://myanimelist.net/"
 
+/**
+ * Writes [change] to MyAnimeList with MAL's own list rules (see [malStatusPatch] and [malStepPatch]) through
+ * [update] and [finishRewatch], and returns the entry with MAL's answer.
+ */
+internal suspend fun applyMalChange(
+    entry: ListEntry,
+    change: ListChange,
+    update: suspend (id: Int, patch: MalListPatch) -> MalListStatus,
+    finishRewatch: suspend (id: Int) -> MalListStatus,
+): ListEntry {
+    val malId = entry.key.id.toInt()
+    val updated = when (change) {
+        is ListChange.SetStatus -> update(malId, malStatusPatch(entry, change.status) ?: return entry)
+        is ListChange.SetScore -> update(malId, MalListPatch(score = change.score))
+        is ListChange.SetRewatching -> update(malId, MalListPatch(isRewatching = change.on))
+        ListChange.FinishRewatch -> finishRewatch(malId)
+        is ListChange.StepEpisodes -> update(malId, malStepPatch(entry, change.delta))
+        is ListChange.LeaveStatus -> throw IllegalArgumentException("MyAnimeList has no leave-status change")
+    }
+    return entry.withMalListStatus(updated)
+}
+
 /** MyAnimeList supports every list feature except removing watch history; movies and series alike. */
 internal val malListCapabilities = ListCapabilities(
     statuses = listOf(ListStatus.WATCHING, ListStatus.COMPLETED, ListStatus.ON_HOLD, ListStatus.DROPPED, ListStatus.PLAN_TO_WATCH),
@@ -177,18 +199,11 @@ object MalListService : ListService {
     override suspend fun impact(entry: ListEntry, change: ListChange): ListChangeImpact =
         ListChangeImpact(0, false)
 
-    override suspend fun apply(entry: ListEntry, change: ListChange): ListEntry {
-        val malId = entry.key.id.toInt()
-        val updated = when (change) {
-            is ListChange.SetStatus -> MyAnimeListRepository.update(malId, malStatusPatch(entry, change.status) ?: return entry)
-            is ListChange.SetScore -> MyAnimeListRepository.update(malId, score = change.score)
-            is ListChange.SetRewatching -> MyAnimeListRepository.update(malId, isRewatching = change.on)
-            ListChange.FinishRewatch -> MyAnimeListRepository.finishRewatch(malId)
-            is ListChange.StepEpisodes -> MyAnimeListRepository.update(malId, malStepPatch(entry, change.delta))
-            is ListChange.LeaveStatus -> throw IllegalArgumentException("MyAnimeList has no leave-status change")
-        }
-        return entry.withMalListStatus(updated)
-    }
+    override suspend fun apply(entry: ListEntry, change: ListChange): ListEntry = applyMalChange(
+        entry, change,
+        update = { id, patch -> MyAnimeListRepository.update(id, patch) },
+        finishRewatch = { id -> MyAnimeListRepository.finishRewatch(id) },
+    )
 
     override suspend fun removeFromHistory(entry: ListEntry): Int =
         throw UnsupportedOperationException("MyAnimeList keeps no watch history to remove")

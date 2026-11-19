@@ -50,28 +50,18 @@ import com.nuvio.app.core.ui.nuvio
 import com.nuvio.app.core.ui.nuvioSwitchColors
 import com.nuvio.app.features.lists.ListChange
 import com.nuvio.app.features.lists.ListEntry
-import com.nuvio.app.features.lists.ListEntryCard
 import com.nuvio.app.features.lists.ListEntryDetailsRequest
 import com.nuvio.app.features.lists.ListPill
 import com.nuvio.app.features.lists.ListPreferencesRepository
 import com.nuvio.app.features.lists.ListServiceId
 import com.nuvio.app.features.lists.ListServices
-import com.nuvio.app.features.lists.ListSort
 import com.nuvio.app.features.lists.ListStepButton
-import com.nuvio.app.features.lists.ListSummary
-import com.nuvio.app.features.lists.ListSummaryRow
 import com.nuvio.app.features.lists.ListTabServiceHooks
-import com.nuvio.app.features.lists.ListToolbar
 import com.nuvio.app.features.lists.ListsTabContent
 import com.nuvio.app.features.lists.listStatusAccent
-import com.nuvio.app.features.lists.malListCapabilities
 import com.nuvio.app.features.lists.malListStatus
-import com.nuvio.app.features.lists.malListSummary
-import com.nuvio.app.features.lists.previewListChange
 import com.nuvio.app.features.lists.rememberListsTabServices
-import com.nuvio.app.features.lists.toListEntry
 import com.nuvio.app.features.lists.toListStatus
-import com.nuvio.app.features.lists.toMalStatus
 import com.nuvio.app.features.lists.withMalListStatus
 import com.nuvio.app.features.profiles.ProfileRepository
 import nuvio.composeapp.generated.resources.Res
@@ -110,12 +100,18 @@ internal actual fun MyAnimeListTabContent(topChromePadding: Dp?) {
     if (setup) MalSetupDialog(connection, onDismiss = { setup = false })
 }
 
-private fun malTabHooks(connection: MalConnectionState, onConnect: () -> Unit) = ListTabServiceHooks(
+/** MyAnimeList's pieces of the lists tab; [update] and [remove] reach MyAnimeList (tests pass fakes). */
+internal fun malTabHooks(
+    connection: MalConnectionState,
+    onConnect: () -> Unit,
+    update: suspend (id: Int, patch: MalListPatch) -> MalListStatus = { id, patch -> MyAnimeListRepository.update(id, patch) },
+    remove: suspend (id: Int) -> Unit = { id -> MyAnimeListRepository.remove(id) },
+) = ListTabServiceHooks(
     disconnected = { modifier -> MalConnectPrompt(connection, onConnect, modifier) },
     busy = connection.busy && !connection.connecting,
     revision = connection.revision,
-    editDetails = { request -> MalEntryDetails(request) },
-    removeEntry = { entry -> MyAnimeListRepository.remove(entry.key.id.toInt()) },
+    editDetails = { request -> MalEntryDetails(request, update) },
+    removeEntry = { entry -> remove(entry.key.id.toInt()) },
 )
 
 private fun ListEntry.toMalAnimeListEntry(): MalAnimeListEntry = MalAnimeListEntry(
@@ -130,7 +126,7 @@ private fun ListEntry.toMalAnimeListEntry(): MalAnimeListEntry = MalAnimeListEnt
 
 /** MyAnimeList's full entry editor for a tab card; saving goes through the tab's editor like every other change. */
 @Composable
-private fun MalEntryDetails(request: ListEntryDetailsRequest) {
+private fun MalEntryDetails(request: ListEntryDetailsRequest, update: suspend (id: Int, patch: MalListPatch) -> MalListStatus) {
     val entry = request.entry
     val id = entry.key.id.toIntOrNull() ?: return request.dismiss()
     MalEntryEditorDialog(
@@ -144,7 +140,7 @@ private fun MalEntryDetails(request: ListEntryDetailsRequest) {
                 preview = { it.withMalListStatus(draft) },
                 write = { current ->
                     val patch = malListPatch(current.malListStatus(), draft)
-                    if (patch == null) current else current.withMalListStatus(MyAnimeListRepository.update(id, patch))
+                    if (patch == null) current else current.withMalListStatus(update(id, patch))
                 },
             )
         },
@@ -155,58 +151,6 @@ private fun MalEntryDetails(request: ListEntryDetailsRequest) {
             }
         },
         onRemove = request.remove,
-    )
-}
-
-/** A MyAnimeList entry drawn with the lists tab's card; [onChange] receives MAL's own list rules for each change. */
-@Composable
-internal fun MalEntryCard(
-    entry: MalAnimeListEntry,
-    saving: Boolean,
-    onChange: ((MalAnimeListEntry) -> MalListStatus) -> Unit,
-    onEdit: () -> Unit,
-    onOpen: () -> Unit,
-    onRemove: () -> Unit,
-) {
-    ListEntryCard(
-        entry = entry.toListEntry(),
-        capabilities = malListCapabilities,
-        saving = saving,
-        onChange = { change -> onChange { current -> previewListChange(current.toListEntry(), change).malListStatus() } },
-        onOpen = onOpen,
-        onRemoveFromHistory = null,
-        onEditDetails = onEdit,
-        onRemoveEntry = onRemove,
-    )
-}
-
-@Composable
-internal fun MalProfileSummary(username: String?, stats: MalAnimeStatistics?, modifier: Modifier = Modifier) = ListSummaryRow(
-    summary = stats?.let { malListSummary(username, it) }
-        ?: ListSummary(username?.takeIf { it.isNotBlank() && it != "Connected" }, emptyMap(), emptyList()),
-    modifier = modifier,
-)
-
-@Composable
-internal fun MalListToolbar(
-    selected: MalStatus?,
-    onSelect: (MalStatus?) -> Unit,
-    stats: MalAnimeStatistics?,
-    sort: MalListSort,
-    onSort: (MalListSort) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val sorts = remember { MalListSort.entries.map { ListSort(it.name, it.label) } }
-    ListToolbar(
-        statuses = MalStatus.entries.map { it.toListStatus() },
-        selected = selected?.toListStatus(),
-        onSelect = { onSelect(it?.toMalStatus()) },
-        counts = stats?.let { malListSummary(null, it).counts },
-        sorts = sorts,
-        sort = sorts.first { it.key == sort.name },
-        onSort = { option -> onSort(MalListSort.valueOf(option.key)) },
-        tagPrefix = "mal",
-        modifier = modifier,
     )
 }
 
