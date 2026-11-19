@@ -3179,7 +3179,6 @@
     <string name="lists_confirm_title">Update %1$s?</string>
     <string name="lists_confirm_episodes">This marks %1$d episodes as watched in Starlit and on your connected services.</string>
     <string name="lists_confirm_dropped_hides">Dropping also hides it from Continue Watching.</string>
-    <string name="lists_confirm_hides">This also removes it from Continue Watching.</string>
     <string name="lists_tab_title">Lists</string>
     <string name="lists_open_on">Open on %1$s</string>
     <string name="lists_filter_all">All</string>
@@ -3241,4 +3240,16 @@
     <string name="lists_settings_on_titles_for">Show %1$s on title pages</string>
     <string name="lists_settings_move_up">Move %1$s up</string>
     <string name="lists_settings_move_down">Move %1$s down</string>
+    <string name="lists_link_mal_entry">Link MAL entry</string>
+    <string name="lists_change_mal_entry">Change MAL entry</string>
+    <string name="lists_sort_updated">Last updated</string>
+    <string name="lists_sort_title">Title</string>
+    <string name="lists_sort_score">Your score</string>
+    <string name="lists_sort_air_date">Air date</string>
+    <string name="lists_stat_episodes">episodes</string>
+    <string name="lists_stat_days_watched">days watched</string>
+    <string name="lists_stat_mean_score">mean score</string>
+    <string name="lists_stat_episodes_watched">episodes watched</string>
+    <string name="lists_stat_movies_watched">movies watched</string>
+    <string name="lists_stat_rated_titles">rated titles</string>
 </resources>

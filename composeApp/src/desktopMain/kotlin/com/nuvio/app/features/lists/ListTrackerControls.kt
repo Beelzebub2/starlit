@@ -31,7 +31,6 @@ import nuvio.composeapp.generated.resources.action_cancel
 import nuvio.composeapp.generated.resources.action_continue
 import nuvio.composeapp.generated.resources.lists_confirm_dropped_hides
 import nuvio.composeapp.generated.resources.lists_confirm_episodes
-import nuvio.composeapp.generated.resources.lists_confirm_hides
 import nuvio.composeapp.generated.resources.lists_confirm_title
 import nuvio.composeapp.generated.resources.lists_updated
 import org.jetbrains.compose.resources.stringResource
@@ -228,7 +227,6 @@ internal fun newListEntryFor(service: ListServiceId, meta: MetaDetails, kind: Li
     pending?.let { confirm ->
         ListChangeConfirmation(
             service = service.id,
-            change = confirm.change,
             impact = confirm.impact,
             onConfirm = {
                 pending = null
@@ -241,7 +239,6 @@ internal fun newListEntryFor(service: ListServiceId, meta: MetaDetails, kind: Li
 
 @Composable internal fun ListChangeConfirmation(
     service: ListServiceId,
-    change: ListChange,
     impact: ListChangeImpact,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
@@ -253,12 +250,7 @@ internal fun newListEntryFor(service: ListServiceId, meta: MetaDetails, kind: Li
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (impact.episodesMarked > 1) Text(stringResource(Res.string.lists_confirm_episodes, impact.episodesMarked))
                 if (impact.hidesFromContinueWatching) {
-                    Text(
-                        stringResource(
-                            if (change == ListChange.SetStatus(ListStatus.DROPPED)) Res.string.lists_confirm_dropped_hides
-                            else Res.string.lists_confirm_hides,
-                        ),
-                    )
+                    Text(stringResource(Res.string.lists_confirm_dropped_hides))
                 }
             }
         },

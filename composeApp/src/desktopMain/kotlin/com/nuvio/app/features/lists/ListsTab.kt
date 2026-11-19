@@ -93,6 +93,16 @@ import nuvio.composeapp.generated.resources.action_cancel
 import nuvio.composeapp.generated.resources.action_remove
 import nuvio.composeapp.generated.resources.airing_action_refresh
 import nuvio.composeapp.generated.resources.auth_passkey_retry
+import nuvio.composeapp.generated.resources.lists_stat_episodes
+import nuvio.composeapp.generated.resources.lists_stat_days_watched
+import nuvio.composeapp.generated.resources.lists_stat_mean_score
+import nuvio.composeapp.generated.resources.lists_stat_episodes_watched
+import nuvio.composeapp.generated.resources.lists_stat_movies_watched
+import nuvio.composeapp.generated.resources.lists_stat_rated_titles
+import nuvio.composeapp.generated.resources.lists_sort_updated
+import nuvio.composeapp.generated.resources.lists_sort_title
+import nuvio.composeapp.generated.resources.lists_sort_score
+import nuvio.composeapp.generated.resources.lists_sort_air_date
 import nuvio.composeapp.generated.resources.lists_change_check_failed
 import nuvio.composeapp.generated.resources.lists_disconnected_body
 import nuvio.composeapp.generated.resources.lists_disconnected_title
@@ -481,7 +491,6 @@ internal fun historyEntryCount(entry: ListEntry): Int =
     confirming?.let { pending ->
         ListChangeConfirmation(
             service = service.id,
-            change = pending.change,
             impact = pending.impact,
             onConfirm = {
                 confirming = null
@@ -644,9 +653,29 @@ internal fun historyEntryCount(entry: ListEntry): Int =
         val total = summary?.counts?.get(null) ?: 0
         if (summary != null && total > 0) {
             ListStat("%,d".format(total), pluralStringResource(Res.plurals.lists_summary_titles, total))
-            summary.extra.forEach { (label, value) -> ListStat(value.toIntOrNull()?.let { "%,d".format(it) } ?: value, label) }
+            summary.extra.forEach { (label, value) -> ListStat(value.toIntOrNull()?.let { "%,d".format(it) } ?: value, listStatLabel(label)) }
         }
     }
+}
+
+/** Display text for a summary figure: services hand over English identifiers, which map to localized labels. */
+@Composable private fun listStatLabel(label: String): String = when (label) {
+    "episodes" -> stringResource(Res.string.lists_stat_episodes)
+    "days watched" -> stringResource(Res.string.lists_stat_days_watched)
+    "mean score" -> stringResource(Res.string.lists_stat_mean_score)
+    "episodes watched" -> stringResource(Res.string.lists_stat_episodes_watched)
+    "movies watched" -> stringResource(Res.string.lists_stat_movies_watched)
+    "rated titles" -> stringResource(Res.string.lists_stat_rated_titles)
+    else -> label
+}
+
+/** Display text for a sort option, keyed by [ListSort.key]; unknown keys keep the service's own label. */
+@Composable private fun listSortLabel(sort: ListSort): String = when (sort.key) {
+    "UPDATED" -> stringResource(Res.string.lists_sort_updated)
+    "TITLE" -> stringResource(Res.string.lists_sort_title)
+    "SCORE" -> stringResource(Res.string.lists_sort_score)
+    "START_DATE" -> stringResource(Res.string.lists_sort_air_date)
+    else -> sort.label
 }
 
 @Composable private fun ListStat(value: String, label: String) {
@@ -715,17 +744,17 @@ internal fun historyEntryCount(entry: ListEntry): Int =
     var open by remember { mutableStateOf(false) }
     Box {
         NuvioCompactActionButton(
-            label = sort.label,
+            label = listSortLabel(sort),
             icon = Icons.AutoMirrored.Rounded.Sort,
             trailingIcon = Icons.Rounded.ExpandMore,
-            accessibilityLabel = stringResource(Res.string.lists_sort_by, sort.label),
+            accessibilityLabel = stringResource(Res.string.lists_sort_by, listSortLabel(sort)),
             onClick = { open = true },
             tone = NuvioCompactActionTone.Secondary,
             size = NuvioActionSize.Small,
         )
         Menu(expanded = open, onDismissRequest = { open = false }) {
             sorts.forEach { option ->
-                MenuItem(text = option.label, selected = option == sort, onClick = { open = false; onSort(option) })
+                MenuItem(text = listSortLabel(option), selected = option == sort, onClick = { open = false; onSort(option) })
             }
         }
     }

@@ -87,7 +87,9 @@ import com.nuvio.app.features.trakt.TraktBrandAsset
 import com.nuvio.app.features.trakt.traktBrandPainter
 import nuvio.composeapp.generated.resources.Res
 import nuvio.composeapp.generated.resources.action_retry
+import nuvio.composeapp.generated.resources.lists_change_mal_entry
 import nuvio.composeapp.generated.resources.lists_clear_rating
+import nuvio.composeapp.generated.resources.lists_link_mal_entry
 import nuvio.composeapp.generated.resources.lists_connect
 import nuvio.composeapp.generated.resources.lists_rate
 import nuvio.composeapp.generated.resources.lists_rate_on
@@ -134,9 +136,10 @@ import org.jetbrains.compose.resources.stringResource
             ListServiceSwitcher(service, otherServices, enabled = !working, onSwitch = onSwitch)
             ListBarDivider()
             if (!linked && !working && onChooseEntry != null) {
-                ListBarSegment(onClick = onChooseEntry, enabled = true, accessibilityLabel = "Link MAL entry") {
+                val linkLabel = stringResource(Res.string.lists_link_mal_entry)
+                ListBarSegment(onClick = onChooseEntry, enabled = true, accessibilityLabel = linkLabel) {
                     ListBarIcon(Icons.Rounded.Link)
-                    ListBarLabel("Link MAL entry", emphasized = true)
+                    ListBarLabel(linkLabel, emphasized = true)
                 }
             } else {
                 val canEdit = !working && linked
@@ -151,7 +154,7 @@ import org.jetbrains.compose.resources.stringResource
                 }
                 if (onChooseEntry != null) {
                     ListBarDivider()
-                    val editLabel = if (linked) "Change MAL entry" else "Link MAL entry"
+                    val editLabel = stringResource(if (linked) Res.string.lists_change_mal_entry else Res.string.lists_link_mal_entry)
                     ListTooltip(editLabel) {
                         ListBarSegment(onClick = onChooseEntry, enabled = !working, accessibilityLabel = editLabel, horizontalPadding = 11.dp) {
                             ListBarIcon(Icons.Rounded.Edit)
