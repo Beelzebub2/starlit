@@ -18,6 +18,7 @@ import com.nuvio.app.features.tracking.extractTrackingYear
 import com.nuvio.app.features.tracking.parseTrackingExternalIds
 import com.nuvio.app.features.trakt.TraktAuthRepository
 import com.nuvio.app.features.trakt.TraktDroppedShow
+import com.nuvio.app.features.trakt.TraktLibraryRepository
 import com.nuvio.app.features.trakt.TraktProgressRepository
 import com.nuvio.app.features.trakt.TraktRatingsRepository
 import com.nuvio.app.features.trakt.TraktWatchedShowSnapshotRepository
@@ -134,6 +135,10 @@ private fun contentAliases(imdb: String?, tmdb: Long?, trakt: Long?): List<Strin
 }
 
 private fun contentAliases(ids: TrackingExternalIds): List<String> = contentAliases(ids.imdb, ids.tmdb, ids.trakt)
+
+/** Trakt can only look titles up by its own, IMDb, TMDB or TVDB ids (not MAL, Kitsu, AniList, AniDB, Simkl, MDBList). */
+internal fun TrackingExternalIds.isTraktAddressable(): Boolean =
+    trakt != null || !imdb.isNullOrBlank() || tmdb != null || !tvdb.isNullOrBlank()
 
 private fun idsOf(aliases: Collection<String>): TrackingExternalIds =
     aliases.fold(TrackingExternalIds()) { ids, alias -> ids.mergeMissing(parseTrackingExternalIds(alias)) }
@@ -252,7 +257,7 @@ internal class TraktListAdapter(
     private var cache: Cache? = null
 
     override fun covers(kind: ListTitleKind, meta: MetaDetails): Boolean =
-        buildTrackingMediaReference(meta.type, meta.id).ids.hasAny
+        buildTrackingMediaReference(meta.type, meta.id).ids.isTraktAddressable()
 
     override fun capabilities(type: ListMediaType): ListCapabilities = when (type) {
         ListMediaType.SERIES -> ListCapabilities(
@@ -312,7 +317,7 @@ internal class TraktListAdapter(
 
     override suspend fun entryFor(meta: MetaDetails): ListEntry? {
         val ids = buildTrackingMediaReference(meta.type, meta.id).ids
-        if (!ids.hasAny) return null
+        if (!ids.isTraktAddressable()) return null
         val type = listMediaType(meta.type)
         val lookup = (contentAliases(ids) + meta.id.trim()).toSet()
         val state = states().firstOrNull { it.type == type && it.aliases.any(lookup::contains) } ?: return null
@@ -588,22 +593,9 @@ private object DefaultTraktListPort : TraktListPort {
         return snapshot.sections.firstOrNull { it.type == watchlistKey }?.items.orEmpty()
     }
 
-    override suspend fun setWatchlisted(item: LibraryItem, inWatchlist: Boolean) {
-        if (!TrackingProviderRegistry.isAuthenticated(TrackingProviderId.TRAKT)) {
-            throw IllegalStateException("Trakt is not connected")
-        }
-        val library = TrackingProviderRegistry.libraryProvider(TrackingProviderId.TRAKT)
-            ?: throw IllegalStateException("Trakt watchlist is not available")
-        val membership = library.membership(item)
-        val snapshot = library.snapshot()
-        val watchlistKey = snapshot.tabs.firstOrNull { it.kind == TrackingLibraryTabKind.WATCHLIST }?.key
-            ?: throw IllegalStateException(snapshot.errorMessage ?: "Trakt watchlist is not available")
-        library.applyMembership(
-            profileId = ProfileRepository.activeProfileId,
-            item = item,
-            desiredMembership = membership + (watchlistKey to inWatchlist),
-        )
-    }
+    /** Writes only the watchlist key; a full desired-membership map could remove the title from personal lists. */
+    override suspend fun setWatchlisted(item: LibraryItem, inWatchlist: Boolean) =
+        TraktLibraryRepository.setWatchlistMembership(item, inWatchlist)
 
     override suspend fun setDropped(media: TrackingMediaReference, dropped: Boolean) =
         TraktProgressRepository.setDropped(ProfileRepository.activeProfileId, media, dropped)

@@ -405,4 +405,18 @@ class TraktListServiceTest {
         assertTrue(svc.covers(kind, MetaDetails(id = "tt1", type = "series", name = "X")))
         assertFalse(svc.covers(kind, MetaDetails(id = "plain-name", type = "series", name = "X")))
     }
+
+    @Test fun coversOnlyIdsTraktCanAddress(): Unit = runBlocking {
+        val svc = adapter(
+            FakeTraktPort(snapshot = TraktListSnapshot(watchlist = listOf(watchlistItem("tt1", "series", "Show")))),
+        )
+        val kind = ListTitleKind(ListMediaType.SERIES, anime = true)
+        listOf("tt1", "tmdb:2", "tvdb:3", "trakt:4").forEach { id ->
+            assertTrue(svc.covers(kind, MetaDetails(id = id, type = "series", name = "X")), "$id should be covered")
+        }
+        listOf("mal:5", "kitsu:6", "anilist:7", "anidb:8", "simkl:9", "mdblist:abc").forEach { id ->
+            assertFalse(svc.covers(kind, MetaDetails(id = id, type = "series", name = "X")), "$id should not be covered")
+            assertNull(svc.entryFor(MetaDetails(id = id, type = "series", name = "X")))
+        }
+    }
 }

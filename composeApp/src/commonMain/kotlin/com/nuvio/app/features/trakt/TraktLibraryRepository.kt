@@ -13,6 +13,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
@@ -49,6 +50,17 @@ data class TraktLibraryUiState(
     val hasLoaded: Boolean = false,
     val errorMessage: String? = null,
 )
+
+/**
+ * Desired membership that changes only [watchlistKey]: every other known list (tabs plus whatever the title is
+ * already in) keeps exactly its current value, so nothing but the watchlist can be added or removed.
+ */
+internal fun watchlistOnlyMembership(
+    tabKeys: Collection<String>,
+    membership: Set<String>,
+    watchlistKey: String,
+    inWatchlist: Boolean,
+): Map<String, Boolean> = (tabKeys + membership).associateWith { key -> key in membership } + (watchlistKey to inWatchlist)
 
 object TraktLibraryRepository {
     private val log = Logger.withTag("TraktLibrary")
@@ -241,6 +253,44 @@ object TraktLibraryRepository {
         }
     }
 
+    /**
+     * Adds [item] to or removes it from the Trakt watchlist and nothing else. Unlike [applyMembershipChanges],
+     * no other list key is diffed or written, so a refresh landing mid-call can never drop a personal-list entry.
+     */
+    suspend fun setWatchlistMembership(item: LibraryItem, inWatchlist: Boolean) {
+        ensureLoaded()
+        val headers = TraktAuthRepository.authorizedHeaders() ?: throw IllegalStateException("Trakt is not connected")
+        ensureFresh()
+
+        var wasInWatchlist = false
+        _uiState.update { state ->
+            wasInWatchlist = WATCHLIST_KEY in state.membershipByContent[contentKey(item.id, item.type)].orEmpty()
+            watchlistOnlyState(state, item, inWatchlist)
+        }
+        try {
+            if (inWatchlist) addToWatchlist(headers, item) else removeFromWatchlist(headers, item)
+        } catch (error: Throwable) {
+            _uiState.update { state -> watchlistOnlyState(state, item, wasInWatchlist) }
+            throw error
+        }
+    }
+
+    /** [state] with only the watchlist membership of [item] changed; every other list keeps its current value. */
+    internal fun watchlistOnlyState(
+        state: TraktLibraryUiState,
+        item: LibraryItem,
+        inWatchlist: Boolean,
+    ): TraktLibraryUiState = applyOptimisticMembershipChanges(
+        state = state,
+        item = item,
+        desiredMembership = watchlistOnlyMembership(
+            tabKeys = state.listTabs.map(TraktListTab::key),
+            membership = state.membershipByContent[contentKey(item.id, item.type)].orEmpty(),
+            watchlistKey = WATCHLIST_KEY,
+            inWatchlist = inWatchlist,
+        ),
+    )
+
     private fun applyOptimisticMembershipChanges(
         state: TraktLibraryUiState,
         item: LibraryItem,
@@ -293,7 +343,7 @@ object TraktLibraryRepository {
         return base.copy(savedAtEpochMs = savedAt)
     }
 
-    private fun rebuildUiState(
+    internal fun rebuildUiState(
         listTabs: List<TraktListTab>,
         entriesByList: Map<String, List<LibraryItem>>,
     ): TraktLibraryUiState {
