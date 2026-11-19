@@ -164,8 +164,8 @@ class SimklListAdapter(
             signedInAs = signedInAs(),
             counts = counts,
             extra = listOf(
-                "Episodes watched" to all.sumOf { it.watchedEpisodesCount }.toString(),
-                "Rated titles" to all.count { (it.userRating ?: 0) > 0 }.toString(),
+                "episodes watched" to all.sumOf { it.watchedEpisodesCount }.toString(),
+                "rated titles" to all.count { (it.userRating ?: 0) > 0 }.toString(),
             ),
         )
     }

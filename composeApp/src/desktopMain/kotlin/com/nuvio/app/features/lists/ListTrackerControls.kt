@@ -62,7 +62,7 @@ internal class MalTitleHooks(
     }
 }
 
-private fun ensureListServicesLoaded() {
+internal fun ensureListServicesLoaded() {
     ListPreferencesRepository.ensureLoaded()
     MyAnimeListRepository.ensureLoaded()
     SimklAuthRepository.ensureLoaded()
@@ -239,7 +239,7 @@ internal fun newListEntryFor(service: ListServiceId, meta: MetaDetails, kind: Li
     }
 }
 
-@Composable private fun ListChangeConfirmation(
+@Composable internal fun ListChangeConfirmation(
     service: ListServiceId,
     change: ListChange,
     impact: ListChangeImpact,
@@ -267,4 +267,3 @@ internal fun newListEntryFor(service: ListServiceId, meta: MetaDetails, kind: Li
     )
 }
 
-private fun Exception.readableMessage(): String = message?.takeIf { it.isNotBlank() } ?: (this::class.simpleName ?: "Error")

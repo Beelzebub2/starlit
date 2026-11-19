@@ -133,9 +133,9 @@ internal class TraktListAdapter(
             signedInAs = signedInAs(),
             counts = counts,
             extra = listOf(
-                "Episodes watched" to all.filterNot { it.isMovie }.sumOf { it.watchedEpisodes }.toString(),
-                "Movies watched" to all.count { it.isMovie && it.watchedEpisodes > 0 }.toString(),
-                "Rated titles" to all.count { it.score > 0 }.toString(),
+                "episodes watched" to all.filterNot { it.isMovie }.sumOf { it.watchedEpisodes }.toString(),
+                "movies watched" to all.count { it.isMovie && it.watchedEpisodes > 0 }.toString(),
+                "rated titles" to all.count { it.score > 0 }.toString(),
             ),
         )
     }

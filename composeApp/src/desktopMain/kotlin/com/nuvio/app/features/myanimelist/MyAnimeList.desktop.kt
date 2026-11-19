@@ -12,7 +12,11 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import kotlin.math.roundToInt
 import com.nuvio.app.features.details.MetaDetails
+import com.nuvio.app.features.lists.ListPreferencesRepository
+import com.nuvio.app.features.lists.ListServiceId
 import com.nuvio.app.features.lists.ListTrackerControls
+import com.nuvio.app.features.lists.listsTabTitle
+import com.nuvio.app.features.lists.rememberListsTabServices
 import com.nuvio.app.features.lists.MalTitleHooks
 import com.nuvio.app.features.profiles.ProfileRepository
 import kotlinx.coroutines.CancellationException
@@ -26,10 +30,11 @@ import org.jetbrains.compose.resources.stringResource
     LaunchedEffect(profile.activeProfile) { MyAnimeListRepository.ensureLoaded() }
     return MyAnimeListRepository.state.collectAsState().value
 }
-@Composable internal actual fun MyAnimeListTabVisible(): Boolean {
-    val connection = rememberMalConnection()
-    return connection.connected && connection.showTab
-}
+/** The lists tab shows when at least one connected service is chosen for it. */
+@Composable internal actual fun MyAnimeListTabVisible(): Boolean = rememberListsTabServices().isNotEmpty()
+
+/** The only tab service's name, or "Lists" when several share the tab. */
+@Composable internal actual fun listsTabLabel(): String = listsTabTitle(rememberListsTabServices())
 
 internal actual fun myAnimeListPlaybackUpdateThresholdPercent(): Int =
     MyAnimeListRepository.playbackUpdateThresholdPercent()
@@ -82,9 +87,14 @@ internal actual suspend fun markMyAnimeListRewatchOnPlayback(
                     Text("Show MyAnimeList tab", style = MaterialTheme.typography.bodyMedium)
                     Text("Browse your MAL anime list from the Starlit navigation bar.", style = MaterialTheme.typography.bodySmall)
                 }
+                // Until the lists settings card replaces this switch, it also chooses MyAnimeList for the lists tab.
+                val listPrefs by ListPreferencesRepository.state.collectAsState()
                 Switch(
-                    checked = connection.showTab && connection.connected,
-                    onCheckedChange = MyAnimeListRepository::setTabVisible,
+                    checked = ListServiceId.MYANIMELIST in listPrefs.inTab && connection.connected,
+                    onCheckedChange = { visible ->
+                        MyAnimeListRepository.setTabVisible(visible)
+                        ListPreferencesRepository.setInTab(ListServiceId.MYANIMELIST, visible)
+                    },
                     enabled = connection.connected && !connection.busy,
                 )
             }

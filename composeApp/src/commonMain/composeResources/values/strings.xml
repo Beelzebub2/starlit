@@ -3180,4 +3180,56 @@
     <string name="lists_confirm_episodes">This marks %1$d episodes as watched in Starlit and on your connected services.</string>
     <string name="lists_confirm_dropped_hides">Dropping also hides it from Continue Watching.</string>
     <string name="lists_confirm_hides">This also removes it from Continue Watching.</string>
+    <string name="lists_tab_title">Lists</string>
+    <string name="lists_open_on">Open on %1$s</string>
+    <string name="lists_filter_all">All</string>
+    <string name="lists_sort_by">Sort by %1$s</string>
+    <string name="lists_switch_to">Show your %1$s list</string>
+    <plurals name="lists_summary_titles">
+        <item quantity="one">title</item>
+        <item quantity="other">titles</item>
+    </plurals>
+    <plurals name="lists_footer_titles">
+        <item quantity="one">%1$s title</item>
+        <item quantity="other">%1$s titles</item>
+    </plurals>
+    <string name="lists_load_failed_title">Couldn't load your list</string>
+    <string name="lists_load_failed">Couldn't load your %1$s list.</string>
+    <string name="lists_empty_title">Your list is empty</string>
+    <string name="lists_empty_body">Add titles on %1$s, or from a title's page in Starlit, and they will show up here.</string>
+    <string name="lists_empty_status_title">Nothing in %1$s</string>
+    <string name="lists_empty_status_body">Titles you mark as %1$s on %2$s show up here.</string>
+    <string name="lists_disconnected_title">%1$s is not connected</string>
+    <string name="lists_disconnected_body">Reconnect %1$s in Settings → Integrations to see and edit your list here.</string>
+    <string name="lists_no_services_title">No lists to show</string>
+    <string name="lists_no_services_body">Choose which services appear here in Settings → Integrations.</string>
+    <string name="lists_card_status">Status: %1$s. Change status</string>
+    <string name="lists_card_status_unset">not set</string>
+    <string name="lists_card_score">Your score: %1$d out of 10. Change score</string>
+    <string name="lists_card_score_unset">Score this title</string>
+    <string name="lists_card_edit">Edit %1$s</string>
+    <string name="lists_community_score">%1$s community score %2$s</string>
+    <string name="lists_episode_less">One episode less</string>
+    <string name="lists_episode_more">One more episode</string>
+    <string name="lists_set_episodes">Set episodes watched</string>
+    <string name="lists_episodes_of">%1$d of %2$d episodes</string>
+    <plurals name="lists_episodes_watched">
+        <item quantity="one">%1$d episode watched</item>
+        <item quantity="other">%1$d episodes watched</item>
+    </plurals>
+    <string name="lists_remove_entry">Remove from list</string>
+    <string name="lists_remove_entry_title">Remove from %1$s?</string>
+    <string name="lists_remove_entry_message">&quot;%1$s&quot; will be removed from your list, along with its status, score and episode progress.</string>
+    <string name="lists_removed_from">Removed from %1$s</string>
+    <string name="lists_remove_history">Remove from watch history…</string>
+    <string name="lists_remove_history_title">Remove from watch history?</string>
+    <plurals name="lists_remove_history_message">
+        <item quantity="one">This removes %1$d watched entry of &quot;%2$s&quot; from Starlit and your connected services. Its status on %3$s may change.</item>
+        <item quantity="other">This removes %1$d watched entries of &quot;%2$s&quot; from Starlit and your connected services. Its status on %3$s may change.</item>
+    </plurals>
+    <plurals name="lists_removed_history">
+        <item quantity="one">Removed %1$d entry from watch history</item>
+        <item quantity="other">Removed %1$d entries from watch history</item>
+    </plurals>
+    <string name="lists_change_check_failed">Couldn't check this change: %1$s</string>
 </resources>

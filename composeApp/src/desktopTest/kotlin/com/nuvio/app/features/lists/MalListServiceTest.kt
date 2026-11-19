@@ -3,6 +3,7 @@ package com.nuvio.app.features.lists
 import com.nuvio.app.features.details.MetaDetails
 import com.nuvio.app.features.myanimelist.MalAnime
 import com.nuvio.app.features.myanimelist.MalAnimeListEntry
+import com.nuvio.app.features.myanimelist.MalListPatch
 import com.nuvio.app.features.myanimelist.MalListStatus
 import com.nuvio.app.features.myanimelist.MalStatus
 import org.junit.Test
@@ -53,5 +54,15 @@ class MalListServiceTest {
         val base = MalAnimeListEntry(MalAnime(1, "A"), null, 12, MalListStatus(MalStatus.WATCHING, 0, 11)).toListEntry()
         assertEquals(12, malStepPatch(base, 5).watchedEpisodes)
         assertEquals(0, malStepPatch(base, -50).watchedEpisodes)
+    }
+
+    @Test fun stepsAndStatusFollowMyAnimeListRules() {
+        val planned = MalAnimeListEntry(MalAnime(1, "A"), null, 12, MalListStatus(MalStatus.PLAN_TO_WATCH, 0, 0)).toListEntry()
+        assertEquals(MalListPatch(status = MalStatus.WATCHING, watchedEpisodes = 1), malStepPatch(planned, 1))
+        val nearlyDone = MalAnimeListEntry(MalAnime(1, "A"), null, 12, MalListStatus(MalStatus.WATCHING, 0, 11)).toListEntry()
+        assertEquals(MalListPatch(status = MalStatus.COMPLETED, watchedEpisodes = 12), malStepPatch(nearlyDone, 1))
+        assertEquals(MalListPatch(status = MalStatus.COMPLETED, watchedEpisodes = 12), malStatusPatch(nearlyDone, ListStatus.COMPLETED))
+        assertEquals(MalListPatch(status = MalStatus.ON_HOLD), malStatusPatch(nearlyDone, ListStatus.ON_HOLD))
+        assertEquals(null, malStatusPatch(nearlyDone, ListStatus.WATCHING))
     }
 }

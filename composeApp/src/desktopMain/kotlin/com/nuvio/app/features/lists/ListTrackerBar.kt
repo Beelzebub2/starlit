@@ -250,7 +250,7 @@ internal fun pickerStatuses(capabilities: ListCapabilities): List<ListStatus> =
     }
 }
 
-@Composable private fun ListLogo(service: ListServiceId, contentDescription: String?, size: Dp = 26.dp) {
+@Composable internal fun ListLogo(service: ListServiceId, contentDescription: String?, size: Dp = 26.dp) {
     Image(
         painter = listServiceLogo(service),
         contentDescription = contentDescription,
@@ -530,7 +530,7 @@ internal fun pickerStatuses(capabilities: ListCapabilities): List<ListStatus> =
     )
 }
 
-@Composable private fun ListStatusDot(status: ListStatus?) {
+@Composable internal fun ListStatusDot(status: ListStatus?) {
     val colors = MaterialTheme.nuvio.colors
     Box(Modifier.size(12.dp), contentAlignment = Alignment.Center) {
         val color = status?.dotColor()
@@ -564,7 +564,7 @@ internal fun pickerStatuses(capabilities: ListCapabilities): List<ListStatus> =
     }
 }
 
-@Composable private fun ListMenu(expanded: Boolean, onDismiss: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
+@Composable internal fun ListMenu(expanded: Boolean, onDismiss: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
     val colors = MaterialTheme.nuvio.colors
     DropdownMenu(
         expanded = expanded,
@@ -577,7 +577,7 @@ internal fun pickerStatuses(capabilities: ListCapabilities): List<ListStatus> =
     )
 }
 
-@Composable private fun ListMenuItem(text: String, selected: Boolean, leading: @Composable () -> Unit, onClick: () -> Unit) {
+@Composable internal fun ListMenuItem(text: String, selected: Boolean, leading: @Composable () -> Unit, onClick: () -> Unit) {
     val colors = MaterialTheme.nuvio.colors
     DropdownMenuItem(
         text = {

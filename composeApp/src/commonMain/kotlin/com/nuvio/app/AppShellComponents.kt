@@ -893,15 +893,16 @@ internal fun DesktopHoverSidebar(
                     )
                 }
                 if (showMyAnimeListTab) {
+                    val listsLabel = com.nuvio.app.features.myanimelist.listsTabLabel()
                     DesktopSidebarItem(
-                        label = "MyAnimeList",
+                        label = listsLabel,
                         selected = selectedTab == AppScreenTab.MyAnimeList,
                         expanded = sidebarExpanded,
                         onClick = { selectTab(AppScreenTab.MyAnimeList) },
                     ) { color ->
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.PlaylistAddCheck,
-                            contentDescription = "MyAnimeList",
+                            contentDescription = listsLabel,
                             modifier = Modifier.size(DesktopSidebarIconSize),
                             tint = color,
                         )
