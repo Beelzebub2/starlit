@@ -3456,4 +3456,10 @@
     <string name="lists_stat_episodes_watched">பார்த்த எபிசோட்கள்</string>
     <string name="lists_stat_movies_watched">பார்த்த திரைப்படங்கள்</string>
     <string name="lists_stat_rated_titles">மதிப்பிடப்பட்ட தலைப்புகள்</string>
+    <string name="settings_playback_section_player_controls">பிளேயர் கட்டுப்பாடுகள்</string>
+    <string name="settings_playback_controls_size">கட்டுப்பாடுகளின் அளவு</string>
+    <string name="settings_playback_controls_size_description">பிளேயர் பொத்தான்கள் மற்றும் ஐகான்களின் அளவை மாற்றுகிறது. பட்டி பொருந்தும் வகையில் சிறிய சாளரங்களில் பெரிய அளவுகள் சுருங்கும்.</string>
+    <string name="settings_playback_controls_size_value">%1$d%</string>
+    <string name="settings_playback_controls_size_preview">முன்னோட்டம்</string>
+    <string name="settings_playback_controls_size_reset">மீட்டமை</string>
 </resources>

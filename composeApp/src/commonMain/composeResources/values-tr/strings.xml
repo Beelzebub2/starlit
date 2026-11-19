@@ -3500,4 +3500,10 @@ Bu özelliği tamamen kendi sorumluluğunuzda kullanırsınız. P2P istediğiniz
     <string name="lists_stat_episodes_watched">izlenen bölüm</string>
     <string name="lists_stat_movies_watched">izlenen film</string>
     <string name="lists_stat_rated_titles">puanlanan yapım</string>
+    <string name="settings_playback_section_player_controls">OYNATICI DENETİMLERİ</string>
+    <string name="settings_playback_controls_size">Denetim boyutu</string>
+    <string name="settings_playback_controls_size_description">Oynatıcı düğmelerinin ve simgelerinin boyutunu değiştirir. Çubuğun sığması için küçük pencerelerde büyük boyutlar küçültülür.</string>
+    <string name="settings_playback_controls_size_value">%1$d%</string>
+    <string name="settings_playback_controls_size_preview">Önizleme</string>
+    <string name="settings_playback_controls_size_reset">Sıfırla</string>
 </resources>

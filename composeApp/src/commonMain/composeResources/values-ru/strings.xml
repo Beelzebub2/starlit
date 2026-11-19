@@ -3508,4 +3508,10 @@
     <string name="lists_stat_episodes_watched">просмотрено серий</string>
     <string name="lists_stat_movies_watched">просмотрено фильмов</string>
     <string name="lists_stat_rated_titles">оценено тайтлов</string>
+    <string name="settings_playback_section_player_controls">ЭЛЕМЕНТЫ УПРАВЛЕНИЯ ПЛЕЕРОМ</string>
+    <string name="settings_playback_controls_size">Размер элементов управления</string>
+    <string name="settings_playback_controls_size_description">Изменяет размер кнопок и значков плеера. В маленьких окнах большие размеры уменьшаются, чтобы панель поместилась.</string>
+    <string name="settings_playback_controls_size_value">%1$d%</string>
+    <string name="settings_playback_controls_size_preview">Предпросмотр</string>
+    <string name="settings_playback_controls_size_reset">Сбросить</string>
 </resources>

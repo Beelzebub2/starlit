@@ -3499,4 +3499,10 @@
     <string name="lists_stat_episodes_watched">переглянуто серій</string>
     <string name="lists_stat_movies_watched">переглянуто фільмів</string>
     <string name="lists_stat_rated_titles">оцінено тайтлів</string>
+    <string name="settings_playback_section_player_controls">ЕЛЕМЕНТИ КЕРУВАННЯ ПЛЕЄРОМ</string>
+    <string name="settings_playback_controls_size">Розмір елементів керування</string>
+    <string name="settings_playback_controls_size_description">Змінює розмір кнопок і піктограм програвача. У маленьких вікнах великі розміри зменшуються, щоб панель умістилася.</string>
+    <string name="settings_playback_controls_size_value">%1$d%</string>
+    <string name="settings_playback_controls_size_preview">Попередній перегляд</string>
+    <string name="settings_playback_controls_size_reset">Скинути</string>
 </resources>

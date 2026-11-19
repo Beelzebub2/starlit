@@ -3493,4 +3493,10 @@
     <string name="lists_stat_episodes_watched">دیکھی گئی اقساط</string>
     <string name="lists_stat_movies_watched">دیکھی گئی فلمیں</string>
     <string name="lists_stat_rated_titles">درجہ بند عنوانات</string>
+    <string name="settings_playback_section_player_controls">پلیئر کنٹرولز</string>
+    <string name="settings_playback_controls_size">کنٹرولز کا سائز</string>
+    <string name="settings_playback_controls_size_description">پلیئر کے بٹنوں اور آئیکنز کا سائز تبدیل کرتا ہے۔ بار کو فٹ رکھنے کے لیے چھوٹی ونڈوز میں بڑے سائز کم ہو جاتے ہیں۔</string>
+    <string name="settings_playback_controls_size_value">%1$d%</string>
+    <string name="settings_playback_controls_size_preview">پیش منظر</string>
+    <string name="settings_playback_controls_size_reset">ری سیٹ</string>
 </resources>

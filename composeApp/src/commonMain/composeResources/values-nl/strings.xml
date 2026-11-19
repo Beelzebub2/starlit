@@ -3492,4 +3492,10 @@
     <string name="lists_stat_episodes_watched">bekeken afleveringen</string>
     <string name="lists_stat_movies_watched">bekeken films</string>
     <string name="lists_stat_rated_titles">beoordeelde titels</string>
+    <string name="settings_playback_section_player_controls">SPELERBEDIENING</string>
+    <string name="settings_playback_controls_size">Grootte van bedieningselementen</string>
+    <string name="settings_playback_controls_size_description">Past de grootte van de knoppen en pictogrammen van de speler aan. Grote formaten worden in kleine vensters verkleind zodat de balk past.</string>
+    <string name="settings_playback_controls_size_value">%1$d%</string>
+    <string name="settings_playback_controls_size_preview">Voorbeeld</string>
+    <string name="settings_playback_controls_size_reset">Resetten</string>
 </resources>

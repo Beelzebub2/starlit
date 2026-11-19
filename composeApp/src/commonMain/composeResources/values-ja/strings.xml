@@ -3482,4 +3482,10 @@
     <string name="lists_stat_episodes_watched">視聴済みの話数</string>
     <string name="lists_stat_movies_watched">視聴済みの映画</string>
     <string name="lists_stat_rated_titles">評価した作品</string>
+    <string name="settings_playback_section_player_controls">プレーヤーコントロール</string>
+    <string name="settings_playback_controls_size">コントロールのサイズ</string>
+    <string name="settings_playback_controls_size_description">プレーヤーのボタンとアイコンのサイズを変更します。小さなウィンドウでは大きなサイズが縮小され、バーが収まります。</string>
+    <string name="settings_playback_controls_size_value">%1$d%</string>
+    <string name="settings_playback_controls_size_preview">プレビュー</string>
+    <string name="settings_playback_controls_size_reset">リセット</string>
 </resources>

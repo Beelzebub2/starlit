@@ -3449,4 +3449,10 @@
     <string name="lists_stat_episodes_watched">katsottua jaksoa</string>
     <string name="lists_stat_movies_watched">katsottua elokuvaa</string>
     <string name="lists_stat_rated_titles">arvosteltua nimikettä</string>
+    <string name="settings_playback_section_player_controls">SOITTIMEN OHJAIMET</string>
+    <string name="settings_playback_controls_size">Ohjainten koko</string>
+    <string name="settings_playback_controls_size_description">Muuttaa soittimen painikkeiden ja kuvakkeiden kokoa. Suuret koot pienenevät pienissä ikkunoissa, jotta palkki mahtuu.</string>
+    <string name="settings_playback_controls_size_value">%1$d%</string>
+    <string name="settings_playback_controls_size_preview">Esikatselu</string>
+    <string name="settings_playback_controls_size_reset">Palauta</string>
 </resources>

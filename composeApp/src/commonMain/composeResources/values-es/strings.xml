@@ -3468,4 +3468,10 @@ Utilizas esta función bajo tu propia responsabilidad. P2P se puede desactivar e
     <string name="lists_stat_episodes_watched">episodios vistos</string>
     <string name="lists_stat_movies_watched">películas vistas</string>
     <string name="lists_stat_rated_titles">títulos puntuados</string>
+    <string name="settings_playback_section_player_controls">CONTROLES DEL REPRODUCTOR</string>
+    <string name="settings_playback_controls_size">Tamaño de los controles</string>
+    <string name="settings_playback_controls_size_description">Cambia el tamaño de los botones e iconos del reproductor. Los tamaños grandes se reducen en ventanas pequeñas para que quepa la barra.</string>
+    <string name="settings_playback_controls_size_value">%1$d%</string>
+    <string name="settings_playback_controls_size_preview">Vista previa</string>
+    <string name="settings_playback_controls_size_reset">Restablecer</string>
 </resources>

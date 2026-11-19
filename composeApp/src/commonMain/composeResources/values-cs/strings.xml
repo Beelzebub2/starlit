@@ -3502,4 +3502,10 @@
     <string name="lists_stat_episodes_watched">zhlédnutých dílů</string>
     <string name="lists_stat_movies_watched">zhlédnutých filmů</string>
     <string name="lists_stat_rated_titles">ohodnocených titulů</string>
+    <string name="settings_playback_section_player_controls">OVLÁDACÍ PRVKY PŘEHRÁVAČE</string>
+    <string name="settings_playback_controls_size">Velikost ovládacích prvků</string>
+    <string name="settings_playback_controls_size_description">Změní velikost tlačítek a ikon přehrávače. Velké velikosti se v malých oknech zmenší, aby se lišta vešla.</string>
+    <string name="settings_playback_controls_size_value">%1$d%</string>
+    <string name="settings_playback_controls_size_preview">Náhled</string>
+    <string name="settings_playback_controls_size_reset">Obnovit</string>
 </resources>

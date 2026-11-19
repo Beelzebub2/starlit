@@ -3486,4 +3486,10 @@ Had permintaan</string>
     <string name="lists_stat_episodes_watched">episod ditonton</string>
     <string name="lists_stat_movies_watched">filem ditonton</string>
     <string name="lists_stat_rated_titles">tajuk dinilai</string>
+    <string name="settings_playback_section_player_controls">KAWALAN PEMAIN</string>
+    <string name="settings_playback_controls_size">Saiz kawalan</string>
+    <string name="settings_playback_controls_size_description">Mengubah saiz butang dan ikon pemain. Saiz besar dikecilkan dalam tetingkap kecil supaya bar muat.</string>
+    <string name="settings_playback_controls_size_value">%1$d%</string>
+    <string name="settings_playback_controls_size_preview">Pratonton</string>
+    <string name="settings_playback_controls_size_reset">Tetapkan semula</string>
 </resources>

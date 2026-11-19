@@ -3453,4 +3453,10 @@
     <string name="lists_stat_episodes_watched">చూసిన ఎపిసోడ్‌లు</string>
     <string name="lists_stat_movies_watched">చూసిన సినిమాలు</string>
     <string name="lists_stat_rated_titles">రేటింగ్ ఇచ్చిన శీర్షికలు</string>
+    <string name="settings_playback_section_player_controls">ప్లేయర్ నియంత్రణలు</string>
+    <string name="settings_playback_controls_size">నియంత్రణల పరిమాణం</string>
+    <string name="settings_playback_controls_size_description">ప్లేయర్ బటన్లు మరియు చిహ్నాల పరిమాణాన్ని మారుస్తుంది. బార్ సరిపోయేలా చిన్న విండోలలో పెద్ద పరిమాణాలు తగ్గుతాయి.</string>
+    <string name="settings_playback_controls_size_value">%1$d%</string>
+    <string name="settings_playback_controls_size_preview">ప్రివ్యూ</string>
+    <string name="settings_playback_controls_size_reset">రీసెట్</string>
 </resources>

@@ -3468,4 +3468,10 @@ Du bruker denne funksjonen helt på eget ansvar. P2P kan deaktiveres når som he
     <string name="lists_stat_episodes_watched">sette episoder</string>
     <string name="lists_stat_movies_watched">sette filmer</string>
     <string name="lists_stat_rated_titles">vurderte titler</string>
+    <string name="settings_playback_section_player_controls">SPILLERKONTROLLER</string>
+    <string name="settings_playback_controls_size">Størrelse på kontroller</string>
+    <string name="settings_playback_controls_size_description">Endrer størrelsen på spillerens knapper og ikoner. Store størrelser krympes i små vinduer slik at linjen får plass.</string>
+    <string name="settings_playback_controls_size_value">%1$d%</string>
+    <string name="settings_playback_controls_size_preview">Forhåndsvisning</string>
+    <string name="settings_playback_controls_size_reset">Tilbakestill</string>
 </resources>

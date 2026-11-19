@@ -3449,4 +3449,10 @@
     <string name="lists_stat_episodes_watched">vipindi vilivyotazamwa</string>
     <string name="lists_stat_movies_watched">filamu zilizotazamwa</string>
     <string name="lists_stat_rated_titles">vichwa vilivyokadiriwa</string>
+    <string name="settings_playback_section_player_controls">VIDHIBITI VYA KICHEZAJI</string>
+    <string name="settings_playback_controls_size">Ukubwa wa vidhibiti</string>
+    <string name="settings_playback_controls_size_description">Hubadilisha ukubwa wa vitufe na aikoni za kichezaji. Ukubwa mkubwa hupunguzwa kwenye madirisha madogo ili upau utoshee.</string>
+    <string name="settings_playback_controls_size_value">%1$d%</string>
+    <string name="settings_playback_controls_size_preview">Onyesho la kukagua</string>
+    <string name="settings_playback_controls_size_reset">Weka upya</string>
 </resources>

@@ -3489,4 +3489,10 @@
     <string name="lists_stat_episodes_watched">tập đã xem</string>
     <string name="lists_stat_movies_watched">phim đã xem</string>
     <string name="lists_stat_rated_titles">tựa phim đã chấm điểm</string>
+    <string name="settings_playback_section_player_controls">ĐIỀU KHIỂN TRÌNH PHÁT</string>
+    <string name="settings_playback_controls_size">Kích thước điều khiển</string>
+    <string name="settings_playback_controls_size_description">Thay đổi kích thước các nút và biểu tượng của trình phát. Kích thước lớn sẽ thu nhỏ trong cửa sổ nhỏ để thanh vừa vặn.</string>
+    <string name="settings_playback_controls_size_value">%1$d%</string>
+    <string name="settings_playback_controls_size_preview">Xem trước</string>
+    <string name="settings_playback_controls_size_reset">Đặt lại</string>
 </resources>

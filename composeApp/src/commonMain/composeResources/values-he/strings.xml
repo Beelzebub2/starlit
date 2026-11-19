@@ -3459,4 +3459,10 @@
     <string name="lists_stat_episodes_watched">פרקים שנצפו</string>
     <string name="lists_stat_movies_watched">סרטים שנצפו</string>
     <string name="lists_stat_rated_titles">כותרים מדורגים</string>
+    <string name="settings_playback_section_player_controls">פקדי הנגן</string>
+    <string name="settings_playback_controls_size">גודל הפקדים</string>
+    <string name="settings_playback_controls_size_description">משנה את גודל הלחצנים והסמלים של הנגן. גדלים גדולים מוקטנים בחלונות קטנים כדי שהסרגל יתאים.</string>
+    <string name="settings_playback_controls_size_value">%1$d%</string>
+    <string name="settings_playback_controls_size_preview">תצוגה מקדימה</string>
+    <string name="settings_playback_controls_size_reset">איפוס</string>
 </resources>
