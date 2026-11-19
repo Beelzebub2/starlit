@@ -1,3 +1,31 @@
+## Starlit 1.31.0
+
+### Lists and tracking integrations
+
+- **Unified desktop Lists tab:** Manage supported statuses, ratings and watched-episode progress across connected MyAnimeList, Simkl, Trakt and MDBList accounts. Available controls depend on each service and title; MyAnimeList remains anime-only.
+- **Tracking on title pages:** View and change a title's status using the highest-priority connected service that supports it, or switch between connected services from the tracker bar.
+- **Per-profile service preferences:** Choose service order and visibility in the Lists tab and title pages. Existing MyAnimeList-tab visibility preferences migrate into the new settings.
+- **Safer tracking edits:** Status changes do not erase watch history; removal is a separate confirmed action. Multi-episode changes and Trakt drop actions require confirmation. Trakt rating and dropped-history controls, Simkl ratings and MDBList drop/restore options are now available where supported.
+
+### Playback and Samsung TV reliability
+
+- **Recover skip markers:** Combine chapters from the active media file with available intro, recap and credits timing sources on desktop and compatible TVs, preserving known post-credits scenes.
+- **Restore subtitle choices:** Preserve subtitles supplied with streams or downloads across source changes, retry add-on lookups with title identifiers and allow separately downloaded subtitle files on desktop.
+- **More reliable Tizen torrent startup:** Improve first-attempt stream preparation and cancellation of obsolete requests so stale playback attempts do not block new ones. Actual first-frame and sustained playback on physical Samsung TVs remain unverified.
+- **Desktop Settings hover fix:** Overview tiles, sidebar profile cards and appearance controls no longer darken or flash while hovering.
+
+### Sign-in and profile PIN screens
+
+- **Refreshed sign-in screens:** Update phone, desktop, Android TV, iOS source and Samsung/LG TV layouts with clearer sign-in controls and improved focus and keyboard navigation. QR-based phone sign-in appears only when the connected server supports that existing flow.
+- **Profile PIN entry:** Improve PIN keypad layout, avatar context and remote focus on supported phones, desktop and TVs. New Compose interface strings have entries in all 38 supported catalogs; native-speaker review remains outstanding.
+
+### Compatibility and distribution
+
+- Lists management and tracker controls in this release are desktop features, not new phone or TV Lists pages. The previous MyAnimeList-tab preference is migrated without deliberately resetting profiles or existing watch data. No backend deployment or server-data migration is included.
+- Provider actions depend on supported service capabilities, connected accounts and title matching. Real-account synchronization, add-on subtitle availability and physical-device playback have not been independently accepted across all platforms.
+- Stable packages for Windows, signed Android phone and Android TV, and Linux are published only after required build, signing, smoke-test, checksum and provenance gates. Matching Samsung Tizen, LG webOS and Windows TV Installer packages remain separate unaccepted developer previews under `tv-preview-v1.31.0`.
+- No iOS App Store release or macOS installer publication is included.
+
 ## Starlit 1.30.7
 
 ### MyAnimeList and playback improvements
