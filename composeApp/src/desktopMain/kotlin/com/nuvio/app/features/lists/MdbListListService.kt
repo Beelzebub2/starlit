@@ -50,6 +50,9 @@ internal interface MdbListListPort {
     fun activeProfileId(): Int
     suspend fun load(): MdbListListSnapshot
 
+    /** Refreshes MDBList's sync snapshot and library through their own entry points with [intent]. */
+    suspend fun refresh(intent: TrackingRefreshIntent)
+
     /** Changes only the watchlist membership (a single add/remove call), never any other list. */
     suspend fun setWatchlisted(item: LibraryItem, inWatchlist: Boolean)
     suspend fun setDropped(media: TrackingMediaReference, dropped: Boolean)
@@ -120,9 +123,16 @@ internal class MdbListListAdapter(
 
     override fun profileUrl(): String? = "https://mdblist.com/"
 
-    /** The next read loads again; that load refreshes the MDBList library and watched snapshot itself. */
+    /**
+     * The lists tab's Refresh: a user-initiated refresh of the MDBList sync snapshot and library (which the next
+     * load's automatic refreshes would skip for up to 15 minutes), then the next read loads again.
+     */
     override suspend fun refresh() {
-        cacheMutex.withLock { cache = null }
+        try {
+            port.refresh(TrackingRefreshIntent.USER_INITIATED)
+        } finally {
+            cacheMutex.withLock { cache = null }
+        }
     }
 
     override suspend fun summary(): ListSummary {
@@ -393,6 +403,11 @@ private object DefaultMdbListListPort : MdbListListPort {
             .filter { it.season == null }
             .map { it.ids }
         MdbListListSnapshot(watchlist = watchlist.await(), watched = watched, dropped = dropped)
+    }
+
+    override suspend fun refresh(intent: TrackingRefreshIntent) {
+        MdbListTracker.sync.refresh(intent)
+        TrackingProviderRegistry.libraryProvider(TrackingProviderId.MDBLIST)?.refresh(intent)
     }
 
     private suspend fun loadWatchlist(): List<LibraryItem> {

@@ -65,6 +65,9 @@ internal interface TraktListPort {
 
     /** Drops Trakt reads cached outside the adapter (the watched-shows snapshot behind aired counts). */
     fun invalidate() {}
+
+    /** Refreshes the Trakt library (watchlist) through the library provider's own entry point with [intent]. */
+    suspend fun refreshWatchlist(intent: TrackingRefreshIntent)
 }
 
 /** Trakt can only look titles up by its own, IMDb, TMDB or TVDB ids (not MAL, Kitsu, AniList, AniDB, Simkl, MDBList). */
@@ -128,9 +131,14 @@ internal class TraktListAdapter(
 
     override fun profileUrl(): String? = "https://trakt.tv/dashboard"
 
+    /** The lists tab's Refresh: a user-initiated watchlist refresh (past the automatic cache window), then fresh reads. */
     override suspend fun refresh() {
-        cacheMutex.withLock { cache = null }
-        port.invalidate()
+        try {
+            port.refreshWatchlist(TrackingRefreshIntent.USER_INITIATED)
+        } finally {
+            cacheMutex.withLock { cache = null }
+            port.invalidate()
+        }
     }
 
     override suspend fun summary(): ListSummary {
@@ -471,6 +479,10 @@ private object DefaultTraktListPort : TraktListPort {
     override fun nowEpochMs(): Long = System.currentTimeMillis()
 
     override fun invalidate() = TraktWatchedShowSnapshotRepository.clear()
+
+    override suspend fun refreshWatchlist(intent: TrackingRefreshIntent) {
+        TrackingProviderRegistry.libraryProvider(TrackingProviderId.TRAKT)?.refresh(intent)
+    }
 }
 
 object TraktListService : ListService by TraktListAdapter(

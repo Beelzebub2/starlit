@@ -4,6 +4,7 @@ import com.nuvio.app.features.details.MetaDetails
 import com.nuvio.app.features.library.LibraryItem
 import com.nuvio.app.features.tracking.TrackingExternalIds
 import com.nuvio.app.features.tracking.TrackingMediaReference
+import com.nuvio.app.features.tracking.TrackingRefreshIntent
 import com.nuvio.app.features.trakt.TraktDroppedShow
 import com.nuvio.app.features.watched.WatchedItem
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,6 +27,8 @@ private class FakeTraktPort(
     var profile = 1
     var now = 1_000L
     var invalidations = 0
+    val watchlistRefreshes = mutableListOf<TrackingRefreshIntent>()
+    var watchlistRefreshFailure: Exception? = null
 
     override fun activeProfileId(): Int = profile
 
@@ -62,6 +65,11 @@ private class FakeTraktPort(
 
     override fun invalidate() {
         invalidations += 1
+    }
+
+    override suspend fun refreshWatchlist(intent: TrackingRefreshIntent) {
+        watchlistRefreshes += intent
+        watchlistRefreshFailure?.let { throw it }
     }
 }
 
@@ -470,6 +478,27 @@ class TraktListServiceTest {
         svc.page(null, svc.sorts.first(), 0)
         assertEquals(1, trakt.loads, "within the TTL the snapshot is served from the cache")
         svc.refresh()
+        assertEquals(1, trakt.invalidations)
+        svc.page(null, svc.sorts.first(), 0)
+        assertEquals(2, trakt.loads)
+    }
+
+    @Test fun refreshAsksForAUserInitiatedWatchlistRefreshPastTheAutomaticThrottle(): Unit = runBlocking {
+        val trakt = watchingShow()
+        val svc = adapter(trakt)
+        svc.page(null, svc.sorts.first(), 0)
+        assertTrue(trakt.watchlistRefreshes.isEmpty(), "reads never force a refresh")
+        svc.refresh()
+        assertEquals(listOf(TrackingRefreshIntent.USER_INITIATED), trakt.watchlistRefreshes)
+    }
+
+    @Test fun aFailedWatchlistRefreshIsReportedAndStillDropsTheCache(): Unit = runBlocking {
+        val trakt = watchingShow()
+        val svc = adapter(trakt)
+        svc.page(null, svc.sorts.first(), 0)
+        trakt.watchlistRefreshFailure = IllegalStateException("Trakt is down")
+        val error = assertFailsWith<IllegalStateException> { svc.refresh() }
+        assertEquals("Trakt is down", error.message)
         assertEquals(1, trakt.invalidations)
         svc.page(null, svc.sorts.first(), 0)
         assertEquals(2, trakt.loads)

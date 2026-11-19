@@ -13,6 +13,7 @@ import com.nuvio.app.features.details.MetaDetails
 import com.nuvio.app.features.library.LibraryItem
 import com.nuvio.app.features.mdblist.MdbListIds
 import com.nuvio.app.features.tracking.TrackingMediaReference
+import com.nuvio.app.features.tracking.TrackingRefreshIntent
 import com.nuvio.app.features.watched.WatchedItem
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking
@@ -31,11 +32,18 @@ private class FakeMdbListPort(
     val calls = mutableListOf<String>()
     var loads = 0
     var now = 1_000L
+    val refreshes = mutableListOf<TrackingRefreshIntent>()
+    var refreshFailure: Exception? = null
 
     override fun activeProfileId(): Int = 1
     override suspend fun load(): MdbListListSnapshot {
         loads += 1
         return snapshot
+    }
+
+    override suspend fun refresh(intent: TrackingRefreshIntent) {
+        refreshes += intent
+        refreshFailure?.let { throw it }
     }
 
     override suspend fun setWatchlisted(item: LibraryItem, inWatchlist: Boolean) {
@@ -297,6 +305,28 @@ class MdbListListServiceTest {
         port.snapshot = MdbListListSnapshot(watchlist = listOf(watchlist("tt1", "series", "Alpha"), watchlist("tt2", "series", "Bravo")))
         svc.refresh()
         assertEquals(listOf("Alpha", "Bravo"), svc.page(null, svc.sorts.first { it.label == "Title" }, 0).entries.map { it.title })
+        assertEquals(2, port.loads)
+    }
+
+    @Test fun refreshAsksForAUserInitiatedRefreshPastTheAutomaticThrottle(): Unit = runBlocking {
+        val port = FakeMdbListPort(MdbListListSnapshot(watchlist = listOf(watchlist("tt1", "series", "Alpha"))))
+        val svc = adapter(port)
+        svc.page(null, svc.sorts.first(), 0)
+        assertTrue(port.refreshes.isEmpty(), "reads never force a refresh")
+        svc.refresh()
+        assertEquals(listOf(TrackingRefreshIntent.USER_INITIATED), port.refreshes)
+        svc.page(null, svc.sorts.first(), 0)
+        assertEquals(2, port.loads)
+    }
+
+    @Test fun aFailedRefreshIsReportedAndStillDropsTheCache(): Unit = runBlocking {
+        val port = FakeMdbListPort(MdbListListSnapshot(watchlist = listOf(watchlist("tt1", "series", "Alpha"))))
+        val svc = adapter(port)
+        svc.page(null, svc.sorts.first(), 0)
+        port.refreshFailure = IllegalStateException("MDBList is down")
+        val error = assertFailsWith<IllegalStateException> { svc.refresh() }
+        assertEquals("MDBList is down", error.message)
+        svc.page(null, svc.sorts.first(), 0)
         assertEquals(2, port.loads)
     }
 }

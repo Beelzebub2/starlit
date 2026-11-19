@@ -19,6 +19,9 @@ import com.nuvio.app.features.tracking.TrackingMutationResult
 import com.nuvio.app.features.tracking.TrackingRefreshIntent
 import com.nuvio.app.features.tracking.buildTrackingMediaReference
 import kotlinx.coroutines.flow.StateFlow
+import nuvio.composeapp.generated.resources.Res
+import nuvio.composeapp.generated.resources.lists_load_failed
+import org.jetbrains.compose.resources.getString
 
 /** Write seam for Simkl list/rating mutations; the default talks to [SimklMutationRepository]. */
 interface SimklListWrites {
@@ -127,8 +130,10 @@ class SimklListAdapter(
     private val writes: SimklListWrites,
     private val history: ListHistoryWrites,
     private val signedInAs: () -> String?,
-    /** Pulls Simkl again into the local snapshot that [entries] reads. */
-    private val refreshSnapshot: suspend () -> Unit = {},
+    /** Pulls Simkl again into the local snapshot that [entries] reads; false when the pull was skipped or failed. */
+    private val refreshSnapshot: suspend () -> Boolean = { true },
+    /** The message shown when [refreshSnapshot] reports that nothing was refreshed. */
+    private val refreshFailure: suspend () -> String = { getString(Res.string.lists_load_failed, ListServiceId.SIMKL.displayName) },
 ) : ListService {
     override val id = ListServiceId.SIMKL
 
@@ -167,7 +172,9 @@ class SimklListAdapter(
 
     override fun profileUrl(): String? = "https://simkl.com/"
 
-    override suspend fun refresh() = refreshSnapshot()
+    override suspend fun refresh() {
+        if (!refreshSnapshot()) throw IllegalStateException(refreshFailure())
+    }
 
     override suspend fun summary(): ListSummary {
         val all = entries()

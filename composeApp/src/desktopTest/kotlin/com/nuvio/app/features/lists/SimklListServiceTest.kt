@@ -66,7 +66,7 @@ class SimklListServiceTest {
         entries: List<SimklLibraryEntry> = emptyList(),
         writes: SimklListWrites = RecordingWrites(),
         port: FakeHistoryPort = FakeHistoryPort(),
-        refreshSnapshot: suspend () -> Unit = {},
+        refreshSnapshot: suspend () -> Boolean = { true },
     ) = SimklListAdapter(
         entries = { entries },
         connected = MutableStateFlow(true),
@@ -74,6 +74,7 @@ class SimklListServiceTest {
         history = ListHistoryWrites(port),
         signedInAs = { null },
         refreshSnapshot = refreshSnapshot,
+        refreshFailure = { "Couldn't load your Simkl list." },
     )
 
     @Test fun moviesHaveNoWatchingOrOnHold() {
@@ -218,7 +219,14 @@ class SimklListServiceTest {
 
     @Test fun refreshPullsSimklAgain(): Unit = runBlocking {
         var refreshes = 0
-        adapter(refreshSnapshot = { refreshes++ }).refresh()
+        adapter(refreshSnapshot = { refreshes++; true }).refresh()
+        assertEquals(1, refreshes)
+    }
+
+    @Test fun aSkippedOrFailedSimklRefreshIsReported(): Unit = runBlocking {
+        var refreshes = 0
+        val error = assertFailsWith<IllegalStateException> { adapter(refreshSnapshot = { refreshes++; false }).refresh() }
+        assertEquals("Couldn't load your Simkl list.", error.message)
         assertEquals(1, refreshes)
     }
 
