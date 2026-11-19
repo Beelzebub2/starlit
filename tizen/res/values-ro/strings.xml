@@ -2921,6 +2921,7 @@
     <string name="home.removeContinueWatching">Eliminare din „Continuă vizionarea”</string>
     <string name="player.track.audioDescription">Descriere audio</string>
     <string name="player.track.commentary">Comentariu</string>
+    <string name="player.track.original">Original</string>
     <string name="player.track.stereo">Stereo</string>
     <string name="player.track.surround">Surround</string>
     <string name="sidebar.profileFallback">Profil</string>

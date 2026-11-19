@@ -540,6 +540,11 @@
     <string name="compose_player_airs_prefix">Sendes</string>
     <string name="compose_player_audio">Lyd</string>
     <string name="compose_player_audio_tracks">Lydspor</string>
+    <string name="player_tracks_title">Lyd og undertekster</string>
+    <string name="player_track_badge_sdh">SDH</string>
+    <string name="player_track_badge_commentary">Kommentar</string>
+    <string name="player_track_badge_original">Original</string>
+    <string name="player_track_badge_description">Synstolking</string>
     <string name="compose_player_auto_sync">Automatisk synk</string>
     <string name="compose_player_bold">Fet</string>
     <string name="compose_player_bottom_offset">Bunn-offset</string>

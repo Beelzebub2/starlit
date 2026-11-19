@@ -2145,6 +2145,7 @@
     <string name="home.removeContinueWatching">Odstrani iz »Nadaljuj z gledanjem«</string>
     <string name="player.track.audioDescription">Zvočni opis</string>
     <string name="player.track.commentary">Komentar</string>
+    <string name="player.track.original">Izvirnik</string>
     <string name="player.track.stereo">Stereo</string>
     <string name="player.track.surround">Surround</string>
     <string name="sidebar.profileFallback">Profil</string>

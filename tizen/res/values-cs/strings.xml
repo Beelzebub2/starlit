@@ -2971,6 +2971,7 @@
     <string name="home.removeContinueWatching">Odebrat z „Pokračovat ve sledování“</string>
     <string name="player.track.audioDescription">Audio popis</string>
     <string name="player.track.commentary">Komentář</string>
+    <string name="player.track.original">Originál</string>
     <string name="player.track.stereo">Stereo</string>
     <string name="player.track.surround">Prostorový zvuk</string>
     <string name="sidebar.profileFallback">Profil</string>

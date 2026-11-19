@@ -2441,6 +2441,7 @@
     <string name="home.removeContinueWatching">Usuń z listy „Kontynuuj oglądanie”</string>
     <string name="player.track.audioDescription">Opis audio</string>
     <string name="player.track.commentary">Komentarz</string>
+    <string name="player.track.original">Oryginał</string>
     <string name="player.track.stereo">Stereo</string>
     <string name="player.track.surround">Dźwięk przestrzenny</string>
     <string name="sidebar.profileFallback">Profil</string>

@@ -2929,6 +2929,7 @@ Du bruker denne funksjonen helt på eget ansvar. P2P kan deaktiveres når som he
     <string name="home.removeContinueWatching">Fjern fra «Fortsett å se»</string>
     <string name="player.track.audioDescription">Lydbeskrivelse</string>
     <string name="player.track.commentary">Kommentar</string>
+    <string name="player.track.original">Original</string>
     <string name="player.track.stereo">Stereo</string>
     <string name="player.track.surround">Surround</string>
     <string name="sidebar.profileFallback">Profil</string>

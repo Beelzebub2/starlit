@@ -2790,6 +2790,7 @@
     <string name="home.removeContinueWatching">\'চালিয়ে দেখুন\' থেকে সরিয়ে ফেলুন</string>
     <string name="player.track.audioDescription">অডিও বর্ণনা</string>
     <string name="player.track.commentary">মন্তব্য</string>
+    <string name="player.track.original">মূল</string>
     <string name="player.track.stereo">স্টেরিও</string>
     <string name="player.track.surround">সাররাউন্ড</string>
     <string name="sidebar.profileFallback">প্রোফাইল</string>

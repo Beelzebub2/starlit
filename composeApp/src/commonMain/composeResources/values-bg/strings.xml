@@ -419,6 +419,11 @@
     <string name="compose_nav_search">Търси</string>
     <string name="compose_nav_settings">Настройки</string>
     <string name="compose_player_audio_tracks">Аудио записи</string>
+    <string name="player_tracks_title">Аудио и субтитри</string>
+    <string name="player_track_badge_sdh">SDH</string>
+    <string name="player_track_badge_commentary">Коментар</string>
+    <string name="player_track_badge_original">Оригинал</string>
+    <string name="player_track_badge_description">Аудиоописание</string>
     <string name="compose_player_audio">Аудио</string>
     <string name="compose_player_auto_sync">Автоматична синхронизация</string>
     <string name="compose_player_bold">Удебелени</string>

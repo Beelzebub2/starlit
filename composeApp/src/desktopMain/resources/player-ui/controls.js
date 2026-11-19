@@ -83,8 +83,14 @@ const nextEpisodeStatus = document.getElementById("nextEpisodeStatus");
 const nextEpisodeAction = document.getElementById("nextEpisodeAction");
 const sourcesButton = document.getElementById("sourcesButton");
 const episodesButton = document.getElementById("episodesButton");
-const audioModal = document.getElementById("audioModal");
 const subtitleModal = document.getElementById("subtitleModal");
+const audioTrackCount = document.getElementById("audioTrackCount");
+const subtitleColumnTitle = document.getElementById("subtitleColumnTitle");
+const subtitleTrackCount = document.getElementById("subtitleTrackCount");
+const tracksSyncLabel = document.getElementById("tracksSyncLabel");
+const tracksSyncMinus = document.getElementById("tracksSyncMinus");
+const tracksSyncValue = document.getElementById("tracksSyncValue");
+const tracksSyncPlus = document.getElementById("tracksSyncPlus");
 const speedModal = document.getElementById("speedModal");
 const speedOptionList = document.getElementById("speedOptionList");
 const speedPanelTitle = document.getElementById("speedPanelTitle");
@@ -459,6 +465,7 @@ let selectedEpisodeSeason = null;
 let episodeStreamFilterId = "";
 let activeSubtitleLanguageKey = "";
 let pendingSubtitleOptionId = "";
+let pendingAudioTrackId = "";
 let activeSubtitleView = "tracks";
 let pendingIsPlaying = null;
 let pendingPlaybackTimer = 0;
@@ -1218,8 +1225,8 @@ const rangePositionMs = () => {
   return durationMs > 0 ? Math.round(durationMs * Number(seek.value) / 1000) : 0;
 };
 
+// Audio and subtitles share one panel; "audio" only decides which column gets focus.
 const modalByName = {
-  audio: audioModal,
   diagnostics: diagnosticsModal,
   subtitles: subtitleModal,
   speed: speedModal,
@@ -1284,7 +1291,9 @@ const closePlayerModal = (notifyDismiss = false, animated = true) => {
   renderChrome();
 };
 
-const openPlayerModal = modal => {
+const openPlayerModal = requestedModal => {
+  const tracksColumn = requestedModal === "audio" ? "audio" : "subtitles";
+  const modal = requestedModal === "audio" ? "subtitles" : requestedModal;
   const targetModal = modalByName[modal];
   if (!targetModal) {
     closePlayerModal(false);
@@ -1309,12 +1318,27 @@ const openPlayerModal = modal => {
   }
   if (modal === "subtitles") {
     resetSubtitleSelectionState();
+    activeSubtitleView = "tracks";
+    pendingAudioTrackId = "";
   }
   renderActiveModal();
   modalElements.forEach(modalElement => {
     setModalVisibility(modalElement, modalElement === targetModal);
   });
   renderChrome();
+  if (modal === "subtitles") focusTracksColumn(tracksColumn);
+};
+
+// Brings the playing track of the requested column into view and gives it keyboard focus.
+const focusTracksColumn = column => {
+  window.requestAnimationFrame(() => {
+    const container = column === "audio" ? audioTrackList : subtitleModal.querySelector(".tracks-subtitles");
+    if (!container) return;
+    const target = container.querySelector(".subs-option.selected") || container.querySelector(".subs-option");
+    if (!target) return;
+    target.scrollIntoView({ block: "nearest" });
+    target.focus({ preventScroll: true });
+  });
 };
 
 const normalizeTracks = tracks =>
@@ -1381,39 +1405,65 @@ const renderSpeedOptionList = () => {
   });
 };
 
+const trackLabels = window.StarlitTrackLabels || {
+  describeTrack: ({ label }) => ({ title: String(label || ""), badges: [], detail: "" }),
+};
+
+const trackBadgeLabel = badge => ({
+  forced: state.forcedLabel || "Forced",
+  sdh: state.trackBadgeSdhLabel || "SDH",
+  commentary: state.trackBadgeCommentaryLabel || "Commentary",
+  original: state.trackBadgeOriginalLabel || "Original",
+  description: state.trackBadgeDescriptionLabel || "Audio description",
+})[badge] || "";
+
+// Re-rendering replaces the rows; keep keyboard focus on the same row position.
+const keepTrackFocus = render => {
+  const rows = Array.from(subtitleModal.querySelectorAll(".subs-option"));
+  const index = rows.indexOf(document.activeElement);
+  render();
+  if (index < 0) return;
+  const next = subtitleModal.querySelectorAll(".subs-option")[index];
+  if (next) next.focus({ preventScroll: true });
+};
+
+const describeAudioTrack = track => {
+  const language = normalizedLanguageCode(track.language);
+  const known = language && language !== "und" && language !== "__unknown__";
+  const languageName = known ? displayLanguageName(language, "") : "";
+  const parts = trackLabels.describeTrack({ label: track.label, language: known ? language : "", languageName, kind: "audio" });
+  return {
+    title: parts.title || languageName || `Track ${Number(track.index || 0) + 1}`,
+    badges: parts.badges.map(trackBadgeLabel).filter(Boolean),
+    detail: parts.detail,
+  };
+};
+
 const renderAudioTrackList = () => {
-  audioPanelTitle.textContent = state.audioTracksPanelTitle || "Audio Tracks";
+  audioPanelTitle.textContent = state.audioSectionLabel || "Audio";
   audioTrackList.textContent = "";
   const tracks = normalizeTracks(state.audioTracks);
+  audioTrackCount.textContent = tracks.length > 1 ? String(tracks.length) : "";
   if (tracks.length === 0) {
     appendEmptyTrackState(audioTrackList, state.noAudioTracksLabel || "No audio tracks available");
     return;
   }
+  const playing = tracks.find(track => track.selected);
+  const playingId = playing ? String(trackIdValue(playing)) : "";
+  // A click shows as chosen right away; drop it once the player reports the same track.
+  if (pendingAudioTrackId === playingId) pendingAudioTrackId = "";
+  const selectedId = pendingAudioTrackId || playingId;
   tracks.forEach(track => {
-    const row = document.createElement("button");
-    row.type = "button";
-    row.className = `track-row audio-track-row${track.selected ? " selected" : ""}`;
-    row.addEventListener("click", event => {
-      event.stopPropagation();
-      send("selectAudioTrack", trackIdValue(track));
-      window.setTimeout(closePlayerModal, 120);
-    });
-    const copy = document.createElement("span");
-    copy.className = "audio-track-copy";
-    const name = document.createElement("span");
-    name.className = "audio-track-name";
-    name.textContent = track.label || displayLanguageName(track.language) || `Track ${Number(track.index || 0) + 1}`;
-    copy.appendChild(name);
-    const language = normalizedLanguageCode(track.language);
-    if (language && language !== "und") {
-      const detail = document.createElement("span");
-      detail.className = "audio-track-language";
-      detail.textContent = displayLanguageName(language);
-      copy.appendChild(detail);
-    }
-    row.appendChild(copy);
-    row.appendChild(buildCheckIcon());
-    audioTrackList.appendChild(row);
+    const id = String(trackIdValue(track));
+    audioTrackList.appendChild(buildSubtitleOptionRow({
+      ...describeAudioTrack(track),
+      selected: id === selectedId,
+      onSelect: () => {
+        pendingAudioTrackId = id;
+        send("selectAudioTrack", trackIdValue(track));
+        keepTrackFocus(renderAudioTrackList);
+      },
+    }));
   });
 };
 
@@ -1475,16 +1525,17 @@ const chooseSubtitleOption = option => {
   pendingSubtitleOptionId = option.id;
   if (option.kind === "builtIn") send("selectBuiltInSubtitleTrack", option.index);
   else send("selectAddonSubtitle", option.index);
-  renderSubtitleModal();
+  keepTrackFocus(renderSubtitleModal);
 };
 
 const chooseSubtitlesOff = () => {
   pendingSubtitleOptionId = subtitleOffKey;
   send("selectBuiltInSubtitleTrack", -1);
-  renderSubtitleModal();
+  keepTrackFocus(renderSubtitleModal);
 };
 
-const buildSubtitleOptionRow = ({ title, detail, selected, onSelect }) => {
+// One row for audio and subtitles: radio, language with badges, then a single facts line.
+const buildSubtitleOptionRow = ({ title, badges = [], detail, detailWraps = false, selected, onSelect }) => {
   const row = document.createElement("button");
   row.type = "button";
   row.className = `subs-option${selected ? " selected" : ""}`;
@@ -1494,32 +1545,66 @@ const buildSubtitleOptionRow = ({ title, detail, selected, onSelect }) => {
     event.stopPropagation();
     onSelect();
   });
+  const radio = document.createElement("span");
+  radio.className = "subs-radio";
+  radio.setAttribute("aria-hidden", "true");
+  row.appendChild(radio);
   const copy = document.createElement("span");
   copy.className = "subs-option-copy";
+  const head = document.createElement("span");
+  head.className = "subs-option-head";
   const titleElement = document.createElement("span");
   titleElement.className = "subs-option-title";
   titleElement.textContent = title;
-  copy.appendChild(titleElement);
+  head.appendChild(titleElement);
+  badges.forEach(label => {
+    const badge = document.createElement("span");
+    badge.className = "track-badge";
+    badge.textContent = label;
+    head.appendChild(badge);
+  });
+  copy.appendChild(head);
   if (detail) {
     const detailElement = document.createElement("span");
-    detailElement.className = "subs-option-detail";
+    detailElement.className = `subs-option-detail${detailWraps ? " wraps" : ""}`;
     detailElement.textContent = detail;
+    detailElement.title = detail;
     copy.appendChild(detailElement);
   }
   row.appendChild(copy);
-  const radio = document.createElement("span");
-  radio.className = "subs-radio";
-  radio.appendChild(buildCheckIcon());
-  row.appendChild(radio);
   return row;
 };
 
-// Addon subtitles are named by their file; the language is already the chip.
+const subtitleLanguageName = languageKey => {
+  const language = subtitleLanguages().find(item => item.key === languageKey);
+  if (language && language.label) return language.label;
+  const code = normalizedLanguageCode(languageKey);
+  return code && code !== "__unknown__" ? displayLanguageName(code, "") : "";
+};
+
+// Line 1 is always the language; addon rows keep their file name readable on two lines.
 const subtitleOptionCopy = option => {
+  const languageName = subtitleLanguageName(option.languageKey);
   if (option.kind === "addon") {
-    return { title: option.metadata || option.title, detail: option.sourceLabel };
+    return {
+      title: option.title || languageName,
+      detail: [option.sourceLabel, option.metadata].filter(Boolean).join(" · "),
+      detailWraps: true,
+    };
   }
-  return { title: option.title, detail: [option.sourceLabel, option.metadata].filter(Boolean).join(" · ") };
+  const code = normalizedLanguageCode(option.languageKey);
+  const parts = trackLabels.describeTrack({
+    label: option.title,
+    language: code && code !== "__unknown__" ? code : "",
+    languageName,
+    kind: "subtitle",
+    forced: Boolean(option.metadata),
+  });
+  return {
+    title: parts.title || languageName || option.title,
+    badges: parts.badges.map(trackBadgeLabel).filter(Boolean),
+    detail: [option.sourceLabel, parts.detail].filter(Boolean).join(" · "),
+  };
 };
 
 const appendSubtitleLanguageChip = item => {
@@ -1572,6 +1657,7 @@ const appendSubtitleSearchRow = () => {
 const renderSubtitleTracksView = () => {
   const options = subtitleSelectionOptions();
   const languages = subtitleLanguages();
+  subtitleTrackCount.textContent = options.length > 1 ? String(options.length) : "";
   const playing = selectedSubtitleOption(options);
   const playingId = playing ? playing.id : subtitleOffKey;
   // A click shows as chosen right away; drop it once the player reports the same track.
@@ -1812,11 +1898,26 @@ const renderSubtitleTimingView = () => {
   renderAutoSyncCues();
 };
 
+const renderTracksSync = () => {
+  const delay = Number(state.subtitleDelayMs) || 0;
+  tracksSyncLabel.textContent = state.subtitleDelayLabel || "Subtitle Delay";
+  tracksSyncValue.textContent = formatDelay(delay);
+  tracksSyncValue.classList.toggle("shifted", delay !== 0);
+  tracksSyncMinus.disabled = delay <= -60000;
+  tracksSyncPlus.disabled = delay >= 60000;
+};
+
 const renderSubtitleModal = () => {
-  subtitlePanelTitle.textContent = state.subtitlesPanelTitle || "Subtitles";
-  subtitleCloseButton.textContent = state.panelCloseLabel || "Close";
+  const closeLabel = state.panelCloseLabel || "Close";
+  subtitlePanelTitle.textContent = state.tracksPanelTitle || "Audio & subtitles";
+  subtitleColumnTitle.textContent = state.subtitlesPanelTitle || "Subtitles";
+  subtitleCloseButton.setAttribute("aria-label", closeLabel);
+  subtitleCloseButton.title = closeLabel;
+  subtitleModal.querySelector(".subs-panel").classList.toggle("tracks-wide", activeSubtitleView === "tracks");
   renderSubtitleTabs();
+  renderAudioTrackList();
   renderSubtitleTracksView();
+  renderTracksSync();
   renderSubtitleStyleView();
   renderSubtitleTimingView();
 };
@@ -2368,7 +2469,6 @@ const renderDiagnosticsModal = () => {
 
 const renderActiveModal = () => {
   if (activeModal === "diagnostics") renderDiagnosticsModal();
-  if (activeModal === "audio") renderAudioTrackList();
   if (activeModal === "subtitles") renderSubtitleModal();
   if (activeModal === "speed") renderSpeedOptionList();
   if (activeModal === "sources") renderSourceModal();
@@ -3498,6 +3598,8 @@ subtitleTabs().forEach(tab => onSubtitleClick(tab, () => {
   activeSubtitleView = tab.dataset.subsTab || "tracks";
   renderSubtitleModal();
 }));
+onSubtitleClick(tracksSyncMinus, () => send("subtitleDelayDelta", -100));
+onSubtitleClick(tracksSyncPlus, () => send("subtitleDelayDelta", 100));
 onSubtitleClick(subtitleDelayMinusCoarse, () => send("subtitleDelayDelta", -1000));
 onSubtitleClick(subtitleDelayMinus, () => send("subtitleDelayDelta", -100));
 onSubtitleClick(subtitleDelayPlus, () => send("subtitleDelayDelta", 100));
@@ -3819,9 +3921,8 @@ window.playerUpdate = update => {
   } else {
     renderChrome();
   }
-  if ((audioTracksChanged && activeModal === "audio") ||
-      (subtitleTracksChanged && activeModal === "subtitles")) {
-    renderActiveModal();
+  if ((audioTracksChanged || subtitleTracksChanged) && activeModal === "subtitles") {
+    keepTrackFocus(renderActiveModal);
   }
 };
 
@@ -4314,23 +4415,6 @@ document.addEventListener("keydown", event => {
     }
   }
 
-  if (activeModal === "audio" && (event.code === "ArrowUp" || event.code === "ArrowDown")) {
-    event.preventDefault();
-    if (state.audioTracks && state.audioTracks.length > 0) {
-      const currentIndex = state.audioTracks.findIndex(t => t.selected);
-      let nextIndex = currentIndex;
-      if (event.code === "ArrowUp") {
-        nextIndex = currentIndex > 0 ? currentIndex - 1 : state.audioTracks.length - 1;
-      } else {
-        nextIndex = currentIndex >= 0 && currentIndex < state.audioTracks.length - 1 ? currentIndex + 1 : 0;
-      }
-      if (nextIndex !== currentIndex && nextIndex >= 0) {
-        send("selectAudioTrack", trackIdValue(state.audioTracks[nextIndex]));
-      }
-    }
-    return;
-  }
-
   if (activeModal === "speed" && (event.code === "ArrowUp" || event.code === "ArrowDown")) {
     event.preventDefault();
     const currentSpeedStr = String(state.playbackSpeedLabel || "1x");
@@ -4407,7 +4491,7 @@ document.addEventListener("keydown", event => {
 
   if (event.code === "KeyA") {
     event.preventDefault();
-    if (activeModal === "audio") closePlayerModal(true);
+    if (activeModal === "subtitles") closePlayerModal(true);
     else openPlayerModal("audio");
     return;
   }

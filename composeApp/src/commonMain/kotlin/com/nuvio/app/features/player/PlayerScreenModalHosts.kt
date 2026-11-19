@@ -119,16 +119,12 @@ internal fun PlayerScreenModalHosts(
         )
     }
 
-    AudioTrackModal(
-        visible = showAudioModal,
+    PlayerTrackPanel(
+        visible = showAudioModal || showSubtitleModal,
+        initialTab = if (showAudioModal) TrackPanelTab.Audio else TrackPanelTab.Subtitles,
         audioTracks = audioTracks,
-        selectedIndex = selectedAudioIndex,
-        onTrackSelected = onAudioTrackSelected,
-        onDismiss = onAudioModalDismissed,
-    )
-
-    SubtitleModal(
-        visible = showSubtitleModal,
+        selectedAudioIndex = selectedAudioIndex,
+        onAudioTrackSelected = onAudioTrackSelected,
         subtitleTracks = subtitleTracks,
         selectedSubtitleIndex = selectedSubtitleIndex,
         isSubtitleOffSelected = isSubtitleOffSelected,
@@ -154,7 +150,10 @@ internal fun PlayerScreenModalHosts(
         onAutoSyncCapture = onAutoSyncCapture,
         onAutoSyncCueSelected = onAutoSyncCueSelected,
         onAutoSyncReload = onAutoSyncReload,
-        onDismiss = onSubtitleModalDismissed,
+        onDismiss = {
+            if (showAudioModal) onAudioModalDismissed()
+            if (showSubtitleModal) onSubtitleModalDismissed()
+        },
     )
 
     IosVideoSettingsModal(

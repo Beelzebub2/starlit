@@ -423,6 +423,11 @@
     <string name="compose_nav_profile">پروفائل</string>
     <string name="compose_nav_search">تلاش</string>
     <string name="compose_player_audio_tracks">آڈیو ٹریکس</string>
+    <string name="player_tracks_title">آڈیو اور سب ٹائٹلز</string>
+    <string name="player_track_badge_sdh">SDH</string>
+    <string name="player_track_badge_commentary">تبصرہ</string>
+    <string name="player_track_badge_original">اصل</string>
+    <string name="player_track_badge_description">آڈیو وضاحت</string>
     <string name="compose_player_audio">آڈیو</string>
     <string name="compose_player_auto_sync">خودکار Sync</string>
     <string name="compose_player_bold">بولڈ</string>

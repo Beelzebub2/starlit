@@ -2757,6 +2757,7 @@
     <string name="home.removeContinueWatching">הסרה מהמשך צפייה</string>
     <string name="player.track.audioDescription">תיאור שמע</string>
     <string name="player.track.commentary">פרשנות</string>
+    <string name="player.track.original">מקורי</string>
     <string name="player.track.stereo">סטריאו</string>
     <string name="player.track.surround">סראונד</string>
     <string name="sidebar.profileFallback">פרופיל</string>

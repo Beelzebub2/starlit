@@ -2743,6 +2743,7 @@
     <string name="home.removeContinueWatching">Eltávolítás a Megtekintés folytatása sorból</string>
     <string name="player.track.audioDescription">Hangos leírás</string>
     <string name="player.track.commentary">Kommentár</string>
+    <string name="player.track.original">Eredeti</string>
     <string name="player.track.stereo">Sztereó</string>
     <string name="player.track.surround">Térhatású hang</string>
     <string name="sidebar.profileFallback">Profil</string>

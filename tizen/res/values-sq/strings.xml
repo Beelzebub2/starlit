@@ -3333,6 +3333,7 @@
     <string name="home.removeContinueWatching">Heq nga Vazhdo shikimin</string>
     <string name="player.track.audioDescription">Përshkrim audio</string>
     <string name="player.track.commentary">Koment</string>
+    <string name="player.track.original">Origjinal</string>
     <string name="player.track.stereo">Stereo</string>
     <string name="player.track.surround">Rrethues</string>
     <string name="sidebar.profileFallback">Profili</string>

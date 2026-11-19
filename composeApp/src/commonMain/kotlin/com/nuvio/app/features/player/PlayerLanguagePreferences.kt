@@ -465,6 +465,11 @@ private fun languageLabelResForCode(code: String?): StringResource? {
     }?.labelRes
 }
 
+/** The localized name of [code], or null when it is not a language the app knows. */
+@Composable
+internal fun knownLanguageLabelForCode(code: String?): String? =
+    languageLabelResForCode(code)?.let { stringResource(it) }
+
 @Composable
 fun languageLabelForCode(code: String?): String = when {
     code.isNullOrBlank() || code.equals(SubtitleLanguageOption.NONE, ignoreCase = true) ->

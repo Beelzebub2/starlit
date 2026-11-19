@@ -511,6 +511,11 @@ akaun</string>
     <string name="compose_nav_settings">Tetapan</string>
     <string name="compose_nav_search">Cari</string>
     <string name="compose_player_audio_tracks">Runut Audio</string>
+    <string name="player_tracks_title">Audio dan sari kata</string>
+    <string name="player_track_badge_sdh">SDH</string>
+    <string name="player_track_badge_commentary">Ulasan</string>
+    <string name="player_track_badge_original">Asal</string>
+    <string name="player_track_badge_description">Perihalan audio</string>
     <string name="compose_player_audio">Audio</string>
     <string name="compose_player_auto_sync">Penyegerakan Auto</string>
     <string name="compose_player_bold">Tebal</string>
