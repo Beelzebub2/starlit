@@ -3160,4 +3160,24 @@
     <string name="mal_rewatch_count">Rewatches: %1$d</string>
     <string name="mal_rewatch_finish">Finish rewatch</string>
     <string name="mal_rewatch_in_progress">Rewatching</string>
+    <string name="lists_status_watching">Watching</string>
+    <string name="lists_status_completed">Completed</string>
+    <string name="lists_status_on_hold">On Hold</string>
+    <string name="lists_status_dropped">Dropped</string>
+    <string name="lists_status_plan_to_watch">Plan to Watch</string>
+    <string name="lists_set_status">Set status</string>
+    <string name="lists_status_description">%1$s status: %2$s</string>
+    <string name="lists_remove_from">Remove from %1$s</string>
+    <string name="lists_rate">Rate</string>
+    <string name="lists_rate_on">Rate on %1$s</string>
+    <string name="lists_rating_description">%1$s rating: %2$d out of 10</string>
+    <string name="lists_rating_value">%1$d / 10</string>
+    <string name="lists_clear_rating">Clear rating</string>
+    <string name="lists_connect">Connect %1$s</string>
+    <string name="lists_switch_service">%1$s, switch list service</string>
+    <string name="lists_updated">%1$s updated</string>
+    <string name="lists_confirm_title">Update %1$s?</string>
+    <string name="lists_confirm_episodes">This marks %1$d episodes as watched in Starlit and on your connected services.</string>
+    <string name="lists_confirm_dropped_hides">Dropping also hides it from Continue Watching.</string>
+    <string name="lists_confirm_hides">This also removes it from Continue Watching.</string>
 </resources>
