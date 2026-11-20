@@ -20,6 +20,12 @@ import com.nuvio.app.features.home.MetaPreview
 import com.nuvio.app.features.home.components.PosterGridRow
 import com.nuvio.app.features.home.components.PosterGridSkeletonRow
 import nuvio.composeapp.generated.resources.Res
+import nuvio.composeapp.generated.resources.library_filter_all
+import nuvio.composeapp.generated.resources.library_filter_genre
+import nuvio.composeapp.generated.resources.library_filter_year
+import nuvio.composeapp.generated.resources.library_filter_watched
+import nuvio.composeapp.generated.resources.library_watched_filter_watched
+import nuvio.composeapp.generated.resources.library_watched_filter_unwatched
 import nuvio.composeapp.generated.resources.library_filter_all_types
 import nuvio.composeapp.generated.resources.library_filter_list
 import nuvio.composeapp.generated.resources.library_filter_sort
@@ -40,6 +46,10 @@ internal fun LibrarySavedControls(
     onSectionSelected: (String) -> Unit,
     onTypeSelected: (String?) -> Unit,
     onSortSelected: (LibrarySortOption) -> Unit,
+    watchedFilter: LibraryWatchedFilter = LibraryWatchedFilter.ALL,
+    onGenreSelected: (String?) -> Unit = {},
+    onYearSelected: (String?) -> Unit = {},
+    onWatchedFilterSelected: (LibraryWatchedFilter) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val sortOptions = availableLibrarySortOptions(sourceMode)
@@ -85,6 +95,16 @@ internal fun LibrarySavedControls(
             )
         }
 
+        if (layoutMode == LibraryLayoutMode.VERTICAL) {
+            LibraryFacetControls(
+                projection = verticalProjection,
+                watchedFilter = watchedFilter,
+                onGenreSelected = onGenreSelected,
+                onYearSelected = onYearSelected,
+                onWatchedFilterSelected = onWatchedFilterSelected,
+            )
+        }
+
         NuvioDropdownChip(
             title = stringResource(Res.string.library_filter_sort),
             label = librarySortOptionLabel(sortOption),
@@ -97,6 +117,62 @@ internal fun LibrarySavedControls(
                 LibrarySortOption.entries
                     .firstOrNull { it.name == option.key }
                     ?.let(onSortSelected)
+            },
+        )
+    }
+}
+
+@Composable
+internal fun LibraryFacetControls(
+    projection: LibraryVerticalProjection,
+    watchedFilter: LibraryWatchedFilter,
+    onGenreSelected: (String?) -> Unit,
+    onYearSelected: (String?) -> Unit,
+    onWatchedFilterSelected: (LibraryWatchedFilter) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val all = stringResource(Res.string.library_filter_all)
+    Row(
+        modifier = modifier.horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        NuvioDropdownChip(
+            title = stringResource(Res.string.library_filter_genre),
+            label = projection.selectedGenre ?: all,
+            selectedKey = projection.selectedGenre.orEmpty(),
+            options = listOf(NuvioDropdownOption("", all)) + projection.availableGenres.map {
+                NuvioDropdownOption(it.key, "${it.key} (${it.count})")
+            },
+            enabled = projection.availableGenres.isNotEmpty(),
+            onSelected = { onGenreSelected(it.key.ifBlank { null }) },
+        )
+        NuvioDropdownChip(
+            title = stringResource(Res.string.library_filter_year),
+            label = projection.selectedYear ?: all,
+            selectedKey = projection.selectedYear.orEmpty(),
+            options = listOf(NuvioDropdownOption("", all)) + projection.availableYears.map {
+                NuvioDropdownOption(it.key, "${it.key} (${it.count})")
+            },
+            enabled = projection.availableYears.isNotEmpty(),
+            onSelected = { onYearSelected(it.key.ifBlank { null }) },
+        )
+        val watchedLabel = stringResource(Res.string.library_watched_filter_watched)
+        val unwatchedLabel = stringResource(Res.string.library_watched_filter_unwatched)
+        NuvioDropdownChip(
+            title = stringResource(Res.string.library_filter_watched),
+            label = when (watchedFilter) {
+                LibraryWatchedFilter.ALL -> all
+                LibraryWatchedFilter.WATCHED -> watchedLabel
+                LibraryWatchedFilter.UNWATCHED -> unwatchedLabel
+            },
+            selectedKey = watchedFilter.name,
+            options = listOf(
+                NuvioDropdownOption(LibraryWatchedFilter.ALL.name, all),
+                NuvioDropdownOption(LibraryWatchedFilter.WATCHED.name, watchedLabel),
+                NuvioDropdownOption(LibraryWatchedFilter.UNWATCHED.name, unwatchedLabel),
+            ),
+            onSelected = { option ->
+                LibraryWatchedFilter.entries.firstOrNull { it.name == option.key }?.let(onWatchedFilterSelected)
             },
         )
     }
