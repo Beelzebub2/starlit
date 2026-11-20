@@ -117,7 +117,7 @@ export function createPlayerScreenMethods49() {
           id: optionId,
           languageKey,
           languageLabel,
-          title: languageLabel,
+          title: cleanDisplayText(track?.label) || languageLabel,
           sourceLabel: entry.secondary || track?.addonName || t("subtitle_tab_addons", {}, "Addons"),
           meta,
           secondary: meta,
