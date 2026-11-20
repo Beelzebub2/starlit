@@ -209,7 +209,7 @@ export function createMetaDetailsScreenMethods06() {
         if (!imdbId && !tmdbId) {
           return {};
         }
-        return await imdbEpisodeRatingsRepository.getEpisodeRatings({ imdbId, tmdbId });
+        return await imdbEpisodeRatingsRepository.getEpisodeRatings({ imdbId, tmdbId, episodes });
       } catch (error) {
         console.warn("Series ratings enrichment failed", error);
         return {};
