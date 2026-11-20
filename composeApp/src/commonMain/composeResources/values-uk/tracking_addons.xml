@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="addons_tracking_consent_title">Додаток відстеження</string>
+    <string name="addons_tracking_consent_body">%1$s може отримувати дані про відтворення (запуск, пауза, зупинка та позиція) і зміни бібліотеки (додано, видалено, переглянуто, не переглянуто). Інформація надсилається зі Starlit постачальнику додатка.</string>
+    <string name="addons_tracking_consent_checkbox">Погоджуюся ділитися відтворенням і бібліотекою з цим додатком</string>
+</resources>

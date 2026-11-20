@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="addons_tracking_consent_title">Tambahan penjejakan</string>
+    <string name="addons_tracking_consent_body">%1$s boleh menerima aktiviti main balik (main, jeda, henti dan kedudukan) serta perubahan pustaka (tambah, buang, ditonton, belum ditonton). Maklumat ini dihantar keluar dari Starlit kepada penyedia tambahan.</string>
+    <string name="addons_tracking_consent_checkbox">Saya bersetuju berkongsi aktiviti main balik dan pustaka dengan tambahan ini</string>
+</resources>

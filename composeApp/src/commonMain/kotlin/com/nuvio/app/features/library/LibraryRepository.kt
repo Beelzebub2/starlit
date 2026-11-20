@@ -1,5 +1,9 @@
 package com.nuvio.app.features.library
 
+import com.nuvio.app.features.addons.ADDON_LIBRARY_RESOURCE
+import com.nuvio.app.features.addons.AddonEventDispatcher
+import com.nuvio.app.features.addons.AddonLibraryAction
+
 import co.touchlab.kermit.Logger
 import com.nuvio.app.core.auth.AuthRepository
 import com.nuvio.app.core.auth.AuthState
@@ -392,6 +396,13 @@ object LibraryRepository {
     suspend fun toggleSaved(
         item: LibraryItem,
         confirmedRemovalProviders: Set<TrackingProviderId> = emptySet(),
+    ): TrackingMembershipApplyResult = withAddonLibraryEvent(item.id, item.type) {
+        toggleSavedInternal(item, confirmedRemovalProviders)
+    }
+
+    private suspend fun toggleSavedInternal(
+        item: LibraryItem,
+        confirmedRemovalProviders: Set<TrackingProviderId>,
     ): TrackingMembershipApplyResult {
         ensureLoaded()
 
@@ -416,7 +427,7 @@ object LibraryRepository {
 
     fun toggleLocalSaved(item: LibraryItem) {
         ensureLoaded()
-        toggleLocalSavedInternal(item)
+        withAddonLibraryEvent(item.id, item.type) { toggleLocalSavedInternal(item) }
     }
 
     private fun toggleLocalSavedInternal(item: LibraryItem): TrackingMembershipApplyResult {
@@ -442,7 +453,11 @@ object LibraryRepository {
 
     fun save(item: LibraryItem) {
         ensureLoaded()
+        val wasSaved = localState.contains(item.id, item.type)
         val snapshot = localState.upsert(item.copy(savedAtEpochMs = LibraryClock.nowEpochMs()))
+        if (!wasSaved && AddonEventDispatcher.hasEnabledAddonFor(ADDON_LIBRARY_RESOURCE)) {
+            AddonEventDispatcher.library(item.type, item.id, AddonLibraryAction.LIBRARY_ADD)
+        }
         log.i {
             "Saving local library item item=${item.id} type=${item.type} profile=${snapshot.token.profileId}"
         }
@@ -453,8 +468,12 @@ object LibraryRepository {
 
     fun remove(id: String) {
         ensureLoaded()
+        val removedType = if (AddonEventDispatcher.hasEnabledAddonFor(ADDON_LIBRARY_RESOURCE)) {
+            localState.findById(id)?.type
+        } else null
         val result = localState.removeById(id)
         if (result.affectedCount > 0) {
+            removedType?.let { AddonEventDispatcher.library(it, id, AddonLibraryAction.LIBRARY_REMOVE) }
             log.i {
                 "Removing local library item id=$id profile=${result.snapshot.token.profileId} " +
                     "removed=${result.affectedCount}"
@@ -531,13 +550,30 @@ object LibraryRepository {
         item: LibraryItem,
         desiredMembership: Map<String, Boolean>,
         confirmedRemovalProviders: Set<TrackingProviderId> = emptySet(),
-    ): TrackingMembershipApplyResult = applyMembershipChanges(
-        item = item,
-        desiredMembership = desiredMembership,
-        confirmedRemovalProviders = confirmedRemovalProviders,
-        targetProviderIds = null,
-        updateLocal = true,
-    )
+    ): TrackingMembershipApplyResult = withAddonLibraryEvent(item.id, item.type) {
+        applyMembershipChanges(
+            item = item,
+            desiredMembership = desiredMembership,
+            confirmedRemovalProviders = confirmedRemovalProviders,
+            targetProviderIds = null,
+            updateLocal = true,
+        )
+    }
+
+    private inline fun <T> withAddonLibraryEvent(id: String, type: String, mutation: () -> T): T {
+        if (!AddonEventDispatcher.hasEnabledAddonFor(ADDON_LIBRARY_RESOURCE)) return mutation()
+        val wasSaved = isSaved(id, type)
+        val result = mutation()
+        val nowSaved = isSaved(id, type)
+        if (wasSaved != nowSaved) {
+            AddonEventDispatcher.library(
+                type = type,
+                id = id,
+                action = if (nowSaved) AddonLibraryAction.LIBRARY_ADD else AddonLibraryAction.LIBRARY_REMOVE,
+            )
+        }
+        return result
+    }
 
     private suspend fun applyMembershipChanges(
         item: LibraryItem,
@@ -607,6 +643,14 @@ object LibraryRepository {
         item: LibraryItem,
         listKey: String,
         confirmedRemovalProviders: Set<TrackingProviderId> = emptySet(),
+    ): TrackingMembershipApplyResult = withAddonLibraryEvent(item.id, item.type) {
+        removeFromListInternal(item, listKey, confirmedRemovalProviders)
+    }
+
+    private suspend fun removeFromListInternal(
+        item: LibraryItem,
+        listKey: String,
+        confirmedRemovalProviders: Set<TrackingProviderId>,
     ): TrackingMembershipApplyResult {
         ensureLoaded()
         val targetProvider = TrackingProviderRegistry.connectedLibraryProviders()

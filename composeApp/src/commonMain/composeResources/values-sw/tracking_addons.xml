@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="addons_tracking_consent_title">Nyongeza ya ufuatiliaji</string>
+    <string name="addons_tracking_consent_body">%1$s inaweza kupokea shughuli za uchezaji (anza, sitisha, simamisha na nafasi) na mabadiliko ya maktaba (ongeza, ondoa, imetazamwa, haijatazamwa). Taarifa hizi hutumwa nje ya Starlit kwa mtoa huduma wa nyongeza.</string>
+    <string name="addons_tracking_consent_checkbox">Ninakubali kushiriki shughuli za uchezaji na maktaba na nyongeza hii</string>
+</resources>

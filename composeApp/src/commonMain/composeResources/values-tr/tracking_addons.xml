@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="addons_tracking_consent_title">Takip eklentisi</string>
+    <string name="addons_tracking_consent_body">%1$s oynatma işlemlerini (başlatma, duraklatma, durdurma ve konum) ve kitaplık değişikliklerini (eklendi, kaldırıldı, izlendi, izlenmedi) alabilir. Bu bilgiler Starlit dışına, eklenti sağlayıcısına gönderilir.</string>
+    <string name="addons_tracking_consent_checkbox">Oynatma ve kitaplık etkinliğimi bu eklentiyle paylaşmayı kabul ediyorum</string>
+</resources>

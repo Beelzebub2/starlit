@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="addons_tracking_consent_title">תוסף מעקב</string>
+    <string name="addons_tracking_consent_body">%1$s יכול לקבל פעולות ניגון (הפעלה, השהיה, עצירה ומיקום) ושינויים בספרייה (הוספה, הסרה, נצפה, לא נצפה). המידע נשלח מחוץ ל-Starlit אל ספק התוסף.</string>
+    <string name="addons_tracking_consent_checkbox">אני מסכים לשתף עם התוסף פעילות ניגון וספרייה</string>
+</resources>
