@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_playback_nvidia_rtx_hdr">RTX Video HDR</string>
+    <string name="settings_playback_nvidia_rtx_hdr_desc">Преобразует SDR-видео в HDR с помощью NVIDIA RTX AI. Требуется включённый HDR в Windows и HDR-совместимый экран.</string>
+</resources>
