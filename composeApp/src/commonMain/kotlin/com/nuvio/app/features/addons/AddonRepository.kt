@@ -63,6 +63,10 @@ object AddonRepository {
     private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
     private val _uiState = MutableStateFlow(AddonsUiState())
     val uiState: StateFlow<AddonsUiState> = _uiState.asStateFlow()
+    private val trackingConsentedUrls = MutableStateFlow<Set<String>>(emptySet())
+
+    fun hasTrackingConsent(manifestUrl: String): Boolean =
+        manifestUrl in trackingConsentedUrls.value
 
     private var initialized = false
     private var currentProfileId: Int = 1
@@ -84,6 +88,7 @@ object AddonRepository {
         if (initialized) return
         initialized = true
         currentProfileId = effectiveProfileId
+        trackingConsentedUrls.value = AddonStorage.loadTrackingConsentUrls(currentProfileId)
         log.d { "initialize() — loading local addons for profile $currentProfileId" }
 
         val storedUrls = dedupeManifestUrls(AddonStorage.loadInstalledAddonUrls(currentProfileId))
@@ -118,6 +123,7 @@ object AddonRepository {
         backupProfileRevision++
         cancelActiveRefreshes()
         currentProfileId = effectiveProfileId
+        trackingConsentedUrls.value = emptySet()
         initialized = false
         _uiState.value = AddonsUiState()
     }
@@ -130,6 +136,7 @@ object AddonRepository {
         }
         pushes.forEach(Job::cancel)
         currentProfileId = 1
+        trackingConsentedUrls.value = emptySet()
         initialized = false
         _uiState.value = AddonsUiState()
     }
@@ -138,6 +145,7 @@ object AddonRepository {
         if (LocalSettingsImport.hasPendingImport(profileId)) return
 
         currentProfileId = resolveEffectiveProfileId(profileId)
+        trackingConsentedUrls.value = AddonStorage.loadTrackingConsentUrls(currentProfileId)
         log.i { "pullFromServer() — profileId=$profileId, initialized=$initialized" }
         runCatching {
             val rows = SupabaseProvider.client.postgrest
@@ -215,7 +223,13 @@ object AddonRepository {
         if (_uiState.value.addons.any { it.manifestUrl == manifest.transportUrl }) {
             return AddAddonResult.Error(getString(Res.string.addon_already_installed))
         }
-        return installManifest(manifest.transportUrl, manifest)
+        val result = installManifest(manifest.transportUrl, manifest)
+        if (result is AddAddonResult.Success) {
+            val allowed = trackingConsentedUrls.value + manifest.transportUrl
+            trackingConsentedUrls.value = allowed
+            AddonStorage.saveTrackingConsentUrls(currentProfileId, allowed)
+        }
+        return result
     }
 
     suspend fun addAddon(rawUrl: String): AddAddonResult {
@@ -277,6 +291,9 @@ object AddonRepository {
             if (changed) current.copy(addons = updatedAddons) else current
         }
         if (!changed) return
+        val allowed = trackingConsentedUrls.value - manifestUrl
+        trackingConsentedUrls.value = allowed
+        AddonStorage.saveTrackingConsentUrls(currentProfileId, allowed)
         persist()
         pushToServer()
     }

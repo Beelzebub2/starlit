@@ -1,7 +1,6 @@
 package com.nuvio.app.features.addons
 
 import co.touchlab.kermit.Logger
-import com.nuvio.app.features.servers.ServerItemRef
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -48,7 +47,8 @@ object AddonEventDispatcher {
 
     fun hasEnabledAddonFor(resource: String): Boolean =
         AddonRepository.uiState.value.addons.any { addon ->
-            addon.isActive && addon.manifest?.resources?.any { it.name == resource } == true
+            addon.isActive && addon.manifest?.resources?.any { it.name == resource } == true &&
+                AddonRepository.hasTrackingConsent(addon.manifestUrl)
         }
 
     fun player(
@@ -107,8 +107,10 @@ object AddonEventDispatcher {
         id: String,
         extra: List<Pair<String, String>>,
     ) {
-        if (type.isBlank() || id.isBlank() || ServerItemRef.isServerId(id)) return
-        events.trySend(AddonEvent(resource, type, id, extra))
+        if (type.isBlank() || id.isBlank()) return
+        if (events.trySend(AddonEvent(resource, type, id, extra)).isFailure) {
+            log.w { "Tracking event queue full; dropping newest event" }
+        }
     }
 
     private fun route(event: AddonEvent) {
@@ -116,11 +118,16 @@ object AddonEventDispatcher {
             .asSequence()
             .filter(ManagedAddon::isActive)
             .mapNotNull(ManagedAddon::manifest)
-            .filter { manifest -> manifest.supportsResource(event.resource, event.type, event.id) }
+            .filter { manifest ->
+                AddonRepository.hasTrackingConsent(manifest.transportUrl) &&
+                    manifest.supportsResource(event.resource, event.type, event.id)
+            }
             .distinctBy(AddonManifest::transportUrl)
             .forEach { manifest ->
                 val url = buildAddonEventUrl(manifest.transportUrl, event.resource, event.type, event.id, event.extra)
-                queueFor(manifest.transportUrl).trySend(AddonDelivery(manifest.id, event.resource, url))
+                if (queueFor(manifest.transportUrl).trySend(AddonDelivery(manifest.id, event.resource, url)).isFailure) {
+                    log.w { "${manifest.id} tracking queue full; dropping newest event" }
+                }
             }
     }
 
