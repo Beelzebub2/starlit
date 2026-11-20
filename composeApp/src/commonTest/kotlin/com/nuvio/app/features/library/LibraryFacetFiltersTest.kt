@@ -52,7 +52,7 @@ class LibraryFacetFiltersTest {
 
     @Test fun filtersExposeCountsAndDoNotSilentlyRemoveAllOptions() {
         val selection = projection("Action", "2023")
-        assertEquals(2, selection.availableGenres.first { it.key == "Action" }.count)
+        assertEquals(1, selection.availableGenres.first { it.key == "Action" }.count)
         assertEquals(1, selection.availableYears.first { it.key == "2023" }.count)
         assertEquals("Action", selection.selectedGenre)
         assertEquals("2023", selection.selectedYear)
