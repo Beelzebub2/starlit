@@ -124,6 +124,7 @@ object AddonRepository {
         cancelActiveRefreshes()
         currentProfileId = effectiveProfileId
         trackingConsentedUrls.value = emptySet()
+        dismissTrackingConsent()
         initialized = false
         _uiState.value = AddonsUiState()
     }
@@ -137,6 +138,7 @@ object AddonRepository {
         pushes.forEach(Job::cancel)
         currentProfileId = 1
         trackingConsentedUrls.value = emptySet()
+        dismissTrackingConsent()
         initialized = false
         _uiState.value = AddonsUiState()
     }
@@ -205,18 +207,26 @@ object AddonRepository {
     }
 
     private val _pendingTrackingConsent = MutableStateFlow<AddonManifest?>(null)
+    private var pendingTrackingConsentProfileId: Int? = null
     val pendingTrackingConsent: StateFlow<AddonManifest?> = _pendingTrackingConsent.asStateFlow()
 
     fun requestTrackingConsent(manifest: AddonManifest) {
+        pendingTrackingConsentProfileId = currentProfileId
         _pendingTrackingConsent.value = manifest
     }
 
     fun dismissTrackingConsent() {
         _pendingTrackingConsent.value = null
+        pendingTrackingConsentProfileId = null
     }
 
     suspend fun installWithTrackingConsent(manifest: AddonManifest): AddAddonResult {
-        _pendingTrackingConsent.value = null
+        if (_pendingTrackingConsent.value?.transportUrl != manifest.transportUrl ||
+            pendingTrackingConsentProfileId != currentProfileId
+        ) {
+            return AddAddonResult.Error(getString(Res.string.addon_invalid_url))
+        }
+        dismissTrackingConsent()
         if (isUsingPrimaryAddonsFromSecondaryProfile()) {
             return AddAddonResult.Error(getString(Res.string.profile_primary_addons_required))
         }
