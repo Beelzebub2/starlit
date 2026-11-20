@@ -98,7 +98,7 @@ export function createPlayerScreenMethods68() {
         const subtitleId = subtitle.id || subtitle.url || `subtitle-${index}`;
         const track = document.createElement("track");
         track.kind = "subtitles";
-        track.label = subtitle.lang || subtitleLabel(index);
+        track.label = String(subtitle.label || subtitle.lang || subtitleLabel(index)).slice(0, 160);
         track.srclang = normalizeTrackLanguageCode(subtitle.lang) || "und";
         track.src = subtitle.url;
         track.default = false;
