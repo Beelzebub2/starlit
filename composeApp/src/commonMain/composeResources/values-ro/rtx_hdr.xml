@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_playback_nvidia_rtx_hdr">RTX Video HDR</string>
+    <string name="settings_playback_nvidia_rtx_hdr_desc">Transformă videoclipurile SDR în HDR cu NVIDIA RTX AI. Necesită HDR activat în Windows și un ecran compatibil HDR.</string>
+</resources>

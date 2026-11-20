@@ -80,6 +80,7 @@ typedef enum mpv_event_id {
     MPV_EVENT_NONE = 0,
     MPV_EVENT_SHUTDOWN = 1,
     MPV_EVENT_END_FILE = 7,
+    MPV_EVENT_VIDEO_RECONFIG = 17,
     MPV_EVENT_FILE_LOADED = 8,
     MPV_EVENT_PROPERTY_CHANGE = 22,
     MPV_EVENT_QUEUE_OVERFLOW = 24,
@@ -1068,6 +1069,7 @@ public:
         JavaVM *vm,
         int decoderPriority,
         bool nvidiaRtxSuperResolutionEnabled,
+        bool nvidiaRtxHdrEnabled,
         jobject sink,
         jmethodID method
     ) {
@@ -1084,8 +1086,8 @@ public:
         auto initState = std::make_shared<InitializationState>();
         auto self = shared_from_this();
         uiThread = std::thread(
-            [self, sourceUrl, headerLines, playWhenReady, initialPositionMs, controlsUrl, decoderPriority, nvidiaRtxSuperResolutionEnabled, initState]() {
-                self->runNativeUiThread(sourceUrl, headerLines, playWhenReady, initialPositionMs, controlsUrl, decoderPriority, nvidiaRtxSuperResolutionEnabled, initState);
+            [self, sourceUrl, headerLines, playWhenReady, initialPositionMs, controlsUrl, decoderPriority, nvidiaRtxSuperResolutionEnabled, nvidiaRtxHdrEnabled, initState]() {
+                self->runNativeUiThread(sourceUrl, headerLines, playWhenReady, initialPositionMs, controlsUrl, decoderPriority, nvidiaRtxSuperResolutionEnabled, nvidiaRtxHdrEnabled, initState);
             }
         );
 
@@ -1712,6 +1714,9 @@ private:
     std::mutex mpvMutex;
     mpv_handle *mpv = nullptr;
     bool rtxVideoConfigured = false;
+    bool rtxSuperResolution = false;
+    bool rtxHdr = false;
+    std::string appliedVideoFilter;
     std::thread eventThread;
     std::atomic_bool controlsTracksDirty = true;
     std::atomic_bool observingControlsTracks = false;
@@ -2048,11 +2053,12 @@ private:
         std::string controlsUrl,
         int decoderPriority,
         bool nvidiaRtxSuperResolutionEnabled,
+        bool nvidiaRtxHdrEnabled,
         std::shared_ptr<InitializationState> initState
     ) {
         std::string failure;
         try {
-            initializeOnNativeUiThread(sourceUrl, headerLines, playWhenReady, initialPositionMs, controlsUrl, decoderPriority, nvidiaRtxSuperResolutionEnabled);
+            initializeOnNativeUiThread(sourceUrl, headerLines, playWhenReady, initialPositionMs, controlsUrl, decoderPriority, nvidiaRtxSuperResolutionEnabled, nvidiaRtxHdrEnabled);
         } catch (const std::exception &error) {
             failure = error.what();
             cleanupUiResources();
@@ -2083,7 +2089,8 @@ private:
         long long initialPositionMs,
         const std::string &controlsUrl,
         int decoderPriority,
-        bool nvidiaRtxSuperResolutionEnabled
+        bool nvidiaRtxSuperResolutionEnabled,
+        bool nvidiaRtxHdrEnabled
     ) {
         registerWindowClasses();
         uiThreadId = GetCurrentThreadId();
@@ -2135,7 +2142,7 @@ private:
         }
 
         startWebView(controlsUrl);
-        startMpv(sourceUrl, headerLines, playWhenReady, initialPositionMs, decoderPriority, nvidiaRtxSuperResolutionEnabled);
+        startMpv(sourceUrl, headerLines, playWhenReady, initialPositionMs, decoderPriority, nvidiaRtxSuperResolutionEnabled, nvidiaRtxHdrEnabled);
         auto weakPlayer = weak_from_this();
         HWND rootWindow = GetAncestor(hostHwnd, GA_ROOT);
         systemMediaSession.start(rootWindow, [weakPlayer](starlit::MediaCommand command, int64_t positionMs) {
@@ -2343,9 +2350,11 @@ private:
         bool playWhenReady,
         long long initialPositionMs,
         int decoderPriority,
-        bool nvidiaRtxSuperResolutionEnabled
+        bool nvidiaRtxSuperResolutionEnabled,
+        bool nvidiaRtxHdrEnabled
     ) {
         MpvApi &api = mpvApi();
+        const bool rtxVideoEnabled = nvidiaRtxSuperResolutionEnabled || nvidiaRtxHdrEnabled;
         {
             std::lock_guard<std::mutex> lock(mpvMutex);
             // libmpv parses numeric options using the C locale. On Windows,
@@ -2367,7 +2376,7 @@ private:
             setMpvOptionStringLocked("keep-open", "yes");
             setMpvOptionStringLocked("volume-max", "200");
             setMpvOptionStringLocked("vo", "gpu-next");
-            if (nvidiaRtxSuperResolutionEnabled) {
+            if (rtxVideoEnabled) {
                 setMpvOptionStringLocked("gpu-api", "d3d11");
                 setMpvOptionStringLocked("hwdec", "d3d11va");
                 setMpvOptionStringLocked("d3d11-adapter", "NVIDIA");
@@ -2377,8 +2386,11 @@ private:
             }
             setMpvOptionStringLocked("hwdec-codecs", "all");
 
-            if (nvidiaRtxSuperResolutionEnabled) {
-                setMpvOptionStringLocked("vf", "d3d11vpp=scale=2:scaling-mode=nvidia");
+            rtxSuperResolution = nvidiaRtxSuperResolutionEnabled;
+            rtxHdr = nvidiaRtxHdrEnabled;
+            appliedVideoFilter = rtxVideoFilter(false);
+            if (!appliedVideoFilter.empty()) {
+                setMpvOptionStringLocked("vf", appliedVideoFilter.c_str());
             }
             setMpvOptionStringLocked("target-colorspace-hint", "yes");
             if (decoderPriority == 0) {
@@ -2704,6 +2716,31 @@ private:
         }
     }
 
+    std::string rtxVideoFilter(bool sourceIsSdr) const {
+        const bool useHdr = rtxHdr && sourceIsSdr;
+        if (rtxSuperResolution && useHdr) {
+            return "d3d11vpp=scale=2:scaling-mode=nvidia:format=x2bgr10:nvidia-true-hdr,format=x2bgr10:transfer=pq:primaries=bt.2020";
+        }
+        if (rtxSuperResolution) return "d3d11vpp=scale=2:scaling-mode=nvidia";
+        if (useHdr) {
+            return "d3d11vpp=format=x2bgr10:nvidia-true-hdr,format=x2bgr10:transfer=pq:primaries=bt.2020";
+        }
+        return "";
+    }
+
+    void updateRtxVideoFilter() {
+        if (!rtxHdr) return;
+        const std::string gamma = stringProperty("video-params/gamma", "");
+        if (gamma.empty()) return;
+        const bool sourceIsSdr = gamma != "pq" && gamma != "hlg";
+        const std::string wanted = rtxVideoFilter(sourceIsSdr);
+        if (wanted == appliedVideoFilter) return;
+        std::lock_guard<std::mutex> lock(mpvMutex);
+        if (!mpv) return;
+        mpvApi().setPropertyString(mpv, "vf", wanted.c_str());
+        appliedVideoFilter = wanted;
+    }
+
     void drainMpvEvents() {
         while (!stopping.load()) {
             mpv_handle *current = nullptr;
@@ -2719,6 +2756,9 @@ private:
             if (!event) continue;
             if (event->event_id == MPV_EVENT_SHUTDOWN) {
                 return;
+            }
+            if (event->event_id == MPV_EVENT_VIDEO_RECONFIG) {
+                updateRtxVideoFilter();
             }
             if (event->event_id == MPV_EVENT_PROPERTY_CHANGE || event->event_id == MPV_EVENT_FILE_LOADED ||
                 event->event_id == MPV_EVENT_END_FILE || event->event_id == MPV_EVENT_QUEUE_OVERFLOW) {
@@ -3112,6 +3152,7 @@ Java_com_nuvio_app_features_player_desktop_NativePlayerBridge_create(
     jstring controlsPageUrl,
     jint decoderPriority,
     jboolean nvidiaRtxSuperResolutionEnabled,
+    jboolean nvidiaRtxHdrEnabled,
     jobject eventSink
 ) {
     HWND hostHwnd = (HWND)(intptr_t)hostViewPtr;
@@ -3147,6 +3188,7 @@ Java_com_nuvio_app_features_player_desktop_NativePlayerBridge_create(
             javaVm,
             decoderPriority,
             nvidiaRtxSuperResolutionEnabled == JNI_TRUE,
+            nvidiaRtxHdrEnabled == JNI_TRUE,
             eventSinkRef,
             eventMethod
         );
