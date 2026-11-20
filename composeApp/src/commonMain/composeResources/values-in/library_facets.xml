@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="library_filter_genre">Genre</string>
+    <string name="library_filter_year">Tahun</string>
+    <string name="library_filter_watched">Ditonton</string>
+    <string name="library_filter_all">Semua</string>
+    <string name="library_watched_filter_watched">Sudah ditonton</string>
+    <string name="library_watched_filter_unwatched">Belum ditonton</string>
+</resources>

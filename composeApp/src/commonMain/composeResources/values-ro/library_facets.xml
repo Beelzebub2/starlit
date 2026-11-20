@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="library_filter_genre">Gen</string>
+    <string name="library_filter_year">An</string>
+    <string name="library_filter_watched">Vizionate</string>
+    <string name="library_filter_all">Toate</string>
+    <string name="library_watched_filter_watched">Vizionate</string>
+    <string name="library_watched_filter_unwatched">Nevizionate</string>
+</resources>

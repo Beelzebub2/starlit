@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="library_filter_genre">ধরন</string>
+    <string name="library_filter_year">বছর</string>
+    <string name="library_filter_watched">দেখা হয়েছে</string>
+    <string name="library_filter_all">সব</string>
+    <string name="library_watched_filter_watched">দেখা হয়েছে</string>
+    <string name="library_watched_filter_unwatched">দেখা হয়নি</string>
+</resources>

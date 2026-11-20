@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="library_filter_genre">ژانر</string>
+    <string name="library_filter_year">سال</string>
+    <string name="library_filter_watched">دیده‌شده</string>
+    <string name="library_filter_all">همه</string>
+    <string name="library_watched_filter_watched">دیده‌شده</string>
+    <string name="library_watched_filter_unwatched">دیده‌نشده</string>
+</resources>

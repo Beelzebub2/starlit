@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="library_filter_genre">ジャンル</string>
+    <string name="library_filter_year">年</string>
+    <string name="library_filter_watched">視聴済み</string>
+    <string name="library_filter_all">すべて</string>
+    <string name="library_watched_filter_watched">視聴済み</string>
+    <string name="library_watched_filter_unwatched">未視聴</string>
+</resources>

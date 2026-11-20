@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="library_filter_genre">Műfaj</string>
+    <string name="library_filter_year">Év</string>
+    <string name="library_filter_watched">Megnézve</string>
+    <string name="library_filter_all">Összes</string>
+    <string name="library_watched_filter_watched">Megnézett</string>
+    <string name="library_watched_filter_unwatched">Nem látott</string>
+</resources>
