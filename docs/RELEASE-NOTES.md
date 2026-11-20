@@ -1,3 +1,19 @@
+## Starlit 1.33.0
+
+### Desktop player and Windows installer
+
+- **More reliable player controls:** Improve desktop track-panel behavior and keep audio and subtitle selection easier to reach while playing.
+- **Playback speed in options:** Move the desktop playback-speed setting into Playback options for more predictable access.
+- **Adjustable desktop controls:** Resize desktop player buttons and icons from 75% to 160%, with a live preview and automatic shrinking in small windows.
+- **Clearer TV installer progress:** Show download, archive extraction and in-place installation progress, including file counts, while retaining checksum verification and clean invalid-archive handling.
+
+### Compatibility and distribution
+
+- New player settings strings are present across all supported Compose catalogs; native-speaker terminology and representative long-label/RTL layout review remain outstanding.
+- The adjustable control-size setting applies to the desktop player. Phone, Android TV, Tizen and webOS player controls remain unchanged.
+- Stable Windows, signed Android phone and Android TV, and Linux packages remain subject to the required build, signing, smoke-test, checksum and provenance gates. Matching Samsung Tizen, LG webOS and Windows TV Installer packages are separate unaccepted developer previews under `tv-preview-v1.33.0`.
+- No iOS App Store release or macOS installer publication is included. Packaged desktop and physical-device acceptance are not claimed by these notes.
+
 ## Starlit 1.32.0
 
 ### Audio and subtitle menus
