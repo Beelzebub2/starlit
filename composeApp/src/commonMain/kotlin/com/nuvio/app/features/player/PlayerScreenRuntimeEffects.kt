@@ -544,7 +544,9 @@ private fun PlayerScreenRuntime.BindPlayerUiVisibilityEffects() {
             flushWatchProgress(TrackingScrobbleAction.PAUSE)
         }
 
-        if (!previousIsPlaying && playbackSnapshot.isPlaying) {
+        if (playbackSnapshot.isPlaying &&
+            (!previousIsPlaying || activeAddonPlayerEventTarget == null)
+        ) {
             emitAddonPlayerEvent(AddonPlayerAction.START)
         }
 

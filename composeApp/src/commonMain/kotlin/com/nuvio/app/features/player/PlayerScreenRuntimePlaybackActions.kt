@@ -1,5 +1,6 @@
 package com.nuvio.app.features.player
 
+import com.nuvio.app.features.addons.ADDON_PLAYER_RESOURCE
 import com.nuvio.app.features.addons.AddonEventDispatcher
 import com.nuvio.app.features.addons.AddonPlayerAction
 import com.nuvio.app.features.addons.AddonPlayerEventTarget
@@ -397,7 +398,7 @@ internal suspend fun PlayerScreenRuntime.resolveParentalGuideImdbId(): String? {
 
 internal fun PlayerScreenRuntime.emitAddonPlayerEvent(action: AddonPlayerAction) {
     // Never disclose private-session activity to any addon, even a consented one.
-    if (privatePlayback) return
+    if (privatePlayback || !AddonEventDispatcher.hasEnabledAddonFor(ADDON_PLAYER_RESOURCE)) return
     val durationMs = playbackSnapshot.durationMs
     if (isShortPlaceholderDuration(durationMs)) return
     val positionMs = playbackSnapshot.positionMs

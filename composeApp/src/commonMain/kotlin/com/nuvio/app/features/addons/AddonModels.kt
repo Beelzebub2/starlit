@@ -37,6 +37,7 @@ internal fun AddonManifest.supportsResource(name: String, type: String, id: Stri
     resources.any { resource ->
         resource.name == name &&
             (resource.types.isEmpty() || type in resource.types) &&
+            (idPrefixes.isEmpty() || idPrefixes.any { id.startsWith(it) }) &&
             (resource.idPrefixes.isEmpty() || resource.idPrefixes.any { id.startsWith(it) })
     }
 
