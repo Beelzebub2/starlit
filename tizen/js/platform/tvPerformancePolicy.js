@@ -20,6 +20,15 @@ export function isModernTvProfile(profile = null) {
 // RAM decides before the generation does. A 2022+ set with 1 GB still cannot
 // keep the modern artwork window, the same way the native legacy client lifts
 // the smallest texture budget to the lowest RAM tier first.
+// Keep artwork rescaling on modern >=2GB TVs when adaptive profiling
+// measures them as slow, but avoid extra worker decode/re-encode on legacy
+// or low-memory panels where the round trip is more expensive.
+export function canUseModernTvArtworkBounding(profile = null, deviceMemory = getDeviceMemoryGb()) {
+  if (!profile?.isTvRuntime || profile.isLegacyTvRuntime || isLowMemoryDevice(deviceMemory)) {
+    return false;
+  }
+  return Boolean(!profile.isPerformanceConstrained || profile.isMeasuredSlow);
+}
 export function isLowMemoryDevice(deviceMemory = 0) {
   const memory = Number(deviceMemory);
   return memory > 0 && memory <= 1;
