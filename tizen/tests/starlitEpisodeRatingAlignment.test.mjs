@@ -3,7 +3,7 @@ import test from "node:test";
 import { alignTvEpisodeRatings } from "../js/data/repository/imdbEpisodeRatingsRepository.js";
 
 const ep = (season, episode, released) => ({ season, episode, released });
-const rating = (episode, value, airDate) => ({ episode, rating: value, airDate });
+const rating = (episode, value, airDate) => ({ episode, rating: value, ...(airDate ? { airDate } : {}) });
 
 test("preserves exact season numbering", () => {
   const source = { 1: [rating(1, 7.0)], 2: [rating(1, 8.0)] };
