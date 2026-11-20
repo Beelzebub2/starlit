@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="addons_tracking_consent_title">Dodatek śledzący</string>
+    <string name="addons_tracking_consent_body">%1$s może otrzymywać informacje o odtwarzaniu (start, pauza, zatrzymanie i pozycja) oraz zmianach biblioteki (dodane, usunięte, obejrzane, nieobejrzane). Dane opuszczają Starlit i trafiają do dostawcy dodatku.</string>
+    <string name="addons_tracking_consent_checkbox">Zgadzam się udostępniać aktywność odtwarzania i biblioteki temu dodatkowi</string>
+</resources>

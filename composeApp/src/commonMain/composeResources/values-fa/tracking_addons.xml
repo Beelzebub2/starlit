@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="addons_tracking_consent_title">افزونه ردیابی</string>
+    <string name="addons_tracking_consent_body">%1$s می‌تواند فعالیت پخش (شروع، مکث، توقف و موقعیت) و تغییرات کتابخانه (افزودن، حذف، دیده‌شده و دیده‌نشده) را دریافت کند. این اطلاعات از Starlit خارج شده و به ارائه‌دهنده افزونه ارسال می‌شود.</string>
+    <string name="addons_tracking_consent_checkbox">با اشتراک‌گذاری فعالیت پخش و کتابخانه با این افزونه موافقم</string>
+</resources>

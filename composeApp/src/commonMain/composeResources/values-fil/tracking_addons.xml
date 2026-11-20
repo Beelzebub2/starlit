@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="addons_tracking_consent_title">Tracking addon</string>
+    <string name="addons_tracking_consent_body">Maaaring matanggap ng %1$s ang iyong playback (play, pause, stop at posisyon) at mga pagbabago sa library (idinagdag, inalis, napanood, hindi napanood). Lalabas ang impormasyong ito sa Starlit at ipapadala sa provider ng addon.</string>
+    <string name="addons_tracking_consent_checkbox">Pumapayag akong ibahagi ang playback at library activity sa addon na ito</string>
+</resources>
