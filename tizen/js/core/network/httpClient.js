@@ -58,7 +58,7 @@ function recordBackendCooldown(response) {
   if (status !== 429 && !(status === 503 && retryAfter)) {
     return;
   }
-  const delayMs = retryAfterDelayMs(retryAfter) ?? 1000;
+  const delayMs = Math.min(BACKEND_RETRY_MAX_DELAY_MS, retryAfterDelayMs(retryAfter) ?? 1000);
   backendCooldownUntilMs = Math.max(backendCooldownUntilMs, Date.now() + delayMs);
 }
 function createAbortError() {
@@ -69,6 +69,10 @@ function createAbortError() {
 function waitWithAbort(delayMs, signal) {
   if (signal?.aborted) {
     return Promise.reject(createAbortError());
+  }
+  const normalizedDelayMs = Math.max(0, Number(delayMs) || 0);
+  if (normalizedDelayMs <= 0) {
+    return Promise.resolve();
   }
   return new Promise((resolve, reject) => {
     let timeoutId = 0;
@@ -107,9 +111,12 @@ async function fetchWithBackendRetry(url, fetchInit, method) {
     if (delayMs > 0) {
       await waitWithAbort(delayMs, fetchInit.signal);
     }
-    await waitWithAbort(Math.max(0, backendCooldownUntilMs - Date.now()), fetchInit.signal);
+    const retryCooldownMs = supabaseRequest ? Math.max(0, backendCooldownUntilMs - Date.now()) : 0;
+    await waitWithAbort(retryCooldownMs, fetchInit.signal);
     response = (await fetchViaWebOsSupabaseProxy(url, fetchInit)) || (await fetch(url, fetchInit));
-    recordBackendCooldown(response);
+    if (supabaseRequest) {
+      recordBackendCooldown(response);
+    }
   }
   return response;
 }
@@ -300,4 +307,8 @@ export async function httpRequest(url, options = {}) {
   } finally {
     combinedSignals.cleanup();
   }
+}
+
+export function resetHttpClientBackendCooldownForTests() {
+  backendCooldownUntilMs = 0;
 }
