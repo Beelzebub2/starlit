@@ -1,5 +1,6 @@
 package com.nuvio.app.features.player
 
+import com.nuvio.app.features.addons.AddonPlayerAction
 import com.nuvio.app.core.i18n.localizedSeasonEpisodeCode
 import com.nuvio.app.core.diagnostics.UsageDiagnostics
 import com.nuvio.app.core.diagnostics.UsageEvent
@@ -541,6 +542,10 @@ private fun PlayerScreenRuntime.BindPlayerUiVisibilityEffects() {
         if (previousIsPlaying && !playbackSnapshot.isPlaying && !playbackSnapshot.isLoading) {
             pendingSeekScrobbleRestart = false
             flushWatchProgress(TrackingScrobbleAction.PAUSE)
+        }
+
+        if (!previousIsPlaying && playbackSnapshot.isPlaying) {
+            emitAddonPlayerEvent(AddonPlayerAction.START)
         }
 
         if (playbackSnapshot.isPlaying && canPersistPlaybackProgress() && pendingSeekScrobbleRestart) {
