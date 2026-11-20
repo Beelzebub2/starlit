@@ -1133,6 +1133,14 @@ private fun PlaybackSettingsSection(
                         onCheckedChange = PlayerSettingsRepository::setNvidiaRtxSuperResolutionEnabled,
                     )
                     SettingsGroupDivider(isTablet = isTablet)
+                    SettingsSwitchRow(
+                        title = stringResource(Res.string.settings_playback_nvidia_rtx_hdr),
+                        description = stringResource(Res.string.settings_playback_nvidia_rtx_hdr_desc),
+                        checked = autoPlayPlayerSettings.nvidiaRtxHdrEnabled,
+                        isTablet = isTablet,
+                        onCheckedChange = PlayerSettingsRepository::setNvidiaRtxHdrEnabled,
+                    )
+                    SettingsGroupDivider(isTablet = isTablet)
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
