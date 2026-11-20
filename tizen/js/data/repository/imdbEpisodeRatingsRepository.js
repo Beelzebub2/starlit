@@ -45,7 +45,8 @@ export function mapRatingsPayload(payload = []) {
       }
       seasons[seasonNumber].push({
         episode: episodeNumber,
-        rating: Number(ratingValue.toFixed(1))
+        rating: Number(ratingValue.toFixed(1)),
+        airDate: String(episodeEntry?.air_date || "").slice(0, 10)
       });
     });
   });
@@ -56,6 +57,66 @@ export function mapRatingsPayload(payload = []) {
   });
   return seasons;
 }
+function episodeDay(value) {
+  const date = String(value || "").slice(0, 10);
+  if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(date)) return null;
+  const day = Date.parse(date + "T00:00:00Z");
+  return Number.isFinite(day) ? Math.floor(day / 86400000) : null;
+}
+
+export function alignTvEpisodeRatings(addonEpisodes = [], externalSeasons = {}, today = Math.floor(Date.now() / 86400000)) {
+  const addon = addonEpisodes
+    .map((entry) => ({
+      season: Number(entry?.season),
+      episode: Number(entry?.episode),
+      day: episodeDay(entry?.released || entry?.releaseDate || entry?.airDate)
+    }))
+    .filter((entry) => Number.isInteger(entry.season) && entry.season > 0 && Number.isInteger(entry.episode) && entry.episode > 0)
+    .sort((a, b) => a.season - b.season || a.episode - b.episode);
+  const external = Object.entries(externalSeasons)
+    .flatMap(([season, entries]) => (Array.isArray(entries) ? entries : []).map((entry) => ({
+      season: Number(season),
+      episode: Number(entry?.episode),
+      day: episodeDay(entry?.airDate),
+      rating: entry?.rating
+    })))
+    .filter((entry) => Number.isInteger(entry.season) && entry.season > 0 && Number.isInteger(entry.episode) && entry.episode > 0)
+    .sort((a, b) => a.season - b.season || a.episode - b.episode);
+  if (!addon.length || !external.length) return externalSeasons;
+  const addonSeasons = [...new Set(addon.map((entry) => entry.season))].join(",");
+  const externalSeasonNumbers = [...new Set(external.map((entry) => entry.season))].join(",");
+  if (addonSeasons === externalSeasonNumbers) return externalSeasons;
+
+  const matches = [];
+  const addonAired = addon.filter((entry) => entry.day == null || entry.day <= today);
+  const externalAired = external.filter((entry) => entry.day == null || entry.day <= today);
+  if (addonAired.length === externalAired.length) {
+    addonAired.forEach((entry, i) => matches.push([entry, externalAired[i]]));
+  } else {
+    const used = new Set();
+    for (const entry of addon) {
+      if (entry.day == null || entry.day > today) continue;
+      const candidates = external.filter((other, i) =>
+        other.day != null && Math.abs(other.day - entry.day) <= 1 && !used.has(i));
+      if (candidates.length !== 1) continue;
+      const matchedIndex = external.indexOf(candidates[0]);
+      used.add(matchedIndex);
+      matches.push([entry, candidates[0]]);
+    }
+  }
+  if (!matches.length) return externalSeasons;
+  const mapped = {};
+  for (const [season, entries] of Object.entries(externalSeasons)) {
+    if (Number(season) === 0) mapped[season] = entries;
+  }
+  for (const [local, remote] of matches) {
+    if (!Array.isArray(mapped[local.season])) mapped[local.season] = [];
+    mapped[local.season].push({ episode: local.episode, rating: remote.rating });
+  }
+  for (const entries of Object.values(mapped)) entries.sort((a, b) => a.episode - b.episode);
+  return mapped;
+}
+
 function normalizeImdbId(value) {
   const normalized = String(value || "")
     .trim()
@@ -95,7 +156,7 @@ async function getSeasonRatingsById({ baseUrl, id, cacheKey }) {
   return request;
 }
 export const imdbEpisodeRatingsRepository = {
-  async getEpisodeRatings({ imdbId, tmdbId } = {}) {
+  async getEpisodeRatings({ imdbId, tmdbId, episodes = [] } = {}) {
     const normalizedImdbId = normalizeImdbId(imdbId);
     const normalizedTmdbId = normalizeTmdbId(tmdbId);
     if (!normalizedImdbId && !normalizedTmdbId) {
@@ -108,15 +169,16 @@ export const imdbEpisodeRatingsRepository = {
         cacheKey: `imdb:${normalizedImdbId}`
       });
       if (Object.keys(primary).length) {
-        return primary;
+        return alignTvEpisodeRatings(episodes, primary);
       }
     }
     if (normalizedTmdbId) {
-      return getSeasonRatingsById({
+      const fallback = await getSeasonRatingsById({
         baseUrl: IMDB_RATINGS_API_BASE_URL,
         id: normalizedTmdbId,
         cacheKey: `tmdb:${normalizedTmdbId}`
       });
+      return alignTvEpisodeRatings(episodes, fallback);
     }
     return {};
   },
