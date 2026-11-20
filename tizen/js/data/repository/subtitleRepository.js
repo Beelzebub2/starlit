@@ -139,6 +139,8 @@ class SubtitleRepository {
         id: subtitle.id || lang + "-" + this.makeDeterministicId(subtitle.url),
         url: subtitle.url,
         lang,
+        // A subtitle addon can provide a descriptive label separate from its language.
+        label: typeof subtitle.label === "string" ? subtitle.label.trim().slice(0, 160) : "",
         ...(headers ? { headers } : {}),
         addonName: addon.displayName,
         addonLogo: addon.logo
