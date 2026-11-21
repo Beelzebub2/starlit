@@ -3507,4 +3507,7 @@
     <string name="diagnostics_consent_usage">Diagnostica anonima</string>
     <string name="diagnostics_consent_usage_detail">L\'app viene avviata; Errori tecnici, avvisi ed esiti di riproduzione/download per versione dell\'app e piattaforma. Nessuna visita allo schermo o ID dispositivo persistente.</string>
     <string name="diagnostics_consent_privacy">Nessun titolo, ricerca, account, URL o registro non elaborato. Un token casuale temporaneo limita gli abusi; i registri vengono conservati fino a 30 giorni.</string>
+    <string name="addon_tracking_consent_title">Componente di tracciamento</string>
+    <string name="addon_tracking_consent_body">%1$s può ricevere le attività di riproduzione (avvio, pausa, arresto e posizione) e le modifiche alla libreria (aggiunto, rimosso, visto, non visto). Questi dati lasciano Starlit e vengono inviati al fornitore del componente.</string>
+    <string name="addon_tracking_consent_checkbox">Acconsento a condividere riproduzione e libreria con questo componente</string>
 </resources>
