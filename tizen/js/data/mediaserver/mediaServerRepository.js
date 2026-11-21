@@ -1,4 +1,5 @@
 import { mirrorWatchTargets, findServerEpisode } from "./serverWatchedMatcher.js";
+import { plexAuthorizedUrl } from "./plexMediaClient.js";
 import { serverUserState, projectServerUserState } from "./mediaServerUserState.js";
 import { MediaServerStore } from "./mediaServerStore.js";
 import {
@@ -85,6 +86,12 @@ function mediaType(item) {
       : "series";
 }
 function image(connection, item, type = "Primary", parentId = null) {
+  if (connection.providerId === "plex") {
+    const asset = type === "Backdrop" ? item.PlexBackdrop :
+      type === "Logo" ? item.PlexLogo : item.PlexPoster;
+    if (!asset) return null;
+    try { return plexAuthorizedUrl(connection, asset); } catch (_) { return null; }
+  }
   const tag = type === "Backdrop" ? item.BackdropImageTags?.[0] : item.ImageTags?.[type];
   const id = parentId || item.Id;
   if (!tag && !parentId) return null;
@@ -198,21 +205,28 @@ export const MediaServerRepository = {
     return this.connections(pid).find((entry) => entry.id === id);
   },
   async connect({ providerId, address, username, password, connectionId = null }) {
-    if (!["jellyfin", "emby"].includes(providerId)) throw new Error("servers_error_failed");
+    if (!["jellyfin", "emby", "plex"].includes(providerId)) throw new Error("servers_error_failed");
     const pid = profile();
     const normalized = normalizeMediaServerAddress(address, providerId);
     if (!normalized) throw new Error("servers_error_address");
-    const draft = { address: normalized, providerId };
+    const isPlex = providerId === "plex";
+    const draft = { address: normalized, providerId, ...(isPlex ? { token: String(password || "").trim() } : {}) };
+    if (isPlex && !draft.token) throw new Error("servers_error_auth");
     const info = await mediaServerRequest(draft, "/System/Info/Public", { publicInfo: true });
     if (
       !isSupportedServerVersion(providerId, info?.Version) ||
       (providerId === "emby" && /jellyfin/i.test(info?.ProductName || ""))
     )
       throw new Error("servers_error_unsupported");
-    const auth = await mediaServerRequest(draft, "/Users/AuthenticateByName", {
-      method: "POST",
-      body: { Username: username, Pw: password }
-    });
+    const auth = isPlex
+      ? { AccessToken: draft.token, ServerId: info.Id, User: {
+          Id: String(username || "plex-user").trim() || "plex-user",
+          Name: String(username || "Plex").trim() || "Plex"
+        } }
+      : await mediaServerRequest(draft, "/Users/AuthenticateByName", {
+          method: "POST",
+          body: { Username: username, Pw: password }
+        });
     if (!auth?.AccessToken || !auth.User?.Id) throw new Error("servers_error_auth");
     const id =
       connectionId ||
@@ -714,7 +728,9 @@ export const MediaServerRepository = {
     if (!source) return { status: "unavailable" };
     let url, playMethod;
     if (source.SupportsDirectPlay && allowDirectPlay) {
-      url = mediaServerUrl(connection, `/Videos/${key(target.itemId)}/stream`, {
+      url = connection.providerId === "plex" && source.PlexDirectUrl
+        ? source.PlexDirectUrl
+        : mediaServerUrl(connection, `/Videos/${key(target.itemId)}/stream`, {
         static: true,
         mediaSourceId: source.Id,
         playSessionId: info.PlaySessionId,
@@ -726,7 +742,7 @@ export const MediaServerRepository = {
     } else if (source.TranscodingUrl) {
       url = new URL(mediaServerAssetUrl(connection, source.TranscodingUrl));
       if (url.origin === new URL(connection.address).origin)
-        url.searchParams.set("api_key", connection.token);
+        url.searchParams.set(connection.providerId === "plex" ? "X-Plex-Token" : "api_key", connection.token);
       url = url.toString();
       playMethod = source.SupportsDirectStream ? "DirectStream" : "Transcode";
     } else return { status: "unavailable" };
@@ -740,7 +756,8 @@ export const MediaServerRepository = {
       .map((entry) => {
         const url = new URL(mediaServerAssetUrl(connection, entry.DeliveryUrl));
         const sameOrigin = url.origin === new URL(connection.address).origin;
-        if (sameOrigin) url.searchParams.set("api_key", connection.token);
+        if (sameOrigin)
+          url.searchParams.set(connection.providerId === "plex" ? "X-Plex-Token" : "api_key", connection.token);
         return {
           id: `server-sub-${entry.Index}`,
           url: url.toString(),
