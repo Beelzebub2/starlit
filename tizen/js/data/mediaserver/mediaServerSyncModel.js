@@ -36,7 +36,7 @@ export function parseSyncedServers(rows) {
   for (const raw of rows[0].servers_json) {
     const providerId = typeof raw?.provider_id === "string" ? raw.provider_id.trim() : "";
     if (!providerId) throw new Error("Invalid media server sync payload");
-    if (!["jellyfin", "emby"].includes(providerId)) {
+    if (!["jellyfin", "emby", "plex"].includes(providerId)) {
       preserved.push(raw);
       continue;
     }
