@@ -3473,4 +3473,7 @@
     <string name="diagnostics_consent_usage">Анонімна діагностика</string>
     <string name="diagnostics_consent_usage_detail">Запуски застосунку; Технічні помилки, попередження і результати відтворення та завантажень за версією і платформою. Без відвіданих екранів та постійного ID.</string>
     <string name="diagnostics_consent_privacy">Без назв, пошуків, облікових записів, URL чи сирих журналів. Тимчасовий токен захищає від зловживань; зберігання до 30 днів.</string>
+    <string name="addon_tracking_consent_title">Додаток відстеження</string>
+    <string name="addon_tracking_consent_body">%1$s може отримувати дані про відтворення (запуск, пауза, зупинка та позиція) і зміни бібліотеки (додано, видалено, переглянуто, не переглянуто). Інформація надсилається зі Starlit постачальнику додатка.</string>
+    <string name="addon_tracking_consent_checkbox">Погоджуюся ділитися відтворенням і бібліотекою з цим додатком</string>
 </resources>

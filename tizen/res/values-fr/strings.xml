@@ -3474,4 +3474,7 @@
     <string name="diagnostics_consent_usage">Diagnostics anonymes</string>
     <string name="diagnostics_consent_usage_detail">Lancement de l\'application ; Erreurs techniques, avertissements et résultats de lecture/téléchargement par version de l\'application et plate-forme. Aucune visite d\'écran ni identifiant d\'appareil persistant.</string>
     <string name="diagnostics_consent_privacy">Aucun titre, recherche, compte, URL ou journal brut. Un jeton aléatoire temporaire limite les abus ; les enregistrements sont conservés jusqu’à 30 jours.</string>
+    <string name="addon_tracking_consent_title">Extension de suivi</string>
+    <string name="addon_tracking_consent_body">%1$s peut recevoir vos actions de lecture (lancer, pause, arrêt et position) ainsi que les modifications de votre bibliothèque (ajout, retrait, vu, non vu). Ces données quittent Starlit et sont transmises au fournisseur de l’extension.</string>
+    <string name="addon_tracking_consent_checkbox">J’accepte de partager mon activité de lecture et ma bibliothèque avec cette extension</string>
 </resources>

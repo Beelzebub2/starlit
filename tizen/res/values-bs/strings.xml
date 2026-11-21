@@ -3471,4 +3471,7 @@
     <string name="diagnostics_consent_usage">Anonimna dijagnostika</string>
     <string name="diagnostics_consent_usage_detail">Pokretanja aplikacije, tehničke greške, upozorenja i ishodi reprodukcije po verziji aplikacije i platformi. Bez praćenja posjećenih ekrana ili trajnog ID-a uređaja.</string>
     <string name="diagnostics_consent_privacy">Bez naslova, pretraga, računa, URL-ova ili izvornih zapisa. Privremeni nasumični token ograničava zloupotrebu; podaci se čuvaju do 30 dana.</string>
+    <string name="addon_tracking_consent_title">Dodatak za praćenje</string>
+    <string name="addon_tracking_consent_body">%1$s može primati podatke o reprodukciji (pokretanje, pauza, zaustavljanje i položaj) i promjenama biblioteke (dodavanje, uklanjanje, gledano i negledano). Ti podaci izlaze iz Starlita i šalju se pružaocu dodatka.</string>
+    <string name="addon_tracking_consent_checkbox">Pristajem dijeliti aktivnost gledanja i biblioteku s ovim dodatkom.</string>
 </resources>

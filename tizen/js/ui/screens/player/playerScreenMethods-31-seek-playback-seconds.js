@@ -1,6 +1,7 @@
 import { syncHtmlSubtitleClearance } from "./subtitleOverlayClearance.js";
 /* eslint-disable no-unused-vars */
 import * as internals from "./playerScreenContext.js";
+import { TrackingScrobbleService } from "../../../data/repository/trackingScrobbleService.js";
 export function createPlayerScreenMethods31() {
   const { PlayerController, PlayerSettingsStore, t, escapeHtml, formatNextEpisodeAirDate } = internals;
   return {
@@ -37,6 +38,7 @@ export function createPlayerScreenMethods31() {
           this.clearSeekLoading();
         } else {
           this.startSeekLoadingWatchdog();
+          TrackingScrobbleService.seeked(() => this.buildScrobbleContext());
         }
         return didSeek;
       }
@@ -46,6 +48,7 @@ export function createPlayerScreenMethods31() {
         return false;
       }
       video.currentTime = Number(seconds || 0);
+      TrackingScrobbleService.seeked(() => this.buildScrobbleContext());
       return true;
     },
     finalizePendingPlaybackRestore(restore = this.pendingPlaybackRestore) {

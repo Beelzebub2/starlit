@@ -3471,4 +3471,7 @@
     <string name="diagnostics_consent_usage">Diagnostik anonim</string>
     <string name="diagnostics_consent_usage_detail">Aplikasi diluncurkan; Kesalahan teknis, peringatan, dan hasil pemutaran/pengunduhan berdasarkan versi dan platform aplikasi. Tidak ada kunjungan layar atau ID perangkat tetap.</string>
     <string name="diagnostics_consent_privacy">Tidak ada judul, pencarian, akun, URL, atau log mentah. Token acak sementara membatasi penyalahgunaan; catatan disimpan hingga 30 hari.</string>
+    <string name="addon_tracking_consent_title">Addon pelacakan</string>
+    <string name="addon_tracking_consent_body">%1$s dapat menerima aktivitas pemutaran (putar, jeda, berhenti, dan posisi) serta perubahan pustaka (ditambahkan, dihapus, ditonton, belum ditonton). Informasi ini dikirim keluar dari Starlit ke penyedia addon.</string>
+    <string name="addon_tracking_consent_checkbox">Saya setuju membagikan aktivitas pemutaran dan pustaka kepada addon ini</string>
 </resources>

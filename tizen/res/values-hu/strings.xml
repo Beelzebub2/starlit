@@ -3470,4 +3470,7 @@
     <string name="diagnostics_consent_usage">Névtelen diagnosztika</string>
     <string name="diagnostics_consent_usage_detail">Alkalmazás indul; Technikai hibák, figyelmeztetések és lejátszási/letöltési eredmények alkalmazásverzió és platform szerint. Nincs képernyőlátogatás vagy állandó eszközazonosító.</string>
     <string name="diagnostics_consent_privacy">Nincsenek címek, keresések, fiókok, URL-ek vagy nyers naplók. Egy ideiglenes véletlenszerű token korlátozza a visszaélést; a feljegyzéseket 30 napig megőrzik.</string>
+    <string name="addon_tracking_consent_title">Követési bővítmény</string>
+    <string name="addon_tracking_consent_body">A(z) %1$s fogadhatja a lejátszási műveleteket (indítás, szünet, leállítás és pozíció), valamint a könyvtár változásait (hozzáadás, eltávolítás, megtekintett, nem látott). Az adatok elhagyják a Starlitot, és a bővítmény szolgáltatójához kerülnek.</string>
+    <string name="addon_tracking_consent_checkbox">Hozzájárulok a lejátszási és könyvtári tevékenységeim megosztásához</string>
 </resources>

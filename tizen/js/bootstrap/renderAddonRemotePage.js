@@ -7,6 +7,8 @@ import { LibrarySyncService } from "../core/profile/librarySyncService.js";
 import { ProfileSettingsSyncService } from "../core/profile/profileSettingsSyncService.js";
 import { HomeCatalogSettingsSyncService } from "../core/profile/homeCatalogSettingsSyncService.js";
 import { I18n } from "../i18n/index.js";
+import { ProfileManager } from "../core/profile/profileManager.js";
+import { isTrackingAddon } from "../data/repository/addonEventDispatcher.js";
 function escapeHtml(value) {
   return String(value ?? "")
     .replaceAll("&", "&amp;")
@@ -121,6 +123,15 @@ function createShell() {
         .addon-remote-input::placeholder {
           color: rgba(255, 255, 255, 0.28);
         }
+        .addon-remote-consent {
+          margin-top: 12px;
+          padding: 14px;
+          border: 1px solid rgba(255, 255, 255, 0.18);
+          border-radius: 12px;
+          background: rgba(255, 255, 255, 0.04);
+        }
+        .addon-remote-consent-body { margin: 6px 0 10px; line-height: 1.45; opacity: .85; }
+        .addon-remote-consent-check { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 12px; }
         .addon-remote-error {
           min-height: 20px;
           margin-top: 10px;
@@ -236,6 +247,10 @@ const AddonRemotePage = {
     this.isSaving = false;
     this.isBootstrapping = true;
     this.authReady = false;
+    this.activeConsentProfileId = String(ProfileManager.getActiveProfileId() || "1");
+    this.trackingApprovedUrls = new Set(addonRepository.trackingConsentUrls());
+    this.pendingTrackingAddon = null;
+    this.trackingConsentChecked = false;
     this.catalogPrefs = clonePrefs(HomeCatalogStore.get());
     this.savedState = { urls: [], order: [], disabled: [] };
     this.draftAddons = [];
@@ -253,6 +268,10 @@ const AddonRemotePage = {
   buildCurrentState() {
     return {
       urls: this.draftAddons.map((addon) => addon.baseUrl),
+      trackingConsents: this.draftAddons
+        .filter((addon) => isTrackingAddon(addon) &&
+          this.trackingApprovedUrls.has(addon.baseUrl))
+        .map((addon) => addon.baseUrl).sort(),
       order: this.catalogItems.map((item) => item.key),
       disabled: this.catalogItems.filter((item) => item.isDisabled).map((item) => item.disableKey)
     };
@@ -279,6 +298,9 @@ const AddonRemotePage = {
     this.isBootstrapping = true;
     this.render();
     this.draftAddons = await addonRepository.getInstalledAddons({ includeDisabled: true });
+    this.activeConsentProfileId = String(ProfileManager.getActiveProfileId() || "1");
+    this.trackingApprovedUrls = new Set(addonRepository.trackingConsentUrls());
+    this.pendingTrackingAddon = null;
     this.collections = CollectionsStore.get();
     this.catalogPrefs = clonePrefs(HomeCatalogStore.get());
     this.rebuildCatalogItems();
@@ -307,10 +329,39 @@ const AddonRemotePage = {
       this.render();
       return;
     }
-    this.draftAddons = [...this.draftAddons, result.data];
+    if (isTrackingAddon(result.data) && !this.trackingApprovedUrls.has(result.data.baseUrl)) {
+      this.pendingTrackingAddon = result.data;
+      this.trackingConsentChecked = false;
+      this.render();
+      return;
+    }
+    this.acceptAddon(result.data);
+  },
+  acceptAddon(addon) {
+    if (!this.draftAddons.some((entry) => entry.baseUrl === addon.baseUrl)) {
+      this.draftAddons = [...this.draftAddons, addon];
+    }
     this.addonDraft = "";
     this.rebuildCatalogItems();
     this.render();
+  },
+  renderTrackingConsent() {
+    const addon = this.pendingTrackingAddon;
+    if (!addon) return "";
+    const name = addon.displayName || addon.name || addon.baseUrl || "";
+    return `
+        <div class="addon-remote-consent" role="dialog" aria-modal="true">
+          <p class="addon-remote-label">${escapeHtml(I18n.t("addon_tracking_consent_title"))}</p>
+          <p class="addon-remote-consent-body">${escapeHtml(I18n.t("addon_tracking_consent_body", [name]))}</p>
+          <label class="addon-remote-consent-check">
+            <input type="checkbox" data-action="tracking-consent" ${this.trackingConsentChecked ? "checked" : ""} />
+            <span>${escapeHtml(I18n.t("addon_tracking_consent_checkbox"))}</span>
+          </label>
+          <div class="addon-remote-add">
+            <button class="addon-remote-btn" data-action="tracking-cancel">${escapeHtml(I18n.t("action_cancel"))}</button>
+            <button class="addon-remote-btn" data-action="tracking-install" ${this.trackingConsentChecked ? "" : "disabled"}>${escapeHtml(I18n.t("addon_install_btn"))}</button>
+          </div>
+        </div>`;
   },
   moveAddon(index, delta) {
     const nextIndex = index + delta;
@@ -328,7 +379,9 @@ const AddonRemotePage = {
     if (index < 0 || index >= this.draftAddons.length) {
       return;
     }
+    const removed = this.draftAddons[index];
     this.draftAddons = this.draftAddons.filter((_, currentIndex) => currentIndex !== index);
+    this.trackingApprovedUrls.delete(removed?.baseUrl);
     this.rebuildCatalogItems();
     this.render();
   },
@@ -359,6 +412,11 @@ const AddonRemotePage = {
     if (this.isSaving || !this.isDirty()) {
       return;
     }
+    if (this.activeConsentProfileId !== String(ProfileManager.getActiveProfileId() || "1")) {
+      this.statusMessage = I18n.t("addon_remote_save_failed");
+      this.render();
+      return;
+    }
     this.isSaving = true;
     this.statusMessage = "";
     this.render();
@@ -367,6 +425,13 @@ const AddonRemotePage = {
       // This page pushes immediately below. Avoid scheduling the same payload
       // through StartupSyncService's Android-compatible 500 ms change queue.
       await addonRepository.setAddonOrder(addonUrls, { silent: true });
+      const authorized = new Set(this.draftAddons
+        .filter((addon) => isTrackingAddon(addon) && this.trackingApprovedUrls.has(addon.baseUrl))
+        .map((addon) => addon.baseUrl));
+      for (const previouslyConsented of addonRepository.trackingConsentUrls()) {
+        if (!authorized.has(previouslyConsented)) addonRepository.revokeTrackingConsent(previouslyConsented);
+      }
+      for (const url of authorized) addonRepository.grantTrackingConsent(url);
       HomeCatalogStore.setOrder(this.catalogPrefs.order);
       HomeCatalogStore.set({ disabled: this.catalogPrefs.disabled });
       if (AuthManager.isAuthenticated) {
@@ -402,6 +467,41 @@ const AddonRemotePage = {
     });
     this.root.querySelector("[data-action='add']")?.addEventListener("click", async () => {
       await this.addAddon();
+    });
+    this.root.querySelector("[data-action='tracking-consent']")?.addEventListener("change", (event) => {
+      this.trackingConsentChecked = Boolean(event.target?.checked);
+      // Only update the confirmation button. Rebuilding the checkbox during
+      // keyboard interaction would steal focus from the user.
+      const confirm = this.root.querySelector("[data-action='tracking-install']");
+      if (confirm) confirm.disabled = !this.trackingConsentChecked;
+    });
+    this.root.querySelector("[data-action='tracking-cancel']")?.addEventListener("click", () => {
+      this.pendingTrackingAddon = null;
+      this.trackingConsentChecked = false;
+      this.render();
+    });
+    this.root.querySelector("[data-action='tracking-install']")?.addEventListener("click", () => {
+      const addon = this.pendingTrackingAddon;
+      if (!addon || !this.trackingConsentChecked) return;
+      if (this.activeConsentProfileId !== String(ProfileManager.getActiveProfileId() || "1")) return;
+      this.trackingApprovedUrls.add(addon.baseUrl);
+      this.pendingTrackingAddon = null;
+      this.trackingConsentChecked = false;
+      this.acceptAddon(addon);
+    });
+    this.root.querySelectorAll("[data-tracking-permission]").forEach((node) => {
+      node.addEventListener("click", () => {
+        const addon = this.draftAddons[Number(node.dataset.trackingPermission)];
+        if (!addon || !isTrackingAddon(addon)) return;
+        if (this.trackingApprovedUrls.has(addon.baseUrl)) {
+          this.trackingApprovedUrls.delete(addon.baseUrl);
+          this.render();
+        } else {
+          this.pendingTrackingAddon = addon;
+          this.trackingConsentChecked = false;
+          this.render();
+        }
+      });
     });
     this.root.querySelector("[data-action='save']")?.addEventListener("click", async () => {
       await this.saveChanges();
@@ -461,6 +561,7 @@ const AddonRemotePage = {
               ${addon.description ? `<span>${escapeHtml(addon.description)}</span>` : ""}
             </div>
             <div class="addon-remote-actions">
+              ${isTrackingAddon(addon) ? `<button class="addon-remote-btn" data-tracking-permission="${index}">${escapeHtml(I18n.t(this.trackingApprovedUrls.has(addon.baseUrl) ? "addon_remote_disable" : "addon_remote_enable"))}</button>` : ""}
               <button class="addon-remote-btn addon-remote-btn-danger" data-addon-remove="${index}">${I18n.t("addon_remote_remove")}</button>
             </div>
           </article>
@@ -509,6 +610,7 @@ const AddonRemotePage = {
           <button class="addon-remote-btn" data-action="add">${I18n.t("addon_remote_add")}</button>
         </div>
         <div class="addon-remote-error">${escapeHtml(this.addError)}</div>
+        ${this.renderTrackingConsent()}
       </section>
       <section class="addon-remote-section">
         <p class="addon-remote-label">${I18n.t("addon_remote_installed_addons")}</p>

@@ -3478,4 +3478,7 @@
     <string name="diagnostics_consent_usage">বেনামী ডায়াগনস্টিকস</string>
     <string name="diagnostics_consent_usage_detail">অ্যাপ চালু হয়েছে; অ্যাপ সংস্করণ এবং প্ল্যাটফর্ম দ্বারা প্রযুক্তিগত ত্রুটি, সতর্কতা এবং প্লেব্যাক/ডাউনলোড ফলাফল। কোনো স্ক্রিন ভিজিট বা ক্রমাগত ডিভাইস আইডি নেই।</string>
     <string name="diagnostics_consent_privacy">কোনো শিরোনাম, অনুসন্ধান, অ্যাকাউন্ট, URL বা কাঁচা লগ নেই৷ একটি অস্থায়ী র্যান্ডম টোকেন অপব্যবহার সীমাবদ্ধ করে; রেকর্ড 30 দিন পর্যন্ত রাখা হয়।</string>
+    <string name="addon_tracking_consent_title">ট্র্যাকিং অ্যাডঅন</string>
+    <string name="addon_tracking_consent_body">%1$s আপনার প্লেব্যাকের কাজ (চালানো, বিরতি, বন্ধ এবং অবস্থান) ও লাইব্রেরির পরিবর্তন (যোগ, অপসারণ, দেখা ও না-দেখা) পেতে পারে। এই তথ্য Starlit ছেড়ে অ্যাডঅন সরবরাহকারীর কাছে যায়।</string>
+    <string name="addon_tracking_consent_checkbox">এই অ্যাডঅনের সঙ্গে প্লেব্যাক ও লাইব্রেরির কার্যকলাপ ভাগ করতে সম্মত</string>
 </resources>

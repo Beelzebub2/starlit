@@ -3474,4 +3474,7 @@
     <string name="diagnostics_consent_usage">匿名诊断</string>
     <string name="diagnostics_consent_usage_detail">应用启动；按应用版本和平台统计技术错误、警告、播放及下载结果。不记录页面访问或永久设备标识。</string>
     <string name="diagnostics_consent_privacy">不收集片名、搜索词、账号、网址或原始日志。临时令牌仅用于防滥用；数据最多保留30天。</string>
+    <string name="addon_tracking_consent_title">追踪扩展</string>
+    <string name="addon_tracking_consent_body">%1$s 可以接收播放操作（开始、暂停、停止和进度）与媒体库更改（添加、移除、已观看、未观看）。这些信息将离开 Starlit 并发送给扩展提供者。</string>
+    <string name="addon_tracking_consent_checkbox">我同意向此扩展分享播放和媒体库活动</string>
 </resources>
