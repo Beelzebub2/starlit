@@ -3468,4 +3468,5 @@
     <string name="diagnostics_consent_usage">Anonimna dijagnostika</string>
     <string name="diagnostics_consent_usage_detail">Pokretanja aplikacije, tehničke pogreške, upozorenja i ishodi reprodukcije prema verziji aplikacije i platformi. Bez praćenja posjećenih zaslona ili trajnog ID-a uređaja.</string>
     <string name="diagnostics_consent_privacy">Bez naslova, pretraga, računa, URL-ova ili izvornih zapisnika. Privremeni nasumični token ograničava zlouporabu; podaci se čuvaju do 30 dana.</string>
+    <string name="servers_plex_token">Plex pristupni token</string>
 </resources>
