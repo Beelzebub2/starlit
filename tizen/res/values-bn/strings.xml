@@ -3478,4 +3478,5 @@
     <string name="diagnostics_consent_usage">বেনামী ডায়াগনস্টিকস</string>
     <string name="diagnostics_consent_usage_detail">অ্যাপ চালু হয়েছে; অ্যাপ সংস্করণ এবং প্ল্যাটফর্ম দ্বারা প্রযুক্তিগত ত্রুটি, সতর্কতা এবং প্লেব্যাক/ডাউনলোড ফলাফল। কোনো স্ক্রিন ভিজিট বা ক্রমাগত ডিভাইস আইডি নেই।</string>
     <string name="diagnostics_consent_privacy">কোনো শিরোনাম, অনুসন্ধান, অ্যাকাউন্ট, URL বা কাঁচা লগ নেই৷ একটি অস্থায়ী র্যান্ডম টোকেন অপব্যবহার সীমাবদ্ধ করে; রেকর্ড 30 দিন পর্যন্ত রাখা হয়।</string>
+    <string name="servers_plex_token">Plex অ্যাক্সেস টোকেন</string>
 </resources>
