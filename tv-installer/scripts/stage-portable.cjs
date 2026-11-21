@@ -4,7 +4,7 @@ const path = require("node:path");
 const { createHash } = require("node:crypto");
 
 const PLATFORMS = Object.freeze({
-  linux: Object.freeze({ label: "Linux", suffixes: [".AppImage", ".tar.gz"], arch: ["x64", "arm64"] }),
+  linux: Object.freeze({ label: "Linux", suffixes: [".AppImage", ".tar.gz"], arch: ["x64", "x86_64", "arm64", "aarch64"] }),
   mac: Object.freeze({ label: "macOS", suffixes: [".zip"], arch: ["x64", "arm64"] })
 });
 
