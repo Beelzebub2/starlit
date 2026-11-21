@@ -91,16 +91,19 @@ const MAX_PENDING_PER_ADDON = 64;
 
 async function send(url) {
   const controller = typeof AbortController === "function" ? new AbortController() : null;
-  const timer = setTimeout(() => controller?.abort(), EVENT_TIMEOUT_MS);
+  let timer = null;
   try {
-    await Promise.race([
-      fetch(url, { method: "GET", signal: controller?.signal }),
-      new Promise((_, reject) => setTimeout(() => reject(new Error("Tracking delivery timeout")), EVENT_TIMEOUT_MS)),
-    ]);
+    const timeout = new Promise((_, reject) => {
+      timer = setTimeout(() => {
+        controller?.abort();
+        reject(new Error("Tracking delivery timeout"));
+      }, EVENT_TIMEOUT_MS);
+    });
+    await Promise.race([fetch(url, { method: "GET", signal: controller?.signal }), timeout]);
   } catch (error) {
     console.warn("Addon tracking event failed", error?.message || error);
   } finally {
-    clearTimeout(timer);
+    if (timer !== null) clearTimeout(timer);
   }
 }
 
