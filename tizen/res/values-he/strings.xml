@@ -3479,4 +3479,5 @@
     <string name="diagnostics_consent_usage">אבחון אנונימי</string>
     <string name="diagnostics_consent_usage_detail">השקות אפליקציה; שגיאות טכניות, אזהרות ותוצאות השמעה/הורדה לפי גרסת אפליקציה ופלטפורמה. אין ביקורים במסך או מזהה מכשיר קבוע.</string>
     <string name="diagnostics_consent_privacy">אין כותרות, חיפושים, חשבונות, כתובות URL או יומנים גולמיים. אסימון אקראי זמני מגביל שימוש לרעה; הרישומים נשמרים עד 30 יום.</string>
+    <string name="servers_plex_token">אסימון גישה ל-Plex</string>
 </resources>
