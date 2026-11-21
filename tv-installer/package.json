@@ -39,8 +39,7 @@
       "src/**/*",
       "build/icon.ico",
       "installer.config.json",
-      "package.json",
-      "build/icon.png"
+      "package.json"
     ],
     "win": {
       "icon": "build/icon.ico",
@@ -62,7 +61,8 @@
       "target": [
         "zip"
       ],
-      "artifactName": "Starlit-TV-Installer-macOS-${arch}-${version}.${ext}"
+      "artifactName": "Starlit-TV-Installer-macOS-${arch}-${version}.${ext}",
+      "icon": "../composeApp/src/commonMain/composeResources/drawable/app_icon_original.png"
     },
     "linux": {
       "category": "Utility",
@@ -71,7 +71,7 @@
         "tar.gz"
       ],
       "artifactName": "Starlit-TV-Installer-Linux-${arch}-${version}.${ext}",
-      "icon": "build/icon.png"
+      "icon": "../composeApp/src/commonMain/composeResources/drawable/app_icon_original.png"
     }
   },
   "bin": {
