@@ -3490,4 +3490,5 @@
     <string name="diagnostics_consent_usage">Diagnósticos anônimos</string>
     <string name="diagnostics_consent_usage_detail">Aberturas do app; Erros técnicos, alertas e resultados de reprodução e downloads por versão e plataforma. Sem rastrear telas ou ID persistente.</string>
     <string name="diagnostics_consent_privacy">Sem títulos, pesquisas, contas, URLs ou logs brutos. Um token temporário limita abusos; os dados são mantidos por até 30 dias.</string>
+    <string name="servers_plex_token">Token de acesso do Plex</string>
 </resources>
