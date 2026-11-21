@@ -3473,4 +3473,5 @@
     <string name="diagnostics_consent_usage">Анонімна діагностика</string>
     <string name="diagnostics_consent_usage_detail">Запуски застосунку; Технічні помилки, попередження і результати відтворення та завантажень за версією і платформою. Без відвіданих екранів та постійного ID.</string>
     <string name="diagnostics_consent_privacy">Без назв, пошуків, облікових записів, URL чи сирих журналів. Тимчасовий токен захищає від зловживань; зберігання до 30 днів.</string>
+    <string name="servers_plex_token">Токен доступу Plex</string>
 </resources>
