@@ -181,6 +181,13 @@ fun LibraryScreen(
     var selectedCloudItemKey by rememberSaveable { mutableStateOf<String?>(null) }
     var selectedLibrarySectionKey by rememberSaveable { mutableStateOf<String?>(null) }
     var selectedLibraryType by rememberSaveable { mutableStateOf<String?>(null) }
+    val libraryFilterProfile = ProfileRepository.activeProfileId
+    var selectedLibraryGenre by rememberSaveable(libraryFilterProfile) { mutableStateOf<String?>(null) }
+    var selectedLibraryYear by rememberSaveable(libraryFilterProfile) { mutableStateOf<String?>(null) }
+    var selectedLibraryWatched by rememberSaveable(libraryFilterProfile) { mutableStateOf(LibraryWatchedFilter.ALL.name) }
+    val watchedFilter = remember(selectedLibraryWatched) {
+        LibraryWatchedFilter.entries.firstOrNull { it.name == selectedLibraryWatched } ?: LibraryWatchedFilter.ALL
+    }
     var librarySearchQuery by rememberSaveable { mutableStateOf("") }
     val coroutineScope = rememberCoroutineScope()
     val listState = rememberLazyListState()
@@ -216,6 +223,11 @@ fun LibraryScreen(
         uiState.sourceMode,
         selectedLibrarySectionKey,
         selectedLibraryType,
+        selectedLibraryGenre,
+        selectedLibraryYear,
+        watchedFilter,
+        watchedUiState.watchedKeys,
+        fullyWatchedSeriesKeys,
         displaySettings,
         sourceMode,
         providerOrders,
@@ -228,6 +240,16 @@ fun LibraryScreen(
                 selectedType = selectedLibraryType,
                 sortOption = visibleSortOption,
                 providerOrders = providerOrders.ranks,
+                selectedGenre = selectedLibraryGenre,
+                selectedYear = selectedLibraryYear,
+                watchedFilter = watchedFilter,
+                isWatched = { item ->
+                    WatchingState.isPosterWatched(
+                        watchedKeys = watchedUiState.watchedKeys,
+                        item = item.toMetaPreview(),
+                        fullyWatchedSeriesKeys = fullyWatchedSeriesKeys,
+                    )
+                },
             )
         } else {
             LibraryVerticalProjection(
@@ -477,6 +499,16 @@ fun LibraryScreen(
                                 ),
                                 modifier = Modifier.padding(horizontal = libraryPageInset()).padding(top = 4.dp, bottom = 10.dp),
                             )
+                            if (savedReady && isGridLayout) {
+                                LibraryFacetControls(
+                                    projection = verticalProjection,
+                                    watchedFilter = watchedFilter,
+                                    onGenreSelected = { selectedLibraryGenre = it },
+                                    onYearSelected = { selectedLibraryYear = it },
+                                    onWatchedFilterSelected = { selectedLibraryWatched = it.name },
+                                    modifier = Modifier.padding(horizontal = libraryPageInset()).padding(bottom = 10.dp),
+                                )
+                            }
                         } else {
                             LibrarySourceSwitch(
                                 selectedMode = sourceMode,
@@ -606,6 +638,10 @@ fun LibraryScreen(
                                 },
                                 onTypeSelected = { type -> selectedLibraryType = type },
                                 onSortSelected = LibraryDisplaySettingsRepository::setSortOption,
+                                watchedFilter = watchedFilter,
+                                onGenreSelected = { selectedLibraryGenre = it },
+                                onYearSelected = { selectedLibraryYear = it },
+                                onWatchedFilterSelected = { selectedLibraryWatched = it.name },
                                 modifier = libraryContentTransitionModifier()
                                     .padding(horizontal = libraryPageInset()),
                             )

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="library_filter_genre">类型</string>
+    <string name="library_filter_year">年份</string>
+    <string name="library_filter_watched">观看状态</string>
+    <string name="library_filter_all">全部</string>
+    <string name="library_watched_filter_watched">已观看</string>
+    <string name="library_watched_filter_unwatched">未观看</string>
+</resources>

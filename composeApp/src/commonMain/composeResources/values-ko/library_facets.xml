@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="library_filter_genre">장르</string>
+    <string name="library_filter_year">연도</string>
+    <string name="library_filter_watched">시청 여부</string>
+    <string name="library_filter_all">전체</string>
+    <string name="library_watched_filter_watched">시청함</string>
+    <string name="library_watched_filter_unwatched">시청 안 함</string>
+</resources>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="library_filter_genre">வகை</string>
+    <string name="library_filter_year">ஆண்டு</string>
+    <string name="library_filter_watched">பார்த்தவை</string>
+    <string name="library_filter_all">அனைத்தும்</string>
+    <string name="library_watched_filter_watched">பார்த்தவை</string>
+    <string name="library_watched_filter_unwatched">பார்க்காதவை</string>
+</resources>
