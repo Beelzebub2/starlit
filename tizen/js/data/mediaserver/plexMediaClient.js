@@ -210,8 +210,7 @@ export async function plexCompatRequest(connection, rawPath, options = {}) {
   }
   if (/^\/Items\/[^/]+\/PlaybackInfo$/.test(path)) {
     const itemId = idFromPath(path, "/Items/");
-    const entry = await plexCompatRequest(connection, "/Items/" + segment(itemId), options);
-    const item = entry?.Items?.[0];
+    const item = await plexCompatRequest(connection, "/Items/" + segment(itemId), options);
     if (!item) throw new Error("servers_error_failed");
     const baseQuery = {
       path: "/library/metadata/" + itemId,
