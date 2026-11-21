@@ -3479,4 +3479,5 @@ Du bruker denne funksjonen helt på eget ansvar. P2P kan deaktiveres når som he
     <string name="diagnostics_consent_usage">Anonym diagnostikk</string>
     <string name="diagnostics_consent_usage_detail">App lanseres; Tekniske feil, advarsler og resultater for avspilling/nedlasting etter appversjon og plattform. Ingen skjermbesøk eller vedvarende enhets-ID.</string>
     <string name="diagnostics_consent_privacy">Ingen titler, søk, kontoer, URL-er eller rålogger. Et midlertidig tilfeldig token begrenser misbruk; journaler oppbevares i opptil 30 dager.</string>
+    <string name="servers_plex_token">Plex-tilgangstoken</string>
 </resources>
