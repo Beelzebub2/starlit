@@ -3473,4 +3473,5 @@
     <string name="diagnostics_consent_usage">Anonym diagnosticering</string>
     <string name="diagnostics_consent_usage_detail">Appstarter, tekniske fejl, advarsler og afspilningsresultater efter appversion og platform. Ingen registrering af besøgte skærme eller permanent enheds-id.</string>
     <string name="diagnostics_consent_privacy">Ingen titler, søgninger, konti, URL-adresser eller rå logfiler. En midlertidig tilfældig token begrænser misbrug; oplysninger opbevares i op til 30 dage.</string>
+    <string name="servers_plex_token">Plex-adgangstoken</string>
 </resources>
