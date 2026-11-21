@@ -1,4 +1,5 @@
 import { LocalStore } from "../../core/storage/localStore.js";
+import { plexCompatRequest } from "./plexMediaClient.js";
 export function normalizeMediaServerAddress(value, provider) {
   try {
     const url = new URL(String(value).trim());
@@ -12,6 +13,7 @@ export function normalizeMediaServerAddress(value, provider) {
       return null;
     let base = url.toString().replace(/\/+$/, "");
     if (provider === "emby") base = base.replace(/\/emby$/i, "");
+    if (provider === "plex") base = base.replace(/\/web$/i, "");
     return base;
   } catch (_) {
     return null;
@@ -37,6 +39,9 @@ export function mediaServerUrl(connection, path, query = {}) {
   return url.toString();
 }
 export function mediaServerHeaders(connection) {
+  if (connection.providerId === "plex") {
+    return { "X-Plex-Token": String(connection.token || "").replace(/[\r\n]/g, "") };
+  }
   const safe = (value) => String(value || "").replace(/["\r\n\\]/g, "");
   const auth = `MediaBrowser Client="Nuvio", Device="Smart TV", DeviceId="${safe(mediaServerDeviceId())}", Version="1.2.8"${connection.token ? `, Token="${safe(connection.token)}"` : ""}`;
   return { [connection.providerId === "emby" ? "X-Emby-Authorization" : "Authorization"]: auth };
@@ -46,6 +51,9 @@ export async function mediaServerRequest(
   path,
   { method = "GET", query = {}, body, signal, publicInfo = false } = {}
 ) {
+  if (connection.providerId === "plex") {
+    return plexCompatRequest(connection, path, { method, query, body, signal, publicInfo });
+  }
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 15000);
   const abort = () => controller.abort();
@@ -105,6 +113,7 @@ export function serverEndpoint(connection, kind, itemId = "") {
   };
 }
 export function isSupportedServerVersion(provider, version) {
+  if (provider === "plex") return true;
   const minimum = provider === "emby" ? [4, 7] : [10, 9];
   const actual = String(version || "")
     .split(".")
