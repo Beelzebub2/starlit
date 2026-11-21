@@ -3471,4 +3471,5 @@
     <string name="diagnostics_consent_usage">Anonimna diagnostika</string>
     <string name="diagnostics_consent_usage_detail">Zagoni aplikacije, tehnične napake, opozorila in rezultati predvajanja po različici aplikacije in platformi. Brez sledenja obiskanim zaslonom ali trajnega ID-ja naprave.</string>
     <string name="diagnostics_consent_privacy">Brez naslovov, iskanj, računov, URL-jev ali surovih dnevnikov. Začasni naključni žeton omejuje zlorabe; zapisi se hranijo do 30 dni.</string>
+    <string name="servers_plex_token">Dostopni žeton Plex</string>
 </resources>
