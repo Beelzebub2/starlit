@@ -3471,4 +3471,5 @@
     <string name="diagnostics_consent_usage">Diagnostik anonim</string>
     <string name="diagnostics_consent_usage_detail">Aplikasi diluncurkan; Kesalahan teknis, peringatan, dan hasil pemutaran/pengunduhan berdasarkan versi dan platform aplikasi. Tidak ada kunjungan layar atau ID perangkat tetap.</string>
     <string name="diagnostics_consent_privacy">Tidak ada judul, pencarian, akun, URL, atau log mentah. Token acak sementara membatasi penyalahgunaan; catatan disimpan hingga 30 hari.</string>
+    <string name="servers_plex_token">Token akses Plex</string>
 </resources>
