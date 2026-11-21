@@ -3475,4 +3475,5 @@
     <string name="diagnostics_consent_usage">匿名診斷</string>
     <string name="diagnostics_consent_usage_detail">應用程式啟動；按應用程式版本與平台統計技術錯誤、警告、播放及下載結果。不記錄畫面造訪或永久裝置識別碼。</string>
     <string name="diagnostics_consent_privacy">不收集片名、搜尋詞、帳號、網址或原始記錄。暫時權杖僅用於防止濫用；資料最多保留30天。</string>
+    <string name="servers_plex_token">Plex 存取權杖</string>
 </resources>
