@@ -43,7 +43,8 @@ export function renderMediaServersSection() {
         title: t("settings_media_servers"),
         options: [
           { id: "jellyfin", label: "Jellyfin" },
-          { id: "emby", label: "Emby" }
+          { id: "emby", label: "Emby" },
+          { id: "plex", label: "Plex" }
         ],
         selectedId: draft.providerId,
         returnFocusKey: "mediaServers:provider",
@@ -55,12 +56,14 @@ export function renderMediaServersSection() {
     body += this.renderActionRow({
       focusKey: "mediaServers:provider",
       title: t("settings_media_servers"),
-      value: draft.providerId === "emby" ? "Emby" : "Jellyfin"
+      value: draft.providerId === "emby" ? "Emby" :
+        draft.providerId === "plex" ? "Plex" : "Jellyfin"
     });
     for (const field of ["address", "username", "password"]) {
       this.actionMap.set(`mediaServers:${field}`, () =>
         this.openTextDialog({
-          title: t(`servers_${field}`),
+          title: field === "password" && draft.providerId === "plex" ?
+            t("servers_plex_token") : t(`servers_${field}`),
           value: draft[field],
           secret: field === "password",
           inputType: field === "address" ? "url" : "text",
@@ -73,7 +76,8 @@ export function renderMediaServersSection() {
       );
       body += this.renderActionRow({
         focusKey: `mediaServers:${field}`,
-        title: t(`servers_${field}`),
+        title: field === "password" && draft.providerId === "plex" ?
+          t("servers_plex_token") : t(`servers_${field}`),
         value: field === "password" ? (draft.password ? "••••••" : "") : draft[field]
       });
     }
@@ -92,8 +96,8 @@ export function renderMediaServersSection() {
         this.mediaServerError = t(
           error?.message?.startsWith("servers_") ? error.message : "servers_error_unreachable",
           [
-            draft.providerId === "emby" ? "Emby" : "Jellyfin",
-            draft.providerId === "emby" ? "4.7" : "10.9"
+            draft.providerId === "emby" ? "Emby" : draft.providerId === "plex" ? "Plex" : "Jellyfin",
+            draft.providerId === "emby" ? "4.7" : draft.providerId === "plex" ? "" : "10.9"
           ]
         );
       } finally {
@@ -205,7 +209,7 @@ export function renderMediaServersSection() {
       body += this.renderActionRow({
         focusKey: id,
         title: entry.name,
-        value: entry.providerId === "emby" ? "Emby" : "Jellyfin",
+        value: entry.providerId === "emby" ? "Emby" : entry.providerId === "plex" ? "Plex" : "Jellyfin",
         subtitle: entry.userName
       });
     }
