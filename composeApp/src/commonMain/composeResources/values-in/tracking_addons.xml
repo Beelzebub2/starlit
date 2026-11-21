@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="addons_tracking_consent_title">Addon pelacakan</string>
+    <string name="addons_tracking_consent_body">%1$s dapat menerima aktivitas pemutaran (putar, jeda, berhenti, dan posisi) serta perubahan pustaka (ditambahkan, dihapus, ditonton, belum ditonton). Informasi ini dikirim keluar dari Starlit ke penyedia addon.</string>
+    <string name="addons_tracking_consent_checkbox">Saya setuju membagikan aktivitas pemutaran dan pustaka kepada addon ini</string>
+</resources>

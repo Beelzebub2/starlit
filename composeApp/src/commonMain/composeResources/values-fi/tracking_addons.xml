@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="addons_tracking_consent_title">Seurantalisäosa</string>
+    <string name="addons_tracking_consent_body">%1$s voi vastaanottaa toistotoiminnot (aloitus, tauko, pysäytys ja sijainti) sekä kirjaston muutokset (lisätty, poistettu, katsottu, katsomaton). Tiedot poistuvat Starlitista lisäosan tarjoajalle.</string>
+    <string name="addons_tracking_consent_checkbox">Hyväksyn toisto- ja kirjastotoiminnan jakamisen tälle lisäosalle</string>
+</resources>

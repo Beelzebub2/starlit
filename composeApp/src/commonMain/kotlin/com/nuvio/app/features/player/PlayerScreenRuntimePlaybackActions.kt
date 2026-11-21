@@ -1,5 +1,9 @@
 package com.nuvio.app.features.player
 
+import com.nuvio.app.features.addons.ADDON_PLAYER_RESOURCE
+import com.nuvio.app.features.addons.AddonEventDispatcher
+import com.nuvio.app.features.addons.AddonPlayerAction
+import com.nuvio.app.features.addons.AddonPlayerEventTarget
 import com.nuvio.app.features.tmdb.TmdbService
 import com.nuvio.app.features.tracking.TrackingMediaReference
 import com.nuvio.app.features.tracking.TrackingScrobbleAction
@@ -392,6 +396,38 @@ internal suspend fun PlayerScreenRuntime.resolveParentalGuideImdbId(): String? {
     )
 }
 
+internal fun PlayerScreenRuntime.emitAddonPlayerEvent(action: AddonPlayerAction) {
+    // Never disclose private-session activity to any addon, even a consented one.
+    if (privatePlayback || !AddonEventDispatcher.hasEnabledAddonFor(ADDON_PLAYER_RESOURCE)) return
+    val durationMs = playbackSnapshot.durationMs
+    if (isShortPlaceholderDuration(durationMs)) return
+    val positionMs = playbackSnapshot.positionMs
+    val active = activeAddonPlayerEventTarget
+    if (action == AddonPlayerAction.STOP) {
+        if (active == null) return
+        activeAddonPlayerEventTarget = null
+        lastAddonPlayerAction = null
+        AddonEventDispatcher.player(active, AddonPlayerAction.STOP, positionMs, durationMs)
+        return
+    }
+    val session = playbackSession
+    val target = AddonPlayerEventTarget(type = session.contentType, videoId = session.videoId)
+    if (active != null && active != target) {
+        AddonEventDispatcher.player(active, AddonPlayerAction.STOP, positionMs, durationMs)
+        activeAddonPlayerEventTarget = null
+        lastAddonPlayerAction = null
+    }
+    if (action == AddonPlayerAction.PAUSE && activeAddonPlayerEventTarget == null) return
+    activeAddonPlayerEventTarget = target
+    lastAddonPlayerAction = action
+    AddonEventDispatcher.player(target, action, positionMs, durationMs)
+}
+
+internal fun PlayerScreenRuntime.resendAddonPlayerStateAfterSeek() {
+    val action = lastAddonPlayerAction ?: return
+    emitAddonPlayerEvent(action)
+}
+
 internal fun PlayerScreenRuntime.flushWatchProgress(
     scrobbleAction: TrackingScrobbleAction = TrackingScrobbleAction.STOP,
 ) {
@@ -399,6 +435,11 @@ internal fun PlayerScreenRuntime.flushWatchProgress(
     when (scrobbleAction) {
         TrackingScrobbleAction.PAUSE -> emitTrackingScrobblePause()
         TrackingScrobbleAction.STOP -> emitStopScrobbleForCurrentProgress()
+        TrackingScrobbleAction.START -> Unit
+    }
+    when (scrobbleAction) {
+        TrackingScrobbleAction.PAUSE -> emitAddonPlayerEvent(AddonPlayerAction.PAUSE)
+        TrackingScrobbleAction.STOP -> emitAddonPlayerEvent(AddonPlayerAction.STOP)
         TrackingScrobbleAction.START -> Unit
     }
     WatchProgressRepository.flushPlaybackProgress(
@@ -419,6 +460,7 @@ internal fun PlayerScreenRuntime.scheduleProgressSyncAfterSeek() {
             session = playbackSession,
             snapshot = playbackSnapshot,
         )
+        resendAddonPlayerStateAfterSeek()
 
         val progressPercent = currentPlaybackProgressPercent()
         if (

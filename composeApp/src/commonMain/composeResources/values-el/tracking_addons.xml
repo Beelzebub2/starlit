@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="addons_tracking_consent_title">Πρόσθετο παρακολούθησης</string>
+    <string name="addons_tracking_consent_body">Το %1$s μπορεί να λαμβάνει ενέργειες αναπαραγωγής (έναρξη, παύση, διακοπή και θέση) και αλλαγές βιβλιοθήκης (προσθήκη, αφαίρεση, προβλήθηκε, δεν προβλήθηκε). Τα δεδομένα αποστέλλονται εκτός Starlit στον πάροχο του πρόσθετου.</string>
+    <string name="addons_tracking_consent_checkbox">Συμφωνώ να κοινοποιούνται οι δραστηριότητες αναπαραγωγής και βιβλιοθήκης</string>
+</resources>

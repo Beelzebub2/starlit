@@ -25,6 +25,22 @@ data class AddonResource(
     val idPrefixes: List<String> = emptyList(),
 )
 
+internal const val ADDON_PLAYER_RESOURCE = "player"
+internal const val ADDON_LIBRARY_RESOURCE = "library"
+
+val AddonManifest.isTrackingAddon: Boolean
+    get() = resources.any { resource ->
+        resource.name == ADDON_PLAYER_RESOURCE || resource.name == ADDON_LIBRARY_RESOURCE
+    }
+
+internal fun AddonManifest.supportsResource(name: String, type: String, id: String): Boolean =
+    resources.any { resource ->
+        resource.name == name &&
+            (resource.types.isEmpty() || type in resource.types) &&
+            (idPrefixes.isEmpty() || idPrefixes.any { id.startsWith(it) }) &&
+            (resource.idPrefixes.isEmpty() || resource.idPrefixes.any { id.startsWith(it) })
+    }
+
 data class AddonCatalog(
     val type: String,
     val id: String,
@@ -103,5 +119,6 @@ internal fun List<ManagedAddon>.firstEnabledManifestError(): String? =
 
 sealed interface AddAddonResult {
     data class Success(val manifest: AddonManifest) : AddAddonResult
+    data class TrackingConsentRequired(val manifest: AddonManifest) : AddAddonResult
     data class Error(val message: String) : AddAddonResult
 }

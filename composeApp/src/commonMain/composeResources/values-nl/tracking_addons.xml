@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="addons_tracking_consent_title">Tracking-add-on</string>
+    <string name="addons_tracking_consent_body">%1$s kan afspeelacties (starten, pauzeren, stoppen en positie) en bibliotheekwijzigingen (toegevoegd, verwijderd, bekeken, onbekeken) ontvangen. Deze gegevens verlaten Starlit en gaan naar de aanbieder van de add-on.</string>
+    <string name="addons_tracking_consent_checkbox">Ik ga akkoord met het delen van afspeel- en bibliotheekactiviteit</string>
+</resources>
