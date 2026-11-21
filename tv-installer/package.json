@@ -64,7 +64,7 @@
         "zip"
       ],
       "artifactName": "Starlit-TV-Installer-macOS-${arch}-${version}.${ext}",
-      "icon": "../composeApp/src/commonMain/composeResources/drawable/app_icon_original.png"
+      "icon": "../branding/starlit-mark.svg"
     },
     "linux": {
       "category": "Utility",
@@ -73,7 +73,9 @@
         "tar.gz"
       ],
       "artifactName": "Starlit-TV-Installer-Linux-${arch}-${version}.${ext}",
-      "icon": "../composeApp/src/commonMain/composeResources/drawable/app_icon_original.png"
+      "icon": "../branding/starlit-mark.svg",
+      "desktopName": "starlit-tv-installer",
+      "syncDesktopName": true
     }
   },
   "bin": {
