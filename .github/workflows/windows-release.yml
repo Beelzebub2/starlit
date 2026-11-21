@@ -462,7 +462,7 @@ jobs:
             "Starlit-Tizen-$version.wgt" "Starlit-WebOS-$version.ipk" \
               "Starlit-TV-Installer-Setup-Windows-$version.exe" "Starlit-TV-Installer-Windows-$version.exe" \
               "Starlit-TV-Installer-Unpacked-Windows-$version.zip" \
-              "Starlit-TV-Installer-Linux-x64-$version.AppImage" \
+              "Starlit-TV-Installer-Linux-x86_64-$version.AppImage" \
               "Starlit-TV-Installer-Linux-x64-$version.tar.gz" \
               "Starlit-TV-Installer-macOS-x64-$version.zip" \
               "Starlit-TV-Installer-macOS-arm64-$version.zip" \
