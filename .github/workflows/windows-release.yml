@@ -415,6 +415,9 @@ jobs:
             preview/*.wgt
             preview/*.ipk
             preview/*.exe
+            preview/*.zip
+            preview/*.AppImage
+            preview/*.tar.gz
       - name: Publish the release after every build passed
         run: |
           version="${RELEASE_TAG#v}"
@@ -425,7 +428,7 @@ jobs:
             echo "::error::The matching TV developer preview already exists; do not publish half a release."; exit 1
           fi
           node .github/release-notes.mjs extract docs/RELEASE-NOTES.md "$RELEASE_TAG" "$RUNNER_TEMP/current-release-notes.md"
-          printf '\n### TV developer preview builds\n\nMatching Tizen, webOS and Windows TV installer developer previews are published separately at https://github.com/%s/releases/tag/tv-preview-%s. They are not device-accepted stable packages.\n' "$GITHUB_REPOSITORY" "$RELEASE_TAG" >> "$RUNNER_TEMP/current-release-notes.md"
+          printf '\n### TV developer preview builds\n\nMatching Tizen, webOS and Windows/Linux/macOS TV installer developer previews are published separately at https://github.com/%s/releases/tag/tv-preview-%s. They are not device-accepted stable packages.\n' "$GITHUB_REPOSITORY" "$RELEASE_TAG" >> "$RUNNER_TEMP/current-release-notes.md"
           gh api "repos/$GITHUB_REPOSITORY/releases?per_page=100" --paginate --slurp > "$RUNNER_TEMP/published-releases.json"
           previous=$(node .github/release-notes.mjs previous "$RUNNER_TEMP/published-releases.json" "$RELEASE_TAG")
           cd release
@@ -433,7 +436,7 @@ jobs:
           mv SHA256SUMS-all.txt SHA256SUMS.txt
           sha256sum --check SHA256SUMS.txt
           cd ../preview
-          { cat SHA256SUMS-Tizen SHA256SUMS-WebOS; tr -d '\r' < SHA256SUMS-TV-Installer; } > SHA256SUMS.txt
+          { cat SHA256SUMS-Tizen SHA256SUMS-WebOS; tr -d '\r' < SHA256SUMS-TV-Installer; cat SHA256SUMS-TV-Installer-Linux SHA256SUMS-TV-Installer-macOS; } > SHA256SUMS.txt
           sha256sum --check SHA256SUMS.txt
           cd ../release
           args=(release create "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --verify-tag --title "Starlit $version"
@@ -459,4 +462,8 @@ jobs:
             "Starlit-Tizen-$version.wgt" "Starlit-WebOS-$version.ipk" \
               "Starlit-TV-Installer-Setup-Windows-$version.exe" "Starlit-TV-Installer-Windows-$version.exe" \
               "Starlit-TV-Installer-Unpacked-Windows-$version.zip" \
+              "Starlit-TV-Installer-Linux-x64-$version.AppImage" \
+              "Starlit-TV-Installer-Linux-x64-$version.tar.gz" \
+              "Starlit-TV-Installer-macOS-x64-$version.zip" \
+              "Starlit-TV-Installer-macOS-arm64-$version.zip" \
             apps2samsung-feed.json SHA256SUMS.txt
