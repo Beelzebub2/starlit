@@ -3470,4 +3470,5 @@
     <string name="diagnostics_consent_usage">Névtelen diagnosztika</string>
     <string name="diagnostics_consent_usage_detail">Alkalmazás indul; Technikai hibák, figyelmeztetések és lejátszási/letöltési eredmények alkalmazásverzió és platform szerint. Nincs képernyőlátogatás vagy állandó eszközazonosító.</string>
     <string name="diagnostics_consent_privacy">Nincsenek címek, keresések, fiókok, URL-ek vagy nyers naplók. Egy ideiglenes véletlenszerű token korlátozza a visszaélést; a feljegyzéseket 30 napig megőrzik.</string>
+    <string name="servers_plex_token">Plex-hozzáférési token</string>
 </resources>
