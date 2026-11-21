@@ -63,6 +63,10 @@ object AddonRepository {
     private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
     private val _uiState = MutableStateFlow(AddonsUiState())
     val uiState: StateFlow<AddonsUiState> = _uiState.asStateFlow()
+    private val trackingConsentedUrls = MutableStateFlow<Set<String>>(emptySet())
+
+    fun hasTrackingConsent(manifestUrl: String): Boolean =
+        manifestUrl in trackingConsentedUrls.value
 
     private var initialized = false
     private var currentProfileId: Int = 1
@@ -84,6 +88,7 @@ object AddonRepository {
         if (initialized) return
         initialized = true
         currentProfileId = effectiveProfileId
+        trackingConsentedUrls.value = AddonStorage.loadTrackingConsentUrls(currentProfileId)
         log.d { "initialize() — loading local addons for profile $currentProfileId" }
 
         val storedUrls = dedupeManifestUrls(AddonStorage.loadInstalledAddonUrls(currentProfileId))
@@ -118,6 +123,8 @@ object AddonRepository {
         backupProfileRevision++
         cancelActiveRefreshes()
         currentProfileId = effectiveProfileId
+        trackingConsentedUrls.value = emptySet()
+        dismissTrackingConsent()
         initialized = false
         _uiState.value = AddonsUiState()
     }
@@ -130,6 +137,8 @@ object AddonRepository {
         }
         pushes.forEach(Job::cancel)
         currentProfileId = 1
+        trackingConsentedUrls.value = emptySet()
+        dismissTrackingConsent()
         initialized = false
         _uiState.value = AddonsUiState()
     }
@@ -138,6 +147,7 @@ object AddonRepository {
         if (LocalSettingsImport.hasPendingImport(profileId)) return
 
         currentProfileId = resolveEffectiveProfileId(profileId)
+        trackingConsentedUrls.value = AddonStorage.loadTrackingConsentUrls(currentProfileId)
         log.i { "pullFromServer() — profileId=$profileId, initialized=$initialized" }
         runCatching {
             val rows = SupabaseProvider.client.postgrest
@@ -196,6 +206,42 @@ object AddonRepository {
         }
     }
 
+    private val _pendingTrackingConsent = MutableStateFlow<AddonManifest?>(null)
+    private var pendingTrackingConsentProfileId: Int? = null
+    val pendingTrackingConsent: StateFlow<AddonManifest?> = _pendingTrackingConsent.asStateFlow()
+
+    fun requestTrackingConsent(manifest: AddonManifest) {
+        pendingTrackingConsentProfileId = currentProfileId
+        _pendingTrackingConsent.value = manifest
+    }
+
+    fun dismissTrackingConsent() {
+        _pendingTrackingConsent.value = null
+        pendingTrackingConsentProfileId = null
+    }
+
+    suspend fun installWithTrackingConsent(manifest: AddonManifest): AddAddonResult {
+        if (_pendingTrackingConsent.value?.transportUrl != manifest.transportUrl ||
+            pendingTrackingConsentProfileId != currentProfileId
+        ) {
+            return AddAddonResult.Error(getString(Res.string.addon_invalid_url))
+        }
+        dismissTrackingConsent()
+        if (isUsingPrimaryAddonsFromSecondaryProfile()) {
+            return AddAddonResult.Error(getString(Res.string.profile_primary_addons_required))
+        }
+        if (_uiState.value.addons.any { it.manifestUrl == manifest.transportUrl }) {
+            return AddAddonResult.Error(getString(Res.string.addon_already_installed))
+        }
+        val result = installManifest(manifest.transportUrl, manifest)
+        if (result is AddAddonResult.Success) {
+            val allowed = trackingConsentedUrls.value + manifest.transportUrl
+            trackingConsentedUrls.value = allowed
+            AddonStorage.saveTrackingConsentUrls(currentProfileId, allowed)
+        }
+        return result
+    }
+
     suspend fun addAddon(rawUrl: String): AddAddonResult {
         if (isUsingPrimaryAddonsFromSecondaryProfile()) {
             return AddAddonResult.Error(getString(Res.string.profile_primary_addons_required))
@@ -223,6 +269,13 @@ object AddonRepository {
             return AddAddonResult.Error(error.message ?: getString(Res.string.addon_load_manifest_failed))
         }
 
+        if (manifest.isTrackingAddon) {
+            return AddAddonResult.TrackingConsentRequired(manifest)
+        }
+        return installManifest(manifestUrl, manifest)
+    }
+
+    private fun installManifest(manifestUrl: String, manifest: AddonManifest): AddAddonResult {
         _uiState.update { current ->
             current.copy(
                 addons = current.addons + ManagedAddon(
@@ -248,6 +301,9 @@ object AddonRepository {
             if (changed) current.copy(addons = updatedAddons) else current
         }
         if (!changed) return
+        val allowed = trackingConsentedUrls.value - manifestUrl
+        trackingConsentedUrls.value = allowed
+        AddonStorage.saveTrackingConsentUrls(currentProfileId, allowed)
         persist()
         pushToServer()
     }

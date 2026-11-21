@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="addons_tracking_consent_title">追跡アドオン</string>
+    <string name="addons_tracking_consent_body">%1$s は再生操作（再生、一時停止、停止、再生位置）とライブラリの変更（追加、削除、視聴済み、未視聴）を受信できます。この情報は Starlit の外部に送信され、アドオン提供者に渡ります。</string>
+    <string name="addons_tracking_consent_checkbox">再生とライブラリの活動をこのアドオンと共有することに同意します</string>
+</resources>

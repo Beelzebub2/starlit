@@ -57,6 +57,14 @@ actual object AddonStorage {
             ?.apply()
     }
 
+    actual fun loadTrackingConsentUrls(profileId: Int): Set<String> =
+        preferences?.getString("tracking_consent_urls_$profileId", null).orEmpty()
+            .lineSequence().map(String::trim).filter(String::isNotEmpty).toSet()
+
+    actual fun saveTrackingConsentUrls(profileId: Int, urls: Set<String>) {
+        preferences?.edit()?.putString("tracking_consent_urls_$profileId", urls.joinToString("\n"))?.apply()
+    }
+
     actual fun loadAddonNames(profileId: Int): Map<String, String> =
         preferences?.getString("addon_names_$profileId", null)
             ?.let { runCatching { Json.decodeFromString<Map<String, String>>(it) }.getOrNull() }

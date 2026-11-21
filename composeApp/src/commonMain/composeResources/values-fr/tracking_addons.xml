@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="addons_tracking_consent_title">Extension de suivi</string>
+    <string name="addons_tracking_consent_body">%1$s peut recevoir vos actions de lecture (lancer, pause, arrêt et position) ainsi que les modifications de votre bibliothèque (ajout, retrait, vu, non vu). Ces données quittent Starlit et sont transmises au fournisseur de l’extension.</string>
+    <string name="addons_tracking_consent_checkbox">J’accepte de partager mon activité de lecture et ma bibliothèque avec cette extension</string>
+</resources>

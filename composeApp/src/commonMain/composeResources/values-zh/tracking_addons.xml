@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="addons_tracking_consent_title">追踪扩展</string>
+    <string name="addons_tracking_consent_body">%1$s 可以接收播放操作（开始、暂停、停止和进度）与媒体库更改（添加、移除、已观看、未观看）。这些信息将离开 Starlit 并发送给扩展提供者。</string>
+    <string name="addons_tracking_consent_checkbox">我同意向此扩展分享播放和媒体库活动</string>
+</resources>

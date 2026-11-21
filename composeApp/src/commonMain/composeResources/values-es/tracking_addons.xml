@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="addons_tracking_consent_title">Complemento de seguimiento</string>
+    <string name="addons_tracking_consent_body">%1$s puede recibir tu actividad de reproducción (iniciar, pausar, detener y posición) y los cambios en tu biblioteca (añadido, eliminado, visto y no visto). Estos datos salen de Starlit y se envían al proveedor del complemento.</string>
+    <string name="addons_tracking_consent_checkbox">Acepto compartir mi actividad de reproducción y biblioteca con este complemento</string>
+</resources>

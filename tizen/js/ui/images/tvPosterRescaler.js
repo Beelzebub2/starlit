@@ -1,5 +1,6 @@
 import { getTvRuntimePerformanceProfile } from "../../platform/tvRuntimePerformance.js";
 import {
+  canUseModernTvArtworkBounding,
   getArtworkCacheLimit,
   getDeviceMemoryGb,
   isLowMemoryDevice
@@ -225,7 +226,7 @@ export function getHomeArtworkObjectFit(image) {
   }
 }
 export function shouldRescaleHomeArtwork() {
-  return isSupported() && Boolean(getTvRuntimePerformanceProfile().isTvRuntime);
+  return isSupported() && canUseModernTvArtworkBounding(getTvRuntimePerformanceProfile());
 }
 // A worker that hangs would hold its slot forever and every later poster
 // would stay blank, which is worse than the oversized decode this replaces.

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="addons_tracking_consent_title">Tracking addon</string>
+    <string name="addons_tracking_consent_body">%1$s can receive your playback actions (play, pause, stop and position) and library updates (added, removed, watched, unwatched). This information leaves Starlit and goes to the addon provider.</string>
+    <string name="addons_tracking_consent_checkbox">I agree to share playback and library activity with this addon</string>
+</resources>

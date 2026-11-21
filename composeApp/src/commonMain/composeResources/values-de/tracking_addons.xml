@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="addons_tracking_consent_title">Tracking-Addon</string>
+    <string name="addons_tracking_consent_body">%1$s kann Wiedergabeaktionen (Start, Pause, Stopp und Position) sowie Bibliotheksänderungen (hinzugefügt, entfernt, gesehen, ungesehen) empfangen. Diese Daten verlassen Starlit und gehen an den Addon-Anbieter.</string>
+    <string name="addons_tracking_consent_checkbox">Ich stimme der Weitergabe meiner Wiedergabe- und Bibliotheksaktivität zu</string>
+</resources>

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="addons_tracking_consent_title">Extensie de urmărire</string>
+    <string name="addons_tracking_consent_body">%1$s poate primi activitatea de redare (pornire, pauză, oprire și poziție) și modificările bibliotecii (adăugat, eliminat, vizionat, nevizionat). Aceste date părăsesc Starlit și ajung la furnizorul extensiei.</string>
+    <string name="addons_tracking_consent_checkbox">Sunt de acord să partajez activitatea de redare și bibliotecă cu această extensie</string>
+</resources>

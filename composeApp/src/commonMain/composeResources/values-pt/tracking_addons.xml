@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="addons_tracking_consent_title">Addon de acompanhamento</string>
+    <string name="addons_tracking_consent_body">O %1$s pode receber a tua atividade de reprodução (iniciar, pausar, parar e posição) e alterações à biblioteca (adicionado, removido, visto e não visto). Estes dados saem do Starlit e são enviados ao fornecedor do addon.</string>
+    <string name="addons_tracking_consent_checkbox">Concordo em partilhar a atividade de reprodução e da biblioteca com este addon</string>
+</resources>

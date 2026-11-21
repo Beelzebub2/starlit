@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="addons_tracking_consent_title">Doplněk pro sledování</string>
+    <string name="addons_tracking_consent_body">%1$s může přijímat informace o přehrávání (spuštění, pozastavení, zastavení a pozice) i změnách knihovny (přidání, odebrání, zhlédnuto, nezhlédnuto). Údaje opustí Starlit a odešlou se provozovateli doplňku.</string>
+    <string name="addons_tracking_consent_checkbox">Souhlasím se sdílením přehrávání a knihovny s tímto doplňkem</string>
+</resources>

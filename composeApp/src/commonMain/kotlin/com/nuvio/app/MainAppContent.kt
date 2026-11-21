@@ -2171,6 +2171,9 @@ internal fun MainAppContent(
                             is AddAddonResult.Success -> NuvioToastController.show(
                                 getString(Res.string.addons_modal_success_message, result.manifest.name),
                             )
+                            is AddAddonResult.TrackingConsentRequired -> {
+                                AddonRepository.requestTrackingConsent(result.manifest)
+                            }
                             is AddAddonResult.Error -> NuvioToastController.show(result.message)
                         }
                     }

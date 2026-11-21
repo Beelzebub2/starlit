@@ -1,5 +1,10 @@
 package com.nuvio.app.features.watched
 
+import com.nuvio.app.features.addons.ADDON_LIBRARY_RESOURCE
+import com.nuvio.app.features.addons.AddonEventDispatcher
+import com.nuvio.app.features.addons.AddonLibraryAction
+import com.nuvio.app.features.watchprogress.buildPlaybackVideoId
+
 import co.touchlab.kermit.Logger
 import com.nuvio.app.core.auth.AuthRepository
 import com.nuvio.app.core.auth.AuthState
@@ -899,7 +904,11 @@ object WatchedRepository {
     }
 
     fun markWatched(items: Collection<WatchedItem>) {
+        val changed = if (AddonEventDispatcher.hasEnabledAddonFor(ADDON_LIBRARY_RESOURCE)) {
+            items.filterNot { isWatched(it.id, it.type, it.season, it.episode) }
+        } else emptyList()
         markWatched(items = items, trackerHistorySync = WatchedTrackerHistorySync.Mirror)
+        emitAddonWatchedEvents(changed, AddonLibraryAction.WATCHED)
     }
 
     internal fun markWatchedFromPlaybackCompletion(item: WatchedItem, syncRemote: Boolean = true) {
@@ -975,6 +984,36 @@ object WatchedRepository {
     }
 
     fun unmarkWatched(items: Collection<WatchedItem>) {
+        val changed = if (AddonEventDispatcher.hasEnabledAddonFor(ADDON_LIBRARY_RESOURCE)) {
+            items.filter { isWatched(it.id, it.type, it.season, it.episode) }
+        } else emptyList()
+        unmarkWatchedInternal(items)
+        emitAddonWatchedEvents(changed, AddonLibraryAction.UNWATCHED)
+    }
+
+    private fun emitAddonWatchedEvents(items: Collection<WatchedItem>, action: AddonLibraryAction) {
+        items.groupBy { it.type to it.id }.forEach { (key, groupItems) ->
+            val (type, id) = key
+            if (groupItems.any { !it.isEpisode }) {
+                AddonEventDispatcher.library(type = type, id = id, action = action)
+            } else {
+                AddonEventDispatcher.libraryVideos(
+                    type = type,
+                    id = id,
+                    action = action,
+                    videoIds = groupItems.map { item ->
+                        item.videoId?.takeIf(String::isNotBlank) ?: buildPlaybackVideoId(
+                            parentMetaId = item.id,
+                            seasonNumber = item.season,
+                            episodeNumber = item.episode,
+                        )
+                    },
+                )
+            }
+        }
+    }
+
+    private fun unmarkWatchedInternal(items: Collection<WatchedItem>) {
         ensureLoaded()
         if (items.isEmpty()) return
         val source = activeSource
@@ -1079,10 +1118,10 @@ object WatchedRepository {
         }
         if (shouldMarkSeriesWatched) {
             if (!hasSeriesWatchedMarker) {
-                markWatched(seriesWatchedItem)
+                markWatched(items = listOf(seriesWatchedItem), trackerHistorySync = WatchedTrackerHistorySync.Mirror)
             }
         } else if (hasSeriesWatchedMarker) {
-            unmarkWatched(seriesWatchedItem)
+            unmarkWatchedInternal(items = listOf(seriesWatchedItem))
         }
     }
 
