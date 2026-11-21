@@ -3471,4 +3471,5 @@
     <string name="diagnostics_consent_usage">अनाम निदान</string>
     <string name="diagnostics_consent_usage_detail">ऐप प्रारंभ होने, तकनीकी त्रुटियों, चेतावनियों और प्लेबैक परिणामों का डेटा, ऐप संस्करण और प्लेटफ़ॉर्म के अनुसार। स्क्रीन विज़िट या स्थायी डिवाइस आईडी नहीं।</string>
     <string name="diagnostics_consent_privacy">शीर्षक, खोज, खाते, URL या मूल लॉग नहीं भेजे जाते। एक अस्थायी यादृच्छिक टोकन दुरुपयोग रोकता है; रिकॉर्ड अधिकतम 30 दिनों तक रखे जाते हैं।</string>
+    <string name="servers_plex_token">Plex एक्सेस टोकन</string>
 </resources>
