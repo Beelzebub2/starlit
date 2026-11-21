@@ -358,8 +358,8 @@ const AddonRemotePage = {
             <span>${escapeHtml(I18n.t("addon_tracking_consent_checkbox"))}</span>
           </label>
           <div class="addon-remote-add">
-            <button class="addon-remote-btn" data-action="tracking-cancel">${escapeHtml(I18n.t("addon_tracking_consent_cancel"))}</button>
-            <button class="addon-remote-btn" data-action="tracking-install" ${this.trackingConsentChecked ? "" : "disabled"}>${escapeHtml(I18n.t("addon_tracking_consent_install"))}</button>
+            <button class="addon-remote-btn" data-action="tracking-cancel">${escapeHtml(I18n.t("action_cancel"))}</button>
+            <button class="addon-remote-btn" data-action="tracking-install" ${this.trackingConsentChecked ? "" : "disabled"}>${escapeHtml(I18n.t("addon_install_btn"))}</button>
           </div>
         </div>`;
   },
@@ -561,7 +561,7 @@ const AddonRemotePage = {
               ${addon.description ? `<span>${escapeHtml(addon.description)}</span>` : ""}
             </div>
             <div class="addon-remote-actions">
-              ${isTrackingAddon(addon) ? `<button class="addon-remote-btn" data-tracking-permission="${index}">${escapeHtml(I18n.t(this.trackingApprovedUrls.has(addon.baseUrl) ? "addon_tracking_consent_revoke" : "addon_tracking_consent_enable"))}</button>` : ""}
+              ${isTrackingAddon(addon) ? `<button class="addon-remote-btn" data-tracking-permission="${index}">${escapeHtml(I18n.t(this.trackingApprovedUrls.has(addon.baseUrl) ? "addon_remote_disable" : "addon_remote_enable"))}</button>` : ""}
               <button class="addon-remote-btn addon-remote-btn-danger" data-addon-remove="${index}">${I18n.t("addon_remote_remove")}</button>
             </div>
           </article>
