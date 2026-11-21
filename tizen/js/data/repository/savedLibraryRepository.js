@@ -1,5 +1,6 @@
 import { markLibraryMutation } from "../../core/profile/starlitLibraryMutations.js";
 import { SavedLibraryStore } from "../local/savedLibraryStore.js";
+import { AddonEventDispatcher, AddonLibraryAction } from "./addonEventDispatcher.js";
 import { ProfileManager } from "../../core/profile/profileManager.js";
 import { getSyncBackoffRemainingMs } from "../../core/sync/syncBackoffPolicy.js";
 import { registerSessionTeardownHandler } from "../../core/auth/sessionLifecycle.js";
@@ -104,15 +105,21 @@ class SavedLibraryRepository {
       return false;
     }
     const exists = SavedLibraryStore.findByContentId(item.contentId, profileId);
+    // The direct toggle is user-initiated; cloud pulls and background sync
+    // use the store's bulk replacement path and must not emit addon events.
+    const addonType = String(item.contentType || item.type || "movie");
+    const emitChange = profileId === activeProfileId() && !item.isMediaServerItem;
     if (exists) {
       markLibraryMutation(profileId,exists,true);
       SavedLibraryStore.remove(item.contentId, profileId);
       queueSavedLibraryCloudSync(profileId);
+      if (emitChange) AddonEventDispatcher.library(addonType, item.contentId, AddonLibraryAction.LIBRARY_REMOVE);
       return false;
     }
     markLibraryMutation(profileId,item);
     SavedLibraryStore.upsert(item, profileId);
     queueSavedLibraryCloudSync(profileId);
+    if (emitChange) AddonEventDispatcher.library(addonType, item.contentId, AddonLibraryAction.LIBRARY_ADD);
     return true;
   }
   async replaceAll(items, profileId = activeProfileId()) {
