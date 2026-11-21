@@ -103,6 +103,8 @@ jobs:
       - run: npm test
       - name: Verify command-line entry point
         run: npm run cli -- --help
+      - name: Verify official Samsung CLI executes on the target OS
+        run: node scripts/verify-samsung-cli.cjs
       - name: Build portable developer previews
         shell: bash
         env:
