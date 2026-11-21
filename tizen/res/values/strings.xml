@@ -3476,4 +3476,5 @@
     <string name="diagnostics_consent_usage">Anonymous diagnostics</string>
     <string name="diagnostics_consent_usage_detail">App launches; Technical errors, warnings and playback/download outcomes by app version and platform. No screen visits or persistent device ID.</string>
     <string name="diagnostics_consent_privacy">No titles, searches, accounts, URLs or raw logs. A temporary random token limits abuse; records are kept up to 30 days.</string>
+    <string name="servers_plex_token">Plex access token</string>
 </resources>
