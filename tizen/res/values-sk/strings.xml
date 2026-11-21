@@ -3477,4 +3477,5 @@
     <string name="diagnostics_consent_usage">Anonymná diagnostika</string>
     <string name="diagnostics_consent_usage_detail">Spustenie aplikácie; Technické chyby, upozornenia a výsledky prehrávania/sťahovania podľa verzie aplikácie a platformy. Žiadne návštevy obrazovky ani trvalé ID zariadenia.</string>
     <string name="diagnostics_consent_privacy">Žiadne názvy, vyhľadávania, účty, adresy URL ani nespracované protokoly. Dočasný náhodný token obmedzuje zneužívanie; záznamy sa uchovávajú do 30 dní.</string>
+    <string name="servers_plex_token">Prístupový token Plex</string>
 </resources>
