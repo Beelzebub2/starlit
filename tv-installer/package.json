@@ -8,9 +8,12 @@
     "prestart": "node scripts/copy-brand-fonts.cjs",
     "start": "electron .",
     "test": "node --test test/*.test.cjs",
-    "lint": "node --check src/main.cjs && node --check src/preload.cjs && node --check src/renderer.js && node --check src/installer.cjs && node --check src/ipk.cjs && node --check src/wgt.cjs && node --check src/samsung.cjs && node --check src/samsung-auth.cjs && node --check src/platforms.cjs && node --check src/discovery.cjs && node --check src/releases.cjs && node --check scripts/copy-brand-fonts.cjs",
+    "lint": "node --check src/cli.cjs && node --check src/main.cjs && node --check src/preload.cjs && node --check src/renderer.js && node --check src/installer.cjs && node --check src/ipk.cjs && node --check src/wgt.cjs && node --check src/samsung.cjs && node --check src/samsung-auth.cjs && node --check src/platforms.cjs && node --check src/discovery.cjs && node --check src/releases.cjs && node --check scripts/copy-brand-fonts.cjs",
     "predist:win": "node scripts/copy-brand-fonts.cjs",
-    "dist:win": "electron-builder --win nsis portable --publish never"
+    "dist:win": "electron-builder --win nsis portable --publish never",
+    "cli": "node src/cli.cjs",
+    "dist:mac": "electron-builder --mac zip --publish never",
+    "dist:linux": "electron-builder --linux AppImage tar.gz --publish never"
   },
   "dependencies": {
     "@xmldom/xmldom": "0.9.12",
@@ -36,7 +39,8 @@
       "src/**/*",
       "build/icon.ico",
       "installer.config.json",
-      "package.json"
+      "package.json",
+      "build/icon.png"
     ],
     "win": {
       "icon": "build/icon.ico",
@@ -52,6 +56,25 @@
       "oneClick": false,
       "perMachine": false,
       "artifactName": "Starlit-TV-Installer-Setup-Windows-${version}.${ext}"
+    },
+    "mac": {
+      "category": "public.app-category.utilities",
+      "target": [
+        "zip"
+      ],
+      "artifactName": "Starlit-TV-Installer-macOS-${arch}-${version}.${ext}"
+    },
+    "linux": {
+      "category": "Utility",
+      "target": [
+        "AppImage",
+        "tar.gz"
+      ],
+      "artifactName": "Starlit-TV-Installer-Linux-${arch}-${version}.${ext}",
+      "icon": "build/icon.png"
     }
+  },
+  "bin": {
+    "starlit-tv-installer": "src/cli.cjs"
   }
 }
