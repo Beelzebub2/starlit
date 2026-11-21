@@ -3478,4 +3478,5 @@
     <string name="diagnostics_consent_usage">Anonim teşhis</string>
     <string name="diagnostics_consent_usage_detail">Uygulama başlatılır; Uygulama sürümüne ve platforma göre teknik hatalar, uyarılar ve oynatma/indirme sonuçları. Ekran ziyareti veya kalıcı cihaz kimliği yok.</string>
     <string name="diagnostics_consent_privacy">Başlık, arama, hesap, URL veya ham günlük yok. Geçici bir rastgele belirteç kötüye kullanımı sınırlar; Kayıtlar 30 güne kadar saklanır.</string>
+    <string name="servers_plex_token">Plex erişim belirteci</string>
 </resources>
