@@ -23,6 +23,10 @@ function artifactNames(files, platform, version) {
   if (unique.size !== names.length) throw new Error("Duplicate TV installer artifact");
   if (platform === "linux" && !names.some(n => n.endsWith(".AppImage")))
     throw new Error("Missing Linux AppImage");
+  if (platform === "mac" && !spec.arch.every(arch =>
+    names.some(name => name.startsWith("Starlit-TV-Installer-macOS-" + arch + "-")))) {
+    throw new Error("Both Intel and Apple Silicon macOS packages are required");
+  }
   return names.sort();
 }
 function stagePortable({ platform, version, directory = path.join(__dirname, "..", "dist") }) {
