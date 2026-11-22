@@ -3471,4 +3471,7 @@
     <string name="diagnostics_consent_usage">Anonymní diagnostika</string>
     <string name="diagnostics_consent_usage_detail">Spuštění aplikace; Technické chyby, varování a výsledky přehrávání/stahování podle verze aplikace a platformy. Žádné návštěvy obrazovky nebo trvalé ID zařízení.</string>
     <string name="diagnostics_consent_privacy">Žádné názvy, vyhledávání, účty, adresy URL nebo nezpracované protokoly. Dočasný náhodný token omezuje zneužití; záznamy jsou uchovávány po dobu 30 dnů.</string>
+    <string name="addon_tracking_consent_title">Doplněk pro sledování</string>
+    <string name="addon_tracking_consent_body">%1$s může přijímat informace o přehrávání (spuštění, pozastavení, zastavení a pozice) i změnách knihovny (přidání, odebrání, zhlédnuto, nezhlédnuto). Údaje opustí Starlit a odešlou se provozovateli doplňku.</string>
+    <string name="addon_tracking_consent_checkbox">Souhlasím se sdílením přehrávání a knihovny s tímto doplňkem</string>
 </resources>

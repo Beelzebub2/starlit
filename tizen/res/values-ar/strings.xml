@@ -3474,4 +3474,7 @@
     <string name="diagnostics_consent_usage">تشخيص مجهول</string>
     <string name="diagnostics_consent_usage_detail">إطلاق التطبيق؛ الأخطاء الفنية والتحذيرات ونتائج التشغيل/التنزيل حسب إصدار التطبيق والنظام الأساسي. لا توجد زيارات للشاشة أو معرف الجهاز المستمر.</string>
     <string name="diagnostics_consent_privacy">لا توجد عناوين أو عمليات بحث أو حسابات أو عناوين URL أو سجلات أولية. رمز عشوائي مؤقت يحد من إساءة الاستخدام؛ يتم الاحتفاظ بالسجلات لمدة تصل إلى 30 يومًا.</string>
+    <string name="addon_tracking_consent_title">إضافة تتبّع</string>
+    <string name="addon_tracking_consent_body">يمكن لإضافة %1$s تلقي نشاط التشغيل (التشغيل والإيقاف المؤقت والإيقاف والموضع) وتغييرات المكتبة (الإضافة والحذف والمشاهدة وعدم المشاهدة). تغادر هذه المعلومات Starlit وتُرسل إلى مزوّد الإضافة.</string>
+    <string name="addon_tracking_consent_checkbox">أوافق على مشاركة نشاط التشغيل والمكتبة مع هذه الإضافة</string>
 </resources>

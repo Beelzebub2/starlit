@@ -8,6 +8,9 @@ const ADDON_URLS_KEY = "installedAddonUrls";
 const ADDON_DISPLAY_NAMES_KEY = "installedAddonDisplayNames";
 const ADDON_ENABLED_STATES_KEY = "installedAddonEnabledStates";
 const PROFILES_KEY = "profiles";
+// Permission for sharing viewing activity is per human profile, not per shared
+// add-on storage profile. An installed tracking add-on gets no events by default.
+const TRACKING_CONSENT_KEY = "trackingAddonConsentV1";
 const PROFILE_SCOPED_VERSION = 1;
 const MANIFEST_SUFFIX = "/manifest.json";
 const DEFAULT_ADDON_URLS = [];
@@ -183,6 +186,41 @@ class AddonRepository {
     } catch (_) {
       return raw;
     }
+  }
+  trackingConsentProfileId() {
+    return String(ProfileManager.getActiveProfileId() || "1").trim() || "1";
+  }
+  trackingConsentUrls(profileId = this.trackingConsentProfileId()) {
+    const payload = LocalStore.get(TRACKING_CONSENT_KEY, {});
+    const values = payload && typeof payload === "object" && !Array.isArray(payload)
+      ? payload[String(profileId)] : null;
+    return Array.isArray(values) ? values.filter((url) => typeof url === "string") : [];
+  }
+  hasTrackingConsent(url) {
+    const clean = this.normalizeUrl(url);
+    return Boolean(clean) && this.trackingConsentUrls().some((stored) => this.normalizeUrl(stored) === clean);
+  }
+  grantTrackingConsent(url) {
+    const clean = this.normalizeCinemetaUrl(this.canonicalizeUrl(url));
+    if (!clean) return false;
+    const profileId = this.trackingConsentProfileId();
+    const current = LocalStore.get(TRACKING_CONSENT_KEY, {});
+    const previous = current && typeof current === "object" && !Array.isArray(current) ? current : {};
+    const urls = this.trackingConsentUrls(profileId);
+    if (!urls.some((stored) => this.normalizeUrl(stored) === this.normalizeUrl(clean))) urls.push(clean);
+    LocalStore.set(TRACKING_CONSENT_KEY, { ...previous, [profileId]: urls });
+    return true;
+  }
+  revokeTrackingConsent(url) {
+    const profileId = this.trackingConsentProfileId();
+    const current = LocalStore.get(TRACKING_CONSENT_KEY, {});
+    const previous = current && typeof current === "object" && !Array.isArray(current) ? current : {};
+    LocalStore.set(TRACKING_CONSENT_KEY, {
+      ...previous,
+      [profileId]: this.trackingConsentUrls(profileId).filter(
+        (stored) => this.normalizeUrl(stored) !== this.normalizeUrl(url)
+      )
+    });
   }
   getActiveStorageProfileId(profileId = null) {
     const raw = String(profileId ?? ProfileManager.getActiveProfileId() ?? "1").trim();
@@ -741,6 +779,7 @@ class AddonRepository {
       nextEnabledStates
     );
     removedUrls.forEach((removedUrl) => {
+      this.revokeTrackingConsent(removedUrl);
       this.deleteManifestCacheEntry(removedUrl);
       this.manifestErrorCache.delete(this.canonicalizeUrl(removedUrl));
     });
