@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="library_filter_genre">Žáner</string>
+    <string name="library_filter_year">Rok</string>
+    <string name="library_filter_watched">Pozreté</string>
+    <string name="library_filter_all">Všetky</string>
+    <string name="library_watched_filter_watched">Pozreté</string>
+    <string name="library_watched_filter_unwatched">Nepozreté</string>
+</resources>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="library_filter_genre">Genere</string>
+    <string name="library_filter_year">Anno</string>
+    <string name="library_filter_watched">Visti</string>
+    <string name="library_filter_all">Tutti</string>
+    <string name="library_watched_filter_watched">Visti</string>
+    <string name="library_watched_filter_unwatched">Non visti</string>
+</resources>

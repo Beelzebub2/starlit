@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="library_filter_genre">Tyylilaji</string>
+    <string name="library_filter_year">Vuosi</string>
+    <string name="library_filter_watched">Katsottu</string>
+    <string name="library_filter_all">Kaikki</string>
+    <string name="library_watched_filter_watched">Katsotut</string>
+    <string name="library_watched_filter_unwatched">Katsomattomat</string>
+</resources>

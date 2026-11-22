@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="library_filter_genre">Жанр</string>
+    <string name="library_filter_year">Година</string>
+    <string name="library_filter_watched">Гледано</string>
+    <string name="library_filter_all">Всички</string>
+    <string name="library_watched_filter_watched">Гледано</string>
+    <string name="library_watched_filter_unwatched">Негледано</string>
+</resources>
