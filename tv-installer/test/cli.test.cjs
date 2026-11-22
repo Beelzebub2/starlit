@@ -39,6 +39,9 @@ test("tar extractor accepts a nested CLI, rejects traversal, links, and malforme
   const entries = safeTarEntries(archive);
   assert.deepEqual(entries.map(x => x.name), ["publish/apps2samsung-cli", "publish/config.json"]);
   assert.equal(entries[0].bytes.toString(), "binary");
+  const rooted = packTar([{ name: "./", type: "5" }, { name: "./apps2samsung-cli", data: "binary" }]);
+  assert.deepEqual(safeTarEntries(rooted).map(x => x.name), ["apps2samsung-cli"]);
+  assert.throws(() => safeTarEntries(packTar([{ name: "../", type: "5" }, { name: "apps2samsung-cli", data: "binary" }])), /Unsafe/);
   assert.throws(() => safeTarEntries(packTar([{ name: "../apps2samsung-cli", data: "evil" }])), /Unsafe/);
   assert.throws(() => safeTarEntries(packTar([{ name: "apps2samsung-cli", type: "2" }])), /Unexpected/);
   assert.throws(() => safeTarEntries(packTar([{ name: "not-an-installer", data: "data" }])), /expected executable/);
