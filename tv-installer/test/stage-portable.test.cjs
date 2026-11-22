@@ -13,7 +13,7 @@ test("installer previews are selected by exact version and supported platform", 
     "Starlit-TV-Installer-Setup-Windows-1.33.0.exe",
     "untrusted-installer-1.33.0.zip",
   ];
-  assert.deepEqual(artifactNames(files, "linux", "1.33.0"), files.slice(0, 2));
+  assert.deepEqual(artifactNames(files, "linux", "1.33.0"), files.slice(0, 2).sort());
   assert.deepEqual(artifactNames(files, "mac", "1.33.0"), files.slice(3, 5).sort());
   assert.throws(() => artifactNames(files, "win", "1.33.0"), /Unsupported/);
   assert.throws(() => artifactNames(files, "mac", "../1.33.0"), /Invalid/);
