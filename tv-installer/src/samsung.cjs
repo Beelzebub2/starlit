@@ -60,6 +60,12 @@ function safeTarEntries(archive) {
       const match = /(?:^|\n)\d+ path=([^\n]+)\n/.exec(meta);
       paxPath = match?.[1] || "";
     } else if (type === 0 || type === 48 || type === 53) {
+      // Standard TAR writers may emit a zero-byte root directory marker.
+      // Skip only that marker; never loosen traversal, link or path checks.
+      if (type === 53 && size === 0 && (name === "./" || name === ".")) {
+        cursor += 512 + padded;
+        continue;
+      }
       name = name.replace(/^\.\//, "").replace(/\/$/, "");
       if (!name || name.startsWith("/") || name.includes("\\") ||
           name.split("/").some(part => part === ".." || part === "")) {
