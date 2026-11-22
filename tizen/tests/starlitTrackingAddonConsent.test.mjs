@@ -82,6 +82,36 @@ test("the approved addon alone receives playback and manual library actions", as
   assert.equal(AddonEventDispatcher.library("movie", "tt2", AddonLibraryAction.UNWATCHED, () => [provider]), 0);
 });
 
+test("queued tracking is dropped after switching profiles even when the next profile consents", async () => {
+  let profileId = "1";
+  ProfileManager.getActiveProfileId = () => profileId;
+  addonRepository.grantTrackingConsent(provider.baseUrl);
+  let releaseFirst;
+  let signalFirst;
+  const firstStarted = new Promise((resolve) => { signalFirst = resolve; });
+  const holdFirst = new Promise((resolve) => { releaseFirst = resolve; });
+  globalThis.fetch = async (url) => {
+    delivered.push(String(url));
+    if (delivered.length === 1) {
+      signalFirst();
+      await holdFirst;
+    }
+    return { ok: true };
+  };
+  try {
+    assert.equal(AddonEventDispatcher.library("movie", "first", AddonLibraryAction.WATCHED, () => [provider]), 1);
+    await firstStarted;
+    assert.equal(AddonEventDispatcher.library("movie", "second", AddonLibraryAction.WATCHED, () => [provider]), 1);
+    profileId = "2";
+    addonRepository.grantTrackingConsent(provider.baseUrl);
+  } finally {
+    releaseFirst?.();
+  }
+  await new Promise((resolve) => setTimeout(resolve, 30));
+  assert.equal(delivered.length, 1);
+  assert.match(delivered[0], /first/);
+});
+
 test("start, pause, seek resend, and stop keep the playback target", () => {
   const previous = AddonEventDispatcher.player;
   const out = [];
