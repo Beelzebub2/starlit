@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "description": "Starlit TV installer for Samsung Tizen and LG webOS",
+  "desktopName": "app.starlit.tvinstaller.desktop",
   "main": "src/main.cjs",
   "scripts": {
     "prestart": "node scripts/copy-brand-fonts.cjs",
@@ -74,7 +75,6 @@
       ],
       "artifactName": "Starlit-TV-Installer-Linux-${arch}-${version}.${ext}",
       "icon": "../branding/starlit-mark.svg",
-      "desktopName": "starlit-tv-installer",
       "syncDesktopName": true
     }
   },
