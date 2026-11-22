@@ -1,4 +1,5 @@
 import { addonRepository } from "./addonRepository.js";
+import { ProfileManager } from "../../core/profile/profileManager.js";
 
 // Android AddonEventDispatcher: the stremio-core player and library tracking events.
 export const ADDON_PLAYER_RESOURCE = "player";
@@ -108,7 +109,7 @@ async function send(url) {
 }
 
 /** Events reach each add-on in order, one at a time, and never block the caller. */
-function deliver(baseUrl, url) {
+function deliver(baseUrl, url, profileId) {
   let state = queues.get(baseUrl);
   if (!state) {
     state = { pending: [], active: false };
@@ -117,15 +118,16 @@ function deliver(baseUrl, url) {
   if (state.pending.length >= MAX_PENDING_PER_ADDON) {
     return false;
   }
-  state.pending.push(url);
+  state.pending.push({ url, profileId });
   if (!state.active) {
     state.active = true;
     const process = async () => {
       while (state.pending.length) {
         const next = state.pending.shift();
         // Re-check consent at delivery time to handle revocation while queued.
-        if (addonRepository.hasTrackingConsent(baseUrl)) {
-          await send(next);
+        if (String(ProfileManager.getActiveProfileId() || "1") === next.profileId &&
+            addonRepository.hasTrackingConsent(baseUrl)) {
+          await send(next.url);
         }
       }
       state.active = false;
@@ -146,6 +148,7 @@ function dispatch(resource, type, id, extra, getAddons) {
     return 0;
   }
   const seen = new Set();
+  const profileId = String(ProfileManager.getActiveProfileId() || "1");
   let count = 0;
   (getAddons() || []).forEach((addon) => {
     const baseUrl = String(addon?.baseUrl || "");
@@ -154,7 +157,7 @@ function dispatch(resource, type, id, extra, getAddons) {
       return;
     }
     seen.add(baseUrl);
-    if (deliver(baseUrl, buildAddonEventUrl(baseUrl, resource, type, id, extra))) count += 1;
+    if (deliver(baseUrl, buildAddonEventUrl(baseUrl, resource, type, id, extra), profileId)) count += 1;
   });
   return count;
 }
