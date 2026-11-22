@@ -4,6 +4,7 @@ const path = require("node:path");
 const os = require("node:os");
 const { spawn } = require("node:child_process");
 const { createHash } = require("node:crypto");
+const { gunzipSync } = require("node:zlib");
 const JSZip = require("jszip");
 const { platformInfo, isLanIPv4 } = require("./platforms.cjs");
 const { inspectWgt, MAX_WGT } = require("./wgt.cjs");
@@ -17,6 +18,128 @@ const DOWNLOAD_URL = "https://github.com/Apps2Samsung/Apps2Samsung/releases/down
 const ZIP_SHA256 = "68b9d032d8ea3f96a3e8cb4f47abfb8fb5b5e0cb712625f946a58aeb8f105593";
 const EXE_SHA256 = "9f16d0f699c68843ee4fdc72b8614f4a6d6eeab95a1dadde894eba952e6f9b9e";
 const TOOL_FILE = "apps2samsung-cli.exe";
+const UPSTREAM_RELEASE = "https://github.com/Apps2Samsung/Apps2Samsung/releases/download/" + VERSION + "/";
+const MAX_ARCHIVE_BYTES = 45 * 1024 * 1024;
+const MAX_EXTRACTED_BYTES = 256 * 1024 * 1024;
+// Official GitHub Release asset digests; this GPL-3-only program is fetched on
+// demand and is NOT redistributed inside Starlit's proprietary packages.
+const PLATFORM_ARCHIVES = Object.freeze({
+  "linux-x64": Object.freeze({ filename: "Apps2Samsung.Cli-v3.3.0-linux-x64.tar.gz", sha256: "a5ac49562c311cc5665f717480ef12952a0fa8eb87912ae430b83495499ed0b8" }),
+  "linux-arm64": Object.freeze({ filename: "Apps2Samsung.Cli-v3.3.0-linux-arm64.tar.gz", sha256: "03372a88781828126f9084b48e949bb3314eaac972c95cdd1fd89f8adc3176fa" }),
+  "darwin-x64": Object.freeze({ filename: "Apps2Samsung.Cli-v3.3.0-osx-x64.tar.gz", sha256: "39ee3a5d4b0b6c3da46a3821abc2cbeaf39dd827255c42a8d4ef4144a0ab86fc" }),
+  "darwin-arm64": Object.freeze({ filename: "Apps2Samsung.Cli-v3.3.0-osx-arm64.tar.gz", sha256: "d4f4c7cfea4db4c51edd81a287c4302d90a5dbb9091b21a960f3f974225b6035" })
+});
+function platformToolArchive(platform = process.platform, architecture = process.arch) {
+  const spec = PLATFORM_ARCHIVES[platform + "-" + architecture];
+  if (!spec) throw new Error("The verified Apps2Samsung CLI is not available for this OS/CPU");
+  return { ...spec, url: UPSTREAM_RELEASE + spec.filename };
+}
+function safeTarEntries(archive) {
+  const tar = gunzipSync(archive, { maxOutputLength: MAX_EXTRACTED_BYTES });
+  const entries = [];
+  let cursor = 0;
+  let paxPath = "";
+  while (cursor + 512 <= tar.length) {
+    const header = tar.subarray(cursor, cursor + 512);
+    if (header.every(b => b === 0)) break;
+    const field = (start, len) => header.toString("utf8", start, start + len).split("\0")[0];
+    const rawSize = field(124, 12).trim();
+    if (!/^[0-7]+$/.test(rawSize)) throw new Error("Invalid Samsung CLI TAR entry size");
+    const size = parseInt(rawSize, 8);
+    if (!Number.isSafeInteger(size) || size > MAX_EXTRACTED_BYTES) throw new Error("Oversized TAR entry");
+    const type = header[156];
+    let name = paxPath || [field(345, 155), field(0, 100)].filter(Boolean).join("/");
+    paxPath = "";
+    const padded = Math.ceil(size / 512) * 512;
+    const end = cursor + 512 + size;
+    if (end > tar.length || cursor + 512 + padded > tar.length) throw new Error("Truncated Samsung CLI archive");
+    const bytes = tar.subarray(cursor + 512, end);
+    if (type === 120) {
+      // PAX metadata can carry a long path for the following archive entry.
+      const meta = bytes.toString("utf8");
+      const match = /(?:^|\n)\d+ path=([^\n]+)\n/.exec(meta);
+      paxPath = match?.[1] || "";
+    } else if (type === 0 || type === 48 || type === 53) {
+      // Standard TAR writers may emit a zero-byte root directory marker.
+      // Skip only that marker; never loosen traversal, link or path checks.
+      if (type === 53 && size === 0 && (name === "./" || name === ".")) {
+        cursor += 512 + padded;
+        continue;
+      }
+      name = name.replace(/^\.\//, "").replace(/\/$/, "");
+      if (!name || name.startsWith("/") || name.includes("\\") ||
+          name.split("/").some(part => part === ".." || part === "")) {
+        throw new Error("Unsafe Samsung CLI archive entry");
+      }
+      entries.push({ name, bytes, directory: type === 53 });
+    } else {
+      // Never extract symlinks, hardlinks, devices or executable scripts from
+      // an untrusted archive, even if the outer asset checksum is pinned.
+      throw new Error("Unexpected Samsung CLI archive entry type");
+    }
+    cursor += 512 + padded;
+  }
+  if (!entries.length || !entries.some(entry => !entry.directory &&
+    path.posix.basename(entry.name).toLowerCase() === "apps2samsung-cli")) {
+    throw new Error("Samsung CLI archive does not contain its expected executable");
+  }
+  return entries;
+}
+async function ensureUnixSamsungCli({ toolsDir, platform = process.platform, architecture = process.arch,
+  fetchImpl = globalThis.fetch, onStatus = () => {}
+} = {}) {
+  const spec = platformToolArchive(platform, architecture);
+  const directory = path.join(toolsDir, "apps2samsung", VERSION, platform + "-" + architecture);
+  const marker = path.join(directory, ".verified.json");
+  try {
+    const metadata = JSON.parse(await fs.readFile(marker, "utf8"));
+    const exePath = path.resolve(directory, metadata.executable || "");
+    if (!exePath.startsWith(directory + path.sep) || !metadata.sha256 ||
+        !/^[a-f0-9]{64}$/.test(metadata.sha256) || metadata.archiveSha256 !== spec.sha256) {
+      throw new Error("Invalid cached Samsung tool metadata");
+    }
+    const stat = await fs.lstat(exePath);
+    if (!stat.isFile() || stat.isSymbolicLink() ||
+        CHECKSUM(await fs.readFile(exePath)) !== metadata.sha256) {
+      throw new Error("Cached Samsung tool failed integrity verification");
+    }
+    return exePath;
+  } catch (error) {
+    if (error.code !== "ENOENT") throw error;
+  }
+  onStatus("Downloading the verified Samsung installation CLI for this OS (first use)");
+  const bytes = await fetchBounded(fetchImpl, spec.url, MAX_ARCHIVE_BYTES, 120000);
+  if (CHECKSUM(bytes) !== spec.sha256) throw new Error("Official Samsung tool asset checksum mismatch");
+  const entries = safeTarEntries(bytes);
+  await fs.mkdir(path.dirname(directory), { recursive: true });
+  const stage = await fs.mkdtemp(path.join(path.dirname(directory), "starlit-samsung-"));
+  try {
+    for (const entry of entries) {
+      const destination = path.resolve(stage, entry.name);
+      if (!destination.startsWith(stage + path.sep)) throw new Error("Unsafe Samsung CLI path");
+      if (entry.directory) {
+        await fs.mkdir(destination, { recursive: true });
+      } else {
+        await fs.mkdir(path.dirname(destination), { recursive: true });
+        await fs.writeFile(destination, entry.bytes, { flag: "wx", mode: 0o700 });
+      }
+    }
+    const entry = entries.find(item => !item.directory &&
+      path.posix.basename(item.name).toLowerCase() === "apps2samsung-cli");
+    const executable = path.resolve(stage, entry.name);
+    await fs.chmod(executable, 0o700);
+    await fs.writeFile(path.join(stage, ".verified.json"), JSON.stringify({
+      archiveSha256: spec.sha256, executable: entry.name, sha256: CHECKSUM(entry.bytes)
+    }), { flag: "wx", mode: 0o600 });
+    await fs.rename(stage, directory); // Never replace an existing cache.
+  } catch (error) {
+    await fs.rm(stage, { recursive: true, force: true });
+    throw error;
+  }
+  onStatus("Verified Apps2Samsung " + VERSION + " is ready for " + platform);
+  return path.resolve(directory, entries.find(item => !item.directory &&
+    path.posix.basename(item.name).toLowerCase() === "apps2samsung-cli").name);
+}
 const CHECKSUM = data => createHash("sha256").update(data).digest("hex");
 
 function validateSamsungTarget(target = {}) {
@@ -32,10 +155,10 @@ function validateSigning(value) {
 async function ensureSamsungCli({
   toolsDir, fetchImpl = globalThis.fetch, onStatus = () => {}
 } = {}) {
-  if (process.platform !== "win32") {
-    throw new Error("The bundled Starlit Samsung installer currently supports Windows");
-  }
   if (!path.isAbsolute(String(toolsDir || ""))) throw new Error("Missing private Samsung tools directory");
+  if (process.platform !== "win32") {
+    return ensureUnixSamsungCli({ toolsDir, fetchImpl, onStatus });
+  }
   const directory = path.join(toolsDir, "apps2samsung", VERSION);
   const destination = path.join(directory, TOOL_FILE);
   try {
@@ -215,6 +338,7 @@ async function operateSamsung({
   }
 }
 module.exports = {
-  VERSION, ZIP_SHA256, EXE_SHA256, validateSamsungTarget, validateSigning,
+  VERSION, ZIP_SHA256, EXE_SHA256, PLATFORM_ARCHIVES, platformToolArchive, safeTarEntries,
+  validateSamsungTarget, validateSigning,
   ensureSamsungCli, runSamsungCli, operateSamsung, cliFailure
 };
