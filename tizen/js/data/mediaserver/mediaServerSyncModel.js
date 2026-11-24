@@ -1,118 +1,141 @@
 import { normalizeMediaServerAddress } from "./mediaBrowserClient.js";
+
+const providers = new Set(["jellyfin", "emby"]);
+const libraryKinds = new Set(["movie", "series", "mixed", "collection"]);
+const idPattern = /^[a-zA-Z0-9._:-]{1,256}$/;
+const addressPattern = /^https?:\/\/([a-z0-9.-]+|\[[0-9a-f:.]+\])(:[0-9]{1,5})?(\/[a-z0-9._~%/-]*)?$/i;
+
 export const serverSyncKey = (server) =>
-  `${server.providerId}|${server.remoteServerId}|${server.remoteUserId}`;
+  `${server.providerId || server.provider_id}|${server.remoteServerId || server.remote_server_id}|${server.remoteUserId || server.remote_user_id}`;
+
 export function toSyncedServer(server) {
+  if (!server || !Array.isArray(server.libraries) || server.libraries.length > 128) return null;
+  const provider = server.providerId || server.provider_id;
+  if (!providers.has(provider) || typeof server.address !== "string" || !addressPattern.test(server.address)) return null;
+  const address = normalizeMediaServerAddress(server.address, provider);
+  const remoteServerId = server.remoteServerId || server.remote_server_id;
+  const remoteUserId = server.remoteUserId || server.remote_user_id;
+  if (!address || address.length > 2048 || ![server.id, remoteServerId, remoteUserId].every(
+    (value) => typeof value === "string" && idPattern.test(value)
+  )) return null;
+  const name = typeof server.name === "string" ? server.name.trim() : "";
+  if (!name || name.length > 256) return null;
+  const libraries = [];
+  const IDs = new Set();
+  for (const library of server.libraries) {
+    if (!library || typeof library.id !== "string" || !idPattern.test(library.id) || IDs.has(library.id) ||
+        typeof library.name !== "string" || !library.name || library.name.length > 512 ||
+        !libraryKinds.has(library.kind) || typeof library.selected !== "boolean") return null;
+    IDs.add(library.id);
+    libraries.push({ id: library.id, name: library.name, kind: library.kind, selected: library.selected });
+  }
+  // Do not transmit passwords, tokens, usernames nor arbitrary passthrough fields.
   return {
     id: server.id,
-    provider_id: server.providerId,
-    name: server.name,
-    address: server.address,
-    remote_server_id: server.remoteServerId,
-    remote_user_id: server.remoteUserId,
-    user_name: server.userName,
-    token: server.token,
-    libraries: server.libraries.map(({ id, name, kind, selected }) => ({
-      id,
-      name,
-      kind,
-      selected
-    })),
-    enabled: server.enabled,
-    use_catalog_metadata: server.useCatalogMetadata,
-    import_watch_state: server.importWatchState
+    provider_id: provider,
+    remote_server_id: remoteServerId,
+    remote_user_id: remoteUserId,
+    name,
+    address,
+    libraries,
+    enabled: server.enabled !== false,
+    use_catalog_metadata: (server.useCatalogMetadata ?? server.use_catalog_metadata) === true,
+    import_watch_state: (server.importWatchState ?? server.import_watch_state) === true
   };
 }
+
 export function toSyncPayload(connections, preserved = []) {
-  return [...connections.map(toSyncedServer), ...preserved];
-}
-export function parseSyncedServers(rows) {
-  if (!Array.isArray(rows)) throw new Error("Invalid media server sync response");
-  if (!rows.length) return null;
-  if (!Array.isArray(rows[0]?.servers_json)) throw new Error("Invalid media server sync response");
-  const servers = [];
-  // Preserve providers the current client cannot execute, so a later sync push
-  // does not erase connections created by other supported clients.
-  const preserved = [];
-  for (const raw of rows[0].servers_json) {
-    const providerId = typeof raw?.provider_id === "string" ? raw.provider_id.trim() : "";
-    if (!providerId) throw new Error("Invalid media server sync payload");
-    if (!["jellyfin", "emby"].includes(providerId)) {
-      preserved.push(raw);
-      continue;
-    }
-    const address = normalizeMediaServerAddress(raw.address, providerId);
-    if (
-      !address ||
-      ![raw.id, raw.remote_server_id, raw.remote_user_id, raw.token].every(
-        (value) => typeof value === "string" && value
-      ) ||
-      !Array.isArray(raw.libraries)
-    )
-      throw new Error("Invalid media server sync payload");
-    for (const flag of ["enabled", "use_catalog_metadata", "import_watch_state"]) {
-      if (raw[flag] != null && typeof raw[flag] !== "boolean")
-        throw new Error("Invalid media server sync flag");
-    }
-    const libraries = raw.libraries.map((library) => {
-      if (
-        typeof library.id !== "string" ||
-        !library.id ||
-        typeof library.name !== "string" ||
-        !["movie", "series", "mixed", "collection"].includes(library.kind) ||
-        typeof library.selected !== "boolean"
-      )
-        throw new Error("Invalid media server library payload");
-      return { id: library.id, name: library.name, kind: library.kind, selected: library.selected };
-    });
-    servers.push({
-      id: raw.id,
-      providerId,
-      address,
-      name: String(raw.name || ""),
-      remoteServerId: raw.remote_server_id,
-      remoteUserId: raw.remote_user_id,
-      userName: String(raw.user_name || ""),
-      token: raw.token,
-      libraries,
-      enabled: raw.enabled !== false,
-      useCatalogMetadata: raw.use_catalog_metadata === true,
-      importWatchState: typeof raw.import_watch_state === "boolean" ? raw.import_watch_state : null
-    });
+  const byKey = new Map();
+  for (const entry of [...preserved, ...connections]) {
+    const clean = toSyncedServer(entry);
+    if (clean) byKey.set(serverSyncKey(clean), clean);
   }
+  return [...byKey.values()];
+}
+
+export function parseSyncedServers(rows) {
+  if (!Array.isArray(rows) || rows.length > 1) throw new Error("Invalid media server sync response");
+  if (!rows.length) return { servers: [], updatedAt: null };
+  const row = rows[0];
+  if (!Array.isArray(row?.servers_json) || row.servers_json.length > 50 ||
+      typeof row.updated_at !== "string" || !Number.isFinite(Date.parse(row.updated_at))) {
+    throw new Error("Invalid media server sync response");
+  }
+  const servers = row.servers_json.map((raw) => {
+    const clean = toSyncedServer(raw);
+    if (!clean || Object.keys(raw).some((key) => !Object.prototype.hasOwnProperty.call(clean, key))) {
+      throw new Error("Invalid media server sync metadata");
+    }
+    return clean;
+  });
   if (new Set(servers.map(serverSyncKey)).size !== servers.length)
     throw new Error("Duplicate media server sync identity");
-  return { servers, preserved };
+  // Preserve the original text, including PostgreSQL's sub-millisecond precision.
+  return { servers, updatedAt: row.updated_at };
 }
-export function mergeSyncedServers(local, remote, syncedKeys) {
-  const localByKey = new Map(local.map((server) => [serverSyncKey(server), server]));
-  const remoteKeys = new Set(remote.map(serverSyncKey));
-  const known = syncedKeys == null ? null : new Set(syncedKeys);
-  const merged = remote.map((server) => {
-    const old = localByKey.get(serverSyncKey(server));
-    return {
-      ...server,
-      id: old?.id || server.id,
-      importWatchState: server.importWatchState ?? old?.importWatchState ?? false,
-      aioStreams: old?.aioStreams || false
-    };
-  });
-  merged.push(
-    ...local.filter(
-      (server) =>
-        !remoteKeys.has(serverSyncKey(server)) && (!known || !known.has(serverSyncKey(server)))
-    )
-  );
-  const used = new Set();
-  const localIds = new Map(local.map((server) => [server.id, serverSyncKey(server)]));
-  return merged.map((server) => {
-    const key = serverSyncKey(server);
-    let id = server.id;
-    if (used.has(id) || (localIds.has(id) && localIds.get(id) !== key)) {
-      do {
-        id = `server-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-      } while (used.has(id) || localIds.has(id));
+
+const indexed = (entries) => new Map(entries.map((entry) => [serverSyncKey(entry), entry]));
+
+export function rebaseMediaServerChanges(local, remote) {
+  const latest = indexed(remote);
+  const desired = indexed(toSyncPayload(local.connections, local.preserved));
+  const baseline = local.syncedPayload == null ? null : indexed(local.syncedPayload);
+  if (baseline && !local.pendingPush) return remote;
+
+  // Only replay local changes relative to the most recent acknowledged snapshot.
+  // First setup contributes local-only rows, never bulk-replaces the remote.
+  if (baseline) {
+    for (const [key] of baseline) if (!desired.has(key)) latest.delete(key);
+  }
+  for (const [key, entry] of desired) {
+    const previous = baseline?.get(key);
+    if (!previous) {
+      if (!latest.has(key)) latest.set(key, entry);
+      continue;
     }
-    used.add(id);
-    return { ...server, id };
-  });
+    // An old preference edit does not recreate a row removed on another device.
+    if (latest.has(key) && JSON.stringify(previous) !== JSON.stringify(entry)) {
+      const next = { ...latest.get(key) };
+      for (const field of ["enabled", "use_catalog_metadata", "import_watch_state", "libraries"]) {
+        if (JSON.stringify(previous[field]) !== JSON.stringify(entry[field])) next[field] = entry[field];
+      }
+      latest.set(key, next);
+    }
+  }
+  return [...latest.values()];
+}
+
+export function withLinkedMediaServerPreferences(local, remote) {
+  if (!remote || serverSyncKey(local) !== serverSyncKey(remote)) return local;
+  const selected = new Map(remote.libraries.map((library) => [library.id, library.selected]));
+  return {
+    ...local,
+    // Keep the locally authenticated endpoint, username, and token together.
+    // Remote metadata must never redirect local credentials to another host.
+    enabled: remote.enabled,
+    useCatalogMetadata: remote.use_catalog_metadata,
+    importWatchState: remote.import_watch_state,
+    libraries: local.libraries.map((library) => ({
+      ...library,
+      selected: selected.has(library.id) ? selected.get(library.id) : library.selected
+    }))
+  };
+}
+
+export function reconcileLinkedMediaServers(local, servers) {
+  const remote = indexed(servers);
+  const known = indexed(local.syncedPayload ?? []);
+  const connections = [];
+  for (const connection of local.connections) {
+    const clean = toSyncedServer(connection);
+    if (!clean) {
+      connections.push(connection);
+      continue;
+    }
+    const key = serverSyncKey(clean);
+    if (remote.has(key)) connections.push(withLinkedMediaServerPreferences(connection, remote.get(key)));
+    else if (!known.has(key)) connections.push(connection);
+  }
+  const linked = new Set(connections.map(serverSyncKey));
+  return { connections, unlinked: servers.filter((entry) => !linked.has(serverSyncKey(entry))) };
 }

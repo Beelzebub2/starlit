@@ -1,6 +1,7 @@
 import { mirrorWatchTargets, findServerEpisode } from "./serverWatchedMatcher.js";
 import { serverUserState, projectServerUserState } from "./mediaServerUserState.js";
 import { MediaServerStore } from "./mediaServerStore.js";
+import { serverSyncKey, toSyncPayload, withLinkedMediaServerPreferences } from "./mediaServerSyncModel.js";
 import {
   mediaServerRequest,
   mediaServerUrl,
@@ -194,6 +195,10 @@ export const MediaServerRepository = {
   connections(id) {
     return MediaServerStore.get(id).connections;
   },
+  unlinkedMetadata(id) {
+    const connected = new Set(this.connections(id).map(serverSyncKey));
+    return toSyncPayload([], MediaServerStore.get(id).preserved).filter((entry) => !connected.has(serverSyncKey(entry)));
+  },
   connection(id, pid) {
     return this.connections(pid).find((entry) => entry.id === id);
   },
@@ -235,11 +240,13 @@ export const MediaServerRepository = {
     connection.libraries = await this.libraries(connection);
     if (profile() !== pid) throw new Error("servers_error_failed");
     const old = this.connection(id, pid);
+    const linked = withLinkedMediaServerPreferences(connection,
+      this.unlinkedMetadata(pid).find((entry) => serverSyncKey(entry) === serverSyncKey(connection)));
     MediaServerStore.set(
       [
         ...this.connections(pid).filter((entry) => entry.id !== id),
         {
-          ...connection,
+          ...linked,
           ...(old
             ? {
                 enabled: old.enabled,

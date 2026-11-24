@@ -1,6 +1,7 @@
 import { MediaServerRepository } from "../../../data/mediaserver/mediaServerRepository.js";
 import { ProfileManager } from "../../../core/profile/profileManager.js";
 import { I18n } from "../../../i18n/index.js";
+import { serverSyncKey } from "../../../data/mediaserver/mediaServerSyncModel.js";
 const t = (key, params = []) => I18n.t(key, params, { fallback: key });
 export function renderMediaServersSection() {
   const pid = String(ProfileManager.getActiveProfileId());
@@ -207,6 +208,25 @@ export function renderMediaServersSection() {
         title: entry.name,
         value: entry.providerId === "emby" ? "Emby" : "Jellyfin",
         subtitle: entry.userName
+      });
+    }
+    for (const entry of MediaServerRepository.unlinkedMetadata(pid)) {
+      const id = `mediaServers:relink:${serverSyncKey(entry)}`;
+      this.actionMap.set(id, () => {
+        if (!current()) return;
+        this.mediaServerDraft = {
+          providerId: entry.provider_id,
+          address: entry.address,
+          username: "",
+          password: ""
+        };
+        this.mediaServersView = "add";
+      });
+      body += this.renderActionRow({
+        focusKey: id,
+        title: entry.name,
+        value: t("servers_connect"),
+        subtitle: entry.address
       });
     }
     this.actionMap.set("mediaServers:add", () => {

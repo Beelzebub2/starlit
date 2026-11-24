@@ -3,10 +3,9 @@ import { ProfileManager } from "./profileManager.js";
 import { SupabaseApi } from "../../data/remote/supabase/supabaseApi.js";
 import { MediaServerStore } from "../../data/mediaserver/mediaServerStore.js";
 import {
-  toSyncPayload,
   parseSyncedServers,
-  mergeSyncedServers,
-  serverSyncKey
+  rebaseMediaServerChanges,
+  reconcileLinkedMediaServers
 } from "../../data/mediaserver/mediaServerSyncModel.js";
 import { getSyncClientId } from "../sync/syncClientIdentity.js";
 import { isSyncBackoffActive, getSyncBackoffRemainingMs } from "../sync/syncBackoffPolicy.js";
@@ -47,58 +46,50 @@ function notifyRemoteChange() {
     new CustomEvent("nuvio:media-servers-changed", { detail: { remote: true } })
   );
 }
-async function push(scope, snapshot, version) {
-  if (!(await stillCurrent(scope, version))) return false;
-  await SupabaseApi.rpc(
-    "sync_push_media_servers",
-    {
-      p_profile_id: Number(scope.profileId),
-      p_servers: toSyncPayload(snapshot.connections, snapshot.preserved),
-      p_origin_client_id: getSyncClientId()
-    },
-    true
-  );
-  if (!(await stillCurrent(scope, version))) return false;
-  MediaServerStore.markPushed(snapshot, snapshot.connections.map(serverSyncKey), scope.profileId);
-  return true;
-}
-async function sync(profileId, pushOnly, version) {
+async function sync(profileId, version) {
   if (version !== generation || isSyncBackoffActive()) return false;
   const scope = await scopeFor(profileId);
   if (!scope || !(await stillCurrent(scope, version))) return false;
-  const local = MediaServerStore.get(scope.profileId);
-  if (local.syncedKeys != null && (pushOnly || local.pendingPush)) {
-    if (local.pendingPush) await push(scope, local, version);
-    return false;
+
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const local = MediaServerStore.get(scope.profileId);
+    let remote = parseSyncedServers(await SupabaseApi.rpc(
+      "sync_pull_media_servers", { p_profile_id: Number(scope.profileId) }, true
+    ));
+    if (!(await stillCurrent(scope, version))) return false;
+    if (MediaServerStore.get(scope.profileId).revision !== local.revision) return false;
+    const payload = rebaseMediaServerChanges(local, remote.servers);
+    if (JSON.stringify(payload) !== JSON.stringify(remote.servers)) {
+      try {
+        remote = parseSyncedServers(await SupabaseApi.rpc("sync_push_media_servers", {
+          p_profile_id: Number(scope.profileId),
+          p_servers: payload,
+          p_origin_client_id: getSyncClientId(),
+          p_expected_updated_at: remote.updatedAt
+        }, true));
+      } catch (error) {
+        if (attempt === 0 && Number(error?.status) === 409 &&
+            await stillCurrent(scope, version)) continue;
+        throw error;
+      }
+    }
+    if (!(await stillCurrent(scope, version))) return false;
+    const { connections, unlinked } = reconcileLinkedMediaServers(local, remote.servers);
+    const changed = JSON.stringify(local.connections) !== JSON.stringify(connections) ||
+      JSON.stringify(local.preserved) !== JSON.stringify(unlinked);
+    if (!MediaServerStore.applySync(local, connections, remote.servers, unlinked, scope.profileId))
+      return false;
+    if (changed) notifyRemoteChange();
+    lastPull = Date.now();
+    return changed;
   }
-  const rows = await SupabaseApi.rpc(
-    "sync_pull_media_servers",
-    { p_profile_id: Number(scope.profileId) },
-    true
-  );
-  if (!(await stillCurrent(scope, version))) return false;
-  const remote = parseSyncedServers(rows);
-  if (remote == null) {
-    if (local.connections.length || local.pendingPush) await push(scope, local, version);
-    return false;
-  }
-  const remoteKeys = remote.servers.map(serverSyncKey);
-  const merged = mergeSyncedServers(local.connections, remote.servers, local.syncedKeys);
-  if (!MediaServerStore.applySync(local, merged, remoteKeys, remote.preserved, scope.profileId))
-    return false;
-  const changed = JSON.stringify(local.connections) !== JSON.stringify(merged);
-  if (changed) notifyRemoteChange();
-  if (merged.some((connection) => !remoteKeys.includes(serverSyncKey(connection)))) {
-    await push(scope, MediaServerStore.get(scope.profileId), version);
-  }
-  lastPull = Date.now();
-  return changed;
+  return false;
 }
-function enqueue(profileId, pushOnly) {
+function enqueue(profileId) {
   const version = generation;
   const operation = queue
     .catch(() => false)
-    .then(() => sync(profileId, pushOnly, version))
+    .then(() => sync(profileId, version))
     .catch(() => false);
   queue = operation;
   return operation;
@@ -112,7 +103,7 @@ export const MediaServerSyncService = {
     });
   },
   syncFromRemote(profileId = ProfileManager.getActiveProfileId()) {
-    return enqueue(String(profileId), false);
+    return enqueue(String(profileId));
   },
   requestPush(profileId = ProfileManager.getActiveProfileId()) {
     if (!AuthManager.isAuthenticated) return;
@@ -127,7 +118,7 @@ export const MediaServerSyncService = {
             this.requestPush(id);
             return;
           }
-          void enqueue(id, true);
+          void enqueue(id);
         },
         Math.max(500, getSyncBackoffRemainingMs())
       )
