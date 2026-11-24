@@ -3475,4 +3475,6 @@ Du bruker denne funksjonen helt på eget ansvar. P2P kan deaktiveres når som he
     <string name="settings_playback_controls_size_preview">Forhåndsvisning</string>
     <string name="settings_playback_controls_size_reset">Tilbakestill</string>
     <string name="compose_player_customize_ass_styles">Bruk egendefinert ASS/SSA-stil</string>
+    <string name="settings_tracking_simkl_rewatches">Registrer gjensyn med filmer i Simkl</string>
+    <string name="player_track_this_simkl_rewatch">Registrer denne filmen som et gjensyn i Simkl</string>
 </resources>

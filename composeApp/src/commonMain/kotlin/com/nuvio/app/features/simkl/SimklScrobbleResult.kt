@@ -16,6 +16,14 @@ internal enum class SimklScrobbleOutcome {
     SCROBBLE,
 }
 
+internal enum class SimklRewatchResult {
+    NOT_REQUESTED,
+    FIRST_WATCH,
+    RECORDED,
+    PLAN_REQUIRED,
+    UNCONFIRMED,
+}
+
 internal data class SimklScrobbleResult(
     val outcome: SimklScrobbleOutcome,
     val playbackId: Long?,
@@ -24,12 +32,17 @@ internal data class SimklScrobbleResult(
     val media: SimklMedia,
     val episode: SimklPlaybackEpisode?,
     val watchedAt: String? = null,
-)
+    val rewatchResult: SimklRewatchResult = SimklRewatchResult.NOT_REQUESTED,
+) {
+    val rewatchPlanRejected: Boolean get() = rewatchResult == SimklRewatchResult.PLAN_REQUIRED
+}
 
 internal fun SimklApiResponse.toSimklScrobbleResult(
     requestedAction: TrackingScrobbleAction,
     event: TrackingScrobbleEvent,
     json: Json,
+    completionThreshold: Int = 80,
+    requestedRewatch: Boolean = false,
 ): SimklScrobbleResult {
     val payload = body
         .takeIf(String::isNotBlank)
@@ -44,11 +57,10 @@ internal fun SimklApiResponse.toSimklScrobbleResult(
     val progress = payload.doubleValue("progress")
         ?.coerceIn(0.0, 100.0)
         ?: event.progressPercent.coerceIn(0.0, 100.0)
+    val responseAction = payload.stringValue("action")?.toSimklScrobbleOutcome()
     val outcome = when {
         isSoftSuccess && status == 409 -> SimklScrobbleOutcome.SCROBBLE
-        else -> payload.stringValue("action")
-            ?.toSimklScrobbleOutcome()
-            ?: requestedAction.fallbackOutcome(progress)
+        else -> responseAction ?: requestedAction.fallbackOutcome(progress, completionThreshold)
     }
     return SimklScrobbleResult(
         outcome = outcome,
@@ -59,6 +71,19 @@ internal fun SimklApiResponse.toSimklScrobbleResult(
         episode = episode,
         watchedAt = payload.stringValue("watched_at")
             ?.takeIf { value -> parseSimklUtcEpochMs(value) != null },
+        rewatchResult = when {
+            !requestedRewatch -> SimklRewatchResult.NOT_REQUESTED
+            else -> when (payload.stringValue("rewatch_status")) {
+                "first_watch" -> SimklRewatchResult.FIRST_WATCH
+                "active", "completed", "closed" -> SimklRewatchResult.RECORDED
+                "pro_required" -> SimklRewatchResult.PLAN_REQUIRED
+                // A stop below the server's threshold can still save normal resume progress.
+                null -> if (responseAction == SimklScrobbleOutcome.PAUSE) {
+                    SimklRewatchResult.NOT_REQUESTED
+                } else SimklRewatchResult.UNCONFIRMED
+                else -> SimklRewatchResult.UNCONFIRMED
+            }
+        },
     )
 }
 
@@ -124,12 +149,12 @@ internal fun TrackingMediaKind.toSimklMediaType(): SimklMediaType = when (this) 
     TrackingMediaKind.ANIME -> SimklMediaType.ANIME
 }
 
-private fun TrackingScrobbleAction.fallbackOutcome(progress: Double): SimklScrobbleOutcome =
+private fun TrackingScrobbleAction.fallbackOutcome(progress: Double, completionThreshold: Int): SimklScrobbleOutcome =
     when (this) {
         TrackingScrobbleAction.START -> SimklScrobbleOutcome.START
         TrackingScrobbleAction.PAUSE -> SimklScrobbleOutcome.PAUSE
         TrackingScrobbleAction.STOP -> {
-            if (progress >= 80.0) SimklScrobbleOutcome.SCROBBLE else SimklScrobbleOutcome.PAUSE
+            if (progress >= completionThreshold) SimklScrobbleOutcome.SCROBBLE else SimklScrobbleOutcome.PAUSE
         }
     }
 

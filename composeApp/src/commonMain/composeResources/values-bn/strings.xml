@@ -3510,4 +3510,6 @@
     <string name="settings_playback_controls_size_preview">পূর্বরূপ</string>
     <string name="settings_playback_controls_size_reset">রিসেট</string>
     <string name="compose_player_customize_ass_styles">কাস্টম ASS/SSA স্টাইল ব্যবহার করুন</string>
+    <string name="settings_tracking_simkl_rewatches">Simkl-এ সিনেমা পুনরায় দেখার হিসাব রাখুন</string>
+    <string name="player_track_this_simkl_rewatch">এই সিনেমাটি Simkl-এ পুনরায় দেখা হিসেবে নথিভুক্ত করুন</string>
 </resources>

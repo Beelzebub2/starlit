@@ -3500,4 +3500,6 @@
     <string name="settings_playback_controls_size_preview">پیش منظر</string>
     <string name="settings_playback_controls_size_reset">ری سیٹ</string>
     <string name="compose_player_customize_ass_styles">حسبِ ضرورت ASS/SSA انداز استعمال کریں</string>
+    <string name="settings_tracking_simkl_rewatches">Simkl میں فلمیں دوبارہ دیکھنے کا ریکارڈ رکھیں</string>
+    <string name="player_track_this_simkl_rewatch">اس فلم کو Simkl میں دوبارہ دیکھے گئے کے طور پر درج کریں</string>
 </resources>

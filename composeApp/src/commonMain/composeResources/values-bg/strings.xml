@@ -3499,4 +3499,6 @@
     <string name="settings_playback_controls_size_preview">Преглед</string>
     <string name="settings_playback_controls_size_reset">Нулиране</string>
     <string name="compose_player_customize_ass_styles">Използване на персонализиран стил за ASS/SSA</string>
+    <string name="settings_tracking_simkl_rewatches">Отчитане на повторните гледания на филми в Simkl</string>
+    <string name="player_track_this_simkl_rewatch">Запиши този филм като повторно гледане в Simkl</string>
 </resources>

@@ -120,21 +120,32 @@ internal class SimklMutationService(
     suspend fun scrobble(
         action: TrackingScrobbleAction,
         event: TrackingScrobbleEvent,
+        rewatch: SimklRewatchStop? = null,
+        authorizationIsCurrent: (() -> Boolean)? = null,
     ): SimklScrobbleResult {
         require(event.media.hasResolvableIdentity) { "Simkl scrobble requires a media ID or title" }
         require(event.media.kind == TrackingMediaKind.MOVIE || event.media.episode != null) {
             "Simkl series scrobble requires an episode"
         }
+        val rewatchStop = rewatch?.takeIf { action == TrackingScrobbleAction.STOP && event.media.kind == TrackingMediaKind.MOVIE }
         val response = client.execute(
             SimklApiRequest(
                 method = SimklHttpMethod.POST,
                 path = "/scrobble/${action.wireValue}",
+                query = rewatchStop?.query ?: emptyMap(),
                 body = buildSimklScrobbleBody(event, json),
                 retryPolicy = SimklRetryPolicy.NEVER,
-                scrobbleStopConflictIsSuccess = action == TrackingScrobbleAction.STOP,
+                scrobbleStopConflictIsSuccess = action == TrackingScrobbleAction.STOP && rewatchStop?.record != true,
+                authorizationIsCurrent = authorizationIsCurrent,
             ),
         )
-        return response.toSimklScrobbleResult(action, event, json)
+        return response.toSimklScrobbleResult(
+            action,
+            event,
+            json,
+            completionThreshold = rewatchStop?.threshold ?: 80,
+            requestedRewatch = rewatchStop?.record == true,
+        )
     }
 
     private fun Collection<TrackingMediaReference>.validated(): List<TrackingMediaReference> =
@@ -227,14 +238,35 @@ object SimklMutationRepository : TrackingListWriter, TrackingHistoryWriter, Trac
     ) {
         if (!isActiveProfile(profileId)) return
         SimklSyncRepository.ensureLoaded()
+        val confirmedAccount = event.explicitSimklMovieRewatchAccountId
         val enriched = SimklSyncRepository.state.value.snapshot.enrichMediaReference(event.media)
+        val candidate = if (action == TrackingScrobbleAction.STOP &&
+            enriched.kind == TrackingMediaKind.MOVIE && enriched.ids.toSimklJsonObjectOrNull() != null
+        ) resolveSimklRewatchStop(
+            progressPercent = event.progressPercent,
+            startPercent = event.inAppPlaybackStartPercent,
+            creditsPercent = event.creditsStartPercent,
+            explicitlySelected = confirmedAccount != null,
+        ) else null
+        val authorization = if (candidate != null && confirmedAccount != null) {
+            SimklAuthRepository.rewatchAuthorization(confirmedAccount)
+        } else null
+        if (!isActiveProfile(profileId)) return
         val result = service.scrobble(
             action = action,
             event = event.copy(
                 media = enriched.resolveAnimeEpisodeForSimkl(),
             ),
+            rewatch = candidate.takeIf { authorization != null },
+            authorizationIsCurrent = authorization?.let { auth ->
+                { isActiveProfile(profileId) && auth.current() }
+            },
         )
-        if (action != TrackingScrobbleAction.START) {
+        if (result.rewatchPlanRejected) {
+            authorization?.onPlanRejected?.invoke()
+            return
+        }
+        if (isActiveProfile(profileId) && action != TrackingScrobbleAction.START) {
             SimklSyncRepository.commitScrobble(result)
         }
     }

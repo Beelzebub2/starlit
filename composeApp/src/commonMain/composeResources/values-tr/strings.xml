@@ -3507,4 +3507,6 @@ Bu özelliği tamamen kendi sorumluluğunuzda kullanırsınız. P2P istediğiniz
     <string name="settings_playback_controls_size_preview">Önizleme</string>
     <string name="settings_playback_controls_size_reset">Sıfırla</string>
     <string name="compose_player_customize_ass_styles">Özel ASS/SSA stilini kullan</string>
+    <string name="settings_tracking_simkl_rewatches">Simkl’de tekrar izlenen filmleri kaydet</string>
+    <string name="player_track_this_simkl_rewatch">Bu filmi Simkl’de tekrar izleme olarak kaydet</string>
 </resources>

@@ -3451,4 +3451,6 @@
     <string name="settings_playback_controls_size_preview">미리보기</string>
     <string name="settings_playback_controls_size_reset">재설정</string>
     <string name="compose_player_customize_ass_styles">사용자 지정 ASS/SSA 스타일 사용</string>
+    <string name="settings_tracking_simkl_rewatches">Simkl에 영화 다시 보기 기록</string>
+    <string name="player_track_this_simkl_rewatch">이 영화를 Simkl에 다시 보기로 기록</string>
 </resources>

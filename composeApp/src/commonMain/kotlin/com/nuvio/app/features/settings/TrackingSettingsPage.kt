@@ -10,6 +10,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -28,6 +29,7 @@ import com.nuvio.app.features.library.LibrarySourceMode
 import com.nuvio.app.features.mdblist.MdbListTracker
 import com.nuvio.app.features.profiles.ProfileRepository
 import com.nuvio.app.features.simkl.SimklAnimeIdPreference
+import com.nuvio.app.features.simkl.SimklAuthRepository
 import com.nuvio.app.features.simkl.SimklAuthUiState
 import com.nuvio.app.features.simkl.SimklConnectionMode
 import com.nuvio.app.features.tracking.TrackingProviderId
@@ -43,6 +45,7 @@ import com.nuvio.app.features.trakt.TraktConnectionMode
 import com.nuvio.app.features.trakt.TraktContinueWatchingDaysOptions
 import com.nuvio.app.features.trakt.normalizeTraktContinueWatchingDaysCap
 import com.nuvio.app.features.watchprogress.WatchProgressSourceCoordinator
+import com.nuvio.app.isDesktop
 import kotlinx.coroutines.launch
 import nuvio.composeapp.generated.resources.Res
 import nuvio.composeapp.generated.resources.tracking_source_mdblist
@@ -56,6 +59,7 @@ import nuvio.composeapp.generated.resources.settings_tracking_nuvio_progress_des
 import nuvio.composeapp.generated.resources.settings_tracking_progress_refresh_failed
 import nuvio.composeapp.generated.resources.settings_tracking_services
 import nuvio.composeapp.generated.resources.settings_tracking_simkl_library_description
+import nuvio.composeapp.generated.resources.settings_tracking_simkl_rewatches
 import nuvio.composeapp.generated.resources.settings_tracking_simkl_progress_description
 import nuvio.composeapp.generated.resources.settings_tracking_simkl_recommendations_description
 import nuvio.composeapp.generated.resources.settings_tracking_source_fallback
@@ -117,6 +121,11 @@ internal fun LazyListScope.trackingSettingsContent(
     onCommentsEnabledChange: (Boolean) -> Unit,
 ) {
     item {
+        if (!isDesktop && simklUiState.mode == SimklConnectionMode.CONNECTED) {
+            LaunchedEffect(simklUiState.accountId) {
+                SimklAuthRepository.refreshRewatchPlanIfNeeded()
+            }
+        }
         SettingsSection(
             title = stringResource(Res.string.settings_tracking_services),
             isTablet = isTablet,
@@ -161,6 +170,23 @@ internal fun LazyListScope.trackingSettingsContent(
     }
 
     if (simklUiState.mode == SimklConnectionMode.CONNECTED) {
+        if (!isDesktop && simklUiState.canTrackRewatches) {
+            item {
+                SettingsSection(
+                    title = stringResource(Res.string.tracking_source_simkl),
+                    isTablet = isTablet,
+                ) {
+                    SettingsGroup(isTablet = isTablet) {
+                        SettingsSwitchRow(
+                            title = stringResource(Res.string.settings_tracking_simkl_rewatches),
+                            checked = simklUiState.trackRewatches,
+                            isTablet = isTablet,
+                            onCheckedChange = SimklAuthRepository::setTrackRewatches,
+                        )
+                    }
+                }
+            }
+        }
         item {
             SettingsSection(
                 title = stringResource(Res.string.settings_tracking_anime_section),

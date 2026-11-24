@@ -3478,4 +3478,6 @@
     <string name="settings_playback_controls_size_preview">预览</string>
     <string name="settings_playback_controls_size_reset">重置</string>
     <string name="compose_player_customize_ass_styles">使用自定义 ASS/SSA 样式</string>
+    <string name="settings_tracking_simkl_rewatches">在 Simkl 中记录重看的电影</string>
+    <string name="player_track_this_simkl_rewatch">在 Simkl 中将这部影片记为重看</string>
 </resources>
