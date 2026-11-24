@@ -63,6 +63,7 @@ import nuvio.composeapp.generated.resources.compose_player_bold
 import nuvio.composeapp.generated.resources.compose_player_bottom_offset
 import nuvio.composeapp.generated.resources.compose_player_capture_line
 import nuvio.composeapp.generated.resources.compose_player_color
+import nuvio.composeapp.generated.resources.compose_player_customize_ass_styles
 import nuvio.composeapp.generated.resources.compose_player_font_size
 import nuvio.composeapp.generated.resources.compose_player_font_size_value
 import nuvio.composeapp.generated.resources.compose_player_loading_lines
@@ -91,6 +92,7 @@ fun SubtitleStylePanel(
     subtitleAutoSyncState: SubtitleAutoSyncUiState,
     isCompact: Boolean,
     showHeader: Boolean = true,
+    showCustomAssStyleControl: Boolean = false,
     onStyleChanged: (SubtitleStyleState) -> Unit,
     onSubtitleDelayChanged: (Int) -> Unit,
     onSubtitleDelayReset: () -> Unit,
@@ -191,6 +193,14 @@ fun SubtitleStylePanel(
                     checked = style.bold,
                     onCheckedChange = { onStyleChanged(style.copy(bold = it)) },
                 )
+                if (showCustomAssStyleControl) {
+                    PanelDivider()
+                    PanelSwitchRow(
+                        title = stringResource(Res.string.compose_player_customize_ass_styles),
+                        checked = style.customizeAssStyles,
+                        onCheckedChange = { onStyleChanged(style.copy(customizeAssStyles = it)) },
+                    )
+                }
                 PanelDivider()
                 val offsetLabel = stringResource(Res.string.compose_player_bottom_offset)
                 PanelRow(title = offsetLabel) {

@@ -3463,4 +3463,5 @@
     <string name="lists_stat_episodes_watched">episódios vistos</string>
     <string name="lists_stat_movies_watched">filmes vistos</string>
     <string name="lists_stat_rated_titles">títulos classificados</string>
+    <string name="compose_player_customize_ass_styles">Usar estilo ASS/SSA personalizado</string>
 </resources>

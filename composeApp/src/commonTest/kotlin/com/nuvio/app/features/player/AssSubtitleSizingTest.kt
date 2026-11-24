@@ -18,6 +18,22 @@ class AssSubtitleSizingTest {
     }
 
     @Test
+    fun customStylingIsOptInAndRestoresAuthoredSizingWhenSwitchedOff() {
+        assertEquals(
+            MpvSubtitleSizing("force", 1.0, 75, customAss = true),
+            resolveMpvSubtitleSizing("ass", 1.5, "no", 100, customizeAss = true, customAssVerticalPosition = 75),
+        )
+        assertEquals(
+            MpvSubtitleSizing("scale", 1.5, 100),
+            resolveMpvSubtitleSizing("ass", 1.5, "no", 100, customizeAss = false, customAssVerticalPosition = 75),
+        )
+        assertEquals(
+            MpvSubtitleSizing("no", 1.0, 100),
+            resolveMpvSubtitleSizing("subrip", 1.5, "no", 100, customizeAss = true, customAssVerticalPosition = 75),
+        )
+    }
+
+    @Test
     fun plainTextAndNoTrackResetAssScale() {
         assertEquals(MpvSubtitleSizing("force", 1.0, 80), resolveMpvSubtitleSizing("subrip", 1.5, "force", 80))
         assertEquals(MpvSubtitleSizing("no", 1.0, 80), resolveMpvSubtitleSizing(null, 1.5, "force", 80))

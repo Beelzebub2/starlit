@@ -172,7 +172,8 @@ final class MPVPlayerBridgeImpl: NSObject, NuvioPlayerBridge {
         fontSize: Float,
         subPos: Int32,
         stripSdh: Bool,
-        assFontScale: Double
+        assFontScale: Double,
+        customizeAssStyles: Bool
     ) {
         playerVC?.applySubtitleStyle(
             textColor: textColor,
@@ -183,7 +184,8 @@ final class MPVPlayerBridgeImpl: NSObject, NuvioPlayerBridge {
             fontSize: fontSize,
             subPos: Int(subPos),
             stripSdh: stripSdh,
-            assFontScale: assFontScale
+            assFontScale: assFontScale,
+            customizeAssStyles: customizeAssStyles
         )
     }
 
@@ -845,6 +847,9 @@ final class MPVPlayerViewController: UIViewController {
     }
 
     private var preferredAssFontScale = 1.0
+    private var customizeAssStyle = false
+    private var preferredSubtitleBold = false
+    private var appliedAssBold: Bool?
     private var preferredPlainSubtitlePosition = 100
     private var appliedMpvSubtitleOverride: String?
     private var appliedMpvSubtitleScale: Double?
@@ -865,12 +870,15 @@ final class MPVPlayerViewController: UIViewController {
         fontSize: Float,
         subPos: Int,
         stripSdh: Bool,
-        assFontScale: Double
+        assFontScale: Double,
+        customizeAssStyles: Bool
     ) {
         guard mpv != nil else { return }
 
         preferredAssFontScale = assFontScale.isFinite ? min(3.0, max(0.25, assFontScale)) : 1.0
         preferredPlainSubtitlePosition = subPos
+        customizeAssStyle = customizeAssStyles
+        preferredSubtitleBold = bold
         checkError(mpv_set_property_string(mpv, "sub-color", textColor))
         checkError(mpv_set_property_string(mpv, "sub-back-color", backgroundColor))
         checkError(mpv_set_property_string(mpv, "sub-outline-color", outlineColor))
@@ -973,9 +981,19 @@ final class MPVPlayerViewController: UIViewController {
         guard mpv != nil else { return }
         let codec = getString("current-tracks/sub/codec")?.lowercased()
         let isAss = codec == "ass" || codec == "ssa"
-        var scale = isAss ? preferredAssFontScale : 1.0
-        let overrideMode = scale == 1.0 ? "no" : "scale"
-        let position = isAss ? 100 : preferredPlainSubtitlePosition
+        let customAss = isAss && customizeAssStyle
+        var scale = isAss && !customAss ? preferredAssFontScale : 1.0
+        let overrideMode = customAss ? "force" : (scale == 1.0 ? "no" : "scale")
+        let position = isAss && !customAss ? 100 : preferredPlainSubtitlePosition
+        let assBold: Bool? = customAss ? preferredSubtitleBold : nil
+        if appliedAssBold != assBold {
+            if let assBold {
+                command("change-list", args: ["sub-ass-style-overrides", "set", assBold ? "Bold=1" : "Bold=0"])
+            } else {
+                command("change-list", args: ["sub-ass-style-overrides", "clr", ""])
+            }
+            appliedAssBold = assBold
+        }
         if appliedMpvSubtitleOverride != overrideMode {
             checkError(mpv_set_property_string(mpv, "sub-ass-override", overrideMode))
             appliedMpvSubtitleOverride = overrideMode

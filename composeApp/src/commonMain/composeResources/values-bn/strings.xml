@@ -3509,4 +3509,5 @@
     <string name="settings_playback_controls_size_value">%1$d%</string>
     <string name="settings_playback_controls_size_preview">পূর্বরূপ</string>
     <string name="settings_playback_controls_size_reset">রিসেট</string>
+    <string name="compose_player_customize_ass_styles">কাস্টম ASS/SSA স্টাইল ব্যবহার করুন</string>
 </resources>

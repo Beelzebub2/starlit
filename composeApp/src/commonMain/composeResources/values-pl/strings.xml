@@ -3486,4 +3486,5 @@
     <string name="settings_playback_controls_size_value">%1$d%</string>
     <string name="settings_playback_controls_size_preview">Podgląd</string>
     <string name="settings_playback_controls_size_reset">Resetuj</string>
+    <string name="compose_player_customize_ass_styles">Używaj własnego stylu ASS/SSA</string>
 </resources>

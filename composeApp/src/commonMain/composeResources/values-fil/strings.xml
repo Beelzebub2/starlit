@@ -3499,4 +3499,5 @@ Nagbalik ang</string>
     <string name="settings_playback_controls_size_value">%1$d%</string>
     <string name="settings_playback_controls_size_preview">Preview</string>
     <string name="settings_playback_controls_size_reset">I-reset</string>
+    <string name="compose_player_customize_ass_styles">Gumamit ng pasadyang estilo ng ASS/SSA</string>
 </resources>

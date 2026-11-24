@@ -3488,4 +3488,5 @@
     <string name="settings_playback_controls_size_value">%1$d%</string>
     <string name="settings_playback_controls_size_preview">プレビュー</string>
     <string name="settings_playback_controls_size_reset">リセット</string>
+    <string name="compose_player_customize_ass_styles">ASS/SSA のカスタムスタイルを使用</string>
 </resources>

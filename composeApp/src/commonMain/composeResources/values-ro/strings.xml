@@ -3471,4 +3471,5 @@
     <string name="settings_playback_controls_size_value">%1$d%</string>
     <string name="settings_playback_controls_size_preview">Previzualizare</string>
     <string name="settings_playback_controls_size_reset">Resetează</string>
+    <string name="compose_player_customize_ass_styles">Folosește stilul personalizat ASS/SSA</string>
 </resources>

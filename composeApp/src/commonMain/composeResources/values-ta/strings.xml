@@ -3462,4 +3462,5 @@
     <string name="settings_playback_controls_size_value">%1$d%</string>
     <string name="settings_playback_controls_size_preview">முன்னோட்டம்</string>
     <string name="settings_playback_controls_size_reset">மீட்டமை</string>
+    <string name="compose_player_customize_ass_styles">தனிப்பயன் ASS/SSA பாணியைப் பயன்படுத்தவும்</string>
 </resources>
