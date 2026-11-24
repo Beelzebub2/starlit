@@ -26,6 +26,7 @@ interface PlayerEngineController {
     fun setSubtitleUri(url: String)
     fun clearExternalSubtitle()
     fun clearExternalSubtitleAndSelect(trackIndex: Int)
+    val supportsCustomAssStyles: Boolean get() = false
     fun applySubtitleStyle(style: SubtitleStyleState, useLibass: Boolean = false) {}
     fun applySubtitlePreferences(
         preferredLanguage: String,

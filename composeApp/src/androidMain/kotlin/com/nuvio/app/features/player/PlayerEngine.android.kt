@@ -1372,6 +1372,9 @@ private class NuvioLibmpvView(
     private var mpvSubtitleStyle = SubtitleStyleState.DEFAULT
     private var useAuthoredPlainSubtitleStyle = false
     private var appliedSubtitleSizing: MpvSubtitleSizing? = null
+    private var lastMpvVisualSubtitleStyle: SubtitleStyleState? = null
+    private var appliedAssBold: Boolean? = null
+    private var customAssTemporarilySetVisualStyle = false
 
     override fun initOptions() {
         setVo(videoOutput.mpvValue)
@@ -1685,20 +1688,15 @@ private class NuvioLibmpvView(
                 }
             }
 
+            override val supportsCustomAssStyles = true
+
             override fun applySubtitleStyle(style: SubtitleStyleState, useLibass: Boolean) {
                 executeMpv {
                     mpvSubtitleStyle = style
                     useAuthoredPlainSubtitleStyle = useLibass
                     if (!useLibass) {
-                        mpv.setPropertyString("sub-color", style.textColor.toMpvColor())
-                        mpv.setPropertyString("sub-back-color", style.backgroundColor.toMpvColor())
-                        mpv.setPropertyString("sub-outline-color", style.outlineColor.toMpvColor())
-                        mpv.setPropertyString("sub-border-color", style.outlineColor.toMpvColor())
-                        mpv.setPropertyString("sub-border-style", style.toMpvSubtitleBorderStyle())
-                        mpv.setPropertyString("sub-bold", if (style.bold) "yes" else "no")
-                        mpv.setPropertyInt("sub-font-size", style.toMpvSubtitleFontSize())
-                        mpv.setPropertyInt("sub-outline-size", style.toMpvSubtitleOutlineSize())
-                        mpv.setPropertyInt("sub-border-size", style.toMpvSubtitleOutlineSize())
+                        applyMpvVisualSubtitleStyle(style)
+                        customAssTemporarilySetVisualStyle = false
                     }
                     refreshMpvSubtitleSizingNow()
                     mpv.setPropertyBoolean("sub-filter-sdh", style.stripSdh)
@@ -1738,17 +1736,48 @@ private class NuvioLibmpvView(
 
     fun refreshMpvSubtitleSizing() = executeMpv { refreshMpvSubtitleSizingNow() }
 
+    private fun applyMpvVisualSubtitleStyle(style: SubtitleStyleState) {
+        if (lastMpvVisualSubtitleStyle == style) return
+        mpv.setPropertyString("sub-color", style.textColor.toMpvColor())
+        mpv.setPropertyString("sub-back-color", style.backgroundColor.toMpvColor())
+        mpv.setPropertyString("sub-outline-color", style.outlineColor.toMpvColor())
+        mpv.setPropertyString("sub-border-color", style.outlineColor.toMpvColor())
+        mpv.setPropertyString("sub-border-style", style.toMpvSubtitleBorderStyle())
+        mpv.setPropertyString("sub-bold", if (style.bold) "yes" else "no")
+        mpv.setPropertyInt("sub-font-size", style.toMpvSubtitleFontSize())
+        mpv.setPropertyInt("sub-outline-size", style.toMpvSubtitleOutlineSize())
+        mpv.setPropertyInt("sub-border-size", style.toMpvSubtitleOutlineSize())
+        lastMpvVisualSubtitleStyle = style
+    }
+
     private fun refreshMpvSubtitleSizingNow() {
+        val userPosition = (100 - mpvSubtitleStyle.bottomOffset / 10).coerceIn(0, 100)
         val sizing = resolveMpvSubtitleSizing(
             codec = mpv.getPropertyString("current-tracks/sub/codec"),
             assFontScale = mpvSubtitleStyle.assFontScale,
             plainOverrideMode = if (useAuthoredPlainSubtitleStyle) "no" else "force",
-            plainVerticalPosition = if (useAuthoredPlainSubtitleStyle) {
-                100
-            } else {
-                (100 - mpvSubtitleStyle.bottomOffset / 10).coerceIn(0, 100)
-            },
+            plainVerticalPosition = if (useAuthoredPlainSubtitleStyle) 100 else userPosition,
+            customizeAss = mpvSubtitleStyle.customizeAssStyles,
+            customAssVerticalPosition = userPosition,
         )
+        if (useAuthoredPlainSubtitleStyle) {
+            if (sizing.customAss) {
+                applyMpvVisualSubtitleStyle(mpvSubtitleStyle)
+                customAssTemporarilySetVisualStyle = true
+            } else if (customAssTemporarilySetVisualStyle) {
+                applyMpvVisualSubtitleStyle(SubtitleStyleState.DEFAULT)
+                customAssTemporarilySetVisualStyle = false
+            }
+        }
+        val assBold = mpvSubtitleStyle.bold.takeIf { sizing.customAss }
+        if (appliedAssBold != assBold) {
+            if (assBold == null) {
+                mpv.command("change-list", "sub-ass-style-overrides", "clr", "")
+            } else {
+                mpv.command("change-list", "sub-ass-style-overrides", "set", if (assBold) "Bold=1" else "Bold=0")
+            }
+            appliedAssBold = assBold
+        }
         val previous = appliedSubtitleSizing
         if (sizing.overrideMode != previous?.overrideMode) mpv.setPropertyString("sub-ass-override", sizing.overrideMode)
         if (sizing.fontScale != previous?.fontScale) mpv.setPropertyDouble("sub-scale", sizing.fontScale)

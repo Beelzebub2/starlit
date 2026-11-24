@@ -3497,4 +3497,7 @@
     <string name="settings_playback_controls_size_value">%1$d%</string>
     <string name="settings_playback_controls_size_preview">Xem trước</string>
     <string name="settings_playback_controls_size_reset">Đặt lại</string>
+    <string name="compose_player_customize_ass_styles">Dùng kiểu ASS/SSA tùy chỉnh</string>
+    <string name="settings_tracking_simkl_rewatches">Ghi lại lượt xem lại phim trên Simkl</string>
+    <string name="player_track_this_simkl_rewatch">Ghi phim này là đã xem lại trên Simkl</string>
 </resources>

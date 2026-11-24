@@ -3488,4 +3488,7 @@
     <string name="settings_playback_controls_size_value">%1$d%</string>
     <string name="settings_playback_controls_size_preview">Podgląd</string>
     <string name="settings_playback_controls_size_reset">Resetuj</string>
+    <string name="compose_player_customize_ass_styles">Używaj własnego stylu ASS/SSA</string>
+    <string name="settings_tracking_simkl_rewatches">Rejestruj ponowne oglądanie filmów w Simkl</string>
+    <string name="player_track_this_simkl_rewatch">Zapisz ten film w Simkl jako obejrzany ponownie</string>
 </resources>

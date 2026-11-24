@@ -209,6 +209,47 @@ object SimklAuthRepository : TrackingAuthProvider {
         invalidateCredentials(SimklAuthError.AUTHORIZATION_REVOKED)
     }
 
+    fun setTrackRewatches(enabled: Boolean) {
+        ensureLoaded()
+        val accountId = storedState.accountId ?: return
+        if (accessToken.isNullOrBlank() || (enabled && !isSimklRewatchPlan(storedState.accountType))) return
+        storedState = storedState.copy(rewatchConsentAccountId = accountId.takeIf { enabled })
+        persistMetadata()
+        publish()
+    }
+
+    internal suspend fun refreshRewatchPlanIfNeeded(): Boolean {
+        if (authorizedAccessToken() == null) return false
+        val ageMs = storedState.accountTypeFetchedAtEpochMs?.let { SimklPlatformClock.nowEpochMs() - it }
+        return if (ageMs != null && ageMs in 0L until 24L * 60 * 60 * 1000) {
+            true
+        } else {
+            fetchAndStoreUserSettings()
+        }
+    }
+
+    internal suspend fun rewatchAuthorization(expectedAccountId: Long): SimklRewatchAuthorization? {
+        ensureLoaded()
+        val generation = profileGeneration
+        val accountId = storedState.accountId?.takeIf { it == expectedAccountId } ?: return null
+        fun consentCurrent(): Boolean = profileGeneration == generation &&
+            !accessToken.isNullOrBlank() && storedState.accountId == accountId &&
+            storedState.rewatchConsentAccountId == accountId
+        if (!consentCurrent()) return null
+        if (!refreshRewatchPlanIfNeeded()) return null
+        if (!consentCurrent() || !isSimklRewatchPlan(storedState.accountType)) return null
+        return SimklRewatchAuthorization(
+            current = { consentCurrent() && isSimklRewatchPlan(storedState.accountType) },
+            onPlanRejected = {
+                if (consentCurrent()) {
+                    storedState = storedState.copy(accountType = null, rewatchConsentAccountId = null)
+                    persistMetadata()
+                    publish()
+                }
+            },
+        )
+    }
+
     suspend fun refreshUserSettings(): String? {
         authorizedAccessToken() ?: return null
         return if (fetchAndStoreUserSettings()) storedState.username else null
@@ -519,11 +560,13 @@ object SimklAuthRepository : TrackingAuthProvider {
         }
 
     private suspend fun fetchAndStoreUserSettings(activityWatermark: String? = null): Boolean {
+        val generation = profileGeneration
         val response = try {
             SimklApi.client.execute(
                 SimklApiRequest(
                     method = SimklHttpMethod.POST,
                     path = "/users/settings",
+                    authorizationIsCurrent = { profileGeneration == generation },
                 ),
             )
         } catch (error: CancellationException) {
@@ -534,9 +577,16 @@ object SimklAuthRepository : TrackingAuthProvider {
         }
         val settings = runCatching { json.decodeFromString<SimklUserSettingsResponse>(response.body) }
             .getOrNull() ?: return false
+        if (generation != profileGeneration) return false
+        val accountId = settings.account?.id
+        val accountType = settings.account?.type
         storedState = storedState.copy(
             username = settings.user?.name,
-            accountId = settings.account?.id,
+            accountId = accountId,
+            accountType = accountType,
+            accountTypeFetchedAtEpochMs = SimklPlatformClock.nowEpochMs(),
+            rewatchConsentAccountId = storedState.rewatchConsentAccountId
+                ?.takeIf { it == accountId && isSimklRewatchPlan(accountType) },
             hasFetchedUserSettings = true,
             settingsActivityWatermark = activityWatermark ?: storedState.settingsActivityWatermark,
         )
@@ -635,6 +685,8 @@ object SimklAuthRepository : TrackingAuthProvider {
             isLoading = isLoading,
             username = storedState.username,
             accountId = storedState.accountId,
+            canTrackRewatches = authenticated && storedState.accountId != null && isSimklRewatchPlan(storedState.accountType),
+            trackRewatches = storedState.accountId?.let { it == storedState.rewatchConsentAccountId } == true,
             tokenExpiresAtEpochMs = storedState.tokenExpiresAtEpochMs,
             pendingAuthorizationStartedAtEpochMs = storedState.pendingAuthorizationStartedAtEpochMs,
             usesPinFlow = true,
@@ -688,4 +740,5 @@ private data class SimklUser(
 @Serializable
 private data class SimklAccount(
     val id: Long? = null,
+    val type: String? = null,
 )

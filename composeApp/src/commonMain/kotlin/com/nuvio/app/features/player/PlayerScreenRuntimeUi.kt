@@ -45,6 +45,7 @@ import com.nuvio.app.features.details.MetaDetailsRepository
 import com.nuvio.app.features.details.MetaVideo
 import com.nuvio.app.features.p2p.P2pSettingsRepository
 import com.nuvio.app.features.profiles.ProfileRepository
+import com.nuvio.app.features.simkl.SimklAuthRepository
 import com.nuvio.app.features.p2p.P2pStreamingState
 import com.nuvio.app.features.p2p.formatP2pMegabytes
 import com.nuvio.app.features.p2p.formatP2pSpeed
@@ -725,7 +726,28 @@ private fun PlayerScreenRuntime.currentInitialPositionRequestKey(): String? {
 
 @Composable
 private fun PlayerScreenRuntime.playerControlToggles(): List<PlayerControlToggle> {
-    if (!isSeries) return emptyList()
+    val simklAuth by SimklAuthRepository.uiState.collectAsState()
+    val rewatchAccount = simklAuth.accountId?.takeIf { accountId ->
+        simklAuth.canTrackRewatches && simklAuth.trackRewatches && accountId > 0L &&
+            !privatePlayback && (contentType ?: parentMetaType).equals("movie", ignoreCase = true) &&
+            canPersistPlaybackProgress() && playbackSnapshot.durationMs > 0L &&
+            !playbackSnapshot.isEnded && initialTrackingPlaybackPercent != null &&
+            profileId == ProfileRepository.activeProfileId
+    }
+    val movieRewatchToggle = rewatchAccount?.let { accountId ->
+        val choice = activePlaybackKey to accountId
+        PlayerControlToggle(
+            label = stringResource(Res.string.player_track_this_simkl_rewatch),
+            checked = simklMovieRewatchChoice == choice,
+            icon = PlayerControlIcons.Replay,
+            onCheckedChange = { selected ->
+                if (activePlaybackKey == choice.first && !privatePlayback &&
+                    profileId == ProfileRepository.activeProfileId
+                ) simklMovieRewatchChoice = choice.takeIf { selected }
+            },
+        )
+    }
+    if (!isSeries) return listOfNotNull(movieRewatchToggle)
     val autoSkipIntroLabel = stringResource(Res.string.player_auto_skip_intro_toggle)
     val autoNextEpisodeLabel = stringResource(Res.string.player_auto_next_episode_toggle)
     val onLabel = stringResource(Res.string.compose_action_on)
@@ -2094,6 +2116,7 @@ private fun PlayerScreenRuntime.RenderPlayerModals(displayedPositionMs: Long) {
         selectedAddonSubtitleId = selectedAddonSubtitleId,
         isLoadingAddonSubtitles = isLoadingAddonSubtitles,
         subtitleStyle = subtitleStyle,
+        showCustomAssStyleControl = playerController?.supportsCustomAssStyles == true,
         subtitleDelayMs = subtitleDelayMs,
         selectedAddonSubtitle = selectedAddonSubtitle,
         subtitleAutoSyncState = subtitleAutoSyncState,
