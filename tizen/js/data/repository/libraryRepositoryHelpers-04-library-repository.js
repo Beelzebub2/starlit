@@ -1,4 +1,5 @@
 import { MdbListAccount } from "./mdbListAccount.js";
+import { AddonEventDispatcher, AddonLibraryAction, ADDON_LIBRARY_RESOURCE } from "./addonEventDispatcher.js";
 import { MdbListLibrary } from "./mdbListLibrary.js";
 /* eslint-disable no-unused-vars */
 import { AuthManager } from "../../core/auth/authManager.js";
@@ -136,9 +137,36 @@ export class LibraryRepository {
     ]);
     return membershipMapFromEntries(entries, listTabs)(item);
   }
+  async withAddonLibraryEvent(item, sourceMode, mutation) {
+    if (!AddonEventDispatcher.hasEnabledAddonFor(ADDON_LIBRARY_RESOURCE)) return mutation();
+    const profile = String(ProfileManager.getActiveProfileId() || "1");
+    const inLibrary = async () => Object.values(
+      (await this.getMembershipSnapshot(item, { sourceMode }).catch(() => null))?.listMembership || {}
+    ).some(Boolean);
+    const wasSaved = await inLibrary();
+    const result = await mutation();
+    if (result?.requiresRemovalConfirmation || String(ProfileManager.getActiveProfileId() || "1") !== profile) {
+      return result;
+    }
+    const nowSaved = await inLibrary();
+    if (wasSaved !== nowSaved) {
+      AddonEventDispatcher.library(
+        String(item.itemType || item.type || item.contentType || "movie"),
+        String(item.itemId || item.id || item.contentId || ""),
+        nowSaved ? AddonLibraryAction.LIBRARY_ADD : AddonLibraryAction.LIBRARY_REMOVE
+      );
+    }
+    return result;
+  }
   async toggleDefault(item, options = {}) {
-    const profileId = ProfileManager.getActiveProfileId();
     const sourceMode = await this.getSourceMode();
+    return this.withAddonLibraryEvent(item, sourceMode, () =>
+      this.toggleDefaultInternal(item, { ...options, sourceMode })
+    );
+  }
+  async toggleDefaultInternal(item, options = {}) {
+    const profileId = ProfileManager.getActiveProfileId();
+    const sourceMode = options.sourceMode || (await this.getSourceMode());
     const mdbListScope = sourceMode === LibrarySourceMode.MDBLIST ? MdbListAccount.scope() : null;
     if (mdbListScope && mdbListScope.profileId !== String(profileId))
       throw Object.assign(new Error("Profile changed"), { code: "mdblist_scope_changed" });
@@ -165,7 +193,7 @@ export class LibraryRepository {
       desiredMembership = { local: currentMembership.local !== true };
     }
     try {
-      await this.applyMembershipChanges(item, { desiredMembership }, { ...options, sourceMode });
+      await this.applyMembershipChangesInternal(item, { desiredMembership }, { ...options, sourceMode });
     } catch (error) {
       if (error?.code === "SIMKL_DESTRUCTIVE_REMOVAL_REQUIRED") {
         return {
@@ -185,6 +213,12 @@ export class LibraryRepository {
     };
   }
   async applyMembershipChanges(item, changes, options = {}) {
+    const sourceMode = options?.sourceMode || (await this.getSourceMode());
+    return this.withAddonLibraryEvent(item, sourceMode, () =>
+      this.applyMembershipChangesInternal(item, changes, { ...options, sourceMode })
+    );
+  }
+  async applyMembershipChangesInternal(item, changes, options = {}) {
     const sourceMode = options?.sourceMode || (await this.getSourceMode());
     if (sourceMode === LibrarySourceMode.MDBLIST) return MdbListLibrary.applyMembershipChanges(item, changes);
     if (sourceMode === LibrarySourceMode.LOCAL) {

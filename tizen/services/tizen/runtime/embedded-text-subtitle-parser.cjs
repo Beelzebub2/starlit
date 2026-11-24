@@ -1178,7 +1178,7 @@ function isAssSubtitleCodec(value) {
   var text = String(value || "").trim();
   if (!text) return false;
   return (
-    /^S_TEXT\/(?:ASS|SSA)$/i.test(text) ||
+    /^S_(?:TEXT\/)?(?:ASS|SSA)$/i.test(text) ||
     /^(?:text\/x-ass|application\/x-ass|text\/x-ssa|application\/x-ssa)$/i.test(text) ||
     /^(?:ass|ssa|advanced substation alpha|substation alpha)$/i.test(text)
   );

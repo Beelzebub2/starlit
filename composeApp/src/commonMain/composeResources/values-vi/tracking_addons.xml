@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="addons_tracking_consent_title">Tiện ích theo dõi</string>
+    <string name="addons_tracking_consent_body">%1$s có thể nhận hoạt động phát (bắt đầu, tạm dừng, dừng và vị trí) cùng các thay đổi thư viện (thêm, xóa, đã xem, chưa xem). Thông tin này rời Starlit và được gửi đến nhà cung cấp tiện ích.</string>
+    <string name="addons_tracking_consent_checkbox">Tôi đồng ý chia sẻ hoạt động phát và thư viện với tiện ích này</string>
+</resources>

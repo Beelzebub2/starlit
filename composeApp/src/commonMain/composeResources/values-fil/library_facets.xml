@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="library_filter_genre">Genre</string>
+    <string name="library_filter_year">Taon</string>
+    <string name="library_filter_watched">Napanood</string>
+    <string name="library_filter_all">Lahat</string>
+    <string name="library_watched_filter_watched">Napanood</string>
+    <string name="library_watched_filter_unwatched">Hindi pa napanood</string>
+</resources>

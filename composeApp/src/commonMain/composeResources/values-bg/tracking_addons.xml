@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="addons_tracking_consent_title">Добавка за проследяване</string>
+    <string name="addons_tracking_consent_body">%1$s може да получава действията ви при възпроизвеждане (пускане, пауза, спиране и позиция) и промените в библиотеката (добавено, премахнато, гледано, негледано). Тази информация напуска Starlit и се изпраща до доставчика на добавката.</string>
+    <string name="addons_tracking_consent_checkbox">Съгласен съм да споделям активността си с тази добавка</string>
+</resources>

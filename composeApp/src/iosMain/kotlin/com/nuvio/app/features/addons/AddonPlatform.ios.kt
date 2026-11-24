@@ -47,6 +47,17 @@ actual object AddonStorage {
         )
     }
 
+    actual fun loadTrackingConsentUrls(profileId: Int): Set<String> =
+        NSUserDefaults.standardUserDefaults.stringForKey("tracking_consent_urls_$profileId")
+            .orEmpty().lineSequence().map(String::trim).filter(String::isNotEmpty).toSet()
+
+    actual fun saveTrackingConsentUrls(profileId: Int, urls: Set<String>) {
+        NSUserDefaults.standardUserDefaults.setObject(
+            urls.joinToString("\n"),
+            forKey = "tracking_consent_urls_$profileId",
+        )
+    }
+
     actual fun loadAddonNames(profileId: Int): Map<String, String> =
         NSUserDefaults.standardUserDefaults.stringForKey("addon_names_$profileId")
             ?.let { runCatching { Json.decodeFromString<Map<String, String>>(it) }.getOrNull() }

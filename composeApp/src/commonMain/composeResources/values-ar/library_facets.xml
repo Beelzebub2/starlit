@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="library_filter_genre">النوع</string>
+    <string name="library_filter_year">السنة</string>
+    <string name="library_filter_watched">المشاهدة</string>
+    <string name="library_filter_all">الكل</string>
+    <string name="library_watched_filter_watched">تمت مشاهدته</string>
+    <string name="library_watched_filter_unwatched">لم تتم مشاهدته</string>
+</resources>

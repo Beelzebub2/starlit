@@ -3473,4 +3473,7 @@
     <string name="diagnostics_consent_usage">Anonieme diagnostiek</string>
     <string name="diagnostics_consent_usage_detail">App wordt gelanceerd; Technische fouten, waarschuwingen en afspeel-/downloadresultaten per app-versie en platform. Geen schermbezoeken of permanente apparaat-ID.</string>
     <string name="diagnostics_consent_privacy">Geen titels, zoekopdrachten, accounts, URL\'s of onbewerkte logs. Een tijdelijk willekeurig token beperkt misbruik; gegevens worden maximaal 30 dagen bewaard.</string>
+    <string name="addon_tracking_consent_title">Tracking-add-on</string>
+    <string name="addon_tracking_consent_body">%1$s kan afspeelacties (starten, pauzeren, stoppen en positie) en bibliotheekwijzigingen (toegevoegd, verwijderd, bekeken, onbekeken) ontvangen. Deze gegevens verlaten Starlit en gaan naar de aanbieder van de add-on.</string>
+    <string name="addon_tracking_consent_checkbox">Ik ga akkoord met het delen van afspeel- en bibliotheekactiviteit</string>
 </resources>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="library_filter_genre">ז׳אנר</string>
+    <string name="library_filter_year">שנה</string>
+    <string name="library_filter_watched">נצפה</string>
+    <string name="library_filter_all">הכול</string>
+    <string name="library_watched_filter_watched">נצפו</string>
+    <string name="library_watched_filter_unwatched">לא נצפו</string>
+</resources>

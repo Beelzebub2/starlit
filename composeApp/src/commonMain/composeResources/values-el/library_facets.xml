@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="library_filter_genre">Είδος</string>
+    <string name="library_filter_year">Έτος</string>
+    <string name="library_filter_watched">Προβλήθηκαν</string>
+    <string name="library_filter_all">Όλα</string>
+    <string name="library_watched_filter_watched">Προβλήθηκαν</string>
+    <string name="library_watched_filter_unwatched">Δεν προβλήθηκαν</string>
+</resources>

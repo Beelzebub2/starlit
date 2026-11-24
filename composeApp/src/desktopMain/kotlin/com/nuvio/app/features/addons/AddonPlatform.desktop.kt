@@ -33,6 +33,15 @@ internal actual object AddonStorage {
         store.putString("installed_addon_urls_$profileId", json.encodeToString(urls))
     }
 
+    actual fun loadTrackingConsentUrls(profileId: Int): Set<String> =
+        store.getString("tracking_consent_urls_$profileId")
+            ?.let { runCatching { json.decodeFromString<List<String>>(it) }.getOrNull() }
+            ?.toSet() ?: emptySet()
+
+    actual fun saveTrackingConsentUrls(profileId: Int, urls: Set<String>) {
+        store.putString("tracking_consent_urls_$profileId", json.encodeToString(urls.toList()))
+    }
+
     actual fun loadAddonNames(profileId: Int): Map<String, String> =
         store.getString("addon_names_$profileId")
             ?.let { runCatching { json.decodeFromString<Map<String, String>>(it) }.getOrNull() }

@@ -3471,4 +3471,7 @@
     <string name="diagnostics_consent_usage">Diagnosticare anonimă</string>
     <string name="diagnostics_consent_usage_detail">Se lansează aplicația; Erori tehnice, avertismente și rezultate de redare/descărcare în funcție de versiunea aplicației și platformă. Fără vizite de ecran sau ID persistent de dispozitiv.</string>
     <string name="diagnostics_consent_privacy">Fără titluri, căutări, conturi, adrese URL sau jurnale brute. Un token aleatoriu temporar limitează abuzul; evidențele se păstrează până la 30 de zile.</string>
+    <string name="addon_tracking_consent_title">Extensie de urmărire</string>
+    <string name="addon_tracking_consent_body">%1$s poate primi activitatea de redare (pornire, pauză, oprire și poziție) și modificările bibliotecii (adăugat, eliminat, vizionat, nevizionat). Aceste date părăsesc Starlit și ajung la furnizorul extensiei.</string>
+    <string name="addon_tracking_consent_checkbox">Sunt de acord să partajez activitatea de redare și bibliotecă cu această extensie</string>
 </resources>

@@ -174,6 +174,8 @@ export function formatSubtitleCodecLabel(value) {
     [
       "stext/ass",
       "stext/ssa",
+      "sass",
+      "sssa",
       "text/ass",
       "text/ssa",
       "text/xass",
@@ -307,10 +309,10 @@ export function isAssSubtitleCodec(value) {
   if (!text) {
     return false;
   }
-  // Matroska codec id (S_TEXT/ASS|SSA), MIME aliases, and short codec names
+  // Matroska codec IDs (including deprecated S_ASS/S_SSA), MIME aliases and short codec names
   // (ass|ssa) reported by ffprobe / the companion tracks endpoint.
   return (
-    /^S_TEXT\/(?:ASS|SSA)$/i.test(text) ||
+    /^S_(?:TEXT\/)?(?:ASS|SSA)$/i.test(text) ||
     /^(?:text\/x-ass|application\/x-ass|text\/x-ssa|application\/x-ssa)$/i.test(text) ||
     /^(?:ass|ssa|advanced substation alpha|substation alpha)$/i.test(text)
   );

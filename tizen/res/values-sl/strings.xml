@@ -3471,4 +3471,7 @@
     <string name="diagnostics_consent_usage">Anonimna diagnostika</string>
     <string name="diagnostics_consent_usage_detail">Zagoni aplikacije, tehnične napake, opozorila in rezultati predvajanja po različici aplikacije in platformi. Brez sledenja obiskanim zaslonom ali trajnega ID-ja naprave.</string>
     <string name="diagnostics_consent_privacy">Brez naslovov, iskanj, računov, URL-jev ali surovih dnevnikov. Začasni naključni žeton omejuje zlorabe; zapisi se hranijo do 30 dni.</string>
+    <string name="addon_tracking_consent_title">Dodatek za sledenje</string>
+    <string name="addon_tracking_consent_body">%1$s lahko prejema podatke o predvajanju (začetek, premor, ustavitev in položaj) ter spremembah knjižnice (dodano, odstranjeno, ogledano in neogledano). Podatki zapustijo Starlit in se pošljejo ponudniku dodatka.</string>
+    <string name="addon_tracking_consent_checkbox">Strinjam se z deljenjem dejavnosti predvajanja in knjižnice s tem dodatkom.</string>
 </resources>

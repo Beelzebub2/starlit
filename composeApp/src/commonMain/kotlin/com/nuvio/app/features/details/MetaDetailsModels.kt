@@ -67,6 +67,8 @@ data class MetaTrailer(
     val seasonNumber: Int? = null,
     val displayName: String? = null,
     val iso6391: String? = null,
+    val directUrl: String? = null,
+    val fromTmdb: Boolean = false,
 )
 
 data class MetaPerson(

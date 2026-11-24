@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="addons_tracking_consent_title">Sporingstillegg</string>
+    <string name="addons_tracking_consent_body">%1$s kan motta avspillingshandlinger (start, pause, stopp og posisjon) og biblioteksendringer (lagt til, fjernet, sett, ikke sett). Informasjonen sendes ut av Starlit til tilleggstilbyderen.</string>
+    <string name="addons_tracking_consent_checkbox">Jeg samtykker til å dele avspillings- og bibliotekaktivitet med dette tillegget</string>
+</resources>

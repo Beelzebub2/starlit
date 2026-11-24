@@ -3488,4 +3488,7 @@
     <string name="diagnostics_consent_usage">Diagnósticos anónimos</string>
     <string name="diagnostics_consent_usage_detail">Aberturas da aplicação; Erros técnicos, avisos e resultados de reprodução e transferências por versão e plataforma. Sem registo de ecrãs nem ID persistente.</string>
     <string name="diagnostics_consent_privacy">Sem títulos, pesquisas, contas, URLs ou registos brutos. Um token temporário limita abusos; os dados são guardados até 30 dias.</string>
+    <string name="addon_tracking_consent_title">Addon de acompanhamento</string>
+    <string name="addon_tracking_consent_body">O %1$s pode receber a tua atividade de reprodução (iniciar, pausar, parar e posição) e alterações à biblioteca (adicionado, removido, visto e não visto). Estes dados saem do Starlit e são enviados ao fornecedor do addon.</string>
+    <string name="addon_tracking_consent_checkbox">Concordo em partilhar a atividade de reprodução e da biblioteca com este addon</string>
 </resources>

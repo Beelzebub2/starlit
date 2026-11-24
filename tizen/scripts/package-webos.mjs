@@ -9,6 +9,7 @@ import { runWebOsToolsBinary } from "./aresCli.mjs";
 import { pruneCssFileForPlatform } from "./pruneCssForPlatform.mjs";
 import { fetchPinnedWebOsServices } from "./fetch-webos-services.mjs";
 import { prepareWebOsArtwork } from "./create-webos-artwork.mjs";
+import { adaptWebOsEmbeddedSubtitleParser } from "./webosEmbeddedSubtitleCompatibility.mjs";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, "..");
 const distDir = path.join(rootDir, "dist");
@@ -225,10 +226,11 @@ const starlitWebOsServiceIdentity = {
   setup(builder) {
     builder.onLoad({ filter: /\.[cm]?js$/ }, async ({ path: sourcePath }) => {
       if (!sourcePath.startsWith(upstreamRootDir + path.sep)) return undefined;
-      return {
-        contents: (await readFile(sourcePath, "utf8")).replaceAll("space.nuvio.webos", appId),
-        loader: "js"
-      };
+      let contents = (await readFile(sourcePath, "utf8")).replaceAll("space.nuvio.webos", appId);
+      if (sourcePath === path.join(webOsServiceSourceDir, "src", "bitmapSubtitles.js")) {
+        contents = adaptWebOsEmbeddedSubtitleParser(contents);
+      }
+      return { contents, loader: "js" };
     });
   }
 };

@@ -13,9 +13,12 @@ async function createWindow() {
     width: 1100, height: 820, minWidth: 800, minHeight: 650,
     title: "Starlit TV Installer", backgroundColor: "#0d0d0d", autoHideMenuBar: true,
     icon: path.join(__dirname, "..", "build", "icon.ico"),
-    // The page draws the title bar; Windows keeps its own caption buttons.
-    titleBarStyle: "hidden",
-    titleBarOverlay: { color: "#0d0d0d", symbolColor: "#f5f7f8", height: 43 },
+    // Windows supports the matching branded caption; on macOS and Linux use
+    // native system decorations so close/minimize and dragging remain usable.
+    ...(process.platform === "win32" ? {
+      titleBarStyle: "hidden",
+      titleBarOverlay: { color: "#0d0d0d", symbolColor: "#f5f7f8", height: 43 }
+    } : {}),
     webPreferences: {
       preload: path.join(__dirname, "preload.cjs"),
       sandbox: true, contextIsolation: true, nodeIntegration: false

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="addons_tracking_consent_title">Componente di tracciamento</string>
+    <string name="addons_tracking_consent_body">%1$s può ricevere le attività di riproduzione (avvio, pausa, arresto e posizione) e le modifiche alla libreria (aggiunto, rimosso, visto, non visto). Questi dati lasciano Starlit e vengono inviati al fornitore del componente.</string>
+    <string name="addons_tracking_consent_checkbox">Acconsento a condividere riproduzione e libreria con questo componente</string>
+</resources>

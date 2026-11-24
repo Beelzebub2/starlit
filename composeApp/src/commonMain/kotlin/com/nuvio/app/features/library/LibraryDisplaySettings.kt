@@ -22,6 +22,10 @@ enum class LibrarySortOption {
     TITLE_DESC,
 }
 
+enum class LibraryWatchedFilter { ALL, WATCHED, UNWATCHED }
+
+internal data class LibraryFilterOption(val key: String, val count: Int)
+
 data class LibraryDisplaySettingsUiState(
     val layoutMode: LibraryLayoutMode = LibraryLayoutMode.HORIZONTAL,
     val sortOption: LibrarySortOption = LibrarySortOption.DEFAULT,
@@ -82,6 +86,10 @@ internal data class LibraryVerticalProjection(
     val availableTypes: List<String>,
     val selectedType: String?,
     val entries: List<LibraryVerticalEntry>,
+    val availableGenres: List<LibraryFilterOption> = emptyList(),
+    val selectedGenre: String? = null,
+    val availableYears: List<LibraryFilterOption> = emptyList(),
+    val selectedYear: String? = null,
 )
 
 internal fun availableLibrarySortOptions(sourceMode: LibrarySourceMode): List<LibrarySortOption> =
@@ -159,6 +167,10 @@ internal fun buildLibraryVerticalProjection(
     selectedType: String?,
     sortOption: LibrarySortOption,
     providerOrders: Map<String, Map<String, Int>> = emptyMap(),
+    selectedGenre: String? = null,
+    selectedYear: String? = null,
+    watchedFilter: LibraryWatchedFilter = LibraryWatchedFilter.ALL,
+    isWatched: (LibraryItem) -> Boolean = { false },
 ): LibraryVerticalProjection {
     val availableSections = if (sourceMode.isRemoteTrackingSource) sections else emptyList()
     val selectedSection = if (sourceMode.isRemoteTrackingSource) {
@@ -188,8 +200,35 @@ internal fun buildLibraryVerticalProjection(
     val effectiveType = selectedType
         ?.normalizedLibraryType()
         ?.takeIf { it in availableTypes }
-    val filteredEntries = deduplicatedEntries.values.filter { entry ->
+    val typeEntries = deduplicatedEntries.values.filter { entry ->
         effectiveType == null || (entry.item.mediaCategory ?: entry.item.type).normalizedLibraryType() == effectiveType
+    }
+    val genre = selectedGenre?.takeIf { chosen ->
+        typeEntries.any { entry -> entry.item.genres.any { it.equals(chosen, ignoreCase = true) } }
+    }
+    val year = selectedYear?.takeIf { chosen ->
+        typeEntries.any { entry -> libraryReleaseYear(entry.item) == chosen }
+    }
+    val genres = typeEntries
+        .filter { year == null || libraryReleaseYear(it.item) == year }
+        .flatMap { it.item.genres.map(String::trim).filter(String::isNotBlank) }
+        .groupingBy { it }.eachCount()
+        .toList().sortedBy { it.first.lowercase() }
+        .map { (key, count) -> LibraryFilterOption(key, count) }
+    val years = typeEntries
+        .filter { genre == null || it.item.genres.any { name -> name.equals(genre, ignoreCase = true) } }
+        .mapNotNull { libraryReleaseYear(it.item) }
+        .groupingBy { it }.eachCount()
+        .toList().sortedByDescending { it.first }
+        .map { (key, count) -> LibraryFilterOption(key, count) }
+    val filteredEntries = typeEntries.filter { entry ->
+        (genre == null || entry.item.genres.any { it.equals(genre, ignoreCase = true) }) &&
+            (year == null || libraryReleaseYear(entry.item) == year) &&
+            when (watchedFilter) {
+                LibraryWatchedFilter.ALL -> true
+                LibraryWatchedFilter.WATCHED -> isWatched(entry.item)
+                LibraryWatchedFilter.UNWATCHED -> !isWatched(entry.item)
+            }
     }
     val entryByKey = filteredEntries.associateBy { entry -> libraryDisplayItemKey(entry.item) }
     val sortedEntries = sortLibraryItems(
@@ -206,8 +245,16 @@ internal fun buildLibraryVerticalProjection(
         availableTypes = availableTypes,
         selectedType = effectiveType,
         entries = sortedEntries,
+        availableGenres = genres,
+        selectedGenre = genre,
+        availableYears = years,
+        selectedYear = year,
     )
 }
+
+private val LibraryYearPattern = Regex("(19|20)\\d{2}")
+private fun libraryReleaseYear(item: LibraryItem): String? =
+    LibraryYearPattern.find(item.releaseInfo.orEmpty())?.value
 
 internal fun encodeLibraryDisplaySettings(state: LibraryDisplaySettingsUiState): String =
     LibraryDisplaySettingsJson.encodeToString(

@@ -441,6 +441,7 @@ fun MetaDetailsScreen(
         episodeImdbRatings = ImdbEpisodeRatingsRepository.getEpisodeRatings(
             imdbId = imdbId,
             tmdbId = tmdbId,
+            addonEpisodes = metaForRatings.videos.map { AddonEpisodeAirDate(it.season, it.episode, it.released) },
         )
     }
 
@@ -800,7 +801,7 @@ fun MetaDetailsScreen(
                         return@LaunchedEffect
                     }
                     val resolvedSource = runCatching {
-                        TrailerPlaybackResolver.resolveFromYouTubeUrl(heroTrailerCandidate.youtubePlaybackUrl())
+                        heroTrailerCandidate.youtubePlaybackUrl()?.let { TrailerPlaybackResolver.resolveFromYouTubeUrl(it) }
                     }.getOrNull()
                     if (resolvedSource == null) {
                         heroTrailerFinished = true
@@ -816,10 +817,10 @@ fun MetaDetailsScreen(
                 }
                 val resolveTrailer: (MetaTrailer) -> Unit = remember(meta.id, trailerPlaybackMode, uriHandler) {
                     { trailer ->
-                        val youtubeUrl = trailer.youtubePlaybackUrl()
-                        when (trailerPlaybackMode) {
-                            TrailerPlaybackMode.EXTERNAL -> runCatching { uriHandler.openUri(youtubeUrl) }
-                            TrailerPlaybackMode.IN_APP -> {
+                        when (val target = trailer.trailerClickTarget(trailerPlaybackMode)) {
+                            null -> Unit
+                            is TrailerClickTarget.External -> runCatching { uriHandler.openUri(target.url) }
+                            is TrailerClickTarget.InAppYouTube -> {
                                 selectedTrailer = trailer
                                 trailerPlaybackSource = null
                                 trailerErrorMessage = null
@@ -828,7 +829,7 @@ fun MetaDetailsScreen(
                                 val currentRequestToken = trailerRequestToken
                                 trailerScope.launch {
                                     val resolvedSource = runCatching {
-                                        TrailerPlaybackResolver.resolveFromYouTubeUrl(youtubeUrl)
+                                        TrailerPlaybackResolver.resolveFromYouTubeUrl(target.url)
                                     }.getOrNull()
                                     if (currentRequestToken != trailerRequestToken) {
                                         return@launch
@@ -2888,6 +2889,7 @@ private fun ConfiguredMetaSections(
                 if (hasTrailersSection) {
                     DetailTrailersSection(
                         trailers = meta.trailers,
+                        fallbackArtwork = meta.background ?: meta.poster,
                         onTrailerClick = onTrailerClick,
                         showHeader = showHeader,
                         horizontalScrollPadding = horizontalScrollPadding,

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="addons_tracking_consent_title">إضافة تتبّع</string>
+    <string name="addons_tracking_consent_body">يمكن لإضافة %1$s تلقي نشاط التشغيل (التشغيل والإيقاف المؤقت والإيقاف والموضع) وتغييرات المكتبة (الإضافة والحذف والمشاهدة وعدم المشاهدة). تغادر هذه المعلومات Starlit وتُرسل إلى مزوّد الإضافة.</string>
+    <string name="addons_tracking_consent_checkbox">أوافق على مشاركة نشاط التشغيل والمكتبة مع هذه الإضافة</string>
+</resources>

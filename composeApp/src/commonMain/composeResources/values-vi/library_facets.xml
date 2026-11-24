@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="library_filter_genre">Thể loại</string>
+    <string name="library_filter_year">Năm</string>
+    <string name="library_filter_watched">Đã xem</string>
+    <string name="library_filter_all">Tất cả</string>
+    <string name="library_watched_filter_watched">Đã xem</string>
+    <string name="library_watched_filter_unwatched">Chưa xem</string>
+</resources>

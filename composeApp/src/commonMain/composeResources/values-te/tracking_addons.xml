@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="addons_tracking_consent_title">ట్రాకింగ్ యాడాన్</string>
+    <string name="addons_tracking_consent_body">%1$s ప్లేబ్యాక్ చర్యలు (ప్లే, పాజ్, ఆపు, స్థానం) మరియు లైబ్రరీ మార్పులను (జోడించినవి, తొలగించినవి, చూసినవి, చూడనివి) స్వీకరించవచ్చు. ఈ సమాచారం Starlit వెలుపల యాడాన్ ప్రదాతకు పంపబడుతుంది.</string>
+    <string name="addons_tracking_consent_checkbox">ప్లేబ్యాక్ మరియు లైబ్రరీ కార్యకలాపాలను ఈ యాడాన్‌తో పంచుకోవడానికి అంగీకరిస్తున్నాను</string>
+</resources>

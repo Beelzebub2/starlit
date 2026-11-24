@@ -1,7 +1,9 @@
 package com.nuvio.app.core.ui
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.RememberObserver
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Size
@@ -21,6 +23,7 @@ import coil3.Image
 import coil3.compose.AsyncImage
 import coil3.compose.AsyncImagePainter
 import coil3.request.NullRequestDataException
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.skia.Bitmap
 import org.jetbrains.skia.FilterMipmap
 import org.jetbrains.skia.FilterMode
@@ -59,11 +62,13 @@ internal actual fun NuvioAsyncImage(
     val effectiveDesktopImageScaling = remember(desktopImageScaling) {
         if (IsWindowsDesktop) desktopImageScaling else NuvioDesktopImageScaling.Disabled
     }
+    val rescaleScope = if (effectiveDesktopImageScaling != NuvioDesktopImageScaling.Disabled) rememberCoroutineScope() else null
     val transform: (AsyncImagePainter.State) -> AsyncImagePainter.State = remember(
         placeholder,
         error,
         fallback,
         effectiveDesktopImageScaling,
+        rescaleScope,
     ) {
         { state ->
             when (state) {
@@ -71,7 +76,7 @@ internal actual fun NuvioAsyncImage(
                     placeholder?.let { state.copy(painter = it) } ?: state
                 }
                 is AsyncImagePainter.State.Success -> {
-                    state.result.image.toScaledBitmapPainter(effectiveDesktopImageScaling)
+                    state.result.image.toScaledBitmapPainter(effectiveDesktopImageScaling, rescaleScope)
                         ?.let { state.copy(painter = it) }
                         ?: state
                 }
@@ -120,20 +125,24 @@ internal actual fun NuvioAsyncImage(
     )
 }
 
-private fun Image.toScaledBitmapPainter(desktopImageScaling: NuvioDesktopImageScaling): Painter? {
-    if (desktopImageScaling == NuvioDesktopImageScaling.Disabled) return null
+private fun Image.toScaledBitmapPainter(
+    desktopImageScaling: NuvioDesktopImageScaling,
+    scope: CoroutineScope?,
+): Painter? {
+    if (desktopImageScaling == NuvioDesktopImageScaling.Disabled || scope == null) return null
 
     return (this as? BitmapImage)
         ?.bitmap
         ?.asComposeImageBitmap()
-        ?.let { imageBitmap -> ScaledBitmapPainter(imageBitmap) }
+        ?.let { imageBitmap -> ScaledBitmapPainter(imageBitmap, scope) }
 }
 
 private class ScaledBitmapPainter(
     private val image: ImageBitmap,
-) : Painter() {
-    private var cachedSize: IntSize? = null
-    private var cachedBitmap: ImageBitmap? = null
+    scope: CoroutineScope,
+) : Painter(), RememberObserver {
+    private val rescale = DesktopPosterRescaleSlot<ImageBitmap>(scope) { size -> image.scale(size.width, size.height) }
+    private var remembered = false
     private var alpha: Float = DefaultAlpha
     private var colorFilter: ColorFilter? = null
 
@@ -145,19 +154,25 @@ private class ScaledBitmapPainter(
             width = size.width.roundToInt().coerceAtLeast(1),
             height = size.height.roundToInt().coerceAtLeast(1),
         )
-        if (!shouldUseScaledBitmap(drawSize)) {
+        // Coil may still draw a forgotten painter as the old side of a crossfade.
+        if (!remembered || !shouldUseScaledBitmap(drawSize)) {
+            rescale.cancelPending()
             drawSource(drawSize)
             return
         }
 
         val cacheSize = drawSize.cacheSize()
         if (cacheSize.pixelCount() > MaxScaledBitmapPixels) {
+            rescale.cancelPending()
             drawSource(drawSize)
             return
         }
 
-        val bitmap = scaledBitmap(cacheSize)
-
+        val bitmap = rescale.request(cacheSize)
+        if (bitmap == null) {
+            drawSource(drawSize)
+            return
+        }
         drawImage(
             image = bitmap,
             srcOffset = IntOffset.Zero,
@@ -180,15 +195,14 @@ private class ScaledBitmapPainter(
         return true
     }
 
-    private fun scaledBitmap(size: IntSize): ImageBitmap {
-        cachedBitmap?.let { bitmap ->
-            if (cachedSize == size) return bitmap
-        }
-        return image.scale(size.width, size.height).also { bitmap ->
-            cachedSize = size
-            cachedBitmap = bitmap
-        }
+    override fun onRemembered() { remembered = true }
+
+    override fun onForgotten() {
+        remembered = false
+        rescale.clear()
     }
+
+    override fun onAbandoned() = onForgotten()
 
     private fun DrawScope.drawSource(drawSize: IntSize) {
         drawImage(
@@ -246,12 +260,20 @@ private class ScaledBitmapPainter(
 
     private fun SkiaImage.scale(width: Int, height: Int): ImageBitmap {
         val bitmap = Bitmap()
-        bitmap.allocN32Pixels(width, height)
-        scalePixels(
-            bitmap.peekPixels()!!,
-            FilterMipmap(FilterMode.LINEAR, MipmapMode.LINEAR),
-            false,
-        )
-        return bitmap.asComposeImageBitmap()
+        try {
+            bitmap.allocN32Pixels(width, height)
+            checkNotNull(bitmap.peekPixels()).use { pixels ->
+                check(scalePixels(
+                    pixels,
+                    FilterMipmap(FilterMode.LINEAR, MipmapMode.LINEAR),
+                    false,
+                ))
+            }
+            bitmap.setImmutable()
+            return bitmap.asComposeImageBitmap()
+        } catch (error: Throwable) {
+            bitmap.close()
+            throw error
+        }
     }
 }

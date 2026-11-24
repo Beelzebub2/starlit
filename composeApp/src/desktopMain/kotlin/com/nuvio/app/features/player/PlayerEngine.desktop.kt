@@ -132,7 +132,10 @@ private fun NativePlayerSurface(
 ) {
     val platformDensity = LocalNuvioPlatformDensity.current
     val host = remember { NativePlayerHost() }
-    val controller = remember(host) { NativePlayerController(host) }
+    val playbackErrorMessage = rememberUpdatedState(stringResource(Res.string.player_unable_to_play_stream))
+    val controller = remember(host) {
+        NativePlayerController(host, playbackErrorMessage = { playbackErrorMessage.value })
+    }
     val hostFirstPaintComplete = remember { mutableStateOf(false) }
     val hostFirstFullSizePaintComplete = remember { mutableStateOf(false) }
     val playbackHeaders = remember(sourceHeaders) { sanitizePlaybackHeaders(sourceHeaders) }
