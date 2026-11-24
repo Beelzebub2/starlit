@@ -281,6 +281,7 @@ actual fun PlatformPlayerSurface(
                     fontSize = style.toMpvSubtitleFontSize(),
                     subPos = style.toMpvSubtitlePosition(),
                     stripSdh = style.stripSdh,
+                    assFontScale = style.assFontScale,
                 )
             }
         }
