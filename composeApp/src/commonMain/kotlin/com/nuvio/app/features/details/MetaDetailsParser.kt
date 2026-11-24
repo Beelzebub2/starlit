@@ -299,6 +299,7 @@ internal object MetaDetailsParser {
     private fun JsonObject.trailers(): List<MetaTrailer> {
         val defaultTrailerLabel by lazy { runBlocking { getString(Res.string.generic_trailer) } }
         val trailers = linkedMapOf<String, MetaTrailer>()
+        val namedTrailers = mutableSetOf<String>()
         for (element in array("trailers").asSequence() + array("trailerStreams").asSequence()) {
             val trailer = element as? JsonObject ?: continue
             val legacyKey = trailer.trailerText("key") ?: trailer.trailerText("source")
@@ -309,11 +310,12 @@ internal object MetaDetailsParser {
                 null
             }
             val key = legacyKey ?: youtubeKey ?: directUrl ?: continue
+            val explicitName = trailer.trailerText("name") ?: trailer.trailerText("title") ?:
+                trailer.trailerText("description")
             val candidate = MetaTrailer(
                 id = trailer.trailerText("id") ?: key,
                 key = key,
-                name = trailer.trailerText("name") ?: trailer.trailerText("title") ?:
-                    trailer.trailerText("description") ?: defaultTrailerLabel,
+                name = explicitName ?: defaultTrailerLabel,
                 site = if (directUrl != null) "" else trailer.trailerText("site") ?: "YouTube",
                 size = (trailer["size"] as? JsonPrimitive)?.intOrNull,
                 type = trailer.trailerText("type") ?: defaultTrailerLabel,
@@ -327,9 +329,10 @@ internal object MetaDetailsParser {
             val identity = candidate.playbackIdentity() ?: continue
             val previous = trailers[identity]
             trailers[identity] = previous?.copy(
-                name = if (previous.name == defaultTrailerLabel) candidate.name else previous.name,
+                name = if (identity !in namedTrailers && explicitName != null) explicitName else previous.name,
                 displayName = previous.displayName ?: candidate.displayName,
             ) ?: candidate
+            if (explicitName != null) namedTrailers += identity
         }
         return trailers.values.toList()
     }
