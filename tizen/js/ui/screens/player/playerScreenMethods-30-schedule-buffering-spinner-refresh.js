@@ -220,6 +220,9 @@ export function createPlayerScreenMethods30() {
           if (!this.loadingVisible || this.isExternalFrameMode()) {
             return;
           }
+          if (this.isInitialTizenAvPlayRestore?.()) {
+            this.attemptPendingPlaybackRestore();
+          }
           if (this.isStartupGateReleaseReady()) {
             this.releaseStartupAudioGate();
             this.scheduleLoadingCompletionCheck(120, { force: true });

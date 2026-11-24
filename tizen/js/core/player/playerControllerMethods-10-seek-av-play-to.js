@@ -4,7 +4,7 @@ import { getAvPlayCallTrace } from "./engines/avplayCallTrace.js";
 export function createPlayerControllerMethods10() {
   const { AVPLAY_SEEK_TIMEOUT_MS, logTizenAvPlayDebug, Platform } = internals;
   return {
-    seekAvPlayTo(targetMs, { emitEvents = true } = {}) {
+    seekAvPlayTo(targetMs, { emitEvents = true, publishOptimisticPosition = true } = {}) {
       if (!this.isUsingAvPlay() || this.avplaySeekInFlight) {
         return false;
       }
@@ -35,6 +35,11 @@ export function createPlayerControllerMethods10() {
       const seekToken = Number(this.avplaySeekRequestToken || 0) + 1;
       const shouldRestartTick = Boolean(this.avplayTickTimer || this.isPlaying);
       const seekStartedAt = Date.now();
+      const playRequestToken = Number(this.playRequestToken || 0);
+      const isCurrentSeek = () =>
+        seekToken === Number(this.avplaySeekRequestToken || 0) &&
+        playRequestToken === Number(this.playRequestToken || 0) &&
+        this.isUsingAvPlay();
       let settled = false;
       let previousCurrentMs = Number(this.avplayCurrentTimeMs || 0);
       try {
@@ -56,7 +61,9 @@ export function createPlayerControllerMethods10() {
         this.emitVideoEvent("waiting", { playbackEngine: this.playbackEngine });
         this.emitVideoEvent("seeking", { playbackEngine: this.playbackEngine });
       }
-      this.avplayCurrentTimeMs = normalizedTargetMs;
+      if (publishOptimisticPosition) {
+        this.avplayCurrentTimeMs = normalizedTargetMs;
+      }
       this.avplayTimelinePolledAt = 0;
       if (emitEvents) {
         this.emitVideoEvent("timeupdate", { playbackEngine: this.playbackEngine });
@@ -66,7 +73,7 @@ export function createPlayerControllerMethods10() {
           return;
         }
         settled = true;
-        if (seekToken !== Number(this.avplaySeekRequestToken || 0) || !this.isUsingAvPlay()) {
+        if (!isCurrentSeek()) {
           return;
         }
         this.clearAvPlaySeekTimeout();
@@ -77,6 +84,8 @@ export function createPlayerControllerMethods10() {
         this.avplaySeekSettledAt = Date.now();
         this.avplayLastSeekOutcome = {
           success: Boolean(success),
+          seekToken,
+          playRequestToken,
           targetMs: normalizedTargetMs,
           elapsedMs: Math.max(0, this.avplaySeekSettledAt - seekStartedAt)
         };
@@ -136,7 +145,7 @@ export function createPlayerControllerMethods10() {
       // while PLAYING. The relative jump APIs use a different native path, so
       // try them once before giving up on the seek.
       const tryJumpFallback = (originalError) => {
-        if (settled || seekToken !== Number(this.avplaySeekRequestToken || 0) || !this.isUsingAvPlay()) {
+        if (settled || !isCurrentSeek()) {
           return false;
         }
         let currentMs = 0;
@@ -176,13 +185,15 @@ export function createPlayerControllerMethods10() {
           return;
         }
         settled = true;
-        if (seekToken !== Number(this.avplaySeekRequestToken || 0) || !this.isUsingAvPlay()) {
+        if (!isCurrentSeek()) {
           return;
         }
         this.clearAvPlaySeekTimeout();
         this.avplaySeekSettledAt = Date.now();
         this.avplayLastSeekOutcome = {
           success: false,
+          seekToken,
+          playRequestToken,
           targetMs: normalizedTargetMs,
           elapsedMs: Math.max(0, this.avplaySeekSettledAt - seekStartedAt),
           timedOut: true

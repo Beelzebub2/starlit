@@ -2,6 +2,8 @@ import { syncHtmlSubtitleClearance } from "./subtitleOverlayClearance.js";
 /* eslint-disable no-unused-vars */
 import * as internals from "./playerScreenContext.js";
 import { TrackingScrobbleService } from "../../../data/repository/trackingScrobbleService.js";
+const TIZEN_STARTUP_RESUME_READY_WAIT_MS = 5_000;
+
 export function createPlayerScreenMethods31() {
   const { PlayerController, PlayerSettingsStore, t, escapeHtml, formatNextEpisodeAirDate } = internals;
   return {
@@ -66,6 +68,63 @@ export function createPlayerScreenMethods31() {
       }
       this.paused = false;
     },
+    isInitialTizenAvPlayRestore(restore = this.pendingPlaybackRestore) {
+      return Boolean(
+        restore && !restore.paused && this.startupAudioGateActive && !this.hasPresentedPlaybackFrame &&
+        this.isTizenAvPlaySeekActive?.()
+      );
+    },
+    attemptInitialTizenAvPlayRestore(restore, targetSeconds) {
+      const now = Date.now();
+      const playRequestToken = Number(PlayerController.playRequestToken || 0);
+      let startupSeek = restore.tizenStartupSeek;
+      if (!startupSeek || startupSeek.playRequestToken !== playRequestToken) {
+        startupSeek = { playRequestToken, waitStartedAt: null, seekToken: null, targetMs: null };
+        restore.tizenStartupSeek = startupSeek;
+      }
+      // Neither an optimistic cached position nor a stale callback confirms this
+      // restore. Never call play() or another native seek during an active seek.
+      if (PlayerController.avplaySeekInFlight) return;
+      if (startupSeek.seekToken !== null) {
+        const outcome = PlayerController.avplayLastSeekOutcome;
+        if (
+          (outcome?.seekToken === startupSeek.seekToken && outcome.playRequestToken === playRequestToken &&
+            outcome.targetMs === startupSeek.targetMs) ||
+          Number(PlayerController.avplaySeekRequestToken || 0) > startupSeek.seekToken
+        ) {
+          // A completed rejection also releases the restore (at the real
+          // current position). A superseding seek is now the owner's intent.
+          this.finalizePendingPlaybackRestore(restore);
+          return;
+        }
+      }
+      if (!PlayerController.avplayReady) return;
+      startupSeek.waitStartedAt ??= now;
+      const nativeState = PlayerController.getAvPlayState();
+      // Some firmware's prepare callback fires before AVPlay leaves IDLE.
+      // Wait for READY rather than repeatedly submitting a deferred seek.
+      if (nativeState === "IDLE" || nativeState === "NONE") return;
+      if (this.isLivePlayback?.() || PlayerController.isLivePlaybackItemType?.()) {
+        this.finalizePendingPlaybackRestore(restore);
+        return;
+      }
+      const toleranceSeconds = Math.max(1.5, Math.min(8, targetSeconds * 0.03));
+      const currentSeconds = this.getPlaybackCurrentSeconds();
+      if (
+        (Number.isFinite(currentSeconds) && currentSeconds >= Math.max(0, targetSeconds - toleranceSeconds)) ||
+        now - startupSeek.waitStartedAt >= TIZEN_STARTUP_RESUME_READY_WAIT_MS
+      ) {
+        this.finalizePendingPlaybackRestore(restore);
+        return;
+      }
+      if (startupSeek.seekToken !== null) return;
+      startupSeek.targetMs = Math.max(0, Math.floor(targetSeconds * 1000));
+      startupSeek.seekToken = Number(PlayerController.avplaySeekRequestToken || 0) + 1;
+      // This is an initial seek, not a user seek. Do not publish optimistic
+      // watch progress or run the interactive seek overlay before playback.
+      // The native timeout still handles a callback that never arrives.
+      PlayerController.seekAvPlayTo(startupSeek.targetMs, { emitEvents: false, publishOptimisticPosition: false });
+    },
     attemptPendingPlaybackRestore({ force = false } = {}) {
       const restore = this.pendingPlaybackRestore;
       if (!restore) {
@@ -97,6 +156,10 @@ export function createPlayerScreenMethods31() {
         Number.isFinite(durationSeconds) && durationSeconds > 0
           ? Math.max(0, Math.min(requestedSeconds, Math.max(0, durationSeconds - 3)))
           : requestedSeconds;
+      if (this.isInitialTizenAvPlayRestore(restore)) {
+        this.attemptInitialTizenAvPlayRestore(restore, targetSeconds);
+        return;
+      }
       const currentSeconds = this.getPlaybackCurrentSeconds();
       const toleranceSeconds = Math.max(1.5, Math.min(8, targetSeconds * 0.03));
       if (Number.isFinite(currentSeconds) && currentSeconds >= Math.max(0, targetSeconds - toleranceSeconds)) {
