@@ -3488,4 +3488,6 @@
     <string name="settings_playback_controls_size_value">%1$d%</string>
     <string name="settings_playback_controls_size_preview">プレビュー</string>
     <string name="settings_playback_controls_size_reset">リセット</string>
+    <string name="settings_tracking_simkl_rewatches">映画の再視聴を Simkl に記録</string>
+    <string name="player_track_this_simkl_rewatch">この映画を Simkl に再視聴として記録</string>
 </resources>

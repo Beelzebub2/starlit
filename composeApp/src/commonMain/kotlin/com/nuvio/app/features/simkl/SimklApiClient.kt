@@ -37,7 +37,14 @@ internal data class SimklApiRequest(
     val requiresAuthentication: Boolean = true,
     val retryPolicy: SimklRetryPolicy = SimklRetryPolicy.TRANSIENT_FAILURES,
     val scrobbleStopConflictIsSuccess: Boolean = false,
+    val authorizationIsCurrent: (() -> Boolean)? = null,
 )
+
+private class SimklAuthorizationChanged : IllegalStateException("Simkl authorization changed")
+
+private fun SimklApiRequest.requireCurrentAuthorization() {
+    if (authorizationIsCurrent?.invoke() == false) throw SimklAuthorizationChanged()
+}
 
 internal data class SimklApiResponse(
     val status: Int,
@@ -78,8 +85,10 @@ internal class SimklApiClient(
 
     suspend fun execute(request: SimklApiRequest): SimklApiResponse {
         // Refresh outside requestMutex: refresh itself uses this client for an unauthenticated POST.
+        request.requireCurrentAuthorization()
         if (request.requiresAuthentication) beforeAuthenticatedRequest()
         return requestMutex.withLock {
+        request.requireCurrentAuthorization()
         val token = if (request.requiresAuthentication) {
             accessToken()?.takeIf(String::isNotBlank)
                 ?: throw SimklApiException(
@@ -101,6 +110,7 @@ internal class SimklApiClient(
         for (attempt in 0 until maxAttempts) {
             val response = try {
                 executeRateLimited(request.method) {
+                    request.requireCurrentAuthorization()
                     engine.execute(
                         method = request.method.name,
                         url = buildSimklApiUrl(request.path, request.query),
@@ -114,6 +124,7 @@ internal class SimklApiClient(
             } catch (error: CancellationException) {
                 throw error
             } catch (error: Throwable) {
+                if (error is SimklAuthorizationChanged) throw error
                 if (attempt == maxAttempts - 1) {
                     throw SimklApiException(
                         status = null,
@@ -144,6 +155,7 @@ internal class SimklApiClient(
                 continue
             }
 
+            request.requireCurrentAuthorization()
             when (classifySimklResponse(response.status, request.scrobbleStopConflictIsSuccess)) {
                 SimklResponseAction.SUCCESS -> return@withLock response.toApiResponse()
                 SimklResponseAction.SOFT_SUCCESS -> {

@@ -3462,4 +3462,6 @@
     <string name="settings_playback_controls_size_value">%1$d%</string>
     <string name="settings_playback_controls_size_preview">முன்னோட்டம்</string>
     <string name="settings_playback_controls_size_reset">மீட்டமை</string>
+    <string name="settings_tracking_simkl_rewatches">திரைப்படங்களை மீண்டும் பார்ப்பதை Simkl-இல் பதிவு செய்</string>
+    <string name="player_track_this_simkl_rewatch">இந்தப் படத்தை Simkl-இல் மீண்டும் பார்த்ததாகப் பதிவு செய்</string>
 </resources>

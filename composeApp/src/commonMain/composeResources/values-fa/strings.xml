@@ -3459,4 +3459,6 @@
     <string name="settings_playback_controls_size_value">%1$d%</string>
     <string name="settings_playback_controls_size_preview">پیش‌نمایش</string>
     <string name="settings_playback_controls_size_reset">بازنشانی</string>
+    <string name="settings_tracking_simkl_rewatches">ثبت تماشای دوبارهٔ فیلم‌ها در Simkl</string>
+    <string name="player_track_this_simkl_rewatch">ثبت این فیلم به‌عنوان تماشای دوباره در Simkl</string>
 </resources>

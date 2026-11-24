@@ -24,12 +24,14 @@ internal data class SimklScrobbleResult(
     val media: SimklMedia,
     val episode: SimklPlaybackEpisode?,
     val watchedAt: String? = null,
+    val rewatchPlanRejected: Boolean = false,
 )
 
 internal fun SimklApiResponse.toSimklScrobbleResult(
     requestedAction: TrackingScrobbleAction,
     event: TrackingScrobbleEvent,
     json: Json,
+    completionThreshold: Int = 80,
 ): SimklScrobbleResult {
     val payload = body
         .takeIf(String::isNotBlank)
@@ -48,7 +50,7 @@ internal fun SimklApiResponse.toSimklScrobbleResult(
         isSoftSuccess && status == 409 -> SimklScrobbleOutcome.SCROBBLE
         else -> payload.stringValue("action")
             ?.toSimklScrobbleOutcome()
-            ?: requestedAction.fallbackOutcome(progress)
+            ?: requestedAction.fallbackOutcome(progress, completionThreshold)
     }
     return SimklScrobbleResult(
         outcome = outcome,
@@ -59,6 +61,7 @@ internal fun SimklApiResponse.toSimklScrobbleResult(
         episode = episode,
         watchedAt = payload.stringValue("watched_at")
             ?.takeIf { value -> parseSimklUtcEpochMs(value) != null },
+        rewatchPlanRejected = payload.stringValue("rewatch_status") == "pro_required",
     )
 }
 
@@ -124,12 +127,12 @@ internal fun TrackingMediaKind.toSimklMediaType(): SimklMediaType = when (this) 
     TrackingMediaKind.ANIME -> SimklMediaType.ANIME
 }
 
-private fun TrackingScrobbleAction.fallbackOutcome(progress: Double): SimklScrobbleOutcome =
+private fun TrackingScrobbleAction.fallbackOutcome(progress: Double, completionThreshold: Int): SimklScrobbleOutcome =
     when (this) {
         TrackingScrobbleAction.START -> SimklScrobbleOutcome.START
         TrackingScrobbleAction.PAUSE -> SimklScrobbleOutcome.PAUSE
         TrackingScrobbleAction.STOP -> {
-            if (progress >= 80.0) SimklScrobbleOutcome.SCROBBLE else SimklScrobbleOutcome.PAUSE
+            if (progress >= completionThreshold) SimklScrobbleOutcome.SCROBBLE else SimklScrobbleOutcome.PAUSE
         }
     }
 

@@ -3465,4 +3465,6 @@
     <string name="settings_playback_controls_size_value">%1$d%</string>
     <string name="settings_playback_controls_size_preview">תצוגה מקדימה</string>
     <string name="settings_playback_controls_size_reset">איפוס</string>
+    <string name="settings_tracking_simkl_rewatches">מעקב אחר צפיות חוזרות בסרטים ב־Simkl</string>
+    <string name="player_track_this_simkl_rewatch">רישום הסרט הזה כצפייה חוזרת ב־Simkl</string>
 </resources>

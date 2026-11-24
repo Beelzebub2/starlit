@@ -175,6 +175,8 @@ internal fun PlayerScreenRuntime.resetIdentityStateIfNeeded() {
         scrobbleStartRequestGeneration = 0L
         pendingSeekScrobbleRestart = false
         hasSentCompletionScrobbleForCurrentItem = false
+        initialTrackingPlaybackPercent = null
+        simklMovieRewatchChoice = null
         currentTrackingMedia = null
         resetTrackSelectionState()
     }
@@ -241,6 +243,9 @@ internal fun PlayerScreenRuntime.emitTrackingScrobbleStart() {
     if (isShortPlaceholderDuration(playbackSnapshot.durationMs)) return
     if (hasRequestedScrobbleStartForCurrentItem) return
     hasRequestedScrobbleStartForCurrentItem = true
+    if (initialTrackingPlaybackPercent == null) {
+        initialTrackingPlaybackPercent = currentPlaybackProgressPercent().toDouble()
+    }
     val requestGeneration = scrobbleStartRequestGeneration + 1L
     scrobbleStartRequestGeneration = requestGeneration
     val sessionPrivatePlayback = privatePlayback
@@ -292,6 +297,17 @@ private fun PlayerScreenRuntime.emitTrackingScrobbleTerminal(
     if (!hasRequestedScrobbleStartForCurrentItem && (provided ?: 0f) < 80f) return
 
     val percent = provided ?: currentPlaybackProgressPercent()
+    val initialPercent = initialTrackingPlaybackPercent
+    val explicitSimklMovieRewatchAccountId = if (action == TrackingScrobbleAction.STOP) {
+        simklMovieRewatchChoice?.takeIf { (playbackKey, _) -> playbackKey == activePlaybackKey }?.second
+    } else null
+    if (action == TrackingScrobbleAction.STOP) simklMovieRewatchChoice = null
+    val durationMs = playbackSnapshot.durationMs
+    val creditsPercent = skipIntervals.asSequence()
+        .filter { it.type == "outro" || it.type == "movie-credits" }
+        .map { it.startTime * 100_000.0 / durationMs }
+        .filter { it.isFinite() && it >= 80.0 && it < 100.0 }
+        .minOrNull()
     val mediaSnapshot = currentTrackingMedia
     val inputsSnapshot = snapshotTrackingScrobbleItemInputs()
     val sessionPrivatePlayback = privatePlayback
@@ -302,7 +318,13 @@ private fun PlayerScreenRuntime.emitTrackingScrobbleTerminal(
             profileId = profileId,
             action = action,
             privatePlayback = sessionPrivatePlayback,
-            event = TrackingScrobbleEvent(media = media, progressPercent = percent.toDouble()),
+            event = TrackingScrobbleEvent(
+                media = media,
+                progressPercent = percent.toDouble(),
+                inAppPlaybackStartPercent = initialPercent,
+                creditsStartPercent = creditsPercent,
+                explicitSimklMovieRewatchAccountId = explicitSimklMovieRewatchAccountId,
+            ),
         )
     }
     currentTrackingMedia = null

@@ -3457,4 +3457,6 @@
     <string name="lists_stat_episodes_watched">episódios assistidos</string>
     <string name="lists_stat_movies_watched">filmes assistidos</string>
     <string name="lists_stat_rated_titles">títulos avaliados</string>
+    <string name="settings_tracking_simkl_rewatches">Registrar visualizações repetidas de filmes no Simkl</string>
+    <string name="player_track_this_simkl_rewatch">Registrar este filme como assistido novamente no Simkl</string>
 </resources>

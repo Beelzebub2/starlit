@@ -3455,4 +3455,6 @@
     <string name="settings_playback_controls_size_value">%1$d%</string>
     <string name="settings_playback_controls_size_preview">Förhandsgranskning</string>
     <string name="settings_playback_controls_size_reset">Återställ</string>
+    <string name="settings_tracking_simkl_rewatches">Registrera omtittningar av filmer i Simkl</string>
+    <string name="player_track_this_simkl_rewatch">Registrera omtittningen av den här filmen i Simkl</string>
 </resources>

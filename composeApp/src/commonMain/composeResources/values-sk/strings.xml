@@ -3509,4 +3509,6 @@
     <string name="settings_playback_controls_size_value">%1$d%</string>
     <string name="settings_playback_controls_size_preview">Ukážka</string>
     <string name="settings_playback_controls_size_reset">Obnoviť</string>
+    <string name="settings_tracking_simkl_rewatches">Sledovať opakované pozretia filmov v Simkl</string>
+    <string name="player_track_this_simkl_rewatch">Zaznamenať tento film v Simkl ako znovu pozretý</string>
 </resources>

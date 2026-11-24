@@ -3477,4 +3477,6 @@
     <string name="settings_playback_controls_size_value">%1$d%</string>
     <string name="settings_playback_controls_size_preview">預覽</string>
     <string name="settings_playback_controls_size_reset">重設</string>
+    <string name="settings_tracking_simkl_rewatches">在 Simkl 中記錄重看的電影</string>
+    <string name="player_track_this_simkl_rewatch">在 Simkl 中將這部電影記為重看</string>
 </resources>

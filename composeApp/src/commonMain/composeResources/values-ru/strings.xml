@@ -3514,4 +3514,6 @@
     <string name="settings_playback_controls_size_value">%1$d%</string>
     <string name="settings_playback_controls_size_preview">Предпросмотр</string>
     <string name="settings_playback_controls_size_reset">Сбросить</string>
+    <string name="settings_tracking_simkl_rewatches">Отслеживать повторные просмотры фильмов в Simkl</string>
+    <string name="player_track_this_simkl_rewatch">Отметить этот фильм как повторно просмотренный в Simkl</string>
 </resources>

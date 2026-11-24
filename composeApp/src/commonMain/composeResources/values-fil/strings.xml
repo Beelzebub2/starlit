@@ -3499,4 +3499,6 @@ Nagbalik ang</string>
     <string name="settings_playback_controls_size_value">%1$d%</string>
     <string name="settings_playback_controls_size_preview">Preview</string>
     <string name="settings_playback_controls_size_reset">I-reset</string>
+    <string name="settings_tracking_simkl_rewatches">Itala sa Simkl ang mga muling pinanood na pelikula</string>
+    <string name="player_track_this_simkl_rewatch">Itala sa Simkl na muling pinanood ang pelikulang ito</string>
 </resources>

@@ -32,6 +32,10 @@ data class TrackingHistoryItem(
 data class TrackingScrobbleEvent(
     val media: TrackingMediaReference,
     val progressPercent: Double,
+    // Present only for terminal events from a confirmed in-app playback.
+    val inAppPlaybackStartPercent: Double? = null,
+    val creditsStartPercent: Double? = null,
+    val explicitSimklMovieRewatchAccountId: Long? = null,
 )
 
 data class TrackingMutationResult(

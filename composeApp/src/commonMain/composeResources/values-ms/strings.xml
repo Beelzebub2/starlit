@@ -3492,4 +3492,6 @@ Had permintaan</string>
     <string name="settings_playback_controls_size_value">%1$d%</string>
     <string name="settings_playback_controls_size_preview">Pratonton</string>
     <string name="settings_playback_controls_size_reset">Tetapkan semula</string>
+    <string name="settings_tracking_simkl_rewatches">Jejaki tontonan semula filem dalam Simkl</string>
+    <string name="player_track_this_simkl_rewatch">Rekod filem ini sebagai tontonan semula dalam Simkl</string>
 </resources>
