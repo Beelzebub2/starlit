@@ -81,7 +81,7 @@ internal suspend fun resolveHomePosterHoverTrailerPlaybackSource(
     val trailer = selectHeroTrailer(meta?.trailers.orEmpty())
         ?: return null
     return try {
-        TrailerPlaybackResolver.resolveFromYouTubeUrl(trailer.youtubePlaybackUrl())
+        trailer.youtubePlaybackUrl()?.let { TrailerPlaybackResolver.resolveFromYouTubeUrl(it) }
     } catch (cancellation: CancellationException) {
         throw cancellation
     } catch (_: Throwable) {
