@@ -7,7 +7,7 @@ const store = createProfileScopedStore({
     preserved: Array.isArray(value.preserved) ? value.preserved : [],
     revision: Number(value.revision || 0),
     pendingPush: value.pendingPush === true,
-    syncedKeys: Array.isArray(value.syncedKeys) ? value.syncedKeys : null
+    syncedPayload: Array.isArray(value.syncedPayload) ? value.syncedPayload : null
   })
 });
 export const MediaServerStore = {
@@ -20,34 +20,23 @@ export const MediaServerStore = {
       { silentSync: true }
     );
   },
-  applySync(snapshot, connections, syncedKeys, preserved, profileId) {
+  applySync(snapshot, connections, syncedPayload, preserved, profileId) {
     const current = this.get(profileId);
     if (current.revision !== snapshot.revision) return false;
-    const changed = JSON.stringify(current.connections) !== JSON.stringify(connections);
+    const changed = JSON.stringify(current.connections) !== JSON.stringify(connections) ||
+      JSON.stringify(current.preserved) !== JSON.stringify(preserved);
     store.setForProfile(
       profileId,
       {
         connections,
         preserved,
-        syncedKeys,
+        syncedPayload,
         pendingPush: false,
         revision: current.revision + (changed ? 1 : 0)
       },
       { silentSync: true }
     );
     return true;
-  },
-  markPushed(snapshot, syncedKeys, profileId) {
-    const current = this.get(profileId);
-    store.setForProfile(
-      profileId,
-      {
-        ...current,
-        syncedKeys,
-        pendingPush: current.revision === snapshot.revision ? false : current.pendingPush
-      },
-      { silentSync: true }
-    );
   },
   update(id, partial, profileId) {
     return this.set(
