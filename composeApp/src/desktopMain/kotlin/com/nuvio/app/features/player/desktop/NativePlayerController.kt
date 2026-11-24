@@ -70,6 +70,7 @@ internal class NativePlayerController(
     private val nativeSetRtxCompareOriginal: (Long, Boolean) -> Boolean = NativePlayerBridge::setRtxCompareOriginal,
     private val nativeSetDiscordShareEnabled: (Long, Boolean, Boolean) -> Boolean = NativePlayerBridge::setDiscordShareEnabled,
     private val nativeSetSurroundUpmixMode: (Long, Int) -> Boolean = NativePlayerBridge::setSurroundUpmixMode,
+    private val playbackErrorMessage: () -> String = { "Unable to play this stream." },
 ) : PlayerEngineController {
     private companion object {
         val json = Json { ignoreUnknownKeys = true }
@@ -198,9 +199,22 @@ internal class NativePlayerController(
     private var onEvent: (String, Double) -> Boolean = { _, _ -> false }
     private var onScrubChange: (Long) -> Boolean = { false }
     private var onScrubFinished: (Long) -> Boolean = { false }
-    private val eventSink = NativePlayerEventSink { type, value ->
-        SwingUtilities.invokeLater {
-            handlePlayerEvent(type, value)
+    private fun eventSinkFor(source: PendingSource): NativePlayerEventSink {
+        var errorReported = false // Accessed only on the Swing event thread.
+        return NativePlayerEventSink { type, value ->
+            SwingUtilities.invokeLater {
+                if (type == "mpvEndFileError") {
+                    // The error can arrive before nativeCreate returns. Bind it to
+                    // the requested source, not a handle that may not exist yet.
+                    if (!errorReported && !releaseRequested && pendingSource === source) {
+                        errorReported = true
+                        log.w { "mpv ended the current source with error " + value.toInt() }
+                        source.onError(playbackErrorMessage())
+                    }
+                } else {
+                    handlePlayerEvent(type, value)
+                }
+            }
         }
     }
 
@@ -400,7 +414,7 @@ internal class NativePlayerController(
                         NativePlayerBridge.controlsPageUrl,
                         pending.decoderPriority,
                         pending.nvidiaRtxSuperResolutionEnabled,
-                        eventSink,
+                        eventSinkFor(pending),
                     ).also { if (it == 0L) error("Native player did not return a handle.") }
                 }.onSuccess { created ->
                     var replacedProxy: HlsHeaderProxy? = null
