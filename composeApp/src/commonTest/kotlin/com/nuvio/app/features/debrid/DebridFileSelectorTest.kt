@@ -254,6 +254,85 @@ class DebridFileSelectorTest {
         assertEquals("large.mkv", selected?.path)
     }
 
+    @Test
+    fun `Torbox selector matches spaced conjunction in either direction`() {
+        val selector = TorboxFileSelector()
+        val names = listOf("Season 2/Episode Audio and Commentary.mkv", "Season 2/Episode Audio & Commentary.mkv")
+        assertEquals(
+            10,
+            selector.selectFile(
+                listOf(TorboxTorrentFileDto(id = 10, name = names[0], size = 100)),
+                resolve(filename = names[1]),
+                null,
+                null,
+            )?.id,
+        )
+        assertEquals(
+            11,
+            selector.selectFile(
+                listOf(TorboxTorrentFileDto(id = 11, name = names[1], size = 100)),
+                resolve(filename = names[0]),
+                null,
+                null,
+            )?.id,
+        )
+        assertNull(selector.selectFile(
+            listOf(TorboxTorrentFileDto(id = 10, name = names[0], size = 100)),
+            resolve(filename = "Episode Audio&Commentary.mkv"),
+            null,
+            null,
+        ))
+    }
+
+    @Test
+    fun `exact raw hint wins before normalized explicit hint`() {
+        val selector = TorboxFileSelector()
+        val files = listOf(
+            TorboxTorrentFileDto(id = 10, name = "Episode Audio and Commentary.mkv", size = 100),
+            TorboxTorrentFileDto(id = 11, name = "Episode Alternate.mkv", size = 50),
+        )
+        val hints = resolve(filename = "Episode Audio & Commentary.mkv").copy(
+            stream = StreamClientResolveStream(raw = StreamClientResolveRaw(filename = "Episode Alternate.mkv")),
+        )
+        assertEquals(11, selector.selectFile(files, hints, null, null)?.id)
+    }
+
+    @Test
+    fun `normalized case collisions do not fall through to an unrelated episode or index`() {
+        val files = listOf(
+            TorboxTorrentFileDto(id = 10, name = "Folder A/Episode Audio and Commentary.mkv", size = 100),
+            TorboxTorrentFileDto(id = 11, name = "Folder B/Episode Audio AND Commentary.mkv", size = 50),
+            TorboxTorrentFileDto(id = 12, name = "Unrelated.S01E01.mkv", size = 10),
+        )
+        assertNull(TorboxFileSelector().selectFile(
+            files,
+            resolve(filename = "Episode Audio & Commentary.mkv", fileIdx = 0),
+            1,
+            1,
+        ))
+        assertEquals(
+            10,
+            TorboxFileSelector().selectFile(
+                files,
+                resolve(filename = "Folder A/Episode Audio & Commentary.mkv"),
+                null,
+                null,
+            )?.id,
+        )
+    }
+
+    @Test
+    fun `conflicting normalized hints refuse both files`() {
+        val files = listOf(
+            TorboxTorrentFileDto(id = 10, name = "Episode Audio and Commentary.mkv", size = 100),
+            TorboxTorrentFileDto(id = 11, name = "Episode Alternate and Commentary.mkv", size = 50),
+        )
+        val hints = resolve(filename = "Episode Audio & Commentary.mkv").copy(
+            stream = StreamClientResolveStream(raw = StreamClientResolveRaw(filename = "Episode Alternate & Commentary.mkv")),
+        )
+        assertNull(TorboxFileSelector().selectFile(files, hints, null, null))
+    }
+
     private fun resolve(
         fileIdx: Int? = null,
         season: Int? = null,
