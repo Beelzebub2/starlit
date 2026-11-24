@@ -296,31 +296,47 @@ internal object MetaDetailsParser {
         }.toMap()
     }
 
-    private fun JsonObject.trailers(): List<MetaTrailer> =
-        array("trailers").mapNotNull { element ->
-            val trailer = element as? JsonObject ?: return@mapNotNull null
-            val key = trailer.string("key")
-                ?: trailer.string("source")
-                ?: trailer.string("ytId")
-                ?: trailer.string("ytid")
-                ?: return@mapNotNull null
-
-            val normalizedKey = key.trim()
-            if (normalizedKey.isEmpty()) return@mapNotNull null
-
-            MetaTrailer(
-                id = trailer.string("id")?.takeIf(String::isNotBlank) ?: normalizedKey,
-                key = normalizedKey,
-                name = trailer.string("name")?.takeIf(String::isNotBlank) ?: runBlocking { getString(Res.string.generic_trailer) },
-                site = trailer.string("site")?.takeIf(String::isNotBlank) ?: "YouTube",
-                size = trailer.int("size"),
-                type = trailer.string("type")?.takeIf(String::isNotBlank) ?: runBlocking { getString(Res.string.generic_trailer) },
-                official = trailer.boolean("official") == true,
-                publishedAt = trailer.string("published_at") ?: trailer.string("publishedAt"),
-                seasonNumber = trailer.int("seasonNumber") ?: trailer.int("season_number"),
-                displayName = trailer.string("displayName")?.takeIf(String::isNotBlank),
+    private fun JsonObject.trailers(): List<MetaTrailer> {
+        val defaultTrailerLabel by lazy { runBlocking { getString(Res.string.generic_trailer) } }
+        val trailers = linkedMapOf<String, MetaTrailer>()
+        for (element in array("trailers").asSequence() + array("trailerStreams").asSequence()) {
+            val trailer = element as? JsonObject ?: continue
+            val legacyKey = trailer.trailerText("key") ?: trailer.trailerText("source")
+            val youtubeKey = trailer.trailerText("ytId") ?: trailer.trailerText("ytid")
+            val directUrl = if (legacyKey == null && youtubeKey == null) {
+                validDirectTrailerUrl(trailer.trailerText("url"))
+            } else {
+                null
+            }
+            val key = legacyKey ?: youtubeKey ?: directUrl ?: continue
+            val candidate = MetaTrailer(
+                id = trailer.trailerText("id") ?: key,
+                key = key,
+                name = trailer.trailerText("name") ?: trailer.trailerText("title") ?:
+                    trailer.trailerText("description") ?: defaultTrailerLabel,
+                site = if (directUrl != null) "" else trailer.trailerText("site") ?: "YouTube",
+                size = (trailer["size"] as? JsonPrimitive)?.intOrNull,
+                type = trailer.trailerText("type") ?: defaultTrailerLabel,
+                official = (trailer["official"] as? JsonPrimitive)?.booleanOrNull == true,
+                publishedAt = trailer.trailerText("published_at") ?: trailer.trailerText("publishedAt"),
+                seasonNumber = (trailer["seasonNumber"] as? JsonPrimitive)?.intOrNull
+                    ?: (trailer["season_number"] as? JsonPrimitive)?.intOrNull,
+                displayName = trailer.trailerText("displayName"),
+                directUrl = directUrl,
             )
+            val identity = candidate.playbackIdentity() ?: continue
+            val previous = trailers[identity]
+            trailers[identity] = previous?.copy(
+                name = if (previous.name == defaultTrailerLabel) candidate.name else previous.name,
+                displayName = previous.displayName ?: candidate.displayName,
+            ) ?: candidate
         }
+        return trailers.values.toList()
+    }
+
+    private fun JsonObject.trailerText(name: String): String? =
+        (this[name] as? JsonPrimitive)?.takeIf { it.isString }?.contentOrNull
+            ?.trim()?.takeIf(String::isNotBlank)
 
     private fun JsonObject.embeddedStreams(): List<StreamItem> {
         val arr = this["streams"] as? JsonArray ?: return emptyList()

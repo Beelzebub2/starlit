@@ -1,10 +1,68 @@
 package com.nuvio.app.features.details
 
+import com.nuvio.app.core.build.TrailerPlaybackMode
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
 class HeroTrailerSelectorTest {
+    @Test
+    fun directAddonMediaCanOnlyOpenExternallyAndNeverBecomesAYouTubePreview() {
+        val playlistUrl = "https://cdn.example.test/sample.m3u8?signature=A%2FB"
+        val direct = trailer(id = "direct", key = "sample-id", official = true).copy(directUrl = playlistUrl)
+        assertNull(selectHeroTrailer(listOf(direct)))
+        assertNull(direct.youtubePlaybackUrl())
+        assertNull(direct.youtubeThumbnailUrl())
+        for (mode in TrailerPlaybackMode.entries) {
+            assertEquals(TrailerClickTarget.External(playlistUrl), direct.trailerClickTarget(mode))
+        }
+    }
+
+    @Test
+    fun recognizedYouTubeLinksUseOneCanonicalVideoAndKeepDistributionPlaybackMode() {
+        val legacy = trailer(id = "legacy", key = "https://youtu.be/sample-id?ignored=1")
+        val tmdb = trailer(id = "tmdb", key = "sample-id").copy(fromTmdb = true)
+        val otherAddon = trailer(id = "addon", key = "unrelated", official = true)
+        val direct = trailer(id = "media").copy(directUrl = "https://cdn.example.test/sample.mp4")
+        val watch = "https://www.youtube.com/watch?v=sample-id"
+        assertEquals(listOf(tmdb, direct, otherAddon), mergeMetadataTrailers(listOf(tmdb), listOf(legacy, direct, otherAddon)))
+        assertEquals(tmdb, selectHeroTrailer(listOf(tmdb, otherAddon, direct)))
+        assertEquals(watch, legacy.youtubePlaybackUrl())
+        assertEquals("https://img.youtube.com/vi/sample-id/hqdefault.jpg", legacy.youtubeThumbnailUrl())
+        assertEquals(TrailerClickTarget.External(watch), legacy.trailerClickTarget(TrailerPlaybackMode.EXTERNAL))
+        assertEquals(TrailerClickTarget.InAppYouTube(watch), legacy.trailerClickTarget(TrailerPlaybackMode.IN_APP))
+        val embed = trailer("embed", "https://www.youtube-nocookie.com/embed/sample-id")
+        assertEquals(watch, embed.youtubePlaybackUrl())
+    }
+
+    @Test
+    fun rejectedLinksCannotReachEitherPlaybackModeOrPreviewArtwork() {
+        for (key in listOf(
+            "https://video.example.test/watch?v=sample-id",
+            "https://www.youtube.com.example.test/watch?v=sample-id",
+            "https://www.youtube.com/redirect",
+            "https://youtu.be/",
+            "sample-id?extra",
+        )) {
+            val unsafe = trailer(id = "invalid", key = key)
+            assertNull(selectHeroTrailer(listOf(unsafe)), key)
+            assertNull(unsafe.youtubeThumbnailUrl(), key)
+            assertNull(unsafe.trailerClickTarget(TrailerPlaybackMode.IN_APP), key)
+            assertNull(unsafe.trailerClickTarget(TrailerPlaybackMode.EXTERNAL), key)
+        }
+
+        for (url in listOf(
+            "relative.mp4", "file:///media/x.mp4", "javascript:noop", "https:/missing-slash",
+            "https:///missing-host", "https://user@cdn.example.test/a.mp4", "https://cdn.example.test:99999/a.mp4",
+            "https://cdn.example.test/a b.mp4",
+        )) {
+            val unsafe = trailer(id = "invalid").copy(directUrl = url)
+            assertNull(unsafe.trailerClickTarget(TrailerPlaybackMode.IN_APP), url)
+            assertNull(unsafe.trailerClickTarget(TrailerPlaybackMode.EXTERNAL), url)
+        }
+    }
+
+
 
     @Test
     fun `selects official non-season YouTube trailer first`() {
