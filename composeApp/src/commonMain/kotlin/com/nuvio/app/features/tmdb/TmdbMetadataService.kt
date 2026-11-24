@@ -9,6 +9,7 @@ import com.nuvio.app.features.details.MetaDetails
 import com.nuvio.app.features.details.MetaPerson
 import com.nuvio.app.features.details.MetaTrailer
 import com.nuvio.app.features.details.MetaVideo
+import com.nuvio.app.features.details.mergeMetadataTrailers
 import com.nuvio.app.features.details.MoreLikeThisSource
 import com.nuvio.app.features.details.PersonDetail
 import com.nuvio.app.features.home.MetaPreview
@@ -930,7 +931,7 @@ object TmdbMetadataService {
         }
 
         if (enrichment != null && settings.useTrailers && enrichment.trailers.isNotEmpty()) {
-            updated = updated.copy(trailers = enrichment.trailers)
+            updated = updated.copy(trailers = mergeMetadataTrailers(enrichment.trailers, updated.trailers))
         }
 
         return updated
@@ -1905,6 +1906,7 @@ private fun TmdbVideoResult.toMetaTrailer(
         seasonNumber = seasonNumber,
         displayName = displayName,
         iso6391 = iso6391?.trim()?.takeIf { it.isNotBlank() },
+        fromTmdb = true,
     )
 }
 

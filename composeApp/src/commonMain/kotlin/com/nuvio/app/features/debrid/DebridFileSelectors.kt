@@ -79,6 +79,34 @@ private fun <T> selectDebridFile(
         if (matches.isNotEmpty()) return matches.singleOrNull()
     }
 
+    if (names.isNotEmpty()) {
+        val equivalentPaths = playable.map { path(it).normalizedPath().normalizedConjunctions() }
+        var selectedIndex: Int? = null
+        for (name in names) {
+            val equivalentName = name.normalizedConjunctions()
+            val pathMatches = if ('/' in equivalentName) {
+                equivalentPaths.indices.filter { index ->
+                    val filePath = equivalentPaths[index]
+                    filePath.equals(equivalentName, ignoreCase = true) ||
+                        filePath.endsWith("/$equivalentName", ignoreCase = true)
+                }
+            } else {
+                emptyList()
+            }
+            val matches = pathMatches.ifEmpty {
+                val basename = equivalentName.substringAfterLast('/')
+                equivalentPaths.indices.filter { index ->
+                    equivalentPaths[index].substringAfterLast('/').equals(basename, ignoreCase = true)
+                }
+            }
+            if (matches.size > 1) return null
+            val index = matches.singleOrNull() ?: continue
+            if (selectedIndex != null && selectedIndex != index) return null
+            selectedIndex = index
+        }
+        selectedIndex?.let { return playable[it] }
+    }
+
     val episodePattern = buildEpisodePattern(season ?: resolve.season, episode ?: resolve.episode)
     if (episodePattern != null) {
         val matches = playable.filter {
@@ -116,6 +144,10 @@ private fun <T> List<T>.matchingFiles(name: String, path: (T) -> String): List<T
     }
     return emptyList()
 }
+
+private val spacedConjunction = Regex("(?<= )(?:&|and)(?= )", RegexOption.IGNORE_CASE)
+
+private fun String.normalizedConjunctions(): String = replace(spacedConjunction, "and")
 
 internal fun buildEpisodePattern(season: Int?, episode: Int?): Regex? {
     if (season == null || episode == null) return null
