@@ -456,6 +456,7 @@ private fun ExoPlayerSurface(
             buildStandardPlayer()
         }
 
+        player.getAssHandlerCompat()?.applyAssFontScaleCompat(playerSettings.subtitleStyle.assFontScale.toFloat())
         player.applySubtitleTrackPreferences(
             preferredLanguage = playerSettings.preferredSubtitleLanguage,
             useForcedSubtitles = playerSettings.subtitleStyle.useForcedSubtitles,
@@ -969,6 +970,7 @@ private fun ExoPlayerSurface(
 
                 override fun applySubtitleStyle(style: SubtitleStyleState, useLibass: Boolean) {
                     currentSubtitleStyle = style
+                    exoPlayer.getAssHandlerCompat()?.applyAssFontScaleCompat(style.assFontScale.toFloat())
                     playerViewRef?.applySubtitleStyle(
                         style, pipSubtitleScale, useLibass && exoPlayer.getAssHandlerCompat() != null,
                     )
@@ -1129,7 +1131,9 @@ private fun LibmpvPlayerSurface(
             }
         }
         val observer = object : MPV.EventObserver {
-            override fun eventProperty(property: String) = Unit
+            override fun eventProperty(property: String) {
+                if (property == "current-tracks/sub/codec") view.refreshMpvSubtitleSizing()
+            }
             override fun eventProperty(property: String, value: Long) {
                 if (property == "cache-buffering-state") {
                     dispatchSnapshot(updateKeepScreenOn = true)
@@ -1147,7 +1151,9 @@ private fun LibmpvPlayerSurface(
                     dispatchSnapshot(updateKeepScreenOn = true)
                 }
             }
-            override fun eventProperty(property: String, value: String) = Unit
+            override fun eventProperty(property: String, value: String) {
+                if (property == "current-tracks/sub/codec") view.refreshMpvSubtitleSizing()
+            }
             override fun eventProperty(property: String, value: Double) {
                 if (property == "duration" || property == "time-pos" || property == "speed") {
                     dispatchSnapshot()
@@ -1363,6 +1369,12 @@ private class NuvioLibmpvView(
     private var latestAudioTracks: List<LibmpvTrack> = emptyList()
     @Volatile
     private var latestSubtitleTracks: List<LibmpvTrack> = emptyList()
+    private var mpvSubtitleStyle = SubtitleStyleState.DEFAULT
+    private var useAuthoredPlainSubtitleStyle = false
+    private var appliedSubtitleSizing: MpvSubtitleSizing? = null
+    private var lastMpvVisualSubtitleStyle: SubtitleStyleState? = null
+    private var appliedAssBold: Boolean? = null
+    private var customAssTemporarilySetVisualStyle = false
 
     override fun initOptions() {
         setVo(videoOutput.mpvValue)
@@ -1377,6 +1389,7 @@ private class NuvioLibmpvView(
         mpv.setOptionString("demuxer-max-bytes", "${libmpvCacheBytes()}").logIfMpvError("demuxer-max-bytes")
         mpv.setOptionString("demuxer-max-back-bytes", "${libmpvCacheBytes()}").logIfMpvError("demuxer-max-back-bytes")
         mpv.setOptionString("vd-lavc-film-grain", "cpu")
+        mpv.setOptionString("sub-ass-override", "no")
         mpv.setPropertyBoolean("keep-open", true)
         mpv.setPropertyBoolean("input-default-bindings", true)
         mpv.setPropertyBoolean("audio-fallback-to-null", true)
@@ -1397,6 +1410,7 @@ private class NuvioLibmpvView(
             "demuxer-cache-time" to MPV.mpvFormat.MPV_FORMAT_DOUBLE,
             "speed" to MPV.mpvFormat.MPV_FORMAT_DOUBLE,
             "track-list" to MPV.mpvFormat.MPV_FORMAT_NODE,
+            "current-tracks/sub/codec" to MPV.mpvFormat.MPV_FORMAT_STRING,
         )
         props.forEach { (name, format) -> mpv.observeProperty(name, format) }
     }
@@ -1674,23 +1688,17 @@ private class NuvioLibmpvView(
                 }
             }
 
+            override val supportsCustomAssStyles = true
+
             override fun applySubtitleStyle(style: SubtitleStyleState, useLibass: Boolean) {
                 executeMpv {
-                    if (useLibass) {
-                        mpv.setPropertyString("sub-ass-override", "no")
-                    } else {
-                        mpv.setPropertyString("sub-ass-override", "force")
-                        mpv.setPropertyString("sub-color", style.textColor.toMpvColor())
-                        mpv.setPropertyString("sub-back-color", style.backgroundColor.toMpvColor())
-                        mpv.setPropertyString("sub-outline-color", style.outlineColor.toMpvColor())
-                        mpv.setPropertyString("sub-border-color", style.outlineColor.toMpvColor())
-                        mpv.setPropertyString("sub-border-style", style.toMpvSubtitleBorderStyle())
-                        mpv.setPropertyString("sub-bold", if (style.bold) "yes" else "no")
-                        mpv.setPropertyInt("sub-font-size", style.toMpvSubtitleFontSize())
-                        mpv.setPropertyInt("sub-outline-size", style.toMpvSubtitleOutlineSize())
-                        mpv.setPropertyInt("sub-border-size", style.toMpvSubtitleOutlineSize())
-                        mpv.setPropertyInt("sub-pos", (100 - style.bottomOffset / 10).coerceIn(0, 100))
+                    mpvSubtitleStyle = style
+                    useAuthoredPlainSubtitleStyle = useLibass
+                    if (!useLibass) {
+                        applyMpvVisualSubtitleStyle(style)
+                        customAssTemporarilySetVisualStyle = false
                     }
+                    refreshMpvSubtitleSizingNow()
                     mpv.setPropertyBoolean("sub-filter-sdh", style.stripSdh)
                     mpv.setPropertyBoolean("sub-filter-sdh-harder", style.stripSdh)
                 }
@@ -1724,6 +1732,57 @@ private class NuvioLibmpvView(
 
     private fun setPausedNow(paused: Boolean) {
         runCatching { mpv.setPropertyBoolean("pause", paused) }
+    }
+
+    fun refreshMpvSubtitleSizing() = executeMpv { refreshMpvSubtitleSizingNow() }
+
+    private fun applyMpvVisualSubtitleStyle(style: SubtitleStyleState) {
+        if (lastMpvVisualSubtitleStyle == style) return
+        mpv.setPropertyString("sub-color", style.textColor.toMpvColor())
+        mpv.setPropertyString("sub-back-color", style.backgroundColor.toMpvColor())
+        mpv.setPropertyString("sub-outline-color", style.outlineColor.toMpvColor())
+        mpv.setPropertyString("sub-border-color", style.outlineColor.toMpvColor())
+        mpv.setPropertyString("sub-border-style", style.toMpvSubtitleBorderStyle())
+        mpv.setPropertyString("sub-bold", if (style.bold) "yes" else "no")
+        mpv.setPropertyInt("sub-font-size", style.toMpvSubtitleFontSize())
+        mpv.setPropertyInt("sub-outline-size", style.toMpvSubtitleOutlineSize())
+        mpv.setPropertyInt("sub-border-size", style.toMpvSubtitleOutlineSize())
+        lastMpvVisualSubtitleStyle = style
+    }
+
+    private fun refreshMpvSubtitleSizingNow() {
+        val userPosition = (100 - mpvSubtitleStyle.bottomOffset / 10).coerceIn(0, 100)
+        val sizing = resolveMpvSubtitleSizing(
+            codec = mpv.getPropertyString("current-tracks/sub/codec"),
+            assFontScale = mpvSubtitleStyle.assFontScale,
+            plainOverrideMode = if (useAuthoredPlainSubtitleStyle) "no" else "force",
+            plainVerticalPosition = if (useAuthoredPlainSubtitleStyle) 100 else userPosition,
+            customizeAss = mpvSubtitleStyle.customizeAssStyles,
+            customAssVerticalPosition = userPosition,
+        )
+        if (useAuthoredPlainSubtitleStyle) {
+            if (sizing.customAss) {
+                applyMpvVisualSubtitleStyle(mpvSubtitleStyle)
+                customAssTemporarilySetVisualStyle = true
+            } else if (customAssTemporarilySetVisualStyle) {
+                applyMpvVisualSubtitleStyle(SubtitleStyleState.DEFAULT)
+                customAssTemporarilySetVisualStyle = false
+            }
+        }
+        val assBold = mpvSubtitleStyle.bold.takeIf { sizing.customAss }
+        if (appliedAssBold != assBold) {
+            if (assBold == null) {
+                mpv.command("change-list", "sub-ass-style-overrides", "clr", "")
+            } else {
+                mpv.command("change-list", "sub-ass-style-overrides", "set", if (assBold) "Bold=1" else "Bold=0")
+            }
+            appliedAssBold = assBold
+        }
+        val previous = appliedSubtitleSizing
+        if (sizing.overrideMode != previous?.overrideMode) mpv.setPropertyString("sub-ass-override", sizing.overrideMode)
+        if (sizing.fontScale != previous?.fontScale) mpv.setPropertyDouble("sub-scale", sizing.fontScale)
+        if (sizing.verticalPosition != previous?.verticalPosition) mpv.setPropertyInt("sub-pos", sizing.verticalPosition)
+        appliedSubtitleSizing = sizing
     }
 
     private fun executeMpv(block: () -> Unit) {
@@ -1997,6 +2056,17 @@ internal fun PlayerView.syncLibassOverlay(
     canvasContainer?.removeAssOverlayChildren()
     glContainer?.removeAssOverlayChildren()
     val assSubtitleView = AssSubtitleView(overlayContainer.context, assHandler)
+    assSubtitleView.addOnAttachStateChangeListener(object : android.view.View.OnAttachStateChangeListener {
+        override fun onViewAttachedToWindow(view: android.view.View) {
+            // The library's canvas view installs its own renderer callback during attachment.
+            // Re-attach our sizing callback after it has done so, preserving both callbacks.
+            view.post {
+                if (view.isAttachedToWindow) player.getAssHandlerCompat()?.rebindAssFontScaleCompat()
+            }
+        }
+
+        override fun onViewDetachedFromWindow(view: android.view.View) = Unit
+    })
     overlayContainer.addView(
         assSubtitleView,
         android.widget.FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT)

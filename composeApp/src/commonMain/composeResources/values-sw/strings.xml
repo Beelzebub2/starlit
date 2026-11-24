@@ -3455,6 +3455,7 @@
     <string name="settings_playback_controls_size_value">%1$d%</string>
     <string name="settings_playback_controls_size_preview">Onyesho la kukagua</string>
     <string name="settings_playback_controls_size_reset">Weka upya</string>
+    <string name="compose_player_customize_ass_styles">Tumia mtindo maalum wa ASS/SSA</string>
     <string name="settings_tracking_simkl_rewatches">Rekodi utazamaji wa marudio wa filamu kwenye Simkl</string>
     <string name="player_track_this_simkl_rewatch">Rekodi filamu hii kama iliyotazamwa tena kwenye Simkl</string>
 </resources>

@@ -3264,6 +3264,7 @@
     <string name="lists_stat_episodes_watched">episodes watched</string>
     <string name="lists_stat_movies_watched">movies watched</string>
     <string name="lists_stat_rated_titles">rated titles</string>
+    <string name="compose_player_customize_ass_styles">Use custom ASS/SSA styling</string>
     <string name="settings_tracking_simkl_rewatches">Track Simkl movie rewatches</string>
     <string name="player_track_this_simkl_rewatch">Log this movie as a Simkl rewatch</string>
 </resources>

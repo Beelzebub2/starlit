@@ -139,7 +139,13 @@ internal class SimklMutationService(
                 authorizationIsCurrent = authorizationIsCurrent,
             ),
         )
-        return response.toSimklScrobbleResult(action, event, json, completionThreshold = rewatchStop?.threshold ?: 80)
+        return response.toSimklScrobbleResult(
+            action,
+            event,
+            json,
+            completionThreshold = rewatchStop?.threshold ?: 80,
+            requestedRewatch = rewatchStop?.record == true,
+        )
     }
 
     private fun Collection<TrackingMediaReference>.validated(): List<TrackingMediaReference> =

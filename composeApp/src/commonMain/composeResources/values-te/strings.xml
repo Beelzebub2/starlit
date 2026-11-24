@@ -3459,6 +3459,7 @@
     <string name="settings_playback_controls_size_value">%1$d%</string>
     <string name="settings_playback_controls_size_preview">ప్రివ్యూ</string>
     <string name="settings_playback_controls_size_reset">రీసెట్</string>
+    <string name="compose_player_customize_ass_styles">అనుకూల ASS/SSA శైలిని ఉపయోగించండి</string>
     <string name="settings_tracking_simkl_rewatches">Simklలో సినిమాలను మళ్లీ చూసినప్పుడు నమోదు చేయండి</string>
     <string name="player_track_this_simkl_rewatch">ఈ చిత్రాన్ని Simklలో మళ్లీ చూసినట్లు నమోదు చేయండి</string>
 </resources>

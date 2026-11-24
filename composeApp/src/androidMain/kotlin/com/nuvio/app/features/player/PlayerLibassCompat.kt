@@ -15,6 +15,7 @@ import androidx.media3.extractor.DefaultExtractorsFactory
 import androidx.media3.extractor.ExtractorsFactory
 import androidx.media3.extractor.mkv.MatroskaExtractor
 import androidx.media3.extractor.text.SubtitleParser
+import io.github.peerless2012.ass.AssRender
 import io.github.peerless2012.ass.media.AssHandler
 import io.github.peerless2012.ass.media.extractor.AssMatroskaExtractor
 import io.github.peerless2012.ass.media.kt.withAssSupport
@@ -24,6 +25,13 @@ import java.util.Collections
 import java.util.WeakHashMap
 
 private val assHandlersByPlayer = Collections.synchronizedMap(WeakHashMap<ExoPlayer, AssHandler>())
+private val assFontScales = WeakHashMap<AssHandler, AssFontScaleState>()
+
+private class AssFontScaleState(initialScale: Float) {
+    @Volatile
+    var scale: Float = initialScale
+    var callback: ((AssRender?) -> Unit)? = null
+}
 
 @OptIn(UnstableApi::class)
 internal fun ExoPlayer.Builder.buildWithAssSupportCompat(
@@ -81,9 +89,35 @@ private fun createAssMediaSourceFactoryCompat(
 
 internal fun ExoPlayer.getAssHandlerCompat(): AssHandler? = assHandlersByPlayer[this]
 
+internal fun AssHandler.applyAssFontScaleCompat(scale: Float) {
+    val clamped = scale.takeIf { it.isFinite() }?.coerceIn(0.25f, 3f) ?: 1f
+    synchronized(assFontScales) {
+        assFontScales.getOrPut(this) { AssFontScaleState(clamped) }.scale = clamped
+    }
+    rebindAssFontScaleCompat()
+}
+
+internal fun AssHandler.rebindAssFontScaleCompat() {
+    val scale = synchronized(assFontScales) {
+        val state = assFontScales[this] ?: return
+        val downstream = renderCallback
+        if (state.callback == null || state.callback !== downstream) {
+            val callback: (AssRender?) -> Unit = { newRender ->
+                newRender?.setFontScale(state.scale)
+                downstream?.invoke(newRender)
+            }
+            renderCallback = callback
+            state.callback = callback
+        }
+        state.scale
+    }
+    render?.setFontScale(scale)
+}
+
 @OptIn(UnstableApi::class)
 internal fun ExoPlayer.releaseWithAssSupportCompat() {
     val assHandler = assHandlersByPlayer.remove(this)
+    assHandler?.let { handler -> synchronized(assFontScales) { assFontScales.remove(handler) } }
     try {
         release()
     } finally {

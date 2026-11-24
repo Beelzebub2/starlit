@@ -61,6 +61,7 @@ data class SubtitleStyleState(
     val stripSdh: Boolean = false,
     val useForcedSubtitles: Boolean = false,
     val showOnlyPreferredLanguages: Boolean = false,
+    val customizeAssStyles: Boolean = false,
 ) {
     companion object {
         val DEFAULT = SubtitleStyleState()

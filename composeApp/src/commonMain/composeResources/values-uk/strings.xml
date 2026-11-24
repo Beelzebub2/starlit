@@ -3505,6 +3505,7 @@
     <string name="settings_playback_controls_size_value">%1$d%</string>
     <string name="settings_playback_controls_size_preview">Попередній перегляд</string>
     <string name="settings_playback_controls_size_reset">Скинути</string>
+    <string name="compose_player_customize_ass_styles">Використовувати власний стиль ASS/SSA</string>
     <string name="settings_tracking_simkl_rewatches">Відстежувати повторні перегляди фільмів у Simkl</string>
     <string name="player_track_this_simkl_rewatch">Позначити цей фільм як повторно переглянутий у Simkl</string>
 </resources>

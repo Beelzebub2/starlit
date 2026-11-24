@@ -80,6 +80,62 @@ class SimklRewatchPolicyTest {
         assertTrue(result.rewatchPlanRejected)
     }
 
+    @Test
+    fun rewatchOutcomesCannotOverwriteCanonicalMovieHistory() = runBlocking {
+        val event = event(95.0)
+        val media = event.media.toSimklMedia()
+        val originalWatchedAt = "2023-11-12T21:00:00Z"
+        val existing = SimklLibraryEntry(
+            mediaType = SimklMediaType.MOVIES,
+            status = SimklListStatus.COMPLETED,
+            lastWatchedAt = originalWatchedAt,
+            movie = media,
+        )
+        val snapshot = SimklSyncSnapshot(
+            entries = listOf(existing),
+            playback = listOf(SimklPlaybackSession(id = 14, type = "movie", progress = 70.0, movie = media)),
+        )
+        val completed = fixture(mutableListOf(), """{"action":"scrobble","rewatch_status":"completed"}""")
+            .scrobble(TrackingScrobbleAction.STOP, event, SimklRewatchStop(90, true))
+        val afterCompleted = snapshot.applyScrobbleResult(completed, COMMIT_TIME)
+        assertEquals(listOf(existing), afterCompleted.entries)
+        assertTrue(afterCompleted.playback.isEmpty())
+        assertTrue(SimklSyncSnapshot().applyScrobbleResult(completed, COMMIT_TIME).entries.isEmpty())
+
+        for (status in listOf("too_soon", "not_eligible", "pro_required", "started", "in_progress", "unknown")) {
+            val result = fixture(mutableListOf(), """{"action":"scrobble","rewatch_id":5,"rewatch_status":"$status"}""")
+                .scrobble(TrackingScrobbleAction.STOP, event, SimklRewatchStop(90, true))
+            assertEquals(snapshot, snapshot.applyScrobbleResult(result, COMMIT_TIME), status)
+        }
+        val unconfirmed = fixture(mutableListOf(), """{"action":"scrobble","rewatch_id":5}""")
+            .scrobble(TrackingScrobbleAction.STOP, event, SimklRewatchStop(90, true))
+        assertEquals(snapshot, snapshot.applyScrobbleResult(unconfirmed, COMMIT_TIME))
+    }
+
+    @Test
+    fun firstWatchAndOrdinaryStopStillUpdateHistoryWhilePausePreservesResume() = runBlocking {
+        val event = event(95.0)
+        val firstWatch = fixture(mutableListOf(), """{"action":"scrobble","rewatch_status":"first_watch"}""")
+            .scrobble(TrackingScrobbleAction.STOP, event, SimklRewatchStop(90, true))
+        val ordinary = fixture(mutableListOf(), """{"action":"scrobble"}""")
+            .scrobble(TrackingScrobbleAction.STOP, event)
+        val pause = fixture(mutableListOf(), """{"action":"pause","progress":89,"id":15}""")
+            .scrobble(TrackingScrobbleAction.STOP, event, SimklRewatchStop(90, true))
+        val snapshot = SimklSyncSnapshot()
+        assertEquals(SimklListStatus.COMPLETED, snapshot.applyScrobbleResult(firstWatch, COMMIT_TIME).entries.single().status)
+        assertEquals(
+            snapshot.applyScrobbleResult(ordinary, COMMIT_TIME),
+            snapshot.applyScrobbleResult(firstWatch, COMMIT_TIME),
+        )
+        val paused = snapshot.applyScrobbleResult(pause, COMMIT_TIME)
+        assertTrue(paused.entries.isEmpty())
+        assertEquals(89.0, paused.playback.single().progress)
+    }
+
+    private companion object {
+        const val COMMIT_TIME = 1_700_000_000_000L
+    }
+
     private fun event(progress: Double) = TrackingScrobbleEvent(
         media = TrackingMediaReference(kind = TrackingMediaKind.MOVIE, title = "Synthetic test movie"),
         progressPercent = progress,

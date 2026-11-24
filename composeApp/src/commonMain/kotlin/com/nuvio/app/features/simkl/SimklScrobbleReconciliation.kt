@@ -6,6 +6,15 @@ internal fun SimklSyncSnapshot.applyScrobbleResult(
     result: SimklScrobbleResult,
     committedAtEpochMs: Long,
 ): SimklSyncSnapshot {
+    when (result.rewatchResult) {
+        SimklRewatchResult.PLAN_REQUIRED, SimklRewatchResult.UNCONFIRMED -> return this
+        // Simkl saved a separate viewing session. Clear its resume point without
+        // rewriting the original watch date or inventing a canonical history row.
+        SimklRewatchResult.RECORDED -> return copy(
+            playback = playback.filterNot { session -> session.media?.matchesTarget(result.media) == true },
+        )
+        SimklRewatchResult.NOT_REQUESTED, SimklRewatchResult.FIRST_WATCH -> Unit
+    }
     val localCommittedAt = committedAtEpochMs.epochMsToUtcIso()
         ?: return this
     return when (result.outcome) {

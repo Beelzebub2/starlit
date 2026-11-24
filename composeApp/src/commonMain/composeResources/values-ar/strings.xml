@@ -3487,6 +3487,7 @@
     <string name="settings_playback_controls_size_value">%1$d%</string>
     <string name="settings_playback_controls_size_preview">معاينة</string>
     <string name="settings_playback_controls_size_reset">إعادة ضبط</string>
+    <string name="compose_player_customize_ass_styles">استخدم تنسيق ASS/SSA المخصص</string>
     <string name="settings_tracking_simkl_rewatches">تتبّع إعادة مشاهدة الأفلام على Simkl</string>
     <string name="player_track_this_simkl_rewatch">سجّل هذا الفيلم كمشاهدة متكررة على Simkl</string>
 </resources>

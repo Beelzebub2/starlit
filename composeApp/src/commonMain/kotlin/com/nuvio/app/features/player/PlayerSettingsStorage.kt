@@ -61,6 +61,8 @@ internal expect object PlayerSettingsStorage {
     fun saveSubtitleOutlineWidth(width: Int)
     fun loadSubtitleBold(): Boolean?
     fun saveSubtitleBold(enabled: Boolean)
+    fun loadCustomizeAssStyles(): Boolean?
+    fun saveCustomizeAssStyles(enabled: Boolean)
     fun loadSubtitleFontSizeSp(): Int?
     fun saveSubtitleFontSizeSp(fontSizeSp: Int)
     fun loadSubtitleBottomOffset(): Int?
