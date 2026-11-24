@@ -336,17 +336,18 @@
             <button class="action optional" id="episodesButton" data-command="episodes" data-tip="Episodes" data-key="E"><svg><use href="#icon-episodes"></use></svg><span id="episodesLabel">Episodes</span></button>
             <button class="action optional" id="sourcesButton" data-command="sources" data-tip="Sources" data-key="Q"><svg><use href="#icon-source"></use></svg><span id="sourcesLabel">Sources</span></button>
             <span class="action-divider library-divider" id="libraryDivider" aria-hidden="true"></span>
-            <button class="action" id="subtitlesButton" data-command="subtitles" data-tip="Subtitles" data-key="S"><svg><use id="subtitlesIcon" href="#icon-subs"></use></svg><span id="subtitlesLabel">Subs</span></button>
-            <button class="action compact-hide" id="audioButton" data-command="audio" data-tip="Audio" data-key="A"><svg><use href="#icon-audio"></use></svg><span id="audioLabel">Audio</span></button>
-            <button class="action compact-hide speed-action" id="speedButton" data-command="speed" data-tip="Speed" data-key="`"><svg><use href="#icon-speed"></use></svg><span id="speedLabel">1x</span><b class="action-badge speed-badge" id="speedBadge" aria-hidden="true" hidden>1x</b></button>
+            <button class="action" id="subtitlesButton" data-command="subtitles" data-tip="Audio &amp; subtitles" data-key="S"><svg><use id="subtitlesIcon" href="#icon-subs"></use></svg><span id="subtitlesLabel">Audio &amp; subtitles</span></button>
             <button class="action compact-hide" id="resizeButton" data-command="resize" data-tip="Aspect"><svg><use href="#icon-aspect"></use></svg><span id="resizeLabel">Fit</span></button>
             <span class="action-divider compact-hide" id="optionsDivider" aria-hidden="true"></span>
             <div class="options-anchor" id="playbackOptionsAnchor">
               <button class="action options-action compact-hide" id="playbackOptionsButton" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="playbackOptionsPopover" aria-label="Playback options" data-tip="Playback options" data-tip-align="end">
-                <svg><use href="#icon-options"></use></svg><span>Playback options</span><b class="action-badge" id="playbackOptionsBadge" aria-hidden="true" hidden>0</b>
+                <svg><use href="#icon-options"></use></svg><span>Playback options</span><b class="action-badge" id="playbackOptionsBadge" aria-hidden="true" hidden>0</b><b class="action-badge speed-badge" id="speedBadge" aria-hidden="true" hidden>1x</b>
               </button>
               <div class="options-popover" id="playbackOptionsPopover" role="group" aria-label="Playback options" hidden>
-                <div class="popover-heading">Playback</div>
+                <div class="popover-heading speed-heading"><span id="speedOptionsHeading">Speed</span><span class="speed-heading-value" id="speedOptionsValue">1x</span></div>
+                <div class="speed-options" id="speedOptionList" role="radiogroup" aria-labelledby="speedOptionsHeading"></div>
+                <div class="popover-divider" id="speedOptionsDivider" aria-hidden="true"></div>
+                <div class="popover-heading" id="playbackTogglesHeading">Playback</div>
                 <button class="option-row toggle-action" id="autoSkipIntroButton" data-command="setAutoSkipIntro" aria-pressed="false" hidden>
                   <svg class="option-icon"><use href="#icon-auto-skip-intro"></use></svg><span class="option-label" id="autoSkipIntroLabel">Auto Skip Intro</span><i class="option-switch" aria-hidden="true"></i>
                 </button>
@@ -376,8 +377,6 @@
                 <button class="option-row" id="moreEpisodes" data-command="episodes"><svg class="option-icon"><use href="#icon-episodes"></use></svg><span class="option-label" id="moreEpisodesLabel">Episodes</span><kbd>E</kbd></button>
                 <button class="option-row" id="moreSources" data-command="sources"><svg class="option-icon"><use href="#icon-source"></use></svg><span class="option-label" id="moreSourcesLabel">Sources</span><kbd>Q</kbd></button>
                 <div class="popover-divider" id="moreLibraryDivider" aria-hidden="true"></div>
-                <button class="option-row" id="moreAudio" data-command="audio"><svg class="option-icon"><use href="#icon-audio"></use></svg><span class="option-label">Audio</span><small class="option-value" id="moreAudioValue"></small></button>
-                <button class="option-row" id="moreSpeed" data-command="speed"><svg class="option-icon"><use href="#icon-speed"></use></svg><span class="option-label">Speed</span><small class="option-value" id="moreSpeedValue"></small></button>
                 <button class="option-row" id="moreResize" data-command="resize"><svg class="option-icon"><use href="#icon-aspect"></use></svg><span class="option-label">Aspect</span><small class="option-value" id="moreResizeValue"></small></button>
                 <button class="option-row" id="moreOptions" type="button"><svg class="option-icon"><use href="#icon-options"></use></svg><span class="option-label">Playback options</span><small class="option-value" id="moreOptionsValue"></small><svg class="option-chevron"><use href="#icon-chevron-right"></use></svg></button>
               </div>
@@ -390,12 +389,6 @@
       <section class="player-toast" id="playerToast" aria-live="polite" aria-atomic="true" aria-hidden="true">
         <svg class="player-toast-icon" id="playerToastIcon" aria-hidden="true" hidden><use id="playerToastIconUse" href="#icon-speed"></use></svg>
         <span class="player-toast-text" id="playerToastText"></span>
-      </section>
-      <section class="modal-layer player-rail-modal" id="speedModal" aria-label="Playback speed" hidden>
-        <div class="track-panel audio-rail-panel">
-          <div class="track-header" id="speedPanelTitle">Playback Speed</div>
-          <div class="track-list" id="speedOptionList"></div>
-        </div>
       </section>
       <section class="modal-layer player-side-modal" id="diagnosticsModal" aria-label="Playback diagnostics" hidden>
         <div class="track-panel player-side-panel diagnostics-panel">
@@ -422,28 +415,48 @@
           </div>
         </div>
       </section>
-      <section class="modal-layer player-rail-modal" id="audioModal" aria-label="Audio tracks" hidden>
-        <div class="track-panel audio-rail-panel">
-          <div class="track-header" id="audioPanelTitle">Audio tracks</div>
-          <div class="track-list" id="audioTrackList"></div>
-        </div>
-      </section>
-      <section class="modal-layer player-side-modal subs-modal" id="subtitleModal" aria-label="Subtitles" hidden>
+      <section class="modal-layer player-side-modal subs-modal" id="subtitleModal" aria-labelledby="subtitlePanelTitle" hidden>
         <div class="track-panel player-side-panel subs-panel">
           <div class="track-header-row">
-            <div class="track-title" id="subtitlePanelTitle">Subtitles</div>
-            <button class="panel-button" id="subtitleCloseButton" type="button">Close</button>
+            <h2 class="track-title" id="subtitlePanelTitle">Audio &amp; subtitles</h2>
+            <button class="panel-icon-button" id="subtitleCloseButton" type="button" aria-label="Close"><svg aria-hidden="true"><use href="#icon-close"></use></svg></button>
           </div>
-          <div class="subs-tabs" role="tablist" aria-label="Subtitle settings">
+          <div class="subs-tabs" role="tablist" aria-label="Audio and subtitle settings">
             <button class="subs-tab" id="subtitleTabTracks" data-subs-tab="tracks" role="tab" type="button">Tracks</button>
             <button class="subs-tab" id="subtitleTabStyle" data-subs-tab="style" role="tab" type="button">Style</button>
             <button class="subs-tab" id="subtitleTabTiming" data-subs-tab="timing" role="tab" type="button">Timing</button>
           </div>
-          <div class="subs-view" id="subtitleTracksView" role="tabpanel">
-            <div class="subs-options" id="subtitleOffList"></div>
-            <div class="subs-section-label" id="subtitleLanguageRailTitle">Languages</div>
-            <div class="subs-chips" id="subtitleTrackList"></div>
-            <div class="subs-options" id="addonSubtitleList"></div>
+          <div class="subs-view tracks-view" id="subtitleTracksView" role="tabpanel">
+            <div class="tracks-columns">
+              <section class="tracks-column tracks-audio" aria-labelledby="audioPanelTitle">
+                <div class="tracks-column-head">
+                  <h3 class="tracks-column-title" id="audioPanelTitle">Audio</h3>
+                  <span class="tracks-column-count" id="audioTrackCount"></span>
+                </div>
+                <div class="subs-options tracks-scroll" id="audioTrackList" role="radiogroup" aria-labelledby="audioPanelTitle"></div>
+              </section>
+              <div class="tracks-divider" aria-hidden="true"></div>
+              <section class="tracks-column tracks-subtitles" aria-labelledby="subtitleColumnTitle">
+                <div class="tracks-column-head">
+                  <h3 class="tracks-column-title" id="subtitleColumnTitle">Subtitles</h3>
+                  <span class="tracks-column-count" id="subtitleTrackCount"></span>
+                </div>
+                <div class="tracks-scroll">
+                  <div class="subs-options" id="subtitleOffList" role="radiogroup" aria-labelledby="subtitleColumnTitle"></div>
+                  <div class="subs-section-label" id="subtitleLanguageRailTitle">Languages</div>
+                  <div class="subs-chips" id="subtitleTrackList" role="group" aria-labelledby="subtitleLanguageRailTitle"></div>
+                  <div class="subs-options" id="addonSubtitleList" role="radiogroup" aria-labelledby="subtitleColumnTitle"></div>
+                </div>
+                <div class="tracks-footer">
+                  <span class="tracks-footer-label" id="tracksSyncLabel">Subtitle Delay</span>
+                  <div class="tracks-sync">
+                    <button class="tracks-sync-step" id="tracksSyncMinus" type="button" aria-label="Show subtitles 0.1 seconds earlier">&minus;</button>
+                    <span class="tracks-sync-value" id="tracksSyncValue" aria-live="polite">0.0 s</span>
+                    <button class="tracks-sync-step" id="tracksSyncPlus" type="button" aria-label="Show subtitles 0.1 seconds later">+</button>
+                  </div>
+                </div>
+              </section>
+            </div>
           </div>
           <div class="subs-view" id="subtitleStyleView" role="tabpanel" hidden>
             <div class="subs-preview" id="subtitlePreview" aria-hidden="true">
@@ -632,6 +645,7 @@
   </div>
 
   <script src="diagnostics.js"></script>
+  <script src="track-labels.js"></script>
   <script src="controls.js"></script>
 </body>
 </html>

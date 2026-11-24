@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="addons_tracking_consent_title">ٹریکنگ ایڈ آن</string>
+    <string name="addons_tracking_consent_body">%1$s پلے بیک کی سرگرمی (چلانا، روکنا، بند کرنا اور مقام) اور لائبریری کی تبدیلیاں (شامل، حذف، دیکھا، نہ دیکھا) حاصل کر سکتا ہے۔ یہ معلومات Starlit سے باہر ایڈ آن فراہم کنندہ کو بھیجی جاتی ہیں۔</string>
+    <string name="addons_tracking_consent_checkbox">میں اس ایڈ آن کے ساتھ پلے بیک اور لائبریری کی سرگرمی شیئر کرنے پر رضامند ہوں</string>
+</resources>

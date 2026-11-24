@@ -4,6 +4,7 @@ import com.nuvio.app.core.storage.DesktopStorage
 import com.nuvio.app.features.airing.NativeAiring
 import com.nuvio.app.features.details.MetaDetails
 import com.nuvio.app.features.profiles.ProfileRepository
+import com.nuvio.app.features.watchorder.AnimeWatchOrderRepository
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -12,11 +13,11 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.awt.Desktop
+import java.util.concurrent.ConcurrentHashMap
 
 internal data class MalConnectionState(val profileId: Int = -1, val connected: Boolean = false,
     val username: String = "", val clientId: String = "", val busy: Boolean = false,
     val connecting: Boolean = false, val revision: Long = 0, val error: String? = null,
-    val showTab: Boolean = false,
     val playbackUpdateThresholdPercent: Int = DefaultMalPlaybackUpdateThresholdPercent)
 
 internal object MyAnimeListRepository {
@@ -25,6 +26,7 @@ internal object MyAnimeListRepository {
     private val json = Json { ignoreUnknownKeys = true }
     private val client = MalClient()
     private val mutex = Mutex()
+    private val inferredMappingCache = ConcurrentHashMap<String, Int>()
     private val mutableState = MutableStateFlow(MalConnectionState())
     val state = mutableState.asStateFlow()
     @Volatile private var loadedProfile: Int? = null
@@ -41,7 +43,6 @@ internal object MyAnimeListRepository {
         val expected = generation
         mutableState.value = MalConnectionState(profileId = profile, revision = expected,
             clientId = store.getString("client_$profile").orEmpty(), busy = true,
-            showTab = store.getString("show_tab_$profile") == "true",
             playbackUpdateThresholdPercent = normalizeMalPlaybackUpdateThresholdPercent(
                 store.getString("playback_update_threshold_$profile")?.toIntOrNull()
                     ?: DefaultMalPlaybackUpdateThresholdPercent,
@@ -67,6 +68,7 @@ internal object MyAnimeListRepository {
     @Synchronized fun clearState() {
         generation += 1
         loadJob?.cancel(); connectJob?.cancel()
+        inferredMappingCache.clear()
         loadedProfile = null; session = null
         mutableState.value = MalConnectionState(revision = generation)
     }
@@ -75,16 +77,8 @@ internal object MyAnimeListRepository {
         val profile = ProfileRepository.activeProfileId
         clearState()
         store.remove("tokens_$profile"); store.remove("username_$profile"); store.remove("sync_owner_$profile")
+        store.remove("rewatch_epoch_$profile")
         ensureLoaded()
-    }
-
-    /** Visibility is optional and local to the Starlit profile; it never changes the MAL account. */
-    @Synchronized fun setTabVisible(visible: Boolean) {
-        ensureLoaded()
-        val profile = ProfileRepository.activeProfileId
-        if (visible) check(mutableState.value.connected) { "Connect MyAnimeList before showing its tab." }
-        store.putString("show_tab_$profile", visible.toString())
-        mutableState.value = mutableState.value.copy(showTab = visible)
     }
 
     @Synchronized fun playbackUpdateThresholdPercent(): Int {
@@ -110,6 +104,7 @@ internal object MyAnimeListRepository {
         check(!mutableState.value.busy || mutableState.value.connecting) { "Wait for account loading to finish." }
         val previous = connectJob
         previous?.cancel()
+        inferredMappingCache.clear()
         generation += 1
         val profile = ProfileRepository.activeProfileId
         val expected = generation
@@ -158,6 +153,11 @@ internal object MyAnimeListRepository {
             save = { encrypted ->
                 store.putString("tokens_$profile", encrypted)
                 session = tokens
+                if (finishConnect) {
+                    // A freshly connected MAL account must not inherit partial progress from
+                    // a different account previously linked to this Starlit profile.
+                    store.putString("rewatch_epoch_$profile", java.util.UUID.randomUUID().toString())
+                }
                 if (finishConnect) mutableState.value = mutableState.value.copy(
                     connected = true, username = tokens.username, busy = false, connecting = false)
             })
@@ -222,46 +222,137 @@ internal object MyAnimeListRepository {
     suspend fun listStatus(id: Int) = authorized { client.listStatus(id, it) }
     suspend fun update(
         id: Int, status: MalStatus? = null, score: Int? = null, isRewatching: Boolean? = null,
-        watchedEpisodes: Int? = null,
-    ) = authorized { client.update(id, it, status, score, isRewatching, watchedEpisodes) }
+        watchedEpisodes: Int? = null, numTimesRewatched: Int? = null,
+    ) = authorized { token ->
+        val updated = client.update(id, token, status, score, isRewatching, watchedEpisodes, numTimesRewatched)
+        if (isRewatching != null || numTimesRewatched != null) {
+            store.remove(rewatchProgressKey(ProfileRepository.activeProfileId, id))
+        }
+        updated
+    }
     suspend fun update(id: Int, patch: MalListPatch) =
-        update(id, patch.status, patch.score, patch.isRewatching, patch.watchedEpisodes)
+        update(id, patch.status, patch.score, patch.isRewatching, patch.watchedEpisodes, patch.numTimesRewatched)
     suspend fun remove(id: Int) = authorized { client.remove(id, it) }
     suspend fun animeStatistics() = authorized { client.animeStatistics(it) }
     suspend fun animeList(status: MalStatus? = null, offset: Int = 0, sort: MalListSort = MalListSort.UPDATED) =
         authorized { client.animeList(it, status, offset, sort = sort) }
 
-    /** Runs list writes that must finish even after the MyAnimeList tab is closed. */
-    internal fun launchDetached(block: suspend CoroutineScope.() -> Unit): Job = scope.launch(block = block)
     suspend fun search(name: String) = authorized { client.search(name, it) }
 
-    /** Idempotent. Only a genuinely playing title already completed on MAL is changed. */
+    private fun rewatchProgressKey(profile: Int, id: Int) =
+        "rewatch_progress_${profile}_${store.getString("rewatch_epoch_$profile").orEmpty()}_$id"
+
+    /** Complete an active MAL rewatch once; never count an interrupted/cancelled rewatch. */
+    suspend fun finishRewatch(id: Int): MalListStatus = authorized { token ->
+        val current = client.listStatus(id, token) ?: error("This title is not on your MyAnimeList.")
+        val completed = current.withCompletedRewatch()
+        if (completed == current) return@authorized current
+        val updated = client.update(
+            id, token, isRewatching = false, numTimesRewatched = completed.numTimesRewatched,
+        )
+        store.remove(rewatchProgressKey(ProfileRepository.activeProfileId, id))
+        updated
+    }
+
+    /** True only after a resolved MAL entry was checked, even if no patch was necessary. */
     suspend fun markRewatchingIfCompleted(
         meta: MetaDetails,
         playbackProfileId: Int,
         positionMs: Long,
         durationMs: Long,
-    ) {
-        if (!shouldUpdateMalAfterPlayback(positionMs, durationMs, true, false, playbackUpdateThresholdPercent())) return
-        if (ProfileRepository.activeProfileId != playbackProfileId) return
+        seasonNumber: Int?,
+        episodeNumber: Int?,
+        completionReached: Boolean,
+    ): Boolean {
+        if (ProfileRepository.activeProfileId != playbackProfileId) return false
+        if (!shouldUpdateMalAfterPlayback(positionMs, durationMs, true, false, playbackUpdateThresholdPercent())) return false
         ensureLoaded()
         synchronized(this) { loadJob }?.join()
-        if (ProfileRepository.activeProfileId != playbackProfileId || !state.value.connected) return
-        val id = resolveId(meta) ?: return
-        // Hold the same per-profile auth mutex across the read and conditional update to avoid
-        // racing a manual status change, and never write into a different Starlit profile.
-        authorized(expectedProfileId = playbackProfileId) { token ->
-            val existing = client.listStatus(id, token)
-            if (shouldMarkMalRewatch(existing)) client.update(id, token, isRewatching = true)
+        if (ProfileRepository.activeProfileId != playbackProfileId || !state.value.connected) return false
+        val id = resolveId(meta) ?: return false
+        // Keep the status lookup and conditional PATCH inside the same profile auth lock.
+        return authorized(expectedProfileId = playbackProfileId) { token ->
+            val snapshot = if (completionReached) client.animeRewatchSnapshot(id, token) else null
+            var existing = snapshot?.listStatus ?: if (completionReached) null else client.listStatus(id, token)
+            val progressKey = rewatchProgressKey(playbackProfileId, id)
+            if (shouldMarkMalRewatch(existing)) {
+                // Any progress from an interrupted or externally cancelled pass belongs to an
+                // older attempt and must never contribute to the next rewatch.
+                store.remove(progressKey)
+                val started = client.update(id, token, isRewatching = true)
+                existing = started.copy(numTimesRewatched = existing!!.numTimesRewatched)
+            }
+            if (completionReached && existing?.status == MalStatus.COMPLETED && existing.isRewatching &&
+                existing.numTimesRewatched < MAX_MAL_REWATCHES
+            ) {
+                val episode = matchedMalRewatchEpisode(meta, snapshot?.totalEpisodes ?: 0, seasonNumber, episodeNumber)
+                if (episode != null) {
+                    val saved = store.getString(progressKey)?.let { encoded ->
+                        runCatching { json.decodeFromString<MalRewatchProgress>(encoded) }.getOrNull()
+                    }?.takeIf { it.baseline == existing.numTimesRewatched }
+                        ?: MalRewatchProgress(baseline = existing.numTimesRewatched)
+                    val progress = saved.record(episode)
+                    if (progress.complete(snapshot!!.totalEpisodes)) {
+                        // Preserve MAL score, status and watched-episode count. Both fields in one
+                        // PATCH make repeated callbacks or resume requests harmless.
+                        client.update(
+                            id, token, isRewatching = false,
+                            numTimesRewatched = existing.numTimesRewatched + 1,
+                        )
+                        store.remove(progressKey)
+                    } else {
+                        store.putString(progressKey, json.encodeToString(progress))
+                    }
+                }
+            }
+            true
         }
     }
+
     suspend fun resolveId(meta: MetaDetails): Int? {
         val profile = ProfileRepository.activeProfileId
-        store.getString("mapping_${profile}_${meta.type}:${meta.id}")?.toIntOrNull()?.takeIf { it > 0 }?.let { return it }
-        meta.links.firstNotNullOfOrNull { Regex("^https?://(?:www\\.)?myanimelist\\.net/anime/(\\d+)(?:/.*)?$")
-            .find(it.url)?.groupValues?.get(1)?.toIntOrNull()?.takeIf { id -> id > 0 } }?.let { return it }
-        return NativeAiring.client.resolveMalId(meta.id)
+        val manualKey = "mapping_" + profile + "_" + meta.type + ":" + meta.id
+        store.getString(manualKey)?.toIntOrNull()?.takeIf { it > 0 }?.let { return it }
+        val malLink = Regex("""^https?://(?:www\.)?myanimelist\.net/anime/(\d+)(?:[/?#].*)?$""", RegexOption.IGNORE_CASE)
+        meta.links.firstNotNullOfOrNull {
+            malLink.find(it.url)?.groupValues?.get(1)?.toIntOrNull()?.takeIf { id -> id > 0 }
+        }?.let { return it }
+        val cacheKey = profile.toString() + ":" + meta.type + ":" + meta.id + ":" +
+            meta.name + ":" + meta.releaseInfo.orEmpty()
+        inferredMappingCache[cacheKey]?.let { return it }
+
+        // Identity mappings are more reliable than title matching, and are time bounded.
+        val nativeId = try {
+            withTimeoutOrNull(3_000L) { NativeAiring.client.resolveMalId(meta.id) }
+        } catch (e: CancellationException) { throw e } catch (_: Exception) { null }
+        if (nativeId != null) {
+            inferredMappingCache[cacheKey] = nativeId
+            return nativeId
+        }
+        if (!isLikelyMyAnimeListAnime(meta)) return null
+        val crosswalkId = try {
+            withTimeoutOrNull(4_000L) { AnimeWatchOrderRepository.resolveMalId(meta) }
+        } catch (e: CancellationException) { throw e } catch (_: Exception) { null }
+        if (crosswalkId != null) {
+            inferredMappingCache[cacheKey] = crosswalkId
+            return crosswalkId
+        }
+
+        // A title/alias is auto-linked only when its MAL metadata is unambiguous.
+        ensureLoaded()
+        synchronized(this) { loadJob }?.join()
+        if (ProfileRepository.activeProfileId != profile || !state.value.connected) return null
+        val matchedId = withTimeoutOrNull(9_000L) {
+            authorized(expectedProfileId = profile) { token ->
+                matchMalSearchCandidate(meta, client.search(meta.name, token, limit = 30))
+            }
+        }
+        if (matchedId != null && ProfileRepository.activeProfileId == profile) {
+            inferredMappingCache[cacheKey] = matchedId
+        }
+        return matchedId
     }
+
     fun link(meta: MetaDetails, id: Int) {
         require(id > 0)
         store.putString("mapping_${ProfileRepository.activeProfileId}_${meta.type}:${meta.id}", id.toString())

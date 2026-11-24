@@ -2,6 +2,7 @@ package com.nuvio.app.features.downloads
 
 import com.nuvio.app.core.diagnostics.UsageDiagnostics
 import com.nuvio.app.core.diagnostics.UsageEvent
+import com.nuvio.app.features.player.SubtitleLookup
 import com.nuvio.app.features.player.addonSubtitleRequests
 import com.nuvio.app.features.streams.StreamItem
 import kotlinx.coroutines.CancellationException
@@ -299,7 +300,9 @@ object DownloadsRepository {
             videoId = videoId, title = title, logo = logo, poster = poster, background = background,
             seasonNumber = season, episodeNumber = episode, episodeTitle = episodeTitle, episodeThumbnail = thumbnail,
             streamTitle = streamTitle, providerName = provider, providerAddonId = providerId, sourceUrl = url,
-            subtitleRequests = addonSubtitleRequests(type, videoId),
+            subtitleRequests = addonSubtitleRequests(
+                SubtitleLookup(type, videoId, parentId, season = season, episode = episode),
+            ),
             destinationDirectory = DownloadDesktopFeatures.directory(),
             fileName = buildFileName(title, season, episode, episodeTitle, streamTitle, url, id),
             status = DownloadStatus.Downloading, phase = if (isDesktop) "Queued" else null,

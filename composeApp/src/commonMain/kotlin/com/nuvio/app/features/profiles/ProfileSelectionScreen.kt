@@ -339,6 +339,7 @@ fun ProfileSelectionScreen(
     pinDialogProfile?.let { profile ->
         PinEntryDialog(
             profileName = profile.name,
+            profile = profile,
             onVerify = { pin -> ProfileRepository.verifyPin(profile.profileIndex, pin) },
             onVerified = {
                 pinDialogProfile = null
@@ -465,6 +466,12 @@ private fun ProfileAvatarCard(
                         contentDescription = avatarItem?.displayName ?: profile.name,
                         modifier = Modifier.size(100.dp).clip(CircleShape),
                         contentScale = ContentScale.Crop,
+                    )
+                } else if (avatarItem != null && isBuiltInAvatar(avatarItem.id)) {
+                    BuiltInAvatarIcon(
+                        avatarId = avatarItem.id,
+                        modifier = Modifier.fillMaxSize(0.62f),
+                        contentDescription = avatarItem.displayName,
                     )
                 } else if (profile.name.isNotBlank()) {
                     Text(

@@ -1,5 +1,7 @@
 import { createStreamRedirectReporter } from "./streamRedirect.js";
 import { applyAdaptiveRequestHeaders } from "./adaptiveRequestHeaders.js";
+import { getTvRuntimePerformanceProfile } from "../../platform/tvRuntimePerformance.js";
+import { getTizenHlsBufferPolicy } from "./tizenHlsBufferPolicy.js";
 /* eslint-disable no-unused-vars */
 import * as internals from "./playerController.js";
 const HLS_MAX_NETWORK_RECOVERY_ATTEMPTS = 2;
@@ -33,14 +35,20 @@ export function createPlayerControllerMethods13() {
       const forwardedHeaders = this.normalizePlaybackHeaders(requestHeaders);
       const isWebOs = Platform.isWebOS();
       const isLivePlayback = this.isLivePlaybackItemType();
+      const hlsBudget = getTizenHlsBufferPolicy({
+        isTizen: Platform.isTizen(),
+        constrained: getTvRuntimePerformanceProfile().isPerformanceConstrained,
+        defaultSeconds: HLS_MAX_BUFFER_SECONDS
+      });
       return {
         autoStartLoad: false,
         enableWorker: !isWebOs,
         lowLatencyMode: false,
         initialLiveManifestSize: isWebOs && isLivePlayback ? WEBOS_LIVE_INITIAL_MANIFEST_SIZE : 1,
         backBufferLength: HLS_BACK_BUFFER_SECONDS,
-        maxBufferLength: HLS_MAX_BUFFER_SECONDS,
-        maxMaxBufferLength: HLS_MAX_BUFFER_SECONDS,
+        maxBufferLength: hlsBudget.forwardSeconds,
+        maxMaxBufferLength: hlsBudget.forwardSeconds,
+        ...(hlsBudget.maxBufferBytes !== null ? { maxBufferSize: hlsBudget.maxBufferBytes } : {}),
         maxBufferHole: 0.5,
         startFragPrefetch: false,
         // Android PlayerLoadErrorHandlingPolicy (DefaultLoadErrorHandlingPolicy(6)) keeps
@@ -118,12 +126,21 @@ export function createPlayerControllerMethods13() {
         this.captureHlsErrorDiagnostic(data);
         const responseCode = Number(data?.response?.code || data?.networkDetails?.status || 0);
         if (!data?.fatal) {
+          // hls.js keeps retrying a 416 fragment for about a minute before
+          // declaring it fatal, which is past the startup watchdog. The player
+          // already recovers a 416 by replaying the source from the start (and,
+          // on CNCVerse's legacy route, through the current bridge path), so
+          // surface it at the first response instead of waiting for the retry
+          // ladder to expire.
+          if (responseCode === 416 && data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+            emitFatalHlsNetworkError(data, responseCode);
+          }
           return;
         }
         if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
           // Keep terminal playlist HTTP statuses aligned with Android TV; a 404
           // points to a missing bridge-generated playlist, not a recoverable load.
-          if (isTerminalHlsHttpStatus(responseCode)) {
+          if (responseCode === 416 || isTerminalHlsHttpStatus(responseCode)) {
             emitFatalHlsNetworkError(data, responseCode);
             return;
           }

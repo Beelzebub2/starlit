@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="addons_tracking_consent_title">Követési bővítmény</string>
+    <string name="addons_tracking_consent_body">A(z) %1$s fogadhatja a lejátszási műveleteket (indítás, szünet, leállítás és pozíció), valamint a könyvtár változásait (hozzáadás, eltávolítás, megtekintett, nem látott). Az adatok elhagyják a Starlitot, és a bővítmény szolgáltatójához kerülnek.</string>
+    <string name="addons_tracking_consent_checkbox">Hozzájárulok a lejátszási és könyvtári tevékenységeim megosztásához</string>
+</resources>

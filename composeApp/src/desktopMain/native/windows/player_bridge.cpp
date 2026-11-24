@@ -79,6 +79,10 @@ struct mpv_node_list {
 typedef enum mpv_event_id {
     MPV_EVENT_NONE = 0,
     MPV_EVENT_SHUTDOWN = 1,
+    MPV_EVENT_END_FILE = 7,
+    MPV_EVENT_FILE_LOADED = 8,
+    MPV_EVENT_PROPERTY_CHANGE = 22,
+    MPV_EVENT_QUEUE_OVERFLOW = 24,
 } mpv_event_id;
 
 typedef struct mpv_event {
@@ -534,6 +538,7 @@ struct MpvApi {
     using mpv_error_string_fn = const char *(*)(int);
     using mpv_free_fn = void (*)(void *);
     using mpv_free_node_contents_fn = void (*)(mpv_node *);
+    using mpv_observe_property_fn = int (*)(mpv_handle *, uint64_t, const char *, mpv_format);
     using mpv_wait_event_fn = mpv_event *(*)(mpv_handle *, double);
     using mpv_wakeup_fn = void (*)(mpv_handle *);
 
@@ -554,6 +559,7 @@ struct MpvApi {
     mpv_error_string_fn errorString = nullptr;
     mpv_free_fn freeValue = nullptr;
     mpv_free_node_contents_fn freeNodeContents = nullptr;
+    mpv_observe_property_fn observeProperty = nullptr;
     mpv_wait_event_fn waitEvent = nullptr;
     mpv_wakeup_fn wakeup = nullptr;
 
@@ -615,6 +621,7 @@ struct MpvApi {
         errorString = loadSymbol<mpv_error_string_fn>("mpv_error_string");
         freeValue = loadSymbol<mpv_free_fn>("mpv_free");
         freeNodeContents = loadSymbol<mpv_free_node_contents_fn>("mpv_free_node_contents");
+        observeProperty = loadSymbol<mpv_observe_property_fn>("mpv_observe_property");
         waitEvent = loadSymbol<mpv_wait_event_fn>("mpv_wait_event");
         wakeup = loadSymbol<mpv_wakeup_fn>("mpv_wakeup");
     }
@@ -683,11 +690,23 @@ std::string discordShareAudioDevice() {
         std::wstring friendly = SUCCEEDED(nameResult) && name.vt == VT_LPWSTR && name.pwszVal
             ? std::wstring(name.pwszVal) : std::wstring();
         PropVariantClear(&name);
-        if (!discord_share::isVbCableInput(friendly) &&
-            !discord_share::isSteamStreamingSpeakers(friendly)) continue;
+        const bool isVbCable = discord_share::isVbCableInput(friendly);
+        if (!isVbCable && !discord_share::isSteamStreamingSpeakers(friendly)) continue;
+        std::wstring adapterName;
+        if (isVbCable) {
+            // Endpoint friendly names can be changed in Windows Sound. Require
+            // the separate audio adapter's name before treating one as VB-CABLE.
+            PROPVARIANT adapter;
+            PropVariantInit(&adapter);
+            const HRESULT result = properties->GetValue(PKEY_DeviceInterface_FriendlyName, &adapter);
+            if (SUCCEEDED(result) && adapter.vt == VT_LPWSTR && adapter.pwszVal) {
+                adapterName = adapter.pwszVal;
+            }
+            PropVariantClear(&adapter);
+        }
         LPWSTR deviceId = nullptr;
         if (FAILED(device->GetId(&deviceId)) || !deviceId) return {};
-        active.push_back({deviceId, std::move(friendly)});
+        active.push_back({deviceId, std::move(friendly), std::move(adapterName)});
         CoTaskMemFree(deviceId);
     }
     const std::wstring candidate = discord_share::uniqueUnusedDiscordEndpoint(
@@ -698,6 +717,10 @@ std::string discordShareAudioDevice() {
 struct DefaultSurroundOutput {
     starlit_surround::Layout layout = starlit_surround::Layout::unsupported;
     std::wstring endpointId;
+    unsigned mixChannels = 0;
+    uint32_t mixMask = 0;
+    uint32_t mixRate = 0;
+    std::vector<starlit_surround::Layout> automaticCandidates;
 };
 
 // Inspect Windows' default shared-mode layout. For physical speakers the mix
@@ -744,11 +767,15 @@ DefaultSurroundOutput defaultSurroundOutput(starlit_surround::Mode mode) {
         // PCM and IEEE-float are the only formats supported by this DSP path.
         if (extended->SubFormat.Data1 == WAVE_FORMAT_PCM ||
             extended->SubFormat.Data1 == WAVE_FORMAT_IEEE_FLOAT) {
+            output.mixChannels = format->nChannels;
+            output.mixMask = extended->dwChannelMask;
+            output.mixRate = format->nSamplesPerSec;
             if (mode == starlit_surround::Mode::speakersFivePointOne) {
                 output.layout = starlit_surround::configuredLayout(
                     format->nChannels, extended->dwChannelMask);
             } else if (mode == starlit_surround::Mode::virtualHeadsetSevenPointOne ||
-                       mode == starlit_surround::Mode::virtualHeadsetFivePointOne) {
+                       mode == starlit_surround::Mode::virtualHeadsetFivePointOne ||
+                       mode == starlit_surround::Mode::automatic) {
                 const auto acceptsExactFloatPcm = [&](WORD channels, DWORD mask) {
                     WAVEFORMATEXTENSIBLE stream{};
                     stream.Format.wFormatTag = WAVE_FORMAT_EXTENSIBLE;
@@ -772,16 +799,28 @@ DefaultSurroundOutput defaultSurroundOutput(starlit_surround::Mode mode) {
                     if (closest) CoTaskMemFree(closest);
                     return supported == S_OK; // S_FALSE closest match is not sufficient.
                 };
-                const bool wantsFivePointOne =
-                    mode == starlit_surround::Mode::virtualHeadsetFivePointOne;
-                output.layout = starlit_surround::configuredVirtualHeadsetLayout(
-                    mode, format->nChannels, extended->dwChannelMask,
-                    wantsFivePointOne &&
-                        acceptsExactFloatPcm(6, starlit_surround::kFivePointOneSideMask),
-                    wantsFivePointOne &&
-                        acceptsExactFloatPcm(6, starlit_surround::kFivePointOneBackMask),
-                    !wantsFivePointOne &&
-                        acceptsExactFloatPcm(8, starlit_surround::kSevenPointOneMask));
+                if (mode == starlit_surround::Mode::automatic) {
+                    // A physical 5.1/7.1 mix is already the right target.
+                    // Only query alternative exact formats on a stereo mix.
+                    const bool stereoMix = format->nChannels == 2 &&
+                        extended->dwChannelMask == starlit_surround::kStereoMask;
+                    output.automaticCandidates = starlit_surround::automaticLayouts(
+                        format->nChannels, extended->dwChannelMask,
+                        stereoMix && acceptsExactFloatPcm(6, starlit_surround::kFivePointOneSideMask),
+                        stereoMix && acceptsExactFloatPcm(6, starlit_surround::kFivePointOneBackMask),
+                        stereoMix && acceptsExactFloatPcm(8, starlit_surround::kSevenPointOneMask));
+                } else {
+                    const bool wantsFivePointOne =
+                        mode == starlit_surround::Mode::virtualHeadsetFivePointOne;
+                    output.layout = starlit_surround::configuredVirtualHeadsetLayout(
+                        mode, format->nChannels, extended->dwChannelMask,
+                        wantsFivePointOne &&
+                            acceptsExactFloatPcm(6, starlit_surround::kFivePointOneSideMask),
+                        wantsFivePointOne &&
+                            acceptsExactFloatPcm(6, starlit_surround::kFivePointOneBackMask),
+                        !wantsFivePointOne &&
+                            acceptsExactFloatPcm(8, starlit_surround::kSevenPointOneMask));
+                }
             }
         }
     }
@@ -1346,11 +1385,16 @@ public:
 
     bool setSurroundUpmixMode(int mode) {
         if (shuttingDown.load() || stopping.load()) return false;
-        if (mode < 0 || mode > 3) return false;
+        if (mode < 0 || mode > 4) return false;
         const bool changed = surroundRequested.exchange(mode) != mode;
         postUiTask([self = shared_from_this(), changed]() {
             if (self->shuttingDown.load()) return;
-            if (changed) self->surroundRejectedKey.clear(); // UI thread owns this state.
+            if (changed) {
+                // An explicit mode change starts a new bounded trial.
+                self->surroundRejectedKey.clear();
+                self->surroundAutoRouteKey.clear();
+                self->surroundAutoRejectedLayouts.clear();
+            }
             self->syncSurroundUpmix();
         });
         return true; // An opt-in, not a claim that surround output is active.
@@ -1383,7 +1427,7 @@ public:
         std::lock_guard<std::mutex> lock(mpvMutex);
         if (!mpv) return;
         std::string seconds = std::to_string((double)positionMs / 1000.0);
-        const char *command[] = {"seek", seconds.c_str(), "absolute+keyframes", nullptr};
+        const char *command[] = {"seek", seconds.c_str(), "absolute+exact", nullptr};
         mpvApi().command(mpv, command);
     }
 
@@ -1486,6 +1530,20 @@ public:
 
     std::string subtitleTracksJson() {
         return tracksJsonForType("sub");
+    }
+
+    std::string chaptersJson() {
+        std::string json = "[";
+        long long count = int64Property("chapter-list/count", 0);
+        for (long long index = 0; index < count; ++index) {
+            std::string prefix = "chapter-list/" + std::to_string(index);
+            double start = doubleProperty((prefix + "/time").c_str(), -1.0);
+            if (!std::isfinite(start) || start < 0) continue;
+            if (json.size() > 1) json += ',';
+            json += "{\"startTime\":" + std::to_string(start) +
+                ",\"title\":\"" + jsonEscape(stringProperty((prefix + "/title").c_str(), "")) + "\"}";
+        }
+        return json + "]";
     }
 
     std::vector<double> chapterStarts() {
@@ -1670,14 +1728,22 @@ private:
     mpv_handle *mpv = nullptr;
     bool rtxVideoConfigured = false;
     std::thread eventThread;
+    std::atomic_bool controlsTracksDirty = true;
+    std::atomic_bool observingControlsTracks = false;
+    std::string controlsAudioTracks;
+    std::string controlsSubtitleTracks;
+    std::wstring lastControlsUpdate;
     std::atomic_bool stopping = false;
     std::atomic_bool shuttingDown = false;
     std::atomic_bool hwdecLogged = false;  // one-shot log for hwdec-current
     std::atomic<int> surroundRequested{0};
     std::atomic<int> surroundReportedStatus{0};
+    std::atomic<int> surroundReportedChannels{0};
     std::atomic_bool surroundFilterInstalled = false;
     starlit_surround::Layout surroundFilterLayout = starlit_surround::Layout::unsupported;
     std::string surroundRejectedKey;
+    std::string surroundAutoRouteKey;
+    std::vector<starlit_surround::Layout> surroundAutoRejectedLayouts;
     int surroundOutputMismatchCount = 0;
 
     // Independent process and audio device: the primary mpv output is never
@@ -1741,16 +1807,21 @@ private:
         // Called on the native player UI thread, which owns the COM apartment.
         // Do not probe device routing if the user has not opted in.
         if (surroundRequested.load() == 0 && !surroundFilterInstalled.load()) {
+            if (surroundReportedChannels.exchange(0) != 0) {
+                sendPlayerEvent("surroundUpmixChannels", 0.0);
+            }
             if (surroundReportedStatus.exchange(0) != 0) {
                 sendPlayerEvent("surroundUpmixStatus", 0.0);
             }
             return;
         }
         const int requestedMode = surroundRequested.load();
+        const bool automatic = requestedMode == static_cast<int>(starlit_surround::Mode::automatic);
         const auto output = requestedMode != 0
             ? defaultSurroundOutput(static_cast<starlit_surround::Mode>(requestedMode))
             : DefaultSurroundOutput{};
         int nextStatus = requestedMode != 0 ? 1 : 0;
+        int deliveredChannels = 0;
         {
             std::lock_guard<std::mutex> lock(mpvMutex);
             if (!mpv) return;
@@ -1764,24 +1835,55 @@ private:
             const std::string decodedLayout = getString("audio-params/channels");
             const std::string audioDevice = getString("audio-device");
             const std::string outputFormat = getString("audio-out-params/format");
-            const auto layout = output.layout;
+            const std::string trackId = getString("aid");
+            const std::string routeKey = toUtf8(output.endpointId) + "|" +
+                getString("path") + "|" + trackId + "|" +
+                std::to_string(output.mixChannels) + "|" +
+                std::to_string(output.mixMask) + "|" +
+                std::to_string(output.mixRate);
+            if (automatic && routeKey != surroundAutoRouteKey) {
+                surroundAutoRouteKey = routeKey;
+                surroundAutoRejectedLayouts.clear();
+            }
+            auto layout = output.layout;
+            if (automatic) {
+                layout = starlit_surround::nextAutomaticLayout(
+                    output.automaticCandidates, surroundAutoRejectedLayouts);
+            }
             const bool supported = requestedMode != 0 &&
                 layout != starlit_surround::Layout::unsupported &&
                 starlit_surround::acceptsStereoInput(decodedLayout) &&
                 (audioDevice == "auto" || audioDevice == "wasapi/default") &&
                 !outputFormat.empty() && outputFormat.rfind("spdif", 0) != 0;
-            const std::string key = toUtf8(output.endpointId) + "|" +
-                getString("aid") + "|" + std::string(starlit_surround::mpvOutputLayout(layout));
-            if (supported && key == surroundRejectedKey && !surroundFilterInstalled) {
+            const std::string key = routeKey + "|" +
+                std::string(starlit_surround::mpvOutputLayout(layout));
+            if (!automatic && supported && key == surroundRejectedKey && !surroundFilterInstalled) {
                 nextStatus = -1; // Keep the rejection visible until the route/request changes.
             }
             if (requestedMode == 0) surroundRejectedKey.clear();
+            if (automatic && starlit_surround::acceptsStereoInput(decodedLayout) &&
+                layout == starlit_surround::Layout::unsupported) {
+                // No accepted layout remains; normal stereo continues untouched.
+                nextStatus = -1;
+            }
             if (surroundFilterInstalled &&
                 (!supported || layout != surroundFilterLayout ||
                  getString("af").find(starlit_surround::kFilterLabel) == std::string::npos)) {
                 if (!removeSurroundFilterLocked()) nextStatus = -1;
             }
-            if (supported && !surroundFilterInstalled && key != surroundRejectedKey) {
+            const auto rejectLayout = [&]() {
+                if (automatic) {
+                    if (std::find(surroundAutoRejectedLayouts.begin(),
+                                  surroundAutoRejectedLayouts.end(), layout) ==
+                        surroundAutoRejectedLayouts.end()) {
+                        surroundAutoRejectedLayouts.push_back(layout);
+                    }
+                } else {
+                    surroundRejectedKey = key;
+                }
+            };
+            if (supported && !surroundFilterInstalled &&
+                (automatic || key != surroundRejectedKey)) {
                 const char *filter = starlit_surround::mpvFilter(layout);
                 const char *add[] = {"af", "add", filter, nullptr};
                 if (filter && mpvApi().command(mpv, add) >= 0 &&
@@ -1790,7 +1892,7 @@ private:
                     surroundFilterLayout = layout;
                     surroundOutputMismatchCount = 0;
                 } else {
-                    surroundRejectedKey = key;
+                    rejectLayout();
                     nextStatus = -1;
                 }
             }
@@ -1799,11 +1901,23 @@ private:
                     starlit_surround::mpvOutputLayout(layout)) {
                     nextStatus = 2;
                     surroundOutputMismatchCount = 0;
+                    deliveredChannels = starlit_surround::mpvOutputLayout(layout) == "7.1" ? 8 : 6;
                 } else if (++surroundOutputMismatchCount >= 3) {
-                    if (removeSurroundFilterLocked()) surroundRejectedKey = key;
+                    if (removeSurroundFilterLocked()) rejectLayout();
                     nextStatus = -1;
                 }
             }
+            if (automatic && nextStatus == -1 && !surroundFilterInstalled &&
+                starlit_surround::nextAutomaticLayout(
+                    output.automaticCandidates, surroundAutoRejectedLayouts) !=
+                    starlit_surround::Layout::unsupported) {
+                // An alternate format is queued; do not prematurely report
+                // total failure while the next bounded attempt is pending.
+                nextStatus = 1;
+            }
+        }
+        if (surroundReportedChannels.exchange(deliveredChannels) != deliveredChannels) {
+            sendPlayerEvent("surroundUpmixChannels", static_cast<double>(deliveredChannels));
         }
         if (surroundReportedStatus.exchange(nextStatus) != nextStatus) {
             sendPlayerEvent("surroundUpmixStatus", static_cast<double>(nextStatus));
@@ -2325,7 +2439,8 @@ private:
                 setMpvOptionStringLocked("cache-pause-initial", "yes");
                 setMpvOptionStringLocked("cache-pause-wait", "8");
             }
-            setMpvOptionStringLocked("hr-seek", "no");
+            // Resume and intro skips must land at the requested point, not a prior keyframe.
+            setMpvOptionStringLocked("hr-seek", "absolute");
 
             int64_t wid = (int64_t)(intptr_t)containerHwnd;
             int widResult = api.setOption(mpv, "wid", MPV_FORMAT_INT64, &wid);
@@ -2378,6 +2493,14 @@ private:
         }
 
         setPaused(!playWhenReady);
+        {
+            std::lock_guard<std::mutex> lock(mpvMutex);
+            // Invalidate on list and selection changes without querying each track every tick.
+            observingControlsTracks.store(
+                api.observeProperty(mpv, 0, "track-list", MPV_FORMAT_NONE) >= 0 &&
+                api.observeProperty(mpv, 0, "aid", MPV_FORMAT_NONE) >= 0 &&
+                api.observeProperty(mpv, 0, "sid", MPV_FORMAT_NONE) >= 0);
+        }
         auto self = shared_from_this();
         eventThread = std::thread([self]() { self->drainMpvEvents(); });
     }
@@ -2443,7 +2566,7 @@ private:
     }
 
     void syncControls() {
-        if (!webView) return;
+        if (!webView || !controlsWebReady.load()) return;
         double duration = doubleProperty("duration", 0.0);
         double position = doubleProperty("time-pos", 0.0);
         double volumeLevel = volume();
@@ -2455,8 +2578,10 @@ private:
         }
         bool paused = isPaused();
         bool loading = isLoading();
-        std::string audioTracks = audioTracksJson();
-        std::string subtitleTracks = subtitleTracksJson();
+        if (!observingControlsTracks.load() || controlsTracksDirty.exchange(false)) {
+            controlsAudioTracks = audioTracksJson();
+            controlsSubtitleTracks = subtitleTracksJson();
+        }
 
         std::ostringstream script;
         script << "window.playerUpdate({duration:" << duration
@@ -2470,11 +2595,13 @@ private:
                << ",seeking:" << (diagnostics.seeking ? "true" : "false")
                << ",paused:" << (paused ? "true" : "false")
                << ",loading:" << (loading ? "true" : "false")
-               << ",audioTracks:" << audioTracks
-               << ",subtitleTracks:" << subtitleTracks
+               << ",audioTracks:" << controlsAudioTracks
+               << ",subtitleTracks:" << controlsSubtitleTracks
                << "})";
         std::wstring wideScript = toWide(script.str());
-        webView->ExecuteScript(wideScript.c_str(), nullptr);
+        if (wideScript != lastControlsUpdate && SUCCEEDED(webView->ExecuteScript(wideScript.c_str(), nullptr))) {
+            lastControlsUpdate = std::move(wideScript);
+        }
     }
 
     void handleWebMessage(const std::wstring &messageJson) {
@@ -2489,17 +2616,21 @@ private:
         }
         if (type == "controlsReady") {
             controlsWebReady.store(true);
+            controlsTracksDirty.store(true);
+            lastControlsUpdate.clear();
             flushPendingControlsJsonIfReady();
             syncControls();
             return;
         }
         if (type == "selectAudioTrack") {
             selectAudioTrackId((int)std::llround(value));
+            controlsTracksDirty.store(true);
             syncControls();
             return;
         }
         if (type == "selectSubtitleTrack") {
             selectSubtitleTrackId((int)std::llround(value));
+            controlsTracksDirty.store(true);
             syncControls();
             return;
         }
@@ -2599,10 +2730,14 @@ private:
                 return;
             }
 
-            mpv_event *event = mpvApi().waitEvent(current, 0.5);
+            mpv_event *event = mpvApi().waitEvent(current, -1);
             if (!event) continue;
             if (event->event_id == MPV_EVENT_SHUTDOWN) {
                 return;
+            }
+            if (event->event_id == MPV_EVENT_PROPERTY_CHANGE || event->event_id == MPV_EVENT_FILE_LOADED ||
+                event->event_id == MPV_EVENT_END_FILE || event->event_id == MPV_EVENT_QUEUE_OVERFLOW) {
+                controlsTracksDirty.store(true);
             }
         }
     }
@@ -3529,6 +3664,12 @@ extern "C" JNIEXPORT jstring JNICALL
 Java_com_nuvio_app_features_player_desktop_NativePlayerBridge_audioTracksJson(JNIEnv *env, jobject, jlong handle) {
     auto player = playerFromHandle(handle);
     return newJavaStringUtf8(env, player ? player->audioTracksJson() : "[]");
+}
+
+extern "C" JNIEXPORT jstring JNICALL
+Java_com_nuvio_app_features_player_desktop_NativePlayerBridge_chaptersJson(JNIEnv *env, jobject, jlong handle) {
+    auto player = playerFromHandle(handle);
+    return newJavaStringUtf8(env, player ? player->chaptersJson() : "[]");
 }
 
 extern "C" JNIEXPORT jdoubleArray JNICALL

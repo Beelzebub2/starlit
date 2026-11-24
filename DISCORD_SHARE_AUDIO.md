@@ -54,8 +54,10 @@ mix for **application-window-only** sharing instead.
   itself is not required. The CABLE **Output** recording endpoint, additional
   paid A/B/C/D cable variants and partial-name matches are not selected.
   The render device must be active, uniquely identified and different from
-  Windows' console, multimedia and communications default outputs.
-  An ambiguous or default VB-CABLE output fails closed instead of switching
+  Windows' console, multimedia and communications default outputs. VB-CABLE
+  additionally requires the expected audio adapter name; a playback device
+  renamed to look like CABLE Input is not sufficient.
+  A mismatched, ambiguous or default VB-CABLE output fails closed instead of switching
   to Steam. Starlit rechecks eligibility during sharing and stops only the
   auxiliary process on device changes. It does **not** install drivers or
   change any Windows audio default.

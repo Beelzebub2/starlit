@@ -1,3 +1,271 @@
+## Starlit 1.33.0
+
+### Desktop player and Windows installer
+
+- **More reliable player controls:** Improve desktop track-panel behavior and keep audio and subtitle selection easier to reach while playing.
+- **Playback speed in options:** Move the desktop playback-speed setting into Playback options for more predictable access.
+- **Adjustable desktop controls:** Resize desktop player buttons and icons from 75% to 160%, with a live preview and automatic shrinking in small windows.
+- **Clearer TV installer progress:** Show download, archive extraction and in-place installation progress, including file counts, while retaining checksum verification and clean invalid-archive handling.
+
+### Compatibility and distribution
+
+- New player settings strings are present across all supported Compose catalogs; native-speaker terminology and representative long-label/RTL layout review remain outstanding.
+- The adjustable control-size setting applies to the desktop player. Phone, Android TV, Tizen and webOS player controls remain unchanged.
+- Stable Windows, signed Android phone and Android TV, and Linux packages remain subject to the required build, signing, smoke-test, checksum and provenance gates. Matching Samsung Tizen, LG webOS and Windows TV Installer packages are separate unaccepted developer previews under `tv-preview-v1.33.0`.
+- No iOS App Store release or macOS installer publication is included. Packaged desktop and physical-device acceptance are not claimed by these notes.
+
+## Starlit 1.32.0
+
+### Audio and subtitle menus
+
+- **One panel for audio and subtitles:** The desktop player, phones, tablets, iOS source builds and Android TV now open a single Audio & subtitles panel from either player button. Wide screens show both lists side by side; phones switch between them with tabs. Choosing an audio track keeps the panel open so subtitles can be changed in the same place.
+- **Readable track names:** Long release titles such as "Japanese / Opus / 2.0 / 48 kHz / 192 kbps / JPBD" now appear as the language followed by a short line of stream facts: codec, channels, bitrate and edition. Common codecs use familiar names, and forced, SDH, commentary, original-language and audio-description tracks are labelled.
+- **Clearer selection:** The playing track is marked with a radio button and a light tint instead of a solid colour bar. On TVs, remote focus uses its own outline so it is never confused with the selected track.
+- **Quick subtitle timing:** A subtitle delay control sits under the subtitle list in 0.1-second steps. The existing style and timing options remain available.
+- **Samsung and LG TV preview:** The developer-preview TV app's audio and subtitle dialogs use the same row style and track names while keeping their existing remote navigation.
+
+### Compatibility and distribution
+
+- New interface strings have entries in every supported Compose and TV catalog; native-speaker review remains outstanding.
+- Track names depend on the metadata each stream provides. The new menus were checked in automated desktop, Compose and TV-web tests and rendered previews; playback on physical phones, Android TV and Samsung/LG TVs has not been independently accepted.
+- Stable packages for Windows, signed Android phone and Android TV, and Linux are published only after required build, signing, smoke-test, checksum and provenance gates. Matching Samsung Tizen, LG webOS and Windows TV Installer packages remain separate unaccepted developer previews under `tv-preview-v1.32.0`.
+- No iOS App Store release or macOS installer publication is included.
+
+## Starlit 1.31.0
+
+### Lists and tracking integrations
+
+- **Unified desktop Lists tab:** Manage supported statuses, ratings and watched-episode progress across connected MyAnimeList, Simkl, Trakt and MDBList accounts. Available controls depend on each service and title; MyAnimeList remains anime-only.
+- **Tracking on title pages:** View and change a title's status using the highest-priority connected service that supports it, or switch between connected services from the tracker bar.
+- **Per-profile service preferences:** Choose service order and visibility in the Lists tab and title pages. Existing MyAnimeList-tab visibility preferences migrate into the new settings.
+- **Safer tracking edits:** Status changes do not erase watch history; removal is a separate confirmed action. Multi-episode changes and Trakt drop actions require confirmation. Trakt rating and dropped-history controls, Simkl ratings and MDBList drop/restore options are now available where supported.
+
+### Playback and Samsung TV reliability
+
+- **Recover skip markers:** Combine chapters from the active media file with available intro, recap and credits timing sources on desktop and compatible TVs, preserving known post-credits scenes.
+- **Restore subtitle choices:** Preserve subtitles supplied with streams or downloads across source changes, retry add-on lookups with title identifiers and allow separately downloaded subtitle files on desktop.
+- **More reliable Tizen torrent startup:** Improve first-attempt stream preparation and cancellation of obsolete requests so stale playback attempts do not block new ones. Actual first-frame and sustained playback on physical Samsung TVs remain unverified.
+- **Desktop Settings hover fix:** Overview tiles, sidebar profile cards and appearance controls no longer darken or flash while hovering.
+
+### Sign-in and profile PIN screens
+
+- **Refreshed sign-in screens:** Update phone, desktop, Android TV, iOS source and Samsung/LG TV layouts with clearer sign-in controls and improved focus and keyboard navigation. QR-based phone sign-in appears only when the connected server supports that existing flow.
+- **Profile PIN entry:** Improve PIN keypad layout, avatar context and remote focus on supported phones, desktop and TVs. New Compose interface strings have entries in all 38 supported catalogs; native-speaker review remains outstanding.
+
+### Compatibility and distribution
+
+- Lists management and tracker controls in this release are desktop features, not new phone or TV Lists pages. The previous MyAnimeList-tab preference is migrated without deliberately resetting profiles or existing watch data. No backend deployment or server-data migration is included.
+- Provider actions depend on supported service capabilities, connected accounts and title matching. Real-account synchronization, add-on subtitle availability and physical-device playback have not been independently accepted across all platforms.
+- Stable packages for Windows, signed Android phone and Android TV, and Linux are published only after required build, signing, smoke-test, checksum and provenance gates. Matching Samsung Tizen, LG webOS and Windows TV Installer packages remain separate unaccepted developer previews under `tv-preview-v1.31.0`.
+- No iOS App Store release or macOS installer publication is included.
+
+## Starlit 1.30.7
+
+### MyAnimeList and playback improvements
+
+- **Completed rewatch counts on desktop:** Synchronize MyAnimeList's completed-rewatch total, show it in anime details and MAL list entries, and provide an explicit Finish rewatch action and count correction. Only confirmed completions increment the count; cancelling a rewatch and resuming near the end do not.
+- **More reliable Samsung TV torrent starts:** Wait for stream service and first-video-byte readiness, recover from stale playback tickets, and cancel obsolete startup attempts on Tizen. Real-TV first-frame acceptance remains outstanding.
+
+### Improvements included since the last published release
+
+- **More accurate desktop playback:** Preserve resume positions until confirmed and improve intro-skip seeking.
+- **Clearer desktop Settings:** Group settings into navigable categories with targeted search and keyboard shortcuts.
+- **Expanded language coverage:** Complete previously missing Compose translation entries and improve Portuguese TV settings labels. Native-speaker and right-to-left layout review remain pending.
+- **Windows release test compatibility:** Update batch-download dialog test expectations to match its existing localized selection controls, without changing download behavior.
+
+### Compatibility and distribution
+
+- Existing accounts, profiles, playback history, downloads, device pairings and local preferences are retained; no migration or backend deployment is required. Completed rewatch syncing currently applies to the desktop MyAnimeList integration; Android and iOS support are not included.
+- Stable Windows, signed Android phone and Android TV, and Linux packages require passing build, signing, installer smoke-test, provenance and checksum gates. Samsung Tizen, LG webOS and the Windows TV Installer are matching-version developer previews under `tv-preview-v1.30.7`, not device-accepted stable packages.
+- No iOS App Store publication is included. A connected MyAnimeList account is still required for live synchronization acceptance.
+
+## Starlit 1.30.6
+
+### Playback and desktop Settings
+
+- **Accurate resume and intro skipping:** Use precise seek targets on desktop players, and preserve saved playback progress until the player confirms the intended resume position.
+- **Better Settings navigation:** Organize desktop Settings into clearer categories with an overview, targeted setting search and Ctrl+K/Cmd+K shortcuts.
+
+### Language coverage
+
+- **More complete localization:** Fill 23,284 historical missing Compose string entries, with full source-key and formatting-argument coverage across 38 Compose and 37 TV catalogs. Restore truncated Czech and Hebrew status messages.
+- **Portuguese TV labels:** Improve PT-PT and PT-BR settings terminology on Samsung TVs. Localization CI also supplies a review report for changed strings.
+
+### Compatibility and release scope
+
+- This update retains existing account, profile, library, add-on, download and device-pairing formats; no client data migration or backend deployment is included.
+- Newly filled historical catalogs contain machine-drafted translations. Native-language terminology review and representative long-label/right-to-left screen validation are still outstanding; automated key parity and green builds are not linguistic acceptance.
+- Stable Windows, signed Android phone and Android TV, and Linux packages are published only after release build, signing, smoke-test, checksum and provenance checks pass. Samsung Tizen, LG webOS and the Windows TV Installer remain separate, matching-version developer previews under `tv-preview-v1.30.6`, pending physical-device and dependency-security acceptance.
+- No iOS App Store publication is included.
+
+## Starlit 1.30.5
+
+### Profile PIN protection and avatar choices
+
+- **Profile security restored:** Existing signed-in profiles now show the PIN lock controls in Edit Profile. PIN creation and removal use explicit account-server success and lockout responses, avoiding false confirmation when the current PIN was rejected.
+- **Avatars available without a network catalog:** Eight selectable bundled avatars appear immediately, with their own colors and icons. Selected avatars remain visible in the profile editor, selection screen and navigation. Custom avatar URLs and supported remote catalogs remain available.
+
+### TV installer discovery
+
+- **Scan only the chosen platform:** Samsung and LG scans now respect the selected television type instead of scanning both brands together.
+- **Show devices as they appear:** Verified results are streamed to the installer while scanning continues. Local discovery is bounded, with an explicit extended scan and manual IP fallback.
+
+### Compatibility and release scope
+
+- Existing profiles, PINs, libraries, account sessions and custom avatar URLs are preserved; no data migration or backend deployment is required for this client update. Security locks remain account-scoped UI gates, not replacements for sign-in.
+- No new application localization keys were introduced. Stable Windows, Android phone and Android TV, and Linux packages remain subject to the release signing, build and checksum gates.
+- Samsung Tizen, LG webOS and the Windows TV installer continue to be distributed only through the matching `tv-preview-v1.30.5` developer prerelease, pending physical-device and dependency-security acceptance. No iOS App Store publication is included.
+
+## Starlit 1.30.4
+
+### Windows installer experience
+
+- **Clearer installation choices:** The Windows setup screen now keeps the destination, Start menu and desktop shortcuts, and optional Starlit TV Installer developer preview together before installation begins.
+- **Guided updates and removal:** Update review shows the installed and target versions and offers a direct way to change installation options. Uninstall clearly distinguishes app files from user data, retaining settings, profiles and cache unless data removal is explicitly selected.
+- **Progress and recovery feedback:** A refreshed Starlit-themed progress view displays installation stages, transferred data and the current file; completion and failure screens retain launch, retry, log and close actions. Keyboard support and reduced-motion preferences remain available.
+
+### Compatibility and release scope
+
+- The redesign uses the existing Windows setup engine and command interface, without changing install locations, account data, add-ons, download logic, TV pairing or automatic update behavior. No migration is required.
+- The optional Samsung/LG TV Installer remains disabled by default and is still a developer preview. It is downloaded with checksum verification when selected; installing Starlit does not automatically install software on a TV.
+- Stable Windows, signed Android phone and Android TV, and Linux packages remain covered by the release build, signing, smoke tests and checksums. Samsung Tizen, LG webOS and the Windows TV installer are published as matching-version developer previews under `tv-preview-v1.30.4`, pending hardware and security acceptance.
+- The Windows setup UI remains English-only; no existing application translation catalogs were modified. This release does not include an iOS App Store update or backend deployment.
+
+## Starlit 1.30.3
+
+### Desktop player controls
+
+- **Back button now auto-hides:** The desktop player's Back button fades out with the other playback controls instead of remaining visible over the video. While hidden, it no longer intercepts pointer input; it returns with the player controls.
+- **Consistent overlay behavior:** Playback error overlays also hide the standalone Back button, and native window resizing avoids unnecessary visibility-transition delays.
+- **Regression coverage:** Automated desktop player checks verify the shipped control markup, visibility-state wiring, pointer-input behavior and normal button styling.
+
+### Compatibility and release scope
+
+- This patch changes desktop player chrome styling only. No migration is required for accounts, libraries, profiles, downloads, add-ons or device pairings.
+- The stable release continues to produce Windows, signed Android phone and Android TV, and Linux packages subject to CI, signing and checksum verification. Samsung Tizen, LG webOS and the Windows TV installer remain separately published as matching-version developer previews under `tv-preview-v1.30.3`.
+- The TV packages remain developer previews, pending device-specific signing, hardware acceptance and dependency-security review. This release does not include an iOS App Store update or backend deployment. No localized app strings were changed.
+
+## Starlit 1.30.2
+
+### Windows TV Installer detection
+
+- **Recognize the installed TV companion:** Fix Settings > Updates incorrectly reporting the optional Starlit TV Installer as missing after it was downloaded by Windows setup. Find the installed executable through the packaged Starlit launcher or bundled runtime when the optional `compose.application.home` property is unavailable.
+- **Keep launch paths local and safe:** Look only in the trusted Starlit installation directory, not unrelated Java installations, Downloads or the system PATH. The already-installed companion remains available to launch directly from Settings, without another download.
+- **Verified regression coverage:** Desktop path-detection tests cover the packaged launcher, bundled-runtime fallback and rejection of unrelated paths.
+
+### Compatibility and release scope
+
+- This patch preserves existing accounts, profiles, media libraries, add-ons, downloads, device pairings and optional TV Installer files. No migration, automatic TV installation or backend deployment is included.
+- The standard tagged release still publishes Windows, signed Android and Android TV, and Linux packages subject to CI checks, signing and checksum verification. Samsung Tizen, LG webOS and Windows TV Installer developer builds continue to publish separately in the matching `tv-preview-v1.30.2` prerelease.
+- Samsung and LG TV packages remain unverified developer previews pending physical-device and dependency-security acceptance. No iOS App Store release is included. No localized app text was changed.
+
+## Starlit 1.30.1
+
+### Samsung and LG TV installer downloads
+
+- **Find the matching TV package:** The Windows TV installer now downloads Samsung Tizen and LG webOS developer packages from the `tv-preview-v1.30.1` prerelease associated with the current stable Starlit version, rather than looking for unsigned TV assets in the stable release.
+- **Keep package verification strict:** Use the preview's published `SHA256SUMS.txt`, require an exact matching version and Starlit application identity, and refuse a missing or mismatched download before installation. Local developer packages remain available as an explicit fallback.
+- **Clarify developer-preview status:** Package selection now identifies TV packages as developer previews rather than accepted stable TV releases.
+
+### Compatibility and release scope
+
+- This compatible patch release changes only TV installer package discovery and supporting UI text. Existing accounts, profiles, libraries, add-ons, device pairings and installation settings require no migration.
+- Windows, signed Android phone and Android TV, and Linux packages remain covered by the normal tagged release, signing and checksum checks. Tizen WGT, webOS IPK and the Windows TV installer Setup/portable executables remain separately published under `tv-preview-v1.30.1`.
+- Samsung and LG TV packages and their Windows installer are **developer previews** that still require TV-specific signing or pairing, physical-device acceptance and dependency-security review. The optional bundled TV companion remains approval-gated.
+- No iOS App Store release or backend deployment is included. The UI wording change is confined to the English-only TV installer; supported app localization catalogs are unchanged.
+
+## Starlit 1.30.0
+
+### Optional TV installer in Windows setup
+
+- **Download the TV companion when selected:** The optional Starlit TV Installer switch is available in regular Windows setup even when the separate developer-preview executable is not embedded. The option remains off by default and downloads the matching-version portable TV installer from GitHub only after explicit selection.
+- **Safer downloads and updates:** Setup retrieves the official TV developer-preview SHA-256 manifest over HTTPS, validates the selected executable before installing it, limits download size and time, and reports progress and required disk space. If the preview is unavailable or verification fails, the existing Starlit installation is preserved and setup offers retry or a return to Options.
+- **Launch from Settings:** The downloaded companion is kept in the Starlit installation and can be launched from Windows Settings > Updates. Setup never automatically runs the downloaded preview, and unselected installs do not require an internet connection.
+
+### Compatibility and release scope
+
+- This is a compatible minor update with no changes to user accounts, media libraries, profiles, installed add-ons or device pairing data. Existing desktop installations retain their TV installer choice on update.
+- Windows, signed Android phone and Android TV, and Linux release assets publish only after tagged build, signing, provenance and checksum validation. The corresponding Samsung Tizen WGT, LG webOS IPK and Windows TV installer Setup/portable executables are published separately under the matching `tv-preview-v1.30.0` developer prerelease.
+- Samsung and LG packages and the Windows TV companion are **unverified developer previews**, not stable TV or automatic-update releases. Physical device signing/pairing, playback and USB validation remain outstanding, and upstream TV-installer dependency advisories still need review.
+- No iOS App Store release or backend deployment is included. The change affects the English-only Windows setup UI; supported app localization catalogs are unchanged.
+
+## Starlit 1.29.0
+
+### Phone and desktop improvements
+
+- **PC controller tab selection:** Open the Remote controls when a PC connection becomes active, even after browsing the TV tab. An intentional TV selection while already connected is preserved.
+- **Mobile startup responsiveness:** Defer download-store initialization and nonessential UI label work so Android navigation does not wait on these operations.
+- **Compact controls:** Keep labels visible in scrollable segmented controls on small screens.
+
+### Samsung TV and Windows installer development previews
+
+- **Older Samsung TV performance:** Bound media range buffering and retry selection, pace initial artwork and navigation work, and reduce resource pressure during HLS playback on constrained Tizen devices. Physical large-video first-frame and memory acceptance are still outstanding.
+- **Optional Windows TV companion:** Windows setup supports a TV installer option behind the existing distribution gate, with a launcher in desktop Settings. The release pipeline now builds matching-version Tizen WGT, LG webOS IPK and Windows TV installer developer previews separately from stable installers.
+- **Diagnostics reliability:** Improve server-side authentication event export checkpoint recovery to prevent repeated event exports after an uncertain checkpoint.
+
+### Compatibility and release scope
+
+- This compatible minor update preserves existing account, library, add-on, device-pairing and playback data formats. No migration is required.
+- Stable Windows, signed Android phone and Android TV, and Linux packages publish only after the tagged CI build, signing, security, checksums and provenance checks pass.
+- Samsung Tizen WGT, LG webOS IPK and the Windows TV installer remain **unverified developer previews** in a separately labeled prerelease, not in stable downloads or automatic update channels. Physical Samsung/LG playback, remote and USB acceptance, per-device signing and upstream TV installer dependency security advisories remain open. The optional bundled Windows TV companion is approval-gated.
+- No iOS App Store release or automatic backend deployment is included. Existing supported UI translations are retained.
+
+## Starlit 1.28.0
+
+### Phone-to-TV controller
+
+- **Refreshed TV remote on mobile:** Improve Samsung and LG device discovery, pairing guidance and connection feedback, with clearer directional, playback and volume controls. The paired-device flow supports private-network connections and existing TV pairing codes.
+
+### Samsung TV and installer development previews
+
+- **TV presentation and navigation:** Refresh the Tizen interface layout, visual styling and focus handling, with particular attention to constrained TV runtimes.
+- **USB torrent cache reliability:** Better recognize mounted USB storage through compatible Tizen filesystem paths and recover gracefully from local cache-service disconnections. USB cache remains optional, with conservative service retries and clearer unavailable states.
+- **Opt-in TV diagnostics:** Add bounded, privacy-conscious TV error and warning events, with consent off by default. Live delivery requires the corresponding server-side telemetry service to be deployed and verified.
+- **TV installer usability:** Embed the Starlit Windows icon, provide a conventional Setup executable alongside the portable development build, and show Samsung certificate browser sign-in and timeout guidance.
+
+### Compatibility and release scope
+
+- This is a compatible minor update. Existing accounts, library data, installed add-ons and device-pairing identities remain unchanged.
+- Windows, signed Android phone and Android TV, and Linux installers are distributed only after the tagged release workflow passes platform builds, signing, security, provenance and checksum checks.
+- Samsung Tizen WGT, LG webOS IPK and the Windows TV installer are separate **developer previews**, not stable release assets. The latest TV changes still need physical playback, remote, USB and signed-package acceptance; the TV installer also has inherited dependency security advisories requiring review. The diagnostics gateway is not automatically deployed by this release.
+- No iOS App Store release is included. The existing supported UI localization catalogs are retained; this release adds no new UI strings beyond previously merged localized changes.
+
+## Starlit 1.27.1
+
+### TV packaging and release reliability
+
+- **Release recovery:** The v1.27.0 tag was superseded before stable installers were published after a webOS packaging-check regression was found. This patch carries forward its merged improvements with the corrected TV verification.
+- **LG webOS developer package:** Correct the release-repository identity verification after the GitHub migration, allowing the existing LG packaging pipeline to validate the canonical Starlit source.
+- **TV installer and phone-to-TV features:** Rebuild the merged v1.27.0 improvements with the current Windows TV installer runtime and unchanged Samsung/LG application identities.
+
+### Compatibility and verification
+
+- This is a compatible patch update. No playback, account, storage, pairing or data-format changes were introduced beyond the v1.27.0 source.
+- Windows, signed Android phone and Android TV, and Linux installers publish only after the tagged platform builds, signature, checksum and provenance checks succeed.
+- Samsung Tizen WGT, LG webOS IPK and the Windows TV installer are separate **developer previews**, not physically accepted stable packages. Samsung per-device signing and Developer Mode, LG developer pairing, and hardware playback/remote/USB checks remain necessary. Upstream webOS CLI dependency security advisories remain outstanding. No iOS App Store release is included.
+
+## Starlit 1.27.0
+
+### Playback, library and settings
+
+- **Mobile and Android TV player controls:** Refresh transport controls, playback options and focus behavior on smaller screens and television layouts.
+- **MyAnimeList rewatching:** Match anime entries automatically from known identifiers and title aliases where possible. Ask for a choice only when a match cannot be resolved confidently, and retry tracking updates against the matched entry.
+- **Android settings search:** Scroll to the specific setting and highlight the target control, including dynamically populated tracking cards, rather than stopping at the settings page.
+- **Bluetooth remote discovery:** Show previously paired Windows PCs even when a new Bluetooth device scan returns no results.
+
+### Phone-to-TV pairing and television improvements
+
+- **Phone-assisted TV setup and playback:** Pair a phone using the TV's QR code or pairing code to manage compatible add-ons and plugins, send selected playback sources to the TV, and access supported remote controls. Pairing is access-controlled and rate-limited.
+- **Samsung and LG installer preview:** Discover compatible TVs on the local network, show guided device-selection and installation progress, preserve known LG device selections, and retain a manual fallback.
+- **Samsung Tizen playback and responsiveness:** Reduce offscreen artwork work on older TVs, improve Home navigation and keyboard focus, select compatible UHD/HLS playback paths, and detect USB storage more reliably. Torrent playback accepts larger bounded metadata and concurrent media ranges; writable USB cache remains opt-in.
+- **Tizen 5 plugin developer preview:** Provide an optional JavaScript/ASM.js execution path for supported legacy plugins, with bounded network work and clearer compatibility warnings. This does not guarantee that arbitrary plugins work on every TV.
+
+### Languages and compatibility
+
+- **Localized interface:** Synchronize translations for recently changed settings, playback and TV management flows across the supported phone and TV language catalogs.
+- Windows, signed Android phone and Android TV, and Linux installers are published only after the tagged release builds, tests, signatures, checksums and provenance checks succeed.
+- Samsung Tizen WGT, LG webOS IPK, and the Windows TV installer remain developer previews, not signed public assets in this release. Real-device testing is still required for large-torrent first-frame playback, TV plugin compatibility, USB cache, remote input and 4K playback. No iOS App Store release is included.
+
 ## Starlit 1.26.0
 
 ### Phone-to-PC controller

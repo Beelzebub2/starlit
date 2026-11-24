@@ -1,5 +1,15 @@
 /* eslint-disable no-unused-vars */
 import * as internals from "./playerScreenContext.js";
+import { describeTrack } from "./trackLabelParts.js";
+
+const trackBadgeText = (badge) =>
+  ({
+    forced: internals.t("sub_forced_lang", {}, "Forced"),
+    sdh: "SDH",
+    commentary: internals.t("player.track.commentary", {}, "Commentary"),
+    original: internals.t("player.track.original", {}, "Original"),
+    description: internals.t("player.track.audioDescription", {}, "Audio description")
+  })[badge] || "";
 export function createPlayerScreenMethods61() {
   const {
     PlayerController,
@@ -328,17 +338,22 @@ export function createPlayerScreenMethods61() {
                     : entry.unsupportedReason === "tizen-dash-audio"
                       ? t("player_audio_tizen_dash_unsupported", {}, "Changing DASH audio tracks is not supported on this TV.")
                       : t("player.audio.unsupportedCodec", {}, "Codec not supported by this device");
-                  const label = disabled ? `${entry.label || ""} · ${t("player.audio.unsupported", {}, "Unsupported")}` : entry.label || "";
-                  const metadataText =
-                    disabled || conversionFailed
-                      ? [entry.metadata || entry.secondary, unsupportedText].filter(Boolean).join(" · ")
-                      : entry.metadata || entry.secondary || "";
+                  // Line 1 is the language with badges; line 2 the facts that help choose a track.
+                  const parts = describeTrack({ label: entry.label, languageName: entry.languageText, kind: "audio" });
+                  const title = parts.title || entry.languageText || entry.label || "";
+                  const label = disabled ? `${title} · ${t("player.audio.unsupported", {}, "Unsupported")}` : title;
+                  const facts = parts.detail || entry.metadata || entry.secondary || "";
+                  const metadataText = disabled || conversionFailed ? [facts, unsupportedText].filter(Boolean).join(" · ") : facts;
+                  const badges = parts.badges
+                    .map((badge) => trackBadgeText(badge))
+                    .filter(Boolean)
+                    .map((badge) => `<span class="player-track-badge">${escapeHtml(badge)}</span>`)
+                    .join("");
                   return `
-                  <div class="player-dialog-item focusable${selected ? " selected" : ""}${focused ? " focused" : ""}${disabled ? " disabled" : ""}${pending ? " pending" : ""}${entry.languageText ? " has-language" : ""}" role="radio" aria-checked="${selected ? "true" : "false"}" data-audio-column="tracks" data-audio-index="${index}" aria-disabled="${disabled ? "true" : "false"}" aria-busy="${pending ? "true" : "false"}">
-                    <div class="player-dialog-item-main">${escapeHtml(label)}</div>
-                    ${entry.languageText ? `<div class="player-dialog-item-language">${escapeHtml(entry.languageText)}</div>` : ""}
-                    <div class="player-dialog-item-sub">${escapeHtml(metadataText)}</div>
-                    <div class="player-dialog-item-check">${pending ? "&#8230;" : selected ? "&#10003;" : ""}</div>
+                  <div class="player-dialog-item player-track-row focusable${selected ? " selected" : ""}${focused ? " focused" : ""}${disabled ? " disabled" : ""}${pending ? " pending" : ""}" role="radio" aria-checked="${selected ? "true" : "false"}" data-audio-column="tracks" data-audio-index="${index}" aria-disabled="${disabled ? "true" : "false"}" aria-busy="${pending ? "true" : "false"}">
+                    <div class="player-dialog-item-main"><span class="player-track-title">${escapeHtml(label)}</span>${badges}</div>
+                    ${metadataText ? `<div class="player-dialog-item-sub">${escapeHtml(metadataText)}</div>` : ""}
+                    <div class="player-dialog-item-check">${pending ? "&#8230;" : ""}</div>
                   </div>
                 `;
                 })

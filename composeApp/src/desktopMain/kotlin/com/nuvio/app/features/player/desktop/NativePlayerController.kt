@@ -34,6 +34,7 @@ import com.nuvio.app.features.player.desktop.hls.isDefaultAllowedHlsTarget
 import com.nuvio.app.features.settings.DiscordShareModeSettings
 import com.nuvio.app.features.settings.SurroundUpmixSettings
 import com.nuvio.app.features.player.toStorageHexString
+import com.nuvio.app.features.player.skip.PlaybackChapter
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
@@ -69,6 +70,7 @@ internal class NativePlayerController(
     private val nativeSetRtxCompareOriginal: (Long, Boolean) -> Boolean = NativePlayerBridge::setRtxCompareOriginal,
     private val nativeSetDiscordShareEnabled: (Long, Boolean, Boolean) -> Boolean = NativePlayerBridge::setDiscordShareEnabled,
     private val nativeSetSurroundUpmixMode: (Long, Int) -> Boolean = NativePlayerBridge::setSurroundUpmixMode,
+    private val playbackErrorMessage: () -> String = { "Unable to play this stream." },
 ) : PlayerEngineController {
     private companion object {
         val json = Json { ignoreUnknownKeys = true }
@@ -107,10 +109,31 @@ internal class NativePlayerController(
     private var surroundUpmixMode: Int = 0
     @Volatile
     private var surroundUpmixStatus: Int = 0
+    @Volatile
+    private var surroundUpmixChannels: Int = 0
+
+    private var automaticSurroundLabel: String = "Auto"
+    private var automaticSurroundActive: String = ""
+    private var automaticSurroundFallback: String = ""
+    private var automaticSurroundChecking: String = ""
+
+    fun setAutomaticSurroundLabels(label: String, active: String, fallback: String, checking: String) {
+        automaticSurroundLabel = label
+        automaticSurroundActive = active
+        automaticSurroundFallback = fallback
+        automaticSurroundChecking = checking
+        lastSentControlsStructureKey = null
+        val refresh = { updateControls(controlsState) }
+        if (SwingUtilities.isEventDispatchThread()) refresh() else SwingUtilities.invokeLater(refresh)
+    }
 
     fun setSurroundUpmixMode(mode: Int) {
         if (DesktopHostOs.current != DesktopHostOs.WINDOWS) return
-        val selectedMode = mode.coerceIn(0, 3)
+        val selectedMode = mode.coerceIn(0, 4)
+        if (selectedMode != surroundUpmixMode) {
+            surroundUpmixStatus = 0
+            surroundUpmixChannels = 0
+        }
         surroundUpmixMode = selectedMode
         val current = synchronized(lifecycleLock) { handle }
         if (current != 0L) {
@@ -176,9 +199,22 @@ internal class NativePlayerController(
     private var onEvent: (String, Double) -> Boolean = { _, _ -> false }
     private var onScrubChange: (Long) -> Boolean = { false }
     private var onScrubFinished: (Long) -> Boolean = { false }
-    private val eventSink = NativePlayerEventSink { type, value ->
-        SwingUtilities.invokeLater {
-            handlePlayerEvent(type, value)
+    private fun eventSinkFor(source: PendingSource): NativePlayerEventSink {
+        var errorReported = false // Accessed only on the Swing event thread.
+        return NativePlayerEventSink { type, value ->
+            SwingUtilities.invokeLater {
+                if (type == "mpvEndFileError") {
+                    // The error can arrive before nativeCreate returns. Bind it to
+                    // the requested source, not a handle that may not exist yet.
+                    if (!errorReported && !releaseRequested && pendingSource === source) {
+                        errorReported = true
+                        log.w { "mpv ended the current source with error " + value.toInt() }
+                        source.onError(playbackErrorMessage())
+                    }
+                } else {
+                    handlePlayerEvent(type, value)
+                }
+            }
         }
     }
 
@@ -378,7 +414,7 @@ internal class NativePlayerController(
                         NativePlayerBridge.controlsPageUrl,
                         pending.decoderPriority,
                         pending.nvidiaRtxSuperResolutionEnabled,
-                        eventSink,
+                        eventSinkFor(pending),
                     ).also { if (it == 0L) error("Native player did not return a handle.") }
                 }.onSuccess { created ->
                     var replacedProxy: HlsHeaderProxy? = null
@@ -543,7 +579,14 @@ internal class NativePlayerController(
         val surroundUpmixEnabled = surroundUpmixMode != 0
         val displayedSurroundMode =
             if (surroundUpmixMode == 0) SurroundUpmixSettings.preferredMode else surroundUpmixMode
-        val surroundUpmixLabel = if (displayedSurroundMode == 2) "7.1" else "5.1"
+        val surroundUpmixAutoMode = displayedSurroundMode == 4
+        val surroundUpmixLabel = when {
+            surroundUpmixAutoMode && surroundUpmixStatus == 2 && surroundUpmixChannels == 8 -> "7.1"
+            surroundUpmixAutoMode && surroundUpmixStatus == 2 && surroundUpmixChannels == 6 -> "5.1"
+            surroundUpmixAutoMode -> automaticSurroundLabel
+            displayedSurroundMode == 2 -> "7.1"
+            else -> "5.1"
+        }
         val surroundUpmixHeadsetMode = displayedSurroundMode == 2 || displayedSurroundMode == 3
         val structureKey = NativeControlsStructureKey(
             state = stateWithVolume.nativeControlsStructureKey(),
@@ -554,7 +597,12 @@ internal class NativePlayerController(
             rtxComparisonFailed = rtxComparisonFailed,
             discordShareEnabled = isDiscordShareEnabled,
             surroundUpmixEnabled = surroundUpmixEnabled,
+            surroundUpmixAutoMode = surroundUpmixAutoMode,
             surroundUpmixLabel = surroundUpmixLabel,
+            automaticSurroundLabel = automaticSurroundLabel,
+            automaticSurroundActive = automaticSurroundActive,
+            automaticSurroundFallback = automaticSurroundFallback,
+            automaticSurroundChecking = automaticSurroundChecking,
             surroundUpmixHeadsetMode = surroundUpmixHeadsetMode,
             surroundUpmixStatus = surroundUpmixStatus,
         )
@@ -577,7 +625,12 @@ internal class NativePlayerController(
                 discordShareEnabled = isDiscordShareEnabled,
                 showSurroundUpmix = showSurroundUpmix,
                 surroundUpmixEnabled = surroundUpmixEnabled,
+                surroundUpmixAutoMode = surroundUpmixAutoMode,
                 surroundUpmixLabel = surroundUpmixLabel,
+                automaticSurroundLabel = automaticSurroundLabel,
+                automaticSurroundActive = automaticSurroundActive,
+                automaticSurroundFallback = automaticSurroundFallback,
+                automaticSurroundChecking = automaticSurroundChecking,
                 surroundUpmixHeadsetMode = surroundUpmixHeadsetMode,
                 surroundUpmixStatus = surroundUpmixStatus,
             ),
@@ -664,6 +717,14 @@ internal class NativePlayerController(
                 val status = value.toInt().coerceIn(-1, 2)
                 if (surroundUpmixStatus != status) {
                     surroundUpmixStatus = status
+                    lastSentControlsStructureKey = null
+                    updateControls(controlsState)
+                }
+            }
+            "surroundUpmixChannels" -> {
+                val channels = value.toInt().takeIf { it == 6 || it == 8 } ?: 0
+                if (surroundUpmixChannels != channels) {
+                    surroundUpmixChannels = channels
                     lastSentControlsStructureKey = null
                     updateControls(controlsState)
                 }
@@ -863,9 +924,14 @@ internal class NativePlayerController(
         NativePlayerBridge.setSpeed(current, next)
     }
 
-    override fun getChapterStarts(): List<Double> = handle.takeIf { it != 0L }?.let { current ->
-        runCatching { NativePlayerBridge.chapterStarts(current).toList() }.getOrDefault(emptyList())
-    }.orEmpty()
+    override fun getPlaybackChapters(): List<PlaybackChapter> {
+        val current = handle.takeIf { it != 0L } ?: return emptyList()
+        return runCatching {
+            json.decodeFromString<List<PlaybackChapter>>(NativePlayerBridge.chaptersJson(current))
+        }.getOrElse {
+            runCatching { NativePlayerBridge.chapterStarts(current).map { PlaybackChapter(it) } }.getOrDefault(emptyList())
+        }
+    }
 
     fun snapshot(): PlayerPlaybackSnapshot {
         val current = handle
@@ -1270,8 +1336,11 @@ internal class NativePlayerController(
     override fun setSubtitleUri(url: String) {
         log.d { "setSubtitleUri ${url.toPlaybackLogKey()} handle=$handle" }
         handle.takeIf { it != 0L }?.let { current ->
+            val subtitlePath = if (url.startsWith("file:", ignoreCase = true)) {
+                runCatching { java.io.File(java.net.URI(url)).path }.getOrDefault(url)
+            } else url
             NativePlayerBridge.clearExternalSubtitles(current)
-            NativePlayerBridge.addSubtitleUrl(current, url)
+            NativePlayerBridge.addSubtitleUrl(current, subtitlePath)
         }
     }
 
@@ -1478,7 +1547,12 @@ private data class NativeControlsStructureKey(
     val rtxComparisonFailed: Boolean,
     val discordShareEnabled: Boolean,
     val surroundUpmixEnabled: Boolean,
+    val surroundUpmixAutoMode: Boolean,
     val surroundUpmixLabel: String,
+    val automaticSurroundLabel: String,
+    val automaticSurroundActive: String,
+    val automaticSurroundFallback: String,
+    val automaticSurroundChecking: String,
     val surroundUpmixHeadsetMode: Boolean,
     val surroundUpmixStatus: Int,
 )
@@ -1492,7 +1566,12 @@ internal fun PlayerControlsState.toControlsJson(
     discordShareEnabled: Boolean = false,
     showSurroundUpmix: Boolean = false,
     surroundUpmixEnabled: Boolean = false,
+    surroundUpmixAutoMode: Boolean = false,
     surroundUpmixLabel: String = "",
+    automaticSurroundLabel: String = "",
+    automaticSurroundActive: String = "",
+    automaticSurroundFallback: String = "",
+    automaticSurroundChecking: String = "",
     surroundUpmixHeadsetMode: Boolean = false,
     surroundUpmixStatus: Int = 0,
 ): String =
@@ -1505,6 +1584,8 @@ internal fun PlayerControlsState.toControlsJson(
         appendJsonField("mediumSeekSeconds", mediumSeekSeconds)
         append(',')
         appendJsonField("longSeekSeconds", longSeekSeconds)
+        append(',')
+        appendJsonField("controlsScalePercent", controlsScalePercent)
         append(',')
         appendJsonField("episodeText", episodeText)
         append(',')
@@ -1623,6 +1704,18 @@ internal fun PlayerControlsState.toControlsJson(
         appendJsonField("audioTracksPanelTitle", audioTracksPanelTitle)
         append(',')
         appendJsonField("noAudioTracksLabel", noAudioTracksLabel)
+        append(',')
+        appendJsonField("tracksPanelTitle", tracksPanelTitle)
+        append(',')
+        appendJsonField("audioSectionLabel", audioSectionLabel)
+        append(',')
+        appendJsonField("trackBadgeSdhLabel", trackBadgeSdhLabel)
+        append(',')
+        appendJsonField("trackBadgeCommentaryLabel", trackBadgeCommentaryLabel)
+        append(',')
+        appendJsonField("trackBadgeOriginalLabel", trackBadgeOriginalLabel)
+        append(',')
+        appendJsonField("trackBadgeDescriptionLabel", trackBadgeDescriptionLabel)
         append(',')
         appendJsonField("subtitlesPanelTitle", subtitlesPanelTitle)
         append(',')
@@ -1837,7 +1930,17 @@ internal fun PlayerControlsState.toControlsJson(
         append(',')
         appendJsonField("surroundUpmixEnabled", surroundUpmixEnabled)
         append(',')
+        appendJsonField("surroundUpmixAutoMode", surroundUpmixAutoMode)
+        append(',')
         appendJsonField("surroundUpmixLabel", surroundUpmixLabel)
+        append(',')
+        appendJsonField("automaticSurroundLabel", automaticSurroundLabel)
+        append(',')
+        appendJsonField("automaticSurroundActive", automaticSurroundActive)
+        append(',')
+        appendJsonField("automaticSurroundFallback", automaticSurroundFallback)
+        append(',')
+        appendJsonField("automaticSurroundChecking", automaticSurroundChecking)
         append(',')
         appendJsonField("surroundUpmixHeadsetMode", surroundUpmixHeadsetMode)
         append(',')

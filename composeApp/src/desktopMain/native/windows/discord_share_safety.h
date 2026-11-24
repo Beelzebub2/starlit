@@ -27,6 +27,7 @@ inline bool isKnownCentreLayout(const std::string &layout, int64_t channels) {
 struct RenderEndpoint {
     std::wstring id;
     std::wstring friendlyName;
+    std::wstring adapterName{};
 };
 
 inline std::wstring lowercaseEndpointName(std::wstring name) {
@@ -40,6 +41,11 @@ inline bool isVbCableInput(const std::wstring &name) {
     const auto lower = lowercaseEndpointName(name);
     return lower == L"cable input (vb-audio virtual cable)" ||
            lower == L"cable input (vb-audio cable)";
+}
+
+inline bool isVbCableAdapter(const std::wstring &name) {
+    const auto lower = lowercaseEndpointName(name);
+    return lower == L"vb-audio virtual cable" || lower == L"vb-audio cable";
 }
 
 inline bool isSteamStreamingSpeakers(const std::wstring &name) {
@@ -72,7 +78,8 @@ inline std::wstring uniqueUnusedDiscordEndpoint(const std::vector<RenderEndpoint
     std::wstring selected;
     for (const auto &endpoint : active) {
         if (!isVbCableInput(endpoint.friendlyName)) continue;
-        if (foundVbCable || endpoint.id.empty() || endpoint.id == console ||
+        if (foundVbCable || !isVbCableAdapter(endpoint.adapterName) ||
+            endpoint.id.empty() || endpoint.id == console ||
             endpoint.id == multimedia || endpoint.id == communications) return {};
         foundVbCable = true;
         selected = endpoint.id;

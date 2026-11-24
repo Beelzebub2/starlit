@@ -58,6 +58,10 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import nuvio.composeapp.generated.resources.Res
+import nuvio.composeapp.generated.resources.downloads_select_all
+import nuvio.composeapp.generated.resources.downloads_clear_selection
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TriStateCheckbox
 import androidx.compose.material3.VerticalDivider
@@ -357,12 +361,12 @@ private fun EpisodePane(
             }
             if (allSelectable.any { it !in selected }) {
                 TextButton(onClick = { onSelectedChange(selected + allSelectable) }, enabled = allSelectable.isNotEmpty()) {
-                    Text("Select all seasons", color = tokens.colors.textPrimary)
+                    Text(stringResource(Res.string.downloads_select_all), color = tokens.colors.textPrimary)
                 }
             }
             if (selected.isNotEmpty()) {
                 TextButton(onClick = { onSelectedChange(emptySet()) }) {
-                    Text("Clear all", color = tokens.colors.textSecondary)
+                    Text(stringResource(Res.string.downloads_clear_selection), color = tokens.colors.textSecondary)
                 }
             }
         }

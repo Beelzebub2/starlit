@@ -312,6 +312,8 @@ export function initializePlayerMountState(params, initialStreamUrl) {
   this.failedPlaybackUrls = new Set();
   this.failedPlaybackStreamIds = new Set();
   this.playbackStallTimer = null;
+  this.tizenFirstFrameStartedAt = 0;
+  this.tizenFirstFrameSourceKey = "";
   this.playbackEngineValidationEngine = "";
   this.playbackEngineValidationStartedAt = 0;
   this.playbackEngineValidationStartSeconds = null;

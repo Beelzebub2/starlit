@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="addons_tracking_consent_title">Spårningstillägg</string>
+    <string name="addons_tracking_consent_body">%1$s kan ta emot uppspelningar (start, paus, stopp och position) och biblioteksändringar (tillagd, borttagen, sedd, osedd). Uppgifterna skickas från Starlit till tilläggsleverantören.</string>
+    <string name="addons_tracking_consent_checkbox">Jag godkänner att dela uppspelnings- och biblioteksaktivitet med tillägget</string>
+</resources>

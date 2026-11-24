@@ -86,6 +86,9 @@ import nuvio.composeapp.generated.resources.airing_action_settings
 import nuvio.composeapp.generated.resources.airing_coming_up
 import nuvio.composeapp.generated.resources.airing_now_title
 import nuvio.composeapp.generated.resources.airing_recent_title
+import nuvio.composeapp.generated.resources.airing_episode_label
+import nuvio.composeapp.generated.resources.airing_coming_up_empty
+import nuvio.composeapp.generated.resources.airing_recent_empty
 import nuvio.composeapp.generated.resources.airing_today
 import nuvio.composeapp.generated.resources.airing_settings_estimated
 import nuvio.composeapp.generated.resources.airing_settings_hide_nsfw
@@ -167,7 +170,7 @@ private fun MobileAiringBrowser(
         {
             open(HomeCatalogSection(
                 key = "native-airing-Now", title = title,
-                subtitle = "Airing Now", addonName = "Built-in",
+                subtitle = title, addonName = "Built-in",
                 target = CatalogTarget.Airing(AiringWindow.Now.name),
                 items = recent.map { it.preview() },
             ))
@@ -211,7 +214,7 @@ private fun MobileAiringBrowser(
                     }
                 }
             } else if (!state.loading) {
-                Text("No recently aired episodes for this period.",
+                Text(stringResource(Res.string.airing_recent_empty, state.settings.historyDays),
                     color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
             }
             HorizontalDivider()
@@ -228,7 +231,7 @@ private fun MobileAiringBrowser(
                     }
                 }
             } else if (!state.loading) {
-                Text("No episodes scheduled for this day.", color = MaterialTheme.colorScheme.onSurfaceVariant,
+                Text(stringResource(Res.string.airing_coming_up_empty), color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodyMedium)
             }
         } else {
@@ -237,8 +240,8 @@ private fun MobileAiringBrowser(
                 onSelect = { selectedDate = it },
             )
             if (displayed.isEmpty() && !state.loading) {
-                Text(if (selectedDate == null) "No recently aired episodes for this period."
-                    else "No episodes scheduled for this day.",
+                Text(if (selectedDate == null) stringResource(Res.string.airing_recent_empty, state.settings.historyDays)
+                    else stringResource(Res.string.airing_coming_up_empty),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodyMedium)
             }
@@ -349,7 +352,7 @@ private fun MobileAiringPoster(
                     .format(Instant.ofEpochSecond(event.airingAt))
             }.getOrDefault("")
         }
-        Text("E${event.episode} · $whenText", style = MaterialTheme.typography.bodySmall,
+        Text(stringResource(Res.string.airing_episode_label, event.episode, whenText), style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
     }
 }

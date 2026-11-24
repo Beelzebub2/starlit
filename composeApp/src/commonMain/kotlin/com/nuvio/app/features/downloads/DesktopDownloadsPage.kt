@@ -309,7 +309,7 @@ private fun SelectionBar(allSelected: Boolean, selectedCount: Int, onSelectAll: 
     val count: @Composable () -> Unit = {
         if (selectedCount > 0) {
             Text(
-                text = "$selectedCount selected",
+                text = stringResource(Res.string.downloads_mobile_selected_count, selectedCount),
                 modifier = Modifier.padding(start = 10.dp, end = 6.dp),
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.SemiBold,

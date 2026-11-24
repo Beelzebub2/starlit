@@ -1,5 +1,17 @@
 package com.nuvio.app.features.auth
 
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import nuvio.composeapp.generated.resources.auth_server_custom
+import nuvio.composeapp.generated.resources.auth_server_official
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -14,7 +26,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.MoreVert
+import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -101,12 +113,44 @@ internal fun ServerConnectionMenu(
     modifier: Modifier = Modifier,
 ) {
     var expanded by remember { mutableStateOf(false) }
+    val menuDescription = stringResource(Res.string.server_menu_content_description)
+    val pillShape = RoundedCornerShape(percent = 50)
     Column(modifier = modifier) {
-        IconButton(onClick = { expanded = true }) {
+        // A labelled pill tells people which account server they are signing in to.
+        Row(
+            modifier = Modifier
+                .height(40.dp)
+                .clip(pillShape)
+                .background(Color(0xD9121219))
+                .border(1.dp, Color(0xFF262630), pillShape)
+                .authFocusRing(pillShape)
+                .clickable(role = Role.Button, onClick = { expanded = true })
+                .semantics { contentDescription = menuDescription }
+                .padding(start = 14.dp, end = 10.dp)
+                .testTag("auth-server-menu"),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(7.dp)
+                    .background(
+                        if (activeServer.isCustom) Color(0xFFFFC56B) else Color(0xFF5EE6A0),
+                        CircleShape,
+                    ),
+            )
+            Text(
+                text = stringResource(
+                    if (activeServer.isCustom) Res.string.auth_server_custom else Res.string.auth_server_official,
+                ),
+                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Medium),
+                color = Color(0xFFA4A9B2),
+            )
             Icon(
-                imageVector = Icons.Rounded.MoreVert,
-                contentDescription = stringResource(Res.string.server_menu_content_description),
-                tint = MaterialTheme.nuvio.colors.textPrimary,
+                imageVector = Icons.Rounded.ExpandMore,
+                contentDescription = null,
+                tint = Color(0xFFA4A9B2),
+                modifier = Modifier.size(18.dp),
             )
         }
         Menu(

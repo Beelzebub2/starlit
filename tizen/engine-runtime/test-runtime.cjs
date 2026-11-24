@@ -27,7 +27,7 @@ function request(path, method, body, extra) {
 function jsonRequest(path, method, body) {return request(path,method,body,{'X-Starlit-Token':token}).then(function(r){r.json=JSON.parse(r.body.toString());return r;});}
 function create(fileIdx) {fileIdx = typeof fileIdx === 'number' ? fileIdx : 1; return jsonRequest('/'+hash+'/create','POST',{torrent:{infoHash:hash},fileIdx:fileIdx,peerSearch:{sources:[]}}).then(function(r){assert.equal(r.status,200,r.body.toString());assert.equal(r.json.files.length,2);assert.equal(r.json.guessedFileIdx,1);ticket=r.json.playbackTicket;assert(/^[a-f0-9]{64}$/.test(ticket));return r;});}
 function media(start,end,file) {file=file===undefined?1:file;var source=file?second:first;return request('/'+hash+'/'+file+'?ticket='+ticket,'GET',null,{Range:'bytes='+start+'-'+end}).then(function(r){assert.equal(r.status,206);assert.equal(r.headers['content-range'],'bytes '+start+'-'+end+'/'+source.length);assert.equal(r.body.length,end-start+1);assert(r.body.equals(source.slice(start,end+1)),'Range bytes differ');return r;});}
-function stats(){return request('/'+hash+'/stats').then(function(unauthorized){assert.equal(unauthorized.status,403,'Process diagnostics must not be public');return jsonRequest('/'+hash+'/stats');}).then(function(r){assert.equal(r.status,200);assert(r.json.cache.bytes<=65536);assert(Number.isInteger(r.json.activeRanges));assert(r.json.activeRanges>=0&&r.json.activeRanges<=4);assert(r.json.memory && r.json.memory.rssBytes>0,'Authenticated memory diagnostics missing');assert(r.json.memory.heapTotalBytes>=r.json.memory.heapUsedBytes);assert(r.json.uptimeSeconds>=0);return r.json;});}
+function stats(){return request('/'+hash+'/stats').then(function(unauthorized){assert.equal(unauthorized.status,403,'Process diagnostics must not be public');return jsonRequest('/'+hash+'/stats');}).then(function(r){assert.equal(r.status,200);assert(r.json.cache.bytes<=65536);assert(Number.isInteger(r.json.activeRanges));assert(r.json.activeRanges>=0&&r.json.activeRanges<=4);assert(Number.isInteger(r.json.activePieceSelections));assert(r.json.activePieceSelections>=0&&r.json.activePieceSelections<=r.json.pieceSelectionLimit);assert(Number.isInteger(r.json.queuedPieceSelections));assert(r.json.queuedPieceSelections>=0);assert(Number.isInteger(r.json.cacheReadRetries) && r.json.cacheReadRetries>=0,'Cache retry diagnostics missing');assert(r.json.pieceLengthBytes===pieceLength,'Piece size diagnostics missing');assert(r.json.memory && r.json.memory.rssBytes>0,'Authenticated memory diagnostics missing');assert(r.json.memory.heapTotalBytes>=r.json.memory.heapUsedBytes);assert(r.json.uptimeSeconds>=0);return r.json;});}
 function verifyRangeUsesPartialCacheReads() {
   var engine = engines[engines.length - 1], originalGet = engine.store.get, seen = [];
   engine.store.get = function (index, options, callback) {
@@ -40,6 +40,25 @@ function verifyRangeUsesPartialCacheReads() {
     assert(seen.some(function (read) { return read.offset > 0 && read.length < 16384; }),
       'HTTP byte-range requests must only retrieve the necessary bytes from the piece cache');
   }, function (error) { engine.store.get = originalGet; throw error; });
+}
+function verifyTransientCacheMissRecovery() {
+  // Force one missing verified cache read to reproduce the eviction/seek
+  // race; one retry must not leave duplicate scheduler selections behind.
+  var engine = engines[engines.length - 1], originalGet = engine.store.get;
+  var before = engine.selection.length, injected = false;
+  engine.store.get = function (index, options, callback) {
+    if (!injected) {
+      injected = true;
+      return process.nextTick(function () { callback(new Error('Synthetic cache eviction')); });
+    }
+    return originalGet.apply(this, arguments);
+  };
+  return media(360000, 360511).then(function () {
+    engine.store.get = originalGet;
+    assert(injected, 'Cache miss was not exercised');
+    assert.equal(engine.selection.length, before, 'A cache retry leaked a torrent scheduler selection');
+    return stats().then(function (snapshot) { assert(snapshot.cacheReadRetries >= 1); });
+  }, function (err) { engine.store.get = originalGet; throw err; });
 }
 function concurrentRanges() {
   // AVPlay can issue a second range while the first is still downloading.
@@ -87,7 +106,7 @@ function concurrentRanges() {
 function boundedConcurrentRanges() {
   // Keep several distinct pieces in flight to verify the playback-request cap
   // without allowing more concurrent piece downloads on constrained TVs.
-  delayedSeedMs = 350;
+  delayedSeedMs = 1000;
   var clients = [];
   function closeAll() {
     delayedSeedMs = 0;
@@ -102,22 +121,26 @@ function boundedConcurrentRanges() {
     req.on('error', function () {});
     clients.push(req);
   }
-  function waitForFour(attempts) {
+  var engine = engines[engines.length - 1];
+  function pendingPeerRequests() {
+    return engine.swarm.wires.some(function (wire) { return wire.requests.length > 0; });
+  }
+  function waitForRanges(count, attempts) {
     return stats().then(function (snapshot) {
-      if (snapshot.activeRanges === 4) return;
-      if (attempts >= 25) throw new Error('Expected four simultaneous media ranges');
+      if (snapshot.activeRanges === count && (count === 0 || pendingPeerRequests())) return;
+      if (attempts >= 25) throw new Error('Expected ' + count + ' simultaneous media ranges');
       return new Promise(function (resolve) { setTimeout(resolve, 10); }).then(function () {
-        return waitForFour(attempts + 1);
+        return waitForRanges(count, attempts + 1);
       });
     });
   }
-  return waitForFour(0).then(function () {
+  return waitForRanges(4, 0).then(function () {
     return request('/' + hash + '/1?ticket=' + ticket, 'GET', null, { Range: 'bytes=2100000-2100100' });
   }).then(function (response) {
     assert.equal(response.status, 429, 'A fifth concurrent range must be rejected');
     closeAll();
-    return new Promise(function (resolve) { setTimeout(resolve, 400); }).then(stats).then(function (snapshot) {
-      assert.equal(snapshot.activeRanges, 0, 'Aborting all media clients must release every range');
+    return waitForRanges(0, 0).then(function () {
+      assert.equal(pendingPeerRequests(), false, 'Abandoned ranges must cancel pending peer requests');
     });
   }, function (error) {
     closeAll();
@@ -147,7 +170,7 @@ new Promise(function(resolve){seed.listen(0,'127.0.0.1',resolve);}).then(functio
   return new Promise(function(resolve){service=runtime.start({port:0,controlToken:token,cacheBytes:65536,dht:false,allowPrivatePeers:true,metadataTimeout:5000,onEngine:function(engine){engines.push(engine);engine.connect('127.0.0.1:'+seedPort);}},resolve);});
 }).then(function(){port=service.server.address().port;return request('/settings');}).then(function(r){assert.equal(r.status,200);return request('/range-probe','GET',null,{Range:'bytes=2-6',Origin:'http://127.0.0.1:'+port});}).then(function(r){assert.equal(r.status,206);assert.equal(r.body.toString(),'arlit');assert.equal(r.headers['content-range'],'bytes 2-6/22');assert.equal(r.headers['access-control-allow-origin'],'http://127.0.0.1:'+port);assert(/\bContent-Range\b/i.test(r.headers['access-control-expose-headers']||''),'Range header must be visible to the TV app');return request('/removeAll','POST');}).then(function(r){assert.equal(r.status,403);return request('/settings','GET',null,{Host:'evil.example:'+port});}).then(function(r){assert.equal(r.status,403);return request('/settings','GET',null,{Origin:'https://evil.example'});}).then(function(r){assert.equal(r.status,403);return request('/settings','GET',null,{Origin:'null'});}).then(function(r){assert.equal(r.status,403);return create();}).then(function(){
   assert.equal(requested.length,0,'Create preloaded media');return boundedConcurrentRanges().then(concurrentRanges).then(function(){return request('/'+hash+'/1');});
-}).then(function(r){assert.equal(r.status,403);return verifyRangeUsesPartialCacheReads();}).then(function(){return create(0).then(function(){return media(0,100,0);}).then(function(){return create(1);});}).then(function(){return media(1000000,1100000);}).then(function(){return stats();}).then(function(s){assert(s.cache.evictions>0,'No cache eviction');var count=requested.length;return media(7,60000).then(function(){assert(requested.length>count,'Evicted pieces not refetched');});}).then(function(){
+}).then(function(r){assert.equal(r.status,403);return verifyRangeUsesPartialCacheReads().then(verifyTransientCacheMissRecovery);}).then(function(){return create(0).then(function(){return media(0,100,0);}).then(function(){return create(1);});}).then(function(){return media(1000000,1100000);}).then(function(){return stats();}).then(function(s){assert(s.cache.evictions>0,'No cache eviction');var count=requested.length;return media(7,60000).then(function(){assert(requested.length>count,'Evicted pieces not refetched');});}).then(function(){
   return request('/'+hash+'/1?ticket='+ticket,'HEAD',null,{Range:'bytes=10-20'});
 }).then(function(r){assert.equal(r.status,206);assert.equal(r.body.length,0);assert.equal(r.headers['content-length'],'11');return request('/'+hash+'/1?ticket='+ticket,'GET',null,{Range:'bytes=-17'});}).then(function(r){assert.equal(r.status,206);assert(r.body.equals(second.slice(second.length-17)));return request('/'+hash+'/1?ticket='+ticket,'GET',null,{Range:'bytes=999999999-'});}).then(function(r){assert.equal(r.status,416);
   return new Promise(function(resolve,reject){var req=http.get({host:'127.0.0.1',port:port,path:'/'+hash+'/1?ticket='+ticket},function(res){res.once('data',function(){req.abort();resolve();});});req.on('error',function(err){if(err.code!=='ECONNRESET')reject(err);});});

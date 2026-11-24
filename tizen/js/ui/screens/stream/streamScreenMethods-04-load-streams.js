@@ -1,5 +1,8 @@
 /* eslint-disable no-unused-vars */
 import * as internals from "./streamScreen.js";
+import { TorrentSettingsStore } from "../../../data/local/torrentSettingsStore.js";
+import { TizenEngineFsService } from "../../../platform/tizen/tizenEngineFsService.js";
+import { TizenUsbTorrentCache } from "../../../platform/tizen/tizenUsbTorrentCache.js";
 export function createStreamScreenMethods04() {
   const {
     streamRepository,
@@ -19,7 +22,9 @@ export function createStreamScreenMethods04() {
     mergeStreamItems,
     ensureAddonLogoImageProxyReady,
     preloadMatchedStreamBadgeImages,
-    sortStreamsByAddonOrder
+    sortStreamsByAddonOrder,
+    Environment,
+    TizenStreamingServerResolver
   } = internals;
   return {
     async loadStreams({ preserveResults = false, forceRefresh = false } = {}) {
@@ -29,6 +34,18 @@ export function createStreamScreenMethods04() {
       // Every load supersedes the previous collector, including runtimes without AbortController.
       this.loadToken = (this.loadToken || 0) + 1;
       const token = this.loadToken;
+      let warmingTizenTorrent = false;
+      const warmTizenTorrent = (streams) => {
+        if (warmingTizenTorrent || !Environment.isTizen() || !TorrentSettingsStore.get().p2pEnabled ||
+            !streams.some((stream) => !/^https?:/i.test(stream.url || stream.externalUrl || "") &&
+              TizenStreamingServerResolver.canResolveStream(stream))) return;
+        warmingTizenTorrent = true;
+        void TizenEngineFsService.ensureStarted({ purpose: "p2p" }).then((service) => {
+          if (service.status === "success" && TizenUsbTorrentCache.isEnabled()) {
+            return TizenUsbTorrentCache.configure(service.baseUrl);
+          }
+        }).catch(() => {});
+      };
       const itemType = normalizeType(this.params?.itemType);
       const videoId = String(this.params?.videoId || this.params?.itemId || "");
       const preserveExistingResults = Boolean(preserveResults && this.streams.length);
@@ -186,6 +203,7 @@ export function createStreamScreenMethods04() {
           this.loading = false;
         }
         this.requestRender({ delayMs: firstVisibleChunk ? 0 : 120 });
+        warmTizenTorrent(chunkStreams);
         this.maybeAutoResumeStream();
         // Keep Android's timeout semantics: instant/bounded auto-play may select
         // from the streams available when its wait window expires. The list
@@ -285,6 +303,7 @@ export function createStreamScreenMethods04() {
           this.focusState = { zone: "filter", index: 1 };
         }
         this.requestRender();
+        warmTizenTorrent(this.streams);
         this.scheduleErrorChipCleanup();
         this.maybeAutoResumeStream({ allLoaded: true });
         this.maybeAutoPlayStream({ allLoaded: true });

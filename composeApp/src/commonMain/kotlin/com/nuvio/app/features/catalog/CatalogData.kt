@@ -6,6 +6,7 @@ import com.nuvio.app.features.addons.fetchAddonResponseText
 import com.nuvio.app.features.home.HomeCatalogParser
 import com.nuvio.app.features.home.MetaPreview
 import com.nuvio.app.features.home.stableKey
+import com.nuvio.app.features.profiles.KidsContentPolicy
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -99,7 +100,7 @@ suspend fun fetchCatalogPage(
         null
     }
     return CatalogPage(
-        items = parsed.items,
+        items = KidsContentPolicy.filter(parsed.items),
         rawItemCount = parsed.rawItemCount,
         nextSkip = nextSkip,
     )

@@ -2,7 +2,7 @@
 // window and drives setup_engine for installs, updates and uninstalls.
 //
 //   setup.exe                         interactive install or update
-//   setup.exe --silent [--dir <path>] [--no-desktop-shortcut] [--no-start-menu-shortcut] [--launch]
+//   setup.exe --silent [--dir <path>] [--no-desktop-shortcut] [--no-start-menu-shortcut] [--with-tv-installer] [--launch]
 //   setup.exe --uninstall [--silent] [--remove-data]
 //   --sandbox [--legacy-upgrade-code <guid>]   separate test identity, see setup_engine.h
 //   --devtools                        enable WebView2 DevTools and reload keys
@@ -35,12 +35,12 @@ constexpr wchar_t kWindowClass[] = L"StarlitSetupWindow";
 constexpr wchar_t kUiOrigin[] = L"https://setup.nuvio/";
 constexpr wchar_t kWebView2Download[] = L"https://go.microsoft.com/fwlink/p/?LinkId=2124703";
 constexpr int kWidth = 760;
-constexpr int kHeight = 480;
+constexpr int kHeight = 530;
 constexpr UINT kFinishedMessage = WM_APP + 1;
 constexpr UINT kDragMessage = WM_APP + 2;
 constexpr UINT_PTR kProgressTimer = 1;
 constexpr UINT_PTR kShowTimer = 2;
-constexpr COLORREF kBackground = RGB(13, 13, 13);
+constexpr COLORREF kBackground = RGB(13, 9, 25);  // ui/setup.css --sky-1
 
 struct Args {
     bool silent = false;
@@ -52,6 +52,7 @@ struct Args {
     bool removeData = false;
     bool noDesktop = false;
     bool noStartMenu = false;
+    bool withTvInstaller = false;
     std::wstring dir;
     std::wstring legacyUpgradeCode;
 };
@@ -141,7 +142,11 @@ void post(const Json& message) {
 const wchar_t* phaseName(Phase phase) {
     switch (phase) {
         case Phase::Closing: return L"closing";
+        case Phase::Downloading: return L"downloading";
+        case Phase::UnpackingTv: return L"unpacking-tv";
         case Phase::Extracting: return L"extracting";
+        case Phase::Installing: return L"installing";
+        case Phase::InstallingTv: return L"installing-tv";
         case Phase::Legacy: return L"legacy";
         case Phase::Finishing: return L"finishing";
         case Phase::Removing: return L"removing";
@@ -167,6 +172,9 @@ void sendInit() {
              .str(L"dir", gDir)
              .flag(L"startMenu", existing.startMenu)
              .flag(L"desktop", existing.desktop)
+             .flag(L"tvInstallerAvailable", gEngine->hasTvInstaller() || gEngine->canDownloadTvInstaller())
+             .flag(L"tvInstallerBundled", gEngine->hasTvInstaller())
+             .flag(L"tvInstaller", existing.tvInstaller)
              .number(L"required", static_cast<double>(gEngine->source().index.totalRaw))
              .number(L"free", static_cast<double>(freeBytesFor(gDir)))
              .flag(L"running", gEngine->isAppRunning(gDir))
@@ -189,8 +197,8 @@ void sendProgress(bool force) {
     Json message(L"progress");
     message.str(L"phase", phaseName(phase))
         .number(L"value", std::round(progress * 10000.0) / 10000.0)
-        .number(L"done", static_cast<double>(gEngine->doneBytes.load()))
-        .number(L"total", static_cast<double>(gEngine->source().index.totalRaw))
+        .number(L"done", phase == Phase::Extracting ? static_cast<double>(gEngine->doneBytes.load()) : 0)
+        .number(L"total", phase == Phase::Extracting ? static_cast<double>(gEngine->source().index.totalRaw) : 0)
         .str(L"file", gEngine->currentFile());
     std::wstring text = message.text();
     if (!force && text == gLastProgress) return;
@@ -202,7 +210,7 @@ void sendProgress(bool force) {
 // ---------------------------------------------------------------------------
 // Actions from the page
 
-void startWork(bool uninstall, bool startMenu, bool desktop, bool removeData) {
+void startWork(bool uninstall, bool startMenu, bool desktop, bool removeData, bool tvInstaller = false) {
     if (gBusy) return;
     if (gWorker.joinable()) gWorker.join();
     gBusy = true;
@@ -211,7 +219,7 @@ void startWork(bool uninstall, bool startMenu, bool desktop, bool removeData) {
     const std::wstring dir = gDir;
     gWorker = std::thread([=]() {
         CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
-        bool ok = uninstall ? gEngine->uninstall(dir, removeData) : gEngine->install({dir, startMenu, desktop});
+        bool ok = uninstall ? gEngine->uninstall(dir, removeData) : gEngine->install({dir, startMenu, desktop, tvInstaller});
         CoUninitialize();
         PostMessageW(gWindow, kFinishedMessage, ok ? 1 : 0, 0);
     });
@@ -286,7 +294,7 @@ void handleMessage(const std::wstring& message) {
         if (!gBusy) browseForFolder();
     } else if (command == L"install") {
         gDir = normalizeDir(arg(1));
-        startWork(false, arg(2) == L"1", arg(3) == L"1", false);
+        startWork(false, arg(2) == L"1", arg(3) == L"1", false, arg(4) == L"1");
     } else if (command == L"uninstall") {
         startWork(true, false, false, arg(1) == L"1");
     } else if (command == L"launch") {
@@ -554,7 +562,7 @@ bool createWindow(HINSTANCE instance) {
     DwmSetWindowAttribute(gWindow, 20 /* DWMWA_USE_IMMERSIVE_DARK_MODE */, &dark, sizeof dark);
     const DWORD corners = 2 /* DWMWCP_ROUND */;
     DwmSetWindowAttribute(gWindow, 33 /* DWMWA_WINDOW_CORNER_PREFERENCE */, &corners, sizeof corners);
-    const COLORREF border = RGB(42, 42, 42);
+    const COLORREF border = RGB(48, 38, 72);
     DwmSetWindowAttribute(gWindow, 34 /* DWMWA_BORDER_COLOR */, &border, sizeof border);
     SetWindowPos(gWindow, nullptr, 0, 0, 0, 0, SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER);
     // Shown once the page has painted, so it never flashes empty; this is the fallback.
@@ -579,6 +587,7 @@ void parseArgs() {
         else if (arg == L"--remove-data") gArgs.removeData = true;
         else if (arg == L"--no-desktop-shortcut") gArgs.noDesktop = true;
         else if (arg == L"--no-start-menu-shortcut") gArgs.noStartMenu = true;
+        else if (arg == L"--with-tv-installer") gArgs.withTvInstaller = true;
         else if (arg == L"--legacy-upgrade-code" && i + 1 < count) gArgs.legacyUpgradeCode = argv[++i];
         else if (arg == L"--dir" && i + 1 < count) gArgs.dir = argv[++i];
         else if (arg.rfind(L"--dir=", 0) == 0) gArgs.dir = arg.substr(6);
@@ -657,7 +666,9 @@ int runSilent(bool uninstall) {
         ok = gEngine->uninstall(gDir, gArgs.removeData);
         gUninstalled = ok;
     } else {
-        InstallRequest request{gDir, existing.startMenu && !gArgs.noStartMenu, existing.desktop && !gArgs.noDesktop};
+        InstallRequest request{gDir, existing.startMenu && !gArgs.noStartMenu,
+                               existing.desktop && !gArgs.noDesktop,
+                               gArgs.withTvInstaller || existing.tvInstaller};
         ok = gEngine->install(request);
         if (ok && gArgs.launch) launchApp(gEngine->identity(), gDir);
     }

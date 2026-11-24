@@ -1,5 +1,26 @@
 /* eslint-disable no-unused-vars */
 import * as internals from "./settingsScreenContext.js";
+// How long the section list waits for focus to settle before rebuilding the
+// section: longer than a remote's key repeat (about 100 ms), so a held key
+// skips the sections it passes, yet short enough that one press feels
+// instant. Constrained TVs build a section more slowly and wait a bit longer.
+export const NAV_SELECTION_SETTLE_MS = Object.freeze({ standard: 120, constrained: 170 });
+export function getNavSelectionSettleMs(constrained = false) {
+  return constrained ? NAV_SELECTION_SETTLE_MS.constrained : NAV_SELECTION_SETTLE_MS.standard;
+}
+export function applyNavGliderBox(glider, box) {
+  const style = glider?.style;
+  if (!style || !box) {
+    return;
+  }
+  const width = Math.round(box.width) + "px";
+  const height = Math.round(box.height) + "px";
+  if (style.width !== width) style.width = width;
+  if (style.height !== height) style.height = height;
+  const transform = "translate3d(" + Math.round(box.x) + "px, " + Math.round(box.y) + "px, 0)";
+  style.webkitTransform = transform;
+  style.transform = transform;
+}
 export function createSettingsScreenMethods13() {
   const {
     Router,
@@ -20,6 +41,55 @@ export function createSettingsScreenMethods13() {
   } = internals;
   return {
     applyFocus() {
+      this.applyFocusState();
+      this.syncNavGlider();
+    },
+    // One highlight slides between the section list items (css/starlit-ui.css
+    // .settings-nav-glider) instead of each item repainting its own fill. It
+    // follows the focused item, or rests on the open section otherwise.
+    syncNavGlider() {
+      const rail = this.container?.querySelector?.("[data-settings-nav]");
+      if (!rail) {
+        return;
+      }
+      const horizon = String(this.model?.theme?.settingsUiStyle || "CLASSIC") === "HORIZON";
+      const navFocused = this.focusZone === "nav" && !this.optionDialog && !this.textDialog;
+      const focusedItem = navFocused ? rail.querySelector(".settings-nav-item.focused") : null;
+      const target = horizon ? null : focusedItem || rail.querySelector(".settings-nav-item.selected");
+      let glider = this.navGlider && this.navGlider.parentNode === rail ? this.navGlider : null;
+      if (!target || target.offsetParent !== rail) {
+        if (glider?.parentNode) {
+          glider.parentNode.removeChild(glider);
+        }
+        this.navGlider = null;
+        rail.classList.remove("has-glider");
+        return;
+      }
+      const box = {
+        x: target.offsetLeft,
+        y: target.offsetTop,
+        width: target.offsetWidth,
+        height: target.offsetHeight
+      };
+      if (!glider) {
+        glider = document.createElement("span");
+        glider.className = "settings-nav-glider";
+        glider.setAttribute("aria-hidden", "true");
+        rail.appendChild(glider);
+        this.navGlider = glider;
+        // Fresh rail markup: start where the previous glider stopped (or on
+        // the target) without a transition, then slide from there.
+        glider.classList.add("is-snapping");
+        applyNavGliderBox(glider, this.navGliderBox || box);
+        void glider.offsetWidth;
+        glider.classList.remove("is-snapping");
+      }
+      glider.classList.toggle("is-resting", !focusedItem);
+      applyNavGliderBox(glider, box);
+      this.navGliderBox = box;
+      rail.classList.add("has-glider");
+    },
+    applyFocusState() {
       this.container.querySelectorAll(".focusable.focused").forEach((node) => node.classList.remove("focused"));
       updateSettingsMarqueeTargets(this.container);
       const selectedNode = this.container.querySelector(".settings-nav-item.selected");
@@ -133,9 +203,67 @@ export function createSettingsScreenMethods13() {
     moveNavFocus(index) {
       this.navIndex = clamp(index, 0, this.visibleSections.length - 1);
       const section = this.visibleSections[this.navIndex];
+      // The highlight moves at once; the section itself is rebuilt only when
+      // focus settles, so holding Up/Down never rebuilds every section passed.
       if (section && this.activeSection !== section.id) {
+        this.applyNavHighlight();
+        this.scheduleNavSelection();
+      } else {
+        this.cancelNavSelection();
+        this.applyFocus();
+      }
+    },
+    // Highlight-only move inside the section list, for the steps before the
+    // section is rebuilt; the full applyFocus runs after the rebuild.
+    applyNavHighlight() {
+      const rail = this.container?.querySelector?.("[data-settings-nav]");
+      const navNode = rail?.querySelector?.(`.settings-nav-item[data-nav-index="${this.navIndex}"]`);
+      if (!navNode || this.focusZone !== "nav" || this.optionDialog || this.textDialog) {
+        this.applyFocus();
+        return;
+      }
+      this.container.querySelectorAll(".focusable.focused").forEach((node) => {
+        if (node !== navNode) node.classList.remove("focused");
+      });
+      navNode.classList.add("focused");
+      focusSettingsNode(navNode);
+      scrollSettingsRailItem(navNode);
+      this.syncNavGlider();
+    },
+    scheduleNavSelection() {
+      this.cancelNavSelection();
+      const token = (this.navSelectionToken || 0) + 1;
+      this.navSelectionToken = token;
+      this.navSelectionTimer = setTimeout(() => {
+        this.navSelectionTimer = null;
+        if (this.navSelectionToken !== token || !this.isMounted) {
+          return;
+        }
         void this.activateNavSelection().catch((error) => console.warn("Settings section could not open", error));
-      } else this.applyFocus();
+      }, getNavSelectionSettleMs(ScreenUtils.isTizenFastPath(this)));
+    },
+    cancelNavSelection() {
+      if (this.navSelectionTimer) {
+        clearTimeout(this.navSelectionTimer);
+        this.navSelectionTimer = null;
+      }
+    },
+    // Any key other than another step through the list opens the pending
+    // section first, so Right, OK and Back act on what the highlight shows.
+    async flushNavSelection() {
+      if (!this.navSelectionTimer) {
+        return false;
+      }
+      this.cancelNavSelection();
+      await this.activateNavSelection();
+      return true;
+    },
+    isNavStepKey(code) {
+      if (this.focusZone !== "nav" || this.optionDialog || this.textDialog) {
+        return false;
+      }
+      const horizon = String(this.model?.theme?.settingsUiStyle || "CLASSIC") === "HORIZON";
+      return horizon ? code === 37 || code === 39 : code === 38 || code === 40;
     },
     async activateNavSelection() {
       const section = this.visibleSections[this.navIndex];

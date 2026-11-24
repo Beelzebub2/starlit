@@ -44,6 +44,8 @@ class RemoteControllerUiTest {
         DesktopRemote.remotePlayback.value = RemotePlayback()
         DesktopRemote.desktops.value = emptyList()
         DesktopRemote.bluetoothDesktops.value = emptyList()
+        DesktopRemote.pairedBluetoothDesktops.value = emptyList()
+        StarlitTvPlayback.openTvTabOnController.value = false
         DesktopRemote.accountChanged(null)
     }
 
@@ -148,6 +150,73 @@ class RemoteControllerUiTest {
         onNodeWithText("Can't find your PC?").performScrollTo().assertIsDisplayed()
         capture("pc-controller-find-bottom")
     }
+
+    @Test
+    fun tvControllerTabIsReachableWithoutAnyPairedPc() =
+        runDesktopComposeUiTest(width = 412, height = 900) {
+            DesktopRemote.connected.value = false
+            DesktopRemote.desktops.value = emptyList()
+            show(desktopLayout = false)
+            onNodeWithTag("pc-controller-screen").assertIsDisplayed()
+            onNodeWithText("TV").assertIsDisplayed().performClick()
+            // Desktop deliberately has no TV transport; the tab must still be
+            // reachable instead of silently redirecting to PC discovery.
+            onNodeWithText("TV remote control is currently available on Android phones.")
+                .assertIsDisplayed()
+            onNodeWithText("Find your Starlit PC").assertDoesNotExist()
+        }
+
+    @Test
+    fun connectingToPcFromTvTabSwitchesToRemoteControls() =
+        runDesktopComposeUiTest(width = 412, height = 900) {
+            show(desktopLayout = false)
+            onNodeWithText("TV").performClick()
+            onNodeWithText("TV remote control is currently available on Android phones.").assertIsDisplayed()
+
+            runOnIdle {
+                DesktopRemote.activeDesktop.value = RemoteDesktop("192.168.1.50", REMOTE_LAN_PORT, "Test PC")
+                DesktopRemote.remotePlayback.value = RemotePlayback(playbackId = "pc-session", title = "Test playback")
+                DesktopRemote.connected.value = true
+            }
+
+            onNode(hasText("Remote") and isSelectable()).assertIsSelected()
+            onNode(hasText("TV") and isSelectable()).assertIsNotSelected()
+            onNodeWithText("Now playing on your PC".uppercase()).assertIsDisplayed()
+            onNodeWithText("TV remote control is currently available on Android phones.").assertDoesNotExist()
+
+            // An explicit TV selection after pairing is still respected.
+            onNodeWithText("TV").performClick()
+            onNode(hasText("TV") and isSelectable()).assertIsSelected()
+            onNodeWithText("TV remote control is currently available on Android phones.").assertIsDisplayed()
+            runOnIdle { DesktopRemote.remotePlayback.value = RemotePlayback(playbackId = "updated-pc-session") }
+            onNode(hasText("TV") and isSelectable()).assertIsSelected()
+        }
+
+    @Test
+    fun explicitTvControllerRequestIsRespectedWhenPcAlreadyConnected() =
+        runDesktopComposeUiTest(width = 412, height = 900) {
+            DesktopRemote.connected.value = true
+            StarlitTvPlayback.openTvTabOnController.value = true
+            show(desktopLayout = false)
+
+            onNode(hasText("TV") and isSelectable()).assertIsSelected()
+            onNodeWithText("TV remote control is currently available on Android phones.").assertIsDisplayed()
+        }
+
+    @Test
+    fun osPairedBluetoothPcsDoNotAppearAsNearbyOrDoubleUp() =
+        runDesktopComposeUiTest(width = 412, height = 900) {
+            val paired = RemoteDesktop("12:34:56:78:9A:BC", 0, "Paired workstation", bluetooth = true)
+            val nearby = RemoteDesktop("AA:BB:CC:DD:EE:FF", 0, "Nearby laptop", bluetooth = true)
+            DesktopRemote.pairedBluetoothDesktops.value = listOf(paired, nearby)
+            DesktopRemote.bluetoothDesktops.value = listOf(nearby)
+            show(desktopLayout = false)
+            onNodeWithText("Nearby Bluetooth PCs".uppercase()).performScrollTo().assertIsDisplayed()
+            onNodeWithText("Paired Bluetooth PCs (may be offline)".uppercase())
+                .performScrollTo().assertIsDisplayed()
+            onNodeWithText("Paired workstation").performScrollTo().assertIsDisplayed()
+            onAllNodesWithText("Nearby laptop").assertCountEquals(1)
+        }
 
     @Test
     fun savedVpnUsesConnectNotWakeAndPrivateEndpointRemainsEditable() = runDesktopComposeUiTest(width = 412, height = 900) {

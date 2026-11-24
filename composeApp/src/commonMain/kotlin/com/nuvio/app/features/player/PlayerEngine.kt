@@ -19,7 +19,7 @@ interface PlayerEngineController {
     fun getRemoteVolume(): Float = 1f
     fun getAudioTracks(): List<AudioTrack>
     fun getSubtitleTracks(): List<SubtitleTrack>
-    fun getChapterStarts(): List<Double> = emptyList()
+    fun getPlaybackChapters(): List<com.nuvio.app.features.player.skip.PlaybackChapter> = emptyList()
     fun applyAudioLanguagePreferences(languages: List<String>)
     fun selectAudioTrack(index: Int)
     fun selectSubtitleTrack(index: Int)
@@ -85,6 +85,7 @@ data class PlayerControlsState(
     val shortSeekSeconds: Int = DEFAULT_SHORT_SEEK_SECONDS,
     val mediumSeekSeconds: Int = DEFAULT_MEDIUM_SEEK_SECONDS,
     val longSeekSeconds: Int = DEFAULT_LONG_SEEK_SECONDS,
+    val controlsScalePercent: Int = DEFAULT_PLAYER_CONTROLS_SCALE_PERCENT,
     val episodeText: String = "",
     val streamTitle: String = "",
     val providerName: String = "",
@@ -146,6 +147,12 @@ data class PlayerControlsState(
     val speedPanelTitle: String = "Playback Speed",
     val audioTracksPanelTitle: String = "Audio Tracks",
     val noAudioTracksLabel: String = "No audio tracks available",
+    val tracksPanelTitle: String = "Audio & subtitles",
+    val audioSectionLabel: String = "Audio",
+    val trackBadgeSdhLabel: String = "SDH",
+    val trackBadgeCommentaryLabel: String = "Commentary",
+    val trackBadgeOriginalLabel: String = "Original",
+    val trackBadgeDescriptionLabel: String = "Audio description",
     val subtitlesPanelTitle: String = "Subtitles",
     val subtitleLanguagesLabel: String = "Languages",
     val subtitleBuiltInTabLabel: String = "Built-in",

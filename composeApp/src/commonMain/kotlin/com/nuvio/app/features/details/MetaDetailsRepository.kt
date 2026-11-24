@@ -18,6 +18,7 @@ import com.nuvio.app.features.simkl.alternateContentIdsFor
 import com.nuvio.app.features.tmdb.TmdbMetadataService
 import com.nuvio.app.features.tmdb.TmdbService
 import com.nuvio.app.features.tmdb.TmdbSettingsRepository
+import com.nuvio.app.features.profiles.KidsContentPolicy
 import com.nuvio.app.features.trakt.TraktAuthRepository
 import com.nuvio.app.features.trakt.TraktConnectionMode
 import com.nuvio.app.features.trakt.TraktRelatedRepository
@@ -646,19 +647,25 @@ object MetaDetailsRepository {
             it.patternForScreen(com.nuvio.app.core.poster.CustomPosterScreen.DETAILS)
         }
         val base = withCustomPosterUrls(posterPattern)
-        if (!HomeCatalogSettingsRepository.snapshot().hideUnreleasedContent) return base
+        if (!HomeCatalogSettingsRepository.snapshot().hideUnreleasedContent) {
+            return base.copy(
+                moreLikeThis = KidsContentPolicy.filter(base.moreLikeThis),
+                collectionItems = KidsContentPolicy.filter(base.collectionItems),
+            )
+        }
         val todayIsoDate = CurrentDateProvider.todayIsoDate()
-        val releasedMoreLikeThis = base.moreLikeThis.filterReleasedItems(todayIsoDate)
+        val releasedMoreLikeThis = KidsContentPolicy.filter(base.moreLikeThis.filterReleasedItems(todayIsoDate))
         return base.copy(
             moreLikeThis = releasedMoreLikeThis,
             moreLikeThisSource = base.moreLikeThisSource.takeIf { releasedMoreLikeThis.isNotEmpty() },
-            collectionItems = base.collectionItems.filterReleasedItems(todayIsoDate),
+            collectionItems = KidsContentPolicy.filter(base.collectionItems.filterReleasedItems(todayIsoDate)),
         )
     }
 
    
     fun findEmbeddedStreams(videoId: String): List<com.nuvio.app.features.streams.StreamItem> {
         val meta = _uiState.value.meta ?: return emptyList()
+        if (KidsContentPolicy.isEnabled() && KidsContentPolicy.isRestricted(meta)) return emptyList()
         val videosWithStreams = meta.videos.filter { it.streams.isNotEmpty() }
         if (videosWithStreams.isEmpty()) return emptyList()
 

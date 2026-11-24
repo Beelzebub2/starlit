@@ -118,6 +118,9 @@ export function createPlayerScreenMethods30() {
         return false;
       }
       this.hasPresentedPlaybackFrame = true;
+      // Native startup reached a running timeline; discard the stall budget.
+      this.tizenFirstFrameStartedAt = 0;
+      this.tizenFirstFrameSourceKey = "";
       const currentStream = this.getCurrentStreamCandidate?.() || null;
       // Only a confirmed first frame counts as a plugin provider play, with the
       // group+identity dedupe Android uses.
@@ -216,6 +219,9 @@ export function createPlayerScreenMethods30() {
           this.loadingCompletionTimer = null;
           if (!this.loadingVisible || this.isExternalFrameMode()) {
             return;
+          }
+          if (this.isInitialTizenAvPlayRestore?.()) {
+            this.attemptPendingPlaybackRestore();
           }
           if (this.isStartupGateReleaseReady()) {
             this.releaseStartupAudioGate();

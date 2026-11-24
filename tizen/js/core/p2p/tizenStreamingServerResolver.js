@@ -336,7 +336,9 @@ async function createTorrent(
       const body = await response.json();
       detail = String(body?.error || "").slice(0, 160);
     } catch (_) {}
-    throw new Error(`Tizen streaming server create failed with HTTP ${response.status}${detail ? `: ${detail}` : ""}`);
+    const error = new Error(`Tizen streaming server create failed with HTTP ${response.status}${detail ? `: ${detail}` : ""}`);
+    error.status = response.status;
+    throw error;
   }
   return response.json();
 }

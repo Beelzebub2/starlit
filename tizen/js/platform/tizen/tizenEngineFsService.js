@@ -5,8 +5,13 @@ import { verifyTizenRangeProbe } from "./tizenRangeProbe.js";
 import { getWrtServiceClass, startWithWrtServiceClass } from "./tizenWrtService.js";
 const LOCAL_BASE_URLS = ["http://127.0.0.1:2710", "http://localhost:2710"];
 const START_TIMEOUT_MS = 12000;
+const P2P_COLD_START_TIMEOUT_MS = 25000;
+export function tizenServiceStartupWaitMs(purpose) {
+  return purpose === "p2p" ? P2P_COLD_START_TIMEOUT_MS : START_TIMEOUT_MS;
+}
 const PROBE_TIMEOUT_MS = 2500;
 const SERVICE_START_CALL_TIMEOUT_MS = 4000;
+const SERVICE_START_FALLBACK_MS = 2500;
 const TIZEN_DEFAULT_OPERATION = "http://tizen.org/appcontrol/operation/default";
 // Subtitle extraction is optional and falls back to native AVPlay when the
 // service cannot start, so it may attempt the legacy path on TVs that report
@@ -144,7 +149,7 @@ async function startViaTizenApplication(serviceId) {
   diagnostic("application launch call", { serviceId });
   return invokeCallbackApi(application.launch.bind(application), [serviceId]);
 }
-async function requestServiceStart(serviceId) {
+async function requestServiceStart(serviceId, timeoutMs) {
   const errors = [];
   // On newer sets application.launch can acknowledge a service id without
   // starting it. Prefer the Service-class bridge when that API is available.
@@ -176,7 +181,9 @@ async function requestServiceStart(serviceId) {
     webServiceSupported: TizenCapabilities.get().webServiceSupported,
     methods: attempts.map((attempt) => attempt.method)
   });
-  for (const attempt of attempts) {
+  let deadline = 0;
+  let acknowledged = null;
+  for (const [index, attempt] of attempts.entries()) {
     diagnostic("launcher attempt begin", { serviceId, method: attempt.method });
     try {
       const startResult = await withTimeout(
@@ -189,7 +196,14 @@ async function requestServiceStart(serviceId) {
         method: attempt.method,
         resultType: startResult === undefined ? "undefined" : typeof startResult
       });
-      return { method: attempt.method };
+      if (!deadline) deadline = Date.now() + timeoutMs;
+      acknowledged = attempt;
+      const remaining = deadline - Date.now();
+      if (remaining <= 0) break;
+      const waitMs = index === attempts.length - 1
+        ? remaining : Math.min(SERVICE_START_FALLBACK_MS, remaining);
+      const reachable = await waitForLocalBaseUrl(waitMs);
+      return { ...reachable, startMethod: attempt.method };
     } catch (error) {
       diagnostic("launcher attempt failed", {
         serviceId,
@@ -199,29 +213,34 @@ async function requestServiceStart(serviceId) {
       errors.push(`${attempt.method}: ${error?.message || error}`);
     }
   }
+  // An earlier launcher may still finish booting even if the fallback was rejected.
+  if (acknowledged && Date.now() < deadline) {
+    const reachable = await waitForLocalBaseUrl(deadline - Date.now());
+    return { ...reachable, startMethod: acknowledged.method };
+  }
   diagnostic("launcher sequence failed", { serviceId, errors });
   throw new Error(errors.join("; "));
 }
 async function probeBaseUrl(baseUrl, timeoutMs = PROBE_TIMEOUT_MS) {
-  const response = await withTimeout(
-    fetch(`${baseUrl}/settings`, {
-      method: "GET",
-      cache: "no-cache"
+  const settings = withTimeout(
+    fetch(`${baseUrl}/settings`, { method: "GET", cache: "no-cache" }).then((response) => {
+      if (!response.ok) {
+        throw new Error(`Tizen local EngineFS settings failed with HTTP ${response.status}`);
+      }
+      return response.json().catch(() => null);
     }),
     timeoutMs,
     `Tizen local EngineFS settings probe timed out for ${baseUrl}`
   );
-  if (!response.ok) {
-    throw new Error(`Tizen local EngineFS settings failed with HTTP ${response.status}`);
-  }
-  let json = null;
-  try {
-    json = await response.clone().json();
-  } catch (_) {
-    json = null;
-  }
-  const probe = await fetch(`${baseUrl}/range-probe`, { headers: { Range: "bytes=1-3" }, cache: "no-store" });
-  await verifyTizenRangeProbe(probe);
+  // A cold or wedged local service can answer /settings but never complete
+  // the range body. Bound both the response and its bytes before retrying.
+  const range = withTimeout(
+    fetch(`${baseUrl}/range-probe`, { headers: { Range: "bytes=1-3" }, cache: "no-store" })
+      .then(verifyTizenRangeProbe),
+    timeoutMs,
+    "Tizen local EngineFS byte-range probe timed out"
+  );
+  const [json] = await Promise.all([settings, range]);
   return { baseUrl, settings: json };
 }
 async function findReachableLocalBaseUrl(timeoutMs = PROBE_TIMEOUT_MS) {
@@ -251,7 +270,7 @@ async function waitForLocalBaseUrl(timeoutMs = START_TIMEOUT_MS) {
   diagnostic("settings wait begin", { timeoutMs });
   while (Date.now() - startedAt < timeoutMs) {
     try {
-      const reachable = await findReachableLocalBaseUrl(1200);
+      const reachable = await findReachableLocalBaseUrl(Math.min(1200, Math.max(1, timeoutMs - (Date.now() - startedAt))));
       diagnostic("settings wait success", {
         elapsedMs: Date.now() - startedAt,
         baseUrl: reachable.baseUrl
@@ -259,7 +278,8 @@ async function waitForLocalBaseUrl(timeoutMs = START_TIMEOUT_MS) {
       return reachable;
     } catch (error) {
       lastError = error;
-      await new Promise((resolve) => setTimeout(resolve, 450));
+      const remaining = timeoutMs - (Date.now() - startedAt);
+      if (remaining > 0) await new Promise((resolve) => setTimeout(resolve, Math.min(remaining, 250)));
     }
   }
   diagnostic("settings wait failed", {
@@ -327,48 +347,16 @@ export const TizenEngineFsService = {
         detail: "Tizen P2P streaming is not supported on this TV"
       };
     }
-    try {
-      const existing = await findReachableLocalBaseUrl();
-      diagnostic("ensure found existing service", {
-        purpose,
-        baseUrl: existing.baseUrl,
-        started: false
-      });
-      await connectLocalControl(getServiceId(), "2710");
-      return { status: "success", ...existing, started: false };
-    } catch (error) {
-      // Continue with explicit service startup.
-      diagnostic("ensure existing service unavailable", {
-        purpose,
-        error: diagnosticError(error)
-      });
-    }
     if (!startPromise) {
       startPromise = (async () => {
         const serviceId = getServiceId();
         if (!serviceId) {
           throw new Error("Tizen EngineFS service id is unavailable");
         }
-        diagnostic("service start requested", { serviceId });
-        const startResult = await requestServiceStart(serviceId);
-        diagnostic("explicit startup acknowledged", {
-          purpose,
-          serviceId,
-          method: startResult.method
-        });
-        const reachable = await waitForLocalBaseUrl();
-        await connectLocalControl(serviceId,"2710");
-        diagnostic("explicit startup health success", {
-          purpose,
-          serviceId,
-          method: startResult.method,
-          baseUrl: reachable.baseUrl
-        });
-        return {
-          ...reachable,
-          serviceId,
-          startMethod: startResult.method
-        };
+        const existing = await findReachableLocalBaseUrl().catch(() => null);
+        const reachable = existing || await requestServiceStart(serviceId, tizenServiceStartupWaitMs(purpose));
+        await connectLocalControl(serviceId, "2710");
+        return { ...reachable, serviceId, started: !existing };
       })().finally(() => {
         startPromise = null;
       });
@@ -380,9 +368,9 @@ export const TizenEngineFsService = {
         serviceId: result.serviceId,
         method: result.startMethod,
         baseUrl: result.baseUrl,
-        started: true
+        started: result.started
       });
-      return { status: "success", ...result, started: true };
+      return { status: "success", ...result };
     } catch (error) {
       diagnostic("ensure failed", { purpose, error: diagnosticError(error) });
       return {

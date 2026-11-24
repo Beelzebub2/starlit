@@ -9,6 +9,7 @@ import com.nuvio.app.features.details.MetaDetails
 import com.nuvio.app.features.details.MetaPerson
 import com.nuvio.app.features.details.MetaTrailer
 import com.nuvio.app.features.details.MetaVideo
+import com.nuvio.app.features.details.mergeMetadataTrailers
 import com.nuvio.app.features.details.MoreLikeThisSource
 import com.nuvio.app.features.details.PersonDetail
 import com.nuvio.app.features.home.MetaPreview
@@ -676,6 +677,8 @@ object TmdbMetadataService {
             logo = null,
             description = result.overview?.takeIf { it.isNotBlank() },
             releaseInfo = releaseInfo,
+            genreIds = result.genreIds,
+            isAdult = result.adult == true,
         )
     }
 
@@ -928,7 +931,7 @@ object TmdbMetadataService {
         }
 
         if (enrichment != null && settings.useTrailers && enrichment.trailers.isNotEmpty()) {
-            updated = updated.copy(trailers = enrichment.trailers)
+            updated = updated.copy(trailers = mergeMetadataTrailers(enrichment.trailers, updated.trailers))
         }
 
         return updated
@@ -1903,6 +1906,7 @@ private fun TmdbVideoResult.toMetaTrailer(
         seasonNumber = seasonNumber,
         displayName = displayName,
         iso6391 = iso6391?.trim()?.takeIf { it.isNotBlank() },
+        fromTmdb = true,
     )
 }
 
@@ -2257,4 +2261,5 @@ internal data class TmdbDiscoverResult(
     @SerialName("vote_count") val voteCount: Int? = null,
     @SerialName("media_type") val mediaType: String? = null,
     val adult: Boolean? = null,
+    @SerialName("genre_ids") val genreIds: List<Int> = emptyList(),
 )

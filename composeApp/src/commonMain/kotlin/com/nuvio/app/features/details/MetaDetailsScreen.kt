@@ -82,6 +82,8 @@ import com.nuvio.app.core.ui.NuvioAsyncImage as AsyncImage
 import co.touchlab.kermit.Logger
 import com.nuvio.app.core.build.AppFeaturePolicy
 import com.nuvio.app.features.remote.DesktopRemote
+import com.nuvio.app.features.remote.StarlitRemoteHandoff
+import com.nuvio.app.features.remote.StarlitTvPlayback
 import com.nuvio.app.features.remote.RemotePlaybackHandoff
 import com.nuvio.app.features.remote.isAllowed
 import com.nuvio.app.core.build.TrailerPlaybackMode
@@ -147,6 +149,7 @@ import com.nuvio.app.features.shuffle.ShuffleSurface
 import com.nuvio.app.features.shuffle.rememberShuffleSave
 import com.nuvio.app.features.shuffle.shufflePrimaryAction
 import com.nuvio.app.features.profiles.ProfileRepository
+import com.nuvio.app.features.profiles.KidsContentPolicy
 import com.nuvio.app.features.streams.rememberPlaybackAvailability
 import com.nuvio.app.features.streams.StreamAutoPlayPolicy
 import com.nuvio.app.features.tmdb.TmdbSettingsRepository
@@ -225,6 +228,7 @@ fun MetaDetailsScreen(
 ) {
     val playbackAvailability = rememberPlaybackAvailability()
     val pcRemoteConnected by DesktopRemote.connected.collectAsStateWithLifecycle()
+    val tvRemoteConnected by StarlitTvPlayback.connected.collectAsStateWithLifecycle()
     val pcHandoffSent = stringResource(Res.string.remote_handoff_sent)
     val pcHandoffUnavailable = stringResource(Res.string.remote_handoff_unavailable)
     val shuffleProfile by remember {
@@ -240,8 +244,12 @@ fun MetaDetailsScreen(
         shuffleWasInactive = !active
     }
     val uiState by MetaDetailsRepository.uiState.collectAsStateWithLifecycle()
-    val displayedMeta = uiState.meta?.takeIf { it.type == type && it.id == id }
+    val activeProfileState by ProfileRepository.state.collectAsStateWithLifecycle()
+    val candidateMeta = uiState.meta?.takeIf { it.type == type && it.id == id }
         ?: MetaDetailsRepository.peek(type, id)
+    val restrictedMeta = activeProfileState.activeProfile?.kidsContentFilterEnabled == true &&
+        candidateMeta?.let(KidsContentPolicy::isRestricted) == true
+    val displayedMeta = candidateMeta.takeUnless { restrictedMeta }
     val metaScreenSettingsUiState by remember {
         MetaScreenSettingsRepository.ensureLoaded()
         MetaScreenSettingsRepository.uiState
@@ -433,6 +441,7 @@ fun MetaDetailsScreen(
         episodeImdbRatings = ImdbEpisodeRatingsRepository.getEpisodeRatings(
             imdbId = imdbId,
             tmdbId = tmdbId,
+            addonEpisodes = metaForRatings.videos.map { AddonEpisodeAirDate(it.season, it.episode, it.released) },
         )
     }
 
@@ -500,6 +509,15 @@ fun MetaDetailsScreen(
                 .background(MaterialTheme.colorScheme.background),
         ) {
             when {
+            restrictedMeta -> {
+                Text(
+                    text = stringResource(Res.string.profile_kids_content_blocked),
+                    modifier = Modifier.align(Alignment.Center).padding(32.dp),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                )
+            }
             displayedMeta == null && uiState.isLoading -> {
                 NuvioLoadingIndicator(
                     modifier = Modifier.align(Alignment.Center),
@@ -783,7 +801,7 @@ fun MetaDetailsScreen(
                         return@LaunchedEffect
                     }
                     val resolvedSource = runCatching {
-                        TrailerPlaybackResolver.resolveFromYouTubeUrl(heroTrailerCandidate.youtubePlaybackUrl())
+                        heroTrailerCandidate.youtubePlaybackUrl()?.let { TrailerPlaybackResolver.resolveFromYouTubeUrl(it) }
                     }.getOrNull()
                     if (resolvedSource == null) {
                         heroTrailerFinished = true
@@ -799,10 +817,10 @@ fun MetaDetailsScreen(
                 }
                 val resolveTrailer: (MetaTrailer) -> Unit = remember(meta.id, trailerPlaybackMode, uriHandler) {
                     { trailer ->
-                        val youtubeUrl = trailer.youtubePlaybackUrl()
-                        when (trailerPlaybackMode) {
-                            TrailerPlaybackMode.EXTERNAL -> runCatching { uriHandler.openUri(youtubeUrl) }
-                            TrailerPlaybackMode.IN_APP -> {
+                        when (val target = trailer.trailerClickTarget(trailerPlaybackMode)) {
+                            null -> Unit
+                            is TrailerClickTarget.External -> runCatching { uriHandler.openUri(target.url) }
+                            is TrailerClickTarget.InAppYouTube -> {
                                 selectedTrailer = trailer
                                 trailerPlaybackSource = null
                                 trailerErrorMessage = null
@@ -811,7 +829,7 @@ fun MetaDetailsScreen(
                                 val currentRequestToken = trailerRequestToken
                                 trailerScope.launch {
                                     val resolvedSource = runCatching {
-                                        TrailerPlaybackResolver.resolveFromYouTubeUrl(youtubeUrl)
+                                        TrailerPlaybackResolver.resolveFromYouTubeUrl(target.url)
                                     }.getOrNull()
                                     if (currentRequestToken != trailerRequestToken) {
                                         return@launch
@@ -1553,7 +1571,8 @@ fun MetaDetailsScreen(
                                     }
                                 }
 
-                                if (!com.nuvio.app.isDesktop && !com.nuvio.app.isIos && pcRemoteConnected &&
+                                if (!com.nuvio.app.isDesktop && !com.nuvio.app.isIos &&
+                                    (pcRemoteConnected || tvRemoteConnected) &&
                                     meta.type in setOf("movie", "series")) {
                                     item(key = "detail-play-on-pc") {
                                         val primaryHandoff = RemotePlaybackHandoff(
@@ -1577,11 +1596,11 @@ fun MetaDetailsScreen(
                                                     vertical = 6.dp,
                                                 ),
                                                 onClick = {
-                                                    val sent = DesktopRemote.requestHandoff(primaryHandoff)
-                                                    if (!sent) NuvioToastController.show(DesktopRemote.status.value)
+                                                    val sent = StarlitRemoteHandoff.request(primaryHandoff)
+                                                    if (!sent) NuvioToastController.show(pcHandoffUnavailable)
                                                 },
                                             ) {
-                                                Text(stringResource(Res.string.remote_handoff_send))
+                                                Text(stringResource(Res.string.remote_handoff_to_device))
                                             }
                                         }
                                     }
@@ -2251,11 +2270,12 @@ fun MetaDetailsScreen(
                             ),
                         )
                     }
-                    if (!com.nuvio.app.isDesktop && !com.nuvio.app.isIos && pcRemoteConnected &&
+                    if (!com.nuvio.app.isDesktop && !com.nuvio.app.isIos &&
+                        (pcRemoteConnected || tvRemoteConnected) &&
                         meta.type == "series") {
                         add(PosterZoomOverlayAction(
                             icon = Icons.Default.PlayArrow,
-                            label = stringResource(Res.string.remote_handoff_send),
+                            label = stringResource(Res.string.remote_handoff_to_device),
                             onSelected = {
                                 val streamId = selectedEpisode.id.ifBlank {
                                     buildPlaybackVideoId(
@@ -2276,8 +2296,8 @@ fun MetaDetailsScreen(
                                     resumePositionMs = progressByVideoId[streamId]
                                         ?.lastPositionMs?.coerceIn(0L, 43_200_000L) ?: 0L,
                                 )
-                                val sent = DesktopRemote.requestHandoff(request)
-                                if (!sent) NuvioToastController.show(DesktopRemote.status.value)
+                                val sent = StarlitRemoteHandoff.request(request)
+                                if (!sent) NuvioToastController.show(pcHandoffUnavailable)
                             },
                         ))
                     }
@@ -2371,6 +2391,8 @@ private fun MetaDetails.toMetaPreview(): MetaPreview =
         releaseInfo = releaseInfo,
         imdbRating = imdbRating,
         genres = genres,
+        ageRating = ageRating,
+        isAdult = isAdult,
     )
 
 private fun LazyListScope.configuredMetaSectionItems(
@@ -2867,6 +2889,7 @@ private fun ConfiguredMetaSections(
                 if (hasTrailersSection) {
                     DetailTrailersSection(
                         trailers = meta.trailers,
+                        fallbackArtwork = meta.background ?: meta.poster,
                         onTrailerClick = onTrailerClick,
                         showHeader = showHeader,
                         horizontalScrollPadding = horizontalScrollPadding,

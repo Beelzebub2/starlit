@@ -200,4 +200,19 @@
         <item quantity="one">%1$d title</item>
         <item quantity="other">%1$d titles</item>
     </plurals>
+    <string name="settings_desktop_overview">Overview</string>
+    <string name="settings_desktop_overview_summary">Your account, connected services and the settings you change most.</string>
+    <string name="settings_desktop_quick_settings">Quick settings</string>
+    <string name="settings_desktop_manage_account">Manage account</string>
+    <string name="settings_desktop_posters_previews">Posters &amp; previews</string>
+    <string name="settings_desktop_posters_previews_summary">How poster cards look, and what happens when you rest the pointer on one.</string>
+    <string name="settings_desktop_metadata_ratings">Metadata &amp; ratings</string>
+    <string name="settings_desktop_metadata_ratings_summary">Artwork, cast and translated details from TMDB, and ratings through MDBList.</string>
+    <string name="settings_playback_tab_player">Player</string>
+    <string name="settings_playback_tab_subtitles_audio">Subtitles &amp; audio</string>
+    <string name="settings_playback_tab_streams">Streams &amp; auto-play</string>
+    <string name="settings_playback_tab_next_episode">Next episode &amp; skips</string>
+    <string name="settings_playback_tab_video">Video</string>
+    <string name="settings_playback_tab_video_p2p">Video &amp; P2P</string>
+    <string name="settings_desktop_subtitle_language">Subtitle language</string>
 </resources>

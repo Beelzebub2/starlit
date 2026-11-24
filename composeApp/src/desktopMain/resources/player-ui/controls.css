@@ -149,6 +149,9 @@ button:disabled {
   position: relative;
   width: 100%;
   height: 100%;
+  /* clip, not hidden: a clipped box cannot be scrolled, so revealing an off-screen panel row
+     can never shift the player. */
+  overflow: clip;
 }
 
 .player.cursor-hidden {
@@ -178,6 +181,7 @@ button:disabled {
 .player.native-resizing .skip-prompt,
 .player.native-resizing .next-episode-card,
 .player.native-resizing .header-actions,
+.player.native-resizing .back-button,
 .player.native-resizing .center-controls,
 .player.native-resizing .progress,
 .player.native-resizing .modal-layer,
@@ -189,6 +193,7 @@ button:disabled {
 .player.chrome-hidden .bottom-gradient,
 .player.chrome-hidden .metadata,
 .player.chrome-hidden .header-actions,
+.player.chrome-hidden .back-button,
 .player.chrome-hidden .center-controls,
 .player.chrome-hidden .progress {
   opacity: 0;
@@ -216,6 +221,7 @@ button:disabled {
 .player.error-active .skip-prompt,
 .player.error-active .next-episode-card,
 .player.error-active .header-actions,
+.player.error-active .back-button,
 .player.error-active .center-controls,
 .player.error-active .progress,
 .player.error-active .modal-layer {
@@ -1950,6 +1956,7 @@ button:disabled {
   position: absolute;
   inset: 0;
   z-index: 30;
+  overflow: clip;
   display: grid;
   place-items: center;
   padding: 24px;
@@ -2933,6 +2940,200 @@ button.action:focus-visible {
 
 .player-side-modal .player-side-panel.subs-panel {
   width: min(440px, calc(100vw - 24px));
+  background: rgba(17, 18, 22, .94);
+  -webkit-backdrop-filter: blur(24px);
+  backdrop-filter: blur(24px);
+  transition:
+    transform var(--motion-panel) var(--ease-out),
+    opacity var(--motion-standard) ease,
+    width var(--motion-panel) var(--ease-out);
+}
+
+/* The Tracks tab shows audio and subtitles side by side. */
+.player-side-modal .player-side-panel.subs-panel.tracks-wide {
+  width: min(820px, calc(100vw - 24px));
+}
+
+.subs-panel .track-title {
+  margin: 0;
+  color: var(--theme-text-primary);
+  font-size: 22px;
+  line-height: 28px;
+  font-weight: 600;
+  letter-spacing: -.01em;
+}
+
+.panel-icon-button {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .06);
+  color: var(--theme-text-primary);
+  transition: background-color var(--motion-fast) ease;
+}
+
+.panel-icon-button:hover {
+  background: rgba(255, 255, 255, .12);
+}
+
+.panel-icon-button svg {
+  width: 18px;
+  height: 18px;
+}
+
+.subs-view.tracks-view {
+  overflow: hidden;
+}
+
+.tracks-columns {
+  min-height: 0;
+  flex: 1 1 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 300px) 1px minmax(0, 1fr);
+  column-gap: 22px;
+}
+
+.tracks-column {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tracks-column-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 4px;
+}
+
+.tracks-column-title {
+  margin: 0;
+  color: var(--theme-text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 16px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.tracks-column-count {
+  color: var(--theme-text-muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.tracks-divider {
+  background: rgba(255, 255, 255, .08);
+}
+
+.tracks-scroll {
+  min-height: 0;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-y: auto;
+  margin: 0 -6px;
+  padding: 2px 6px 8px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, .26) transparent;
+}
+
+.tracks-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.tracks-scroll::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .26);
+}
+
+.tracks-scroll .subs-chips {
+  margin: 2px 0 6px;
+}
+
+.tracks-footer {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, .08);
+}
+
+.tracks-footer-label {
+  min-width: 0;
+  overflow: hidden;
+  padding-left: 4px;
+  color: var(--theme-text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tracks-sync {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .06);
+}
+
+.tracks-sync-step {
+  width: 44px;
+  height: 40px;
+  border-radius: 999px;
+  color: var(--theme-text-primary);
+  font-size: 18px;
+  line-height: 1;
+}
+
+.tracks-sync-step:hover:not(:disabled) {
+  background: rgba(255, 255, 255, .1);
+}
+
+.tracks-sync-step:disabled {
+  opacity: .35;
+}
+
+.tracks-sync-value {
+  min-width: 64px;
+  text-align: center;
+  color: var(--theme-text-primary);
+  font-size: 14px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.tracks-sync-value.shifted {
+  color: var(--theme-accent-strong);
+}
+
+/* Narrow windows stack the columns and scroll the whole tab instead. */
+@media (max-width: 760px) {
+  .subs-view.tracks-view {
+    overflow-y: auto;
+  }
+
+  .tracks-columns {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 18px;
+  }
+
+  .tracks-divider {
+    height: 1px;
+  }
+
+  .tracks-scroll {
+    overflow: visible;
+    flex: 0 0 auto;
+  }
 }
 
 .subs-tabs {
@@ -3056,25 +3257,29 @@ button.action:focus-visible {
 
 .subs-option {
   width: 100%;
-  min-height: 48px;
+  min-height: 56px;
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 12px;
-  border: 1px solid transparent;
+  gap: 14px;
+  padding: 10px 14px;
+  border: 0;
   border-radius: 12px;
   color: var(--theme-text-primary);
   text-align: left;
-  transition: background-color var(--motion-standard) ease, border-color var(--motion-standard) ease;
+  transition: background-color var(--motion-standard) ease, box-shadow var(--motion-fast) ease;
 }
 
 .subs-option:hover {
-  background: rgba(255, 255, 255, .07);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .16);
+}
+
+.subs-option:focus-visible {
+  outline: 2px solid var(--theme-text-primary);
+  outline-offset: 1px;
 }
 
 .subs-option.selected {
-  border-color: color-mix(in srgb, var(--theme-accent) 55%, transparent);
-  background: color-mix(in srgb, var(--theme-accent) 14%, transparent);
+  background: color-mix(in srgb, var(--theme-accent) 16%, transparent);
 }
 
 .subs-option-copy {
@@ -3082,50 +3287,76 @@ button.action:focus-visible {
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
+}
+
+.subs-option-head {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .subs-option-title {
+  min-width: 0;
   overflow: hidden;
   font-size: 15px;
-  font-weight: 500;
+  font-weight: 600;
   line-height: 20px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+.track-badge {
+  flex: 0 0 auto;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, .08);
+  color: rgba(255, 255, 255, .74);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 14px;
+  letter-spacing: .02em;
+}
+
 .subs-option-detail {
   overflow: hidden;
   color: var(--theme-text-muted);
-  font-size: 12px;
-  line-height: 16px;
+  font-size: 13px;
+  line-height: 17px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+.subs-option-detail.wraps {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
 .subs-radio {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   flex: 0 0 auto;
   display: grid;
   place-items: center;
-  border: 2px solid rgba(255, 255, 255, .32);
+  border: 2px solid rgba(255, 255, 255, .34);
   border-radius: 999px;
+  transition: border-color var(--motion-fast) ease;
 }
 
 .subs-option.selected .subs-radio {
   border-color: var(--theme-accent);
+}
+
+.subs-option.selected .subs-radio::after {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
   background: var(--theme-accent);
-}
-
-.subs-radio .track-check {
-  width: 12px;
-  height: 12px;
-  color: var(--theme-on-accent);
-}
-
-.subs-option.selected .subs-radio .track-check {
-  opacity: 1;
 }
 
 .subs-search-button {
@@ -3718,10 +3949,15 @@ svg {
    popover. Icons share one 1.8px stroke family. */
 
 :root {
-  --overlay-bottom: calc(var(--slider-bottom) + 124px);
-  --bar-button: 44px;
-  --bar-icon: 22px;
-  --bar-play: 56px;
+  /* Set from Settings > Playback > Player controls; controls.js caps it so the bar fits. */
+  --controls-scale: 1;
+  /* Text grows at half the rate of icons so labels stay balanced. */
+  --controls-text-scale: calc(1 + (var(--controls-scale) - 1) * .5);
+  --overlay-bottom: calc(var(--slider-bottom) + 124px * var(--controls-scale));
+  --bar-button: calc(44px * var(--controls-scale));
+  --bar-icon: calc(22px * var(--controls-scale));
+  --bar-play: calc(56px * var(--controls-scale));
+  --header-icon: calc(22px * var(--controls-scale));
   --popover-surface: rgba(17, 18, 23, .95);
   --popover-border: rgba(255, 255, 255, .08);
 }
@@ -3818,8 +4054,8 @@ svg {
 }
 
 .header-button svg {
-  width: 21px;
-  height: 21px;
+  width: calc(21px * var(--controls-scale));
+  height: calc(21px * var(--controls-scale));
 }
 
 .header-button.back-button {
@@ -3851,10 +4087,10 @@ svg {
 
 .scrub-row .time-pill {
   flex: 0 0 auto;
-  min-width: 48px;
+  min-width: calc(48px * var(--controls-text-scale));
   color: #fff;
-  font-size: 13px;
-  line-height: 16px;
+  font-size: calc(13px * var(--controls-text-scale));
+  line-height: calc(16px * var(--controls-text-scale));
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
@@ -4015,7 +4251,7 @@ svg {
 .action-divider {
   flex: 0 0 auto;
   width: 1px;
-  height: 24px;
+  height: calc(24px * var(--controls-scale));
   margin: 0 8px;
   background: rgba(255, 255, 255, .18);
 }
@@ -4104,8 +4340,8 @@ svg {
 }
 
 .action-group .action.playback-action svg {
-  width: 24px;
-  height: 24px;
+  width: calc(24px * var(--controls-scale));
+  height: calc(24px * var(--controls-scale));
 }
 
 .seek-amount {
@@ -4113,7 +4349,7 @@ svg {
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  font-size: 7.5px;
+  font-size: calc(7.5px * var(--controls-scale));
   line-height: 1;
   font-weight: 800;
   letter-spacing: -.03em;
@@ -4137,12 +4373,62 @@ svg {
   pointer-events: none;
 }
 
+/* On Playback options the speed badge sits bottom-right so it never covers the toggle count. */
 .action-badge.speed-badge {
-  top: 2px;
+  top: auto;
+  bottom: 2px;
   right: -3px;
   height: 14px;
   border-radius: 6px;
   line-height: 14px;
+}
+
+/* Speed: one row of choices at the top of Playback options. */
+.popover-heading.speed-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.speed-heading-value {
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.speed-options {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 4px;
+  padding: 2px 8px 6px;
+}
+
+.speed-option {
+  height: 34px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, .06);
+  color: rgba(255, 255, 255, .86);
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  transition: background-color var(--motion-fast) ease, color var(--motion-fast) ease;
+}
+
+.speed-option:hover {
+  background: rgba(255, 255, 255, .12);
+  color: #fff;
+}
+
+.speed-option.selected {
+  background: var(--theme-accent);
+  color: var(--theme-on-accent);
+}
+
+.speed-option:focus-visible {
+  outline: 2px solid var(--theme-focus);
+  outline-offset: 2px;
 }
 
 /* Volume: 0-200%; a tick marks 100% and boost fills in the accent. */
@@ -4178,7 +4464,7 @@ svg {
 }
 
 .action-group .volume-slider {
-  width: 112px;
+  width: calc(112px * var(--controls-text-scale));
   height: 24px;
 }
 
@@ -4200,9 +4486,9 @@ svg {
 }
 
 .volume-value {
-  min-width: 40px;
+  min-width: calc(40px * var(--controls-text-scale));
   color: rgba(255, 255, 255, .72);
-  font-size: 12px;
+  font-size: calc(12px * var(--controls-text-scale));
   line-height: 16px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;

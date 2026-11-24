@@ -6,6 +6,7 @@ import { installCustomPosterFallback } from "./core/poster/customPoster.js";
 import { installWebOsImgurImageFallback } from "./core/media/imageProxy.js";
 import { startTvArtworkLazyLoader } from "./ui/images/tvArtworkLazyLoader.js";
 import { installFrameBudgetSampler } from "./core/diagnostics/frameBudget.js";
+import { TvUsageDiagnostics } from "./core/diagnostics/tvUsageDiagnostics.js";
 import { AmbientMode } from "./ui/ambient/ambientMode.js";
 /* global __NUVIO_APP_VERSION__ */
 import "./core/diagnostics/consoleDebugBuffer.js";
@@ -30,7 +31,7 @@ import { preloadStreamBadgeImages } from "./ui/screens/stream/streamScreen.js";
 import { warmStreamingLibs } from "./runtime/loadStreamingLibs.js";
 import { runAfterFirstHomePaint } from "./runtime/startupScheduler.js";
 import { Platform } from "./platform/index.js";
-import { TizenCapabilities } from "./platform/tizen/tizenCapabilities.js";
+import { TizenCapabilities, isTizen5PluginPreviewEnabled } from "./platform/tizen/tizenCapabilities.js";
 import { PluginServiceClient } from "./platform/pluginServiceClient.js";
 import { getTvRuntimePerformanceProfile } from "./platform/tvRuntimePerformance.js";
 import { LocalStore } from "./core/storage/localStore.js";
@@ -50,8 +51,10 @@ import {
 } from "./core/deeplink/launchDeepLink.js";
 // These legacy Web-only overrides are no longer user settings. Navigation now
 // uses the stable grid algorithm and simulator detection automatically.
-LocalStore.remove("strictDpadGridNavigation");
-LocalStore.remove("rotatedDpadMapping");
+runAfterFirstHomePaint(() => {
+  LocalStore.remove("strictDpadGridNavigation");
+  LocalStore.remove("rotatedDpadMapping");
+});
 (function applyLegacyPatches() {
   const originalGetElementById = document.getElementById;
   document.getElementById = function (id) {
@@ -588,7 +591,7 @@ function setupPluginRuntimeLifecycle() {
   document.addEventListener("nuvio:beforeExitApp", cancel);
 }
 function setupPluginServiceLifecycle() {
-  if (!Platform.isTizen() || shouldDisableTizenPluginSupport()) {
+  if (!Platform.isTizen() || shouldDisableTizenPluginSupport() || isTizen5PluginPreviewEnabled()) {
     return;
   }
   // The service only serves plugins, so its watchdog probe is skipped while
@@ -636,7 +639,9 @@ async function bootstrapApp() {
   installLocalServiceFetch();
   setupPluginServiceLifecycle();
   if (shouldDisableTizenPluginSupport()) {
-    markBootStage("PluginService disabled on Tizen below 6.0");
+    markBootStage("PluginService disabled on unsupported Tizen runtime");
+  } else if (isTizen5PluginPreviewEnabled()) {
+    markBootStage("Tizen 5 plugin preview uses HTTPS/CORS without background service");
   } else {
     // PluginService is optional and only serves installed plugins. It used to
     // be launched here, which spawned the Node process during Home render on
@@ -659,10 +664,14 @@ async function bootstrapApp() {
   }
   PlayerController.init();
   installCustomPosterFallback();
-  preloadMaterialIconFont();
   installWebOsImgurImageFallback();
+  // Both the large icon font and ambient-mode timers are optional before the
+  // first route. Avoid competing with Home's first catalog rows on Tizen 5.
+  runAfterFirstHomePaint(() => {
+    preloadMaterialIconFont();
+    AmbientMode.start();
+  });
   // Media-server account sync is unavailable; user-configured servers remain local.
-  AmbientMode.start();
   FocusEngine.init();
   setupProviderCredentialForegroundLifecycle();
   setupTizenPlaybackLifecycle();
@@ -680,6 +689,15 @@ async function bootstrapApp() {
   }
   runAfterFirstHomePaint(() => {
     void checkForAppUpdateOnStartup();
+  });
+  // The opt-in TV reporter is deliberately initialized only after first paint,
+  // so startup, remote navigation and player initialization never wait for it.
+  runAfterFirstHomePaint(() => {
+    TvUsageDiagnostics.start({
+      platform: Platform.getName(),
+      version: APP_VERSION,
+      route: () => Router.getCurrent()
+    });
   });
   markBootStage("Restoring session");
   DeviceSessionRegistration.start();
@@ -802,3 +820,4 @@ window.addEventListener("unhandledrejection", (event) => {
   }
   console.warn("Unhandled promise rejection", event?.reason);
 });
+window.addEventListener("beforeunload", () => TvUsageDiagnostics.stop());

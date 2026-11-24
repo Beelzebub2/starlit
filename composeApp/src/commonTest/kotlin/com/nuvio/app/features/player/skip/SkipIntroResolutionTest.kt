@@ -155,4 +155,37 @@ class SkipIntroResolutionTest {
     }
 
     private fun timestamp(at: Double, name: String) = AnimeSkipTimestamp(at, AnimeSkipTimestampType(name))
+    @Test
+    fun activeFileChaptersOverrideOnlyMatchingProviderSegments() {
+        val estimatedOpening = SkipInterval(100.0, 188.0, "op", "aniskip")
+        val providerRecap = SkipInterval(0.0, 30.0, "recap", "introdb")
+        val providerCredits = SkipInterval(1_500.0, 1_790.0, "movie-credits", "introdb")
+        val namedChapters = listOf(
+            PlaybackChapter(0.0, "Feature"),
+            PlaybackChapter(50.0, "Opening Credits"),
+            PlaybackChapter(140.0, "Chapter 2"),
+            PlaybackChapter(1_520.0, "End Credits"),
+            PlaybackChapter(1_680.0, "Post-Credits Scene"),
+        )
+        val providers = listOf(estimatedOpening, providerRecap, providerCredits)
+        assertEquals(listOf(
+            providerRecap,
+            SkipInterval(50.0, 140.0, "intro", "chapters"),
+            SkipInterval(1_520.0, 1_680.0, "movie-credits", "chapters"),
+            SkipInterval(1_680.0, 1_800.0, "post-credits", "chapters"),
+        ), resolvePlaybackSkipIntervals(providers, namedChapters, 1_800_000L, isMovie = true))
+
+        // The replacement file has no labeled chapters and ends before the old credits target.
+        assertEquals(listOf(providerRecap, estimatedOpening),
+            resolvePlaybackSkipIntervals(providers, emptyList(), 1_700_000L, isMovie = true))
+    }
+
+    @Test
+    fun terminalMovieCreditsNeedAnExplicitEndBoundary() {
+        assertEquals(emptyList(), resolvePlaybackSkipIntervals(
+            emptyList(), listOf(PlaybackChapter(0.0), PlaybackChapter(980.0, "Credits")),
+            1_100_000, isMovie = true,
+        ))
+    }
+
 }

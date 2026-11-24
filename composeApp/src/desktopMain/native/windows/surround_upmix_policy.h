@@ -1,7 +1,9 @@
 #pragma once
 
+#include <algorithm>
 #include <cstdint>
 #include <string_view>
+#include <vector>
 
 namespace starlit_surround {
 
@@ -18,12 +20,14 @@ enum class Mode : int {
     speakersFivePointOne = 1,
     virtualHeadsetSevenPointOne = 2,
     virtualHeadsetFivePointOne = 3,
+    automatic = 4,
 };
 
 enum class Layout {
     unsupported,
     fivePointOneBack,
     fivePointOneSide,
+    speakersSevenPointOne,
     virtualHeadsetSevenPointOne,
     virtualHeadsetFivePointOneBack,
     virtualHeadsetFivePointOneSide,
@@ -66,6 +70,45 @@ inline Layout configuredVirtualHeadsetLayout(
     return Layout::unsupported;
 }
 
+// Auto is itself an explicit opt-in. Respect a physical multichannel mix
+// rather than treating speakers as headphones; for a stereo mix, try exact
+// driver-accepted 7.1, then 5.1(side), then 5.1(back). Each layout is attempted
+// at most once per output/track; stream acceptance cannot prove virtual HRTF.
+inline std::vector<Layout> automaticLayouts(
+    unsigned channels, uint32_t speakerMask,
+    bool acceptsFivePointOneSide, bool acceptsFivePointOneBack,
+    bool acceptsSevenPointOne
+) {
+    if (channels == 8 && speakerMask == kSevenPointOneMask) {
+        return {Layout::speakersSevenPointOne};
+    }
+    if (channels == 6) {
+        const Layout physical = configuredLayout(channels, speakerMask);
+        return physical == Layout::unsupported ? std::vector<Layout>{}
+                                               : std::vector<Layout>{physical};
+    }
+    if (channels != 2 || speakerMask != kStereoMask) return {};
+    std::vector<Layout> layouts;
+    if (acceptsSevenPointOne) layouts.push_back(Layout::virtualHeadsetSevenPointOne);
+    if (acceptsFivePointOneSide) layouts.push_back(Layout::virtualHeadsetFivePointOneSide);
+    if (acceptsFivePointOneBack) layouts.push_back(Layout::virtualHeadsetFivePointOneBack);
+    return layouts;
+}
+
+// After a filter or actual WASAPI output mismatch, choose the next supported
+// candidate instead of retrying a rejected one on every playback timer.
+inline Layout nextAutomaticLayout(
+    const std::vector<Layout> &candidates,
+    const std::vector<Layout> &rejected
+) {
+    for (const Layout candidate : candidates) {
+        if (std::find(rejected.begin(), rejected.end(), candidate) == rejected.end()) {
+            return candidate;
+        }
+    }
+    return Layout::unsupported;
+}
+
 inline bool acceptsStereoInput(std::string_view decodedChannels) {
     return decodedChannels == "stereo" || decodedChannels == "2.0";
 }
@@ -74,6 +117,7 @@ inline std::string_view mpvOutputLayout(Layout layout) {
     switch (layout) {
         case Layout::fivePointOneSide: return "5.1(side)";
         case Layout::fivePointOneBack: return "5.1";
+        case Layout::speakersSevenPointOne: return "7.1";
         case Layout::virtualHeadsetFivePointOneSide: return "5.1(side)";
         case Layout::virtualHeadsetFivePointOneBack: return "5.1";
         case Layout::virtualHeadsetSevenPointOne: return "7.1";
@@ -92,6 +136,7 @@ inline const char *mpvFilter(Layout layout) {
         case Layout::virtualHeadsetFivePointOneBack:
             return "@starlit-surround:lavfi=[surround=chl_in=stereo:chl_out=5.1:lfe=0:level_out=0.65]";
         case Layout::virtualHeadsetSevenPointOne:
+        case Layout::speakersSevenPointOne:
             return "@starlit-surround:lavfi=[surround=chl_in=stereo:chl_out=7.1:lfe=0:level_out=0.65]";
         default: return nullptr;
     }

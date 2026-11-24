@@ -63,7 +63,9 @@ test("multiple storages reserve using conservative capacity", async () => {
 });
 test("ignore USB with no safe capacity mapping or writable native path", async () => {
   await withMock(mock([], [{ type: "EXTERNAL", state: "MOUNTED", label: "A" }]), async () => {
-    assert.equal((await detectTizenUsbStorage()).drives.length, 0);
+    const result = await detectTizenUsbStorage();
+    assert.equal(result.drives.length, 0, "A drive without a safe native path is not eligible");
+    assert.equal(result.mountedCount, 1, "native mount detection is distinct from cache eligibility");
   });
   await withMock(mock(
     [{ type: "USB_HOST", capacity: 4 * GiB, availableCapacity: 3 * GiB, isRemovable: true }],
@@ -71,6 +73,130 @@ test("ignore USB with no safe capacity mapping or writable native path", async (
     { A: "virtualRoot" }
   ), async () => {
     assert.equal((await detectTizenUsbStorage()).drives.length, 0);
+  });
+});
+test("detect mounted USB even when SystemInfo has no removable unit", async () => {
+  await withMock(mock(
+    [{ type: "INTERNAL", capacity: 8 * GiB, availableCapacity: 4 * GiB }],
+    [{ type: "EXTERNAL", state: "MOUNTED", label: "removable2" }],
+    { removable2: "/opt/storage/usb0" }
+  ), async () => {
+    const result = await detectTizenUsbStorage();
+    assert.equal(result.drives.length, 1);
+    assert.equal(result.drives[0].root, "/opt/storage/usb0");
+    assert.equal(result.drives[0].freeBytes, null, "Never borrow internal capacity for USB");
+    assert.match(result.reason, /USB connected/);
+  });
+});
+test("USB enumeration is independent from unsupported or failing STORAGE property", async () => {
+  const api = mock([], [{ type: "EXTERNAL", state: "MOUNTED", label: "B" }],
+    { B: "/opt/storage/usb1" });
+  delete api.systeminfo;
+  await withMock(api, async () => {
+    const result = await detectTizenUsbStorage();
+    assert.equal(result.drives.length, 1);
+    assert.equal(result.drives[0].totalBytes, null);
+  });
+  api.systeminfo = { getPropertyValue: (_, good, bad) => bad(new Error("NotSupportedError")) };
+  await withMock(api, async () => {
+    assert.equal((await detectTizenUsbStorage()).drives.length, 1);
+  });
+});
+test("Tizen 5 path APIs detect removable storage without deprecated resolve", async () => {
+  const api = mock([], [
+    { type: "INTERNAL", state: "MOUNTED", label: "internal0" },
+    { type: "EXTERNAL", state: "MOUNTED", label: "removable_sda1" }
+  ]);
+  delete api.filesystem.resolve;
+  const paths = [];
+  api.filesystem.isDirectory = (label) => {
+    paths.push("check:" + label);
+    return label === "removable_sda1";
+  };
+  api.filesystem.toURI = (label) => {
+    paths.push("uri:" + label);
+    return "file:///opt/storage/USB%20Drive";
+  };
+  await withMock(api, async () => {
+    const result = await detectTizenUsbStorage();
+    assert.deepEqual(result.drives.map((drive) => drive.root), ["/opt/storage/USB Drive"]);
+    assert.equal(result.drives[0].freeBytes, null);
+    assert.deepEqual(paths, ["check:removable_sda1", "uri:removable_sda1"]);
+  });
+});
+test("deprecated Tizen 5 resolve can fail while path-based access works", async () => {
+  const api = mock([], [{ type: "EXTERNAL", state: "MOUNTED", label: "removable_sdb1" }]);
+  let attempts = 0;
+  api.filesystem.resolve = (_, success, fail) => {
+    attempts++;
+    fail(new Error("NotSupportedError"));
+  };
+  api.filesystem.isDirectory = (label) => label === "removable_sdb1";
+  api.filesystem.toURI = () => "file:///media/usb-drive-b";
+  await withMock(api, async () => {
+    const result = await detectTizenUsbStorage();
+    assert.equal(result.drives.length, 1);
+    assert.equal(result.drives[0].root, "/media/usb-drive-b");
+    assert.equal(attempts, 0, "valid modern mount must not wait for deprecated resolve");
+  });
+});
+test("legacy Tizen filesystem remains usable when the modern directory probe fails", async () => {
+  const api = mock([], [{ type: "EXTERNAL", state: "MOUNTED", label: "removable2" }],
+    { removable2: "/mnt/legacy-usb" });
+  api.filesystem.isDirectory = () => { throw new Error("NotSupportedError"); };
+  api.filesystem.toURI = () => { throw new Error("NotSupportedError"); };
+  await withMock(api, async () => {
+    assert.equal((await detectTizenUsbStorage()).drives[0].root, "/mnt/legacy-usb");
+  });
+});
+test("array-like native storage collections are handled as mounted USB lists", async () => {
+  const api = mock([], []);
+  api.filesystem.listStorages = (good) => good({
+    0: { type: "INTERNAL", state: "MOUNTED", label: "internal0" },
+    1: { type: "EXTERNAL", state: "MOUNTED", label: "removable_sda1" },
+    length: 2
+  });
+  api.filesystem.toURI = () => "file:///mnt/usb1";
+  api.filesystem.isDirectory = () => true;
+  delete api.filesystem.resolve;
+  await withMock(api, async () => {
+    const { drives } = await detectTizenUsbStorage();
+    assert.equal(drives.length, 1);
+    assert.equal(drives[0].label, "removable_sda1");
+  });
+});
+test("a Tizen 5 URI alone never qualifies a missing or unsafe storage directory", async () => {
+  const mounts = [{ type: "EXTERNAL", state: "MOUNTED", label: "removable_sda1" }];
+  for (const [directory, uri] of [
+    [false, "file:///opt/storage/usb0"],
+    [true, "https://example.com/a"],
+    [true, "file://remote-host/usb"],
+    [true, "file:///mnt/../private"],
+    [true, "file:///mnt/%2e%2e/private"],
+    [true, "file:///mnt/%5cprivate"],
+    [true, "file:///mnt/%00drive"],
+    [true, "/not-a-file-uri"]
+  ]) {
+    const api = mock([], mounts);
+    delete api.filesystem.resolve;
+    api.filesystem.isDirectory = () => directory;
+    api.filesystem.toURI = () => uri;
+    await withMock(api, async () => {
+      assert.equal((await detectTizenUsbStorage()).drives.length, 0);
+    });
+  }
+});
+test("an explicit read-only legacy handle is rejected without a usable modern mount", async () => {
+  const api = mock([], [{ type: "EXTERNAL", state: "MOUNTED", label: "removable_sda1" }]);
+  api.filesystem.resolve = (_, good) => good({
+    readOnly: true, isDirectory: true, toURI: () => "file:///opt/storage/usb0"
+  });
+  let modernChecks = 0;
+  api.filesystem.isDirectory = () => { modernChecks++; return false; };
+  api.filesystem.toURI = () => "file:///opt/storage/usb0";
+  await withMock(api, async () => {
+    assert.equal((await detectTizenUsbStorage()).drives.length, 0);
+    assert.equal(modernChecks, 1);
   });
 });
 test("physical file URI is decoded; virtual paths and unsafe file URIs are rejected", async () => {

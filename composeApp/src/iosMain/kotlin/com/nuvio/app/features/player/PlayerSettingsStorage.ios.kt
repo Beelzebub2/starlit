@@ -30,6 +30,7 @@ actual object PlayerSettingsStorage {
     private const val shortSeekSecondsKey = "short_seek_seconds"
     private const val mediumSeekSecondsKey = "medium_seek_seconds"
     private const val longSeekSecondsKey = "long_seek_seconds"
+    private const val controlsScalePercentKey = "controls_scale_percent"
     private const val touchGesturesEnabledKey = "touch_gestures_enabled"
     private const val externalPlayerEnabledKey = "external_player_enabled"
     private const val externalPlayerForwardSubtitlesKey = "external_player_forward_subtitles"
@@ -110,6 +111,7 @@ actual object PlayerSettingsStorage {
         shortSeekSecondsKey,
         mediumSeekSecondsKey,
         longSeekSecondsKey,
+        controlsScalePercentKey,
         nvidiaRtxSuperResolutionEnabledKey,
         touchGesturesEnabledKey,
         externalPlayerEnabledKey,
@@ -325,6 +327,8 @@ actual object PlayerSettingsStorage {
     actual fun saveMediumSeekSeconds(seconds: Int) = saveInt(mediumSeekSecondsKey, seconds)
     actual fun loadLongSeekSeconds(): Int? = loadInt(longSeekSecondsKey)
     actual fun saveLongSeekSeconds(seconds: Int) = saveInt(longSeekSecondsKey, seconds)
+    actual fun loadControlsScalePercent(): Int? = loadInt(controlsScalePercentKey)
+    actual fun saveControlsScalePercent(percent: Int) = saveInt(controlsScalePercentKey, percent)
 
     actual fun loadTouchGesturesEnabled(): Boolean? = loadBoolean(touchGesturesEnabledKey)
 
@@ -1053,6 +1057,7 @@ actual object PlayerSettingsStorage {
         loadShortSeekSeconds()?.let { put(shortSeekSecondsKey, encodeSyncInt(it)) }
         loadMediumSeekSeconds()?.let { put(mediumSeekSecondsKey, encodeSyncInt(it)) }
         loadLongSeekSeconds()?.let { put(longSeekSecondsKey, encodeSyncInt(it)) }
+        loadControlsScalePercent()?.let { put(controlsScalePercentKey, encodeSyncInt(it)) }
         loadTouchGesturesEnabled()?.let { put(touchGesturesEnabledKey, encodeSyncBoolean(it)) }
         loadExternalPlayerEnabled()?.let { put(externalPlayerEnabledKey, encodeSyncBoolean(it)) }
         loadExternalPlayerForwardSubtitles()?.let { put(externalPlayerForwardSubtitlesKey, encodeSyncBoolean(it)) }
@@ -1138,6 +1143,9 @@ actual object PlayerSettingsStorage {
         payload.decodeSyncInt(shortSeekSecondsKey)?.let { saveShortSeekSeconds(normalizedSeekSeconds(it)) }
         payload.decodeSyncInt(mediumSeekSecondsKey)?.let { saveMediumSeekSeconds(normalizedSeekSeconds(it)) }
         payload.decodeSyncInt(longSeekSecondsKey)?.let { saveLongSeekSeconds(normalizedSeekSeconds(it)) }
+        payload.decodeSyncInt(controlsScalePercentKey)?.let {
+            saveControlsScalePercent(normalizedPlayerControlsScalePercent(it))
+        }
         payload.decodeSyncBoolean(touchGesturesEnabledKey)?.let(::saveTouchGesturesEnabled)
         payload.decodeSyncBoolean(externalPlayerEnabledKey)?.let(::saveExternalPlayerEnabled)
         payload.decodeSyncBoolean(externalPlayerForwardSubtitlesKey)?.let(::saveExternalPlayerForwardSubtitles)

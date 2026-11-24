@@ -4,6 +4,7 @@ import co.touchlab.kermit.Logger
 import com.nuvio.app.core.auth.AuthRepository
 import com.nuvio.app.core.auth.AuthState
 import com.nuvio.app.core.auth.isAnonymous
+import com.nuvio.app.core.network.ServerConfigurationRepository
 import com.nuvio.app.core.network.SupabaseProvider
 import com.nuvio.app.core.poster.CustomPosterUrlRepository
 import com.nuvio.app.core.sync.ProfileSettingsSync
@@ -13,6 +14,8 @@ import com.nuvio.app.features.addons.AddonRepository
 import com.nuvio.app.features.catalog.CatalogSortSettingsRepository
 import com.nuvio.app.features.collection.CollectionMobileSettingsRepository
 import com.nuvio.app.features.collection.CollectionRepository
+import com.nuvio.app.features.catalog.CatalogRepository
+import com.nuvio.app.features.details.MetaDetailsRepository
 import com.nuvio.app.features.downloads.DownloadsRepository
 import com.nuvio.app.features.details.MetaScreenSettingsRepository
 import com.nuvio.app.features.home.HomeCatalogSettingsRepository
@@ -145,7 +148,14 @@ object ProfileRepository {
         try {
             val previousProfileId = activeProfileIndex
             val result = SupabaseProvider.client.postgrest.rpc("sync_pull_profiles")
-            val profiles = result.decodeList<NuvioProfile>()
+            val cached = _state.value.profiles
+            val profiles = result.decodeList<NuvioProfile>().map { remote ->
+                val local = cached.firstOrNull { profile ->
+                    profile.userId == remote.userId && profile.profileIndex == remote.profileIndex &&
+                        (profile.id.isBlank() || remote.id.isBlank() || profile.id == remote.id)
+                }
+                remote.copy(kidsContentFilterEnabled = local?.kidsContentFilterEnabled ?: false)
+            }
             _state.value = _state.value.copy(
                 profiles = profiles.sortedBy { it.profileIndex },
                 isLoaded = true,
@@ -211,6 +221,8 @@ object ProfileRepository {
         P2pSettingsRepository.onProfileChanged()
         HomeCatalogSettingsRepository.onProfileChanged()
         HomeRepository.clear()
+        MetaDetailsRepository.clear()
+        CatalogRepository.clear()
         MetaScreenSettingsRepository.onProfileChanged()
         com.nuvio.app.features.shuffle.EpisodeShuffleRepository.onProfileChanged()
         ContinueWatchingPreferencesRepository.onProfileChanged()
@@ -253,6 +265,7 @@ object ProfileRepository {
         avatarId: String? = null,
         avatarUrl: String? = null,
         usesPrimaryAddons: Boolean = false,
+        kidsContentFilterEnabled: Boolean = false,
     ) {
         val existing = _state.value.profiles
         val nextIndex = ((1..MAX_PROFILES).toSet() - existing.map { it.profileIndex }.toSet()).minOrNull() ?: return
@@ -279,6 +292,7 @@ object ProfileRepository {
         )
 
         pushProfiles(allPayloads)
+        setKidsContentFilterEnabled(nextIndex, kidsContentFilterEnabled)
     }
 
     suspend fun updateProfile(
@@ -290,6 +304,7 @@ object ProfileRepository {
         profileBackgroundId: String? = null,
         profileBackgroundUrl: String? = null,
         usesPrimaryAddons: Boolean = false,
+        kidsContentFilterEnabled: Boolean = false,
     ) {
         val allPayloads = _state.value.profiles.map { profile ->
             if (profile.profileIndex == profileIndex) {
@@ -319,6 +334,30 @@ object ProfileRepository {
         }
 
         pushProfiles(allPayloads)
+        setKidsContentFilterEnabled(profileIndex, kidsContentFilterEnabled)
+    }
+
+    fun setKidsContentFilterEnabled(profileIndex: Int, enabled: Boolean) {
+        val current = _state.value
+        val profile = current.profiles.firstOrNull { it.profileIndex == profileIndex } ?: return
+        if (profile.kidsContentFilterEnabled == enabled) return
+        val profiles = current.profiles.map { item ->
+            if (item.profileIndex == profileIndex) item.copy(kidsContentFilterEnabled = enabled) else item
+        }
+        _state.value = current.copy(
+            profiles = profiles,
+            activeProfile = current.activeProfile?.let { active ->
+                profiles.firstOrNull { it.profileIndex == active.profileIndex }
+            },
+        )
+        persist()
+        if (activeProfileIndex == profileIndex) {
+            HomeRepository.clear()
+            SearchRepository.reset()
+            CatalogRepository.clear()
+            MetaDetailsRepository.clear()
+            HomeRepository.refresh(AddonRepository.uiState.value.addons, force = true)
+        }
     }
 
     suspend fun deleteProfile(profileIndex: Int) {
@@ -371,19 +410,43 @@ object ProfileRepository {
         }
     }
 
+    private suspend fun pinMutationFailure(result: ProfilePinMutationResult, fallback: StringResource): PinVerifyResult =
+        PinVerifyResult(
+            unlocked = false,
+            retryAfterSeconds = result.retryAfterSeconds,
+            message = if (result.retryAfterSeconds > 0) {
+                getString(Res.string.pin_locked_try_again, result.retryAfterSeconds)
+            } else {
+                getString(fallback)
+            },
+        )
+
     suspend fun setPin(profileIndex: Int, pin: String, currentPin: String? = null): PinVerifyResult {
         if (AuthRepository.state.value !is AuthState.Authenticated) {
             return PinVerifyResult(unlocked = false, message = getString(Res.string.profile_pin_set_requires_internet))
         }
-
         return runCatching {
-            val params = buildJsonObject {
-                put("p_profile_id", profileIndex)
-                put("p_pin", pin)
-                currentPin?.let { put("p_current_pin", it) }
+            if (!ServerConfigurationRepository.active.value.supportsNuvioAccountFeatures) {
+                val params = buildJsonObject {
+                    put("p_profile_id", profileIndex)
+                    put("p_new_pin", pin)
+                    currentPin?.let { put("p_current_pin", it) }
+                }
+                val mutation = SupabaseProvider.client.postgrest
+                    .rpc("account_change_pin", params).decodeAs<ProfilePinMutationResult>()
+                if (!mutation.ok) return@runCatching pinMutationFailure(mutation, Res.string.profile_pin_set_failed)
+            } else {
+                val params = buildJsonObject {
+                    put("p_profile_id", profileIndex)
+                    put("p_pin", pin)
+                    currentPin?.let { put("p_current_pin", it) }
+                }
+                SupabaseProvider.client.postgrest.rpc("set_profile_pin", params)
             }
-            SupabaseProvider.client.postgrest.rpc("set_profile_pin", params)
             pullProfiles()
+            if (_state.value.profiles.none { it.profileIndex == profileIndex && it.pinEnabled }) {
+                return@runCatching PinVerifyResult(unlocked = false, message = getString(Res.string.profile_pin_set_failed))
+            }
             rememberVerifiedPin(profileIndex = profileIndex, pin = pin)
             PinVerifyResult(unlocked = true)
         }.onFailure { e ->
@@ -397,14 +460,26 @@ object ProfileRepository {
         if (AuthRepository.state.value !is AuthState.Authenticated) {
             return PinVerifyResult(unlocked = false, message = getString(Res.string.profile_pin_clear_requires_internet))
         }
-
         return runCatching {
-            val params = buildJsonObject {
-                put("p_profile_id", profileIndex)
-                currentPin?.let { put("p_current_pin", it) }
+            if (!ServerConfigurationRepository.active.value.supportsNuvioAccountFeatures) {
+                val params = buildJsonObject {
+                    put("p_profile_id", profileIndex)
+                    currentPin?.let { put("p_current_pin", it) }
+                }
+                val mutation = SupabaseProvider.client.postgrest
+                    .rpc("account_remove_pin", params).decodeAs<ProfilePinMutationResult>()
+                if (!mutation.ok) return@runCatching pinMutationFailure(mutation, Res.string.profile_pin_clear_failed)
+            } else {
+                val params = buildJsonObject {
+                    put("p_profile_id", profileIndex)
+                    currentPin?.let { put("p_current_pin", it) }
+                }
+                SupabaseProvider.client.postgrest.rpc("clear_profile_pin", params)
             }
-            SupabaseProvider.client.postgrest.rpc("clear_profile_pin", params)
             pullProfiles()
+            if (_state.value.profiles.any { it.profileIndex == profileIndex && it.pinEnabled }) {
+                return@runCatching PinVerifyResult(unlocked = false, message = getString(Res.string.profile_pin_clear_failed))
+            }
             ProfilePinCacheStorage.removePayload(profileIndex)
             PinVerifyResult(unlocked = true)
         }.onFailure { e ->

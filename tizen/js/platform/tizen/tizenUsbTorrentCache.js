@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Starlit contributors. SPDX-License-Identifier: MIT.
 // Opt-in, removable torrent cache detection for Samsung Tizen TVs.
 import { trustedEngineFsControlHeaders } from "./starlitControlBridge.js";
+import { TizenEngineFsService } from "./tizenEngineFsService.js";
 
 const KEY = "starlit.tizen.usbTorrentCache.enabled.v1";
 let configuredUrl = "";
@@ -13,27 +14,78 @@ let generation = 0;
 let state = { mode: "memory", reason: "USB cache disabled" };
 const storageChangeSubscribers = new Set();
 
-function callTizen(method, args = []) {
+function callTizen(method, args = [], timeoutMs = 3500) {
   return new Promise((resolve, reject) => {
-    try { method(...args, resolve, reject); } catch (error) { reject(error); }
+    let settled = false;
+    const timer = setTimeout(() => finish(new Error("Tizen storage query timed out")), timeoutMs);
+    function finish(error, result) {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      if (error) reject(error);
+      else resolve(result);
+    }
+    try { method(...args, (result) => finish(null, result), (error) => finish(error)); }
+    catch (error) { finish(error); }
   });
 }
 function resolveDrive(label) {
   return new Promise((resolve, reject) => {
-    try { globalThis.tizen.filesystem.resolve(label, resolve, reject, "rw"); }
-    catch (error) { reject(error); }
+    let settled = false;
+    const timer = setTimeout(() => finish(new Error("Tizen USB mount resolution timed out")), 3500);
+    function finish(error, file) {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      if (error) reject(error);
+      else resolve(file);
+    }
+    try {
+      globalThis.tizen.filesystem.resolve(label,
+        (file) => finish(null, file), (error) => finish(error), "rw");
+    } catch (error) { finish(error); }
   });
 }
-function nativePathFromFile(file) {
-  if (!file || file.readOnly === true || file.isDirectory === false ||
-      typeof file.toURI !== "function") return "";
+function nativePathFromUri(uri) {
   try {
-    const url = new URL(file.toURI());
+    // URL() normalizes ../ segments before exposing pathname. Reject them in
+    // the original URI first so no mount URI can be redirected outside USB.
+    if (typeof uri !== "string" || !uri.startsWith("file:///") || uri.length > 1024) return "";
+    const rawPath = decodeURIComponent(uri.slice("file://".length).split(/[?#]/, 1)[0]);
+    if (!rawPath.startsWith("/") || rawPath.includes("\\") ||
+        rawPath.includes("\0") || rawPath.split("/").some((part) => part === "." || part === "..")) return "";
+    const url = new URL(uri);
     if (url.protocol !== "file:" || url.hostname || url.search || url.hash) return "";
     const path = decodeURIComponent(url.pathname);
     if (!path.startsWith("/") || path.includes("\0") || path.split("/").includes("..")) return "";
     return path;
   } catch (_) { return ""; }
+}
+async function nativeMountPath(filesystem, label) {
+  // Tizen 5 introduced path-based Filesystem APIs. The older File handle from
+  // resolve() is deprecated and may time out on older Smart TVs. Use modern
+  // path validation first to avoid blocking the remote-control interface.
+  // A detected mount is not proof it can be used for caching: the isolated
+  // EngineFS service independently verifies filesystem access and writes.
+  if (typeof filesystem.isDirectory === "function" &&
+      typeof filesystem.toURI === "function") {
+    try {
+      if (filesystem.isDirectory(label) === true) {
+        const path = nativePathFromUri(filesystem.toURI(label));
+        if (path) return path;
+      }
+    } catch (_) { /* Older firmware may reject the newer path API. */ }
+  }
+  if (typeof filesystem.resolve === "function") {
+    try {
+      const file = await resolveDrive(label);
+      if (file?.readOnly === true || file?.isDirectory === false) return "";
+      const path = typeof file?.toURI === "function"
+        ? nativePathFromUri(file.toURI()) : "";
+      if (path) return path;
+    } catch (_) { /* Legacy access is optional on Tizen 5. */ }
+  }
+  return "";
 }
 function usableUnit(unit) {
   return unit && Number.isSafeInteger(Number(unit.capacity)) &&
@@ -43,42 +95,59 @@ function usableUnit(unit) {
 }
 async function findDrives() {
   const api = globalThis.tizen;
-  if (!api?.filesystem?.listStorages || !api?.filesystem?.resolve ||
-      !api?.systeminfo?.getPropertyValue) {
-    return { drives: [], reason: "TV external storage API unavailable" };
+  if (!api?.filesystem?.listStorages ||
+      (!api.filesystem.resolve &&
+       !(api.filesystem.isDirectory && api.filesystem.toURI))) {
+    return { drives: [], reason: "TV USB filesystem API unavailable" };
   }
-  const [storages, info] = await Promise.all([
-    callTizen(api.filesystem.listStorages.bind(api.filesystem)),
-    callTizen(api.systeminfo.getPropertyValue.bind(api.systeminfo), ["STORAGE"])
-  ]);
-  const candidates = (Array.isArray(storages) ? storages : []).filter(
+  let storages;
+  try { storages = await callTizen(api.filesystem.listStorages.bind(api.filesystem)); }
+  catch (error) {
+    return { drives: [], reason: "Cannot list TV storage: " + String(error?.message || error) };
+  }
+  // Some native WebIDL bindings return array-like collections rather than
+  // genuine JavaScript arrays. Only inspect a bounded set of storage records.
+  const entries = storages && Number.isSafeInteger(storages.length) &&
+    storages.length >= 0 && storages.length <= 64
+    ? Array.from(storages) : [];
+  const candidates = entries.filter(
     (item) => item?.type === "EXTERNAL" && item?.state === "MOUNTED" && item?.label
   );
+  if (!candidates.length) {
+    return { drives: [], mountedCount: 0, reason: "No mounted USB drive reported by Tizen" };
+  }
+  // On some TV firmware versions SystemInfo omits removable disks even though
+  // Filesystem lists and resolves them. The service can measure the specific
+  // native mount safely; do not confuse a missing capacity report with no USB.
+  let info = null;
+  if (typeof api?.systeminfo?.getPropertyValue === "function") {
+    try { info = await callTizen(api.systeminfo.getPropertyValue.bind(api.systeminfo), ["STORAGE"], 2200); }
+    catch (_) { /* Missing capacity does not invalidate a mounted filesystem. */ }
+  }
   const units = (Array.isArray(info?.units) ? info.units : []).filter(
     (unit) => usableUnit(unit) &&
       (unit.isRemovable === true || unit.isRemoveable === true ||
        unit.type === "USB_HOST" || unit.type === "USB_DEVICE" || unit.type === "MMC")
   );
-  if (!candidates.length || !units.length) {
-    return { drives: [], reason: "No mounted USB with measurable free space" };
-  }
   // SystemInfo USB units have no storage labels, so use the most conservative
-  // available/total value when the TV reports multiple removable devices.
-  const freeBytes = Math.min(...units.map((unit) => Number(unit.availableCapacity)));
-  const totalBytes = Math.min(...units.map((unit) => Number(unit.capacity)));
+  // values when there is no way to associate individual units with labels.
+  // Null explicitly requests a per-mount capacity measurement from EngineFS.
+  const freeBytes = units.length ? Math.min(...units.map((unit) => Number(unit.availableCapacity))) : null;
+  const totalBytes = units.length ? Math.min(...units.map((unit) => Number(unit.capacity))) : null;
   const drives = [];
   for (const candidate of candidates) {
     try {
-      const resolved = await resolveDrive(String(candidate.label));
-      const root = nativePathFromFile(resolved);
+      const root = await nativeMountPath(api.filesystem, String(candidate.label));
       if (root) {
         drives.push({ label: String(candidate.label), root, freeBytes, totalBytes });
       }
     } catch (_) {
-      // Unwritable, unmounted or inaccessible devices cannot be selected.
+      // A mount without a validated native path cannot be probed by EngineFS.
     }
   }
-  return { drives, reason: drives.length ? "" : "No writable USB storage" };
+  return { drives, mountedCount: candidates.length, reason: drives.length
+    ? (units.length ? "" : "USB connected; checking free space in EngineFS")
+    : "USB mounted but not writable or accessible to Starlit" };
 }
 export async function detectTizenUsbStorage() {
   return findDrives();
@@ -100,6 +169,30 @@ async function control(baseUrl, path, payload, timeoutMs = 5000) {
     if (!response.ok) throw new Error("USB cache HTTP " + response.status);
     return await response.json();
   } finally { clearTimeout(timer); }
+}
+function retryableServiceError(error) {
+  const message = String(error?.message || error || "");
+  return error?.name === "TypeError" ||
+    /failed to fetch|networkerror|network request failed|load failed|request timed out|HTTP 403|authorization unavailable/i.test(message);
+}
+function unavailableServiceState() {
+  // The UI translates this stable code instead of displaying browser-specific
+  // network errors such as "Failed to fetch".
+  return { mode: "memory", reason: "", issue: "service-unavailable" };
+}
+async function controlWithRecovery(baseUrl, path, payload, timeoutMs = 5000, recovery = null) {
+  try {
+    return await control(baseUrl, path, payload, timeoutMs);
+  } catch (error) {
+    if (!retryableServiceError(error)) throw error;
+    if (recovery?.attempted) throw error;
+    if (recovery) recovery.attempted = true;
+    // A legacy Tizen service may have stopped since its initial health probe,
+    // or restarted with a new trusted MessagePort token. Reconnect once only.
+    const service = await TizenEngineFsService.ensureStarted({ purpose: "p2p" });
+    if (service?.status !== "success") throw error;
+    return control(service.baseUrl, path, payload, timeoutMs);
+  }
 }
 function watchStorage() {
   if (listenerId != null || !globalThis.tizen?.filesystem?.addStorageStateChangeListener) return;
@@ -168,7 +261,8 @@ export const TizenUsbTorrentCache = {
       } catch (_) {}
       configuredUrl = "";
     }
-    if (!force && lastCheckedUrl === baseUrl && Date.now() - lastCheckedAt < 10 * 60 * 1000) {
+    if (!force && lastCheckedUrl === baseUrl &&
+        Date.now() - lastCheckedAt < (configuredUrl ? 10 * 60 * 1000 : 20 * 1000)) {
       return state;
     }
     if (pending) return pending;
@@ -188,11 +282,13 @@ export const TizenUsbTorrentCache = {
       let best = null;
       let bestDrive = null;
       let busy = false;
+      let serviceUnavailable = false;
+      const recovery = { attempted: false };
       for (const drive of drives) {
         try {
-          const result = await control(baseUrl, "/cache/probe", {
+          const result = await controlWithRecovery(baseUrl, "/cache/probe", {
             root: drive.root, freeBytes: drive.freeBytes, totalBytes: drive.totalBytes
-          }, 30000);
+          }, 30000, recovery);
           if (result.mode === "usb" && (!best || result.writeMBps > best.writeMBps)) {
             best = result; bestDrive = drive;
           } else if (!best) {
@@ -200,19 +296,27 @@ export const TizenUsbTorrentCache = {
           }
         } catch (error) {
           if (String(error?.message || error).includes("HTTP 409")) busy = true;
-          if (!best) state = { mode: "memory", reason: String(error?.message || error) };
+          if (retryableServiceError(error)) serviceUnavailable = true;
+          if (!best) {
+            state = retryableServiceError(error) ? unavailableServiceState()
+              : { mode: "memory", reason: String(error?.message || error) };
+          }
         }
       }
       if (best && bestDrive) {
         if (bestDrive !== drives[drives.length - 1]) {
-          best = await control(baseUrl, "/cache/probe", {
+          best = await controlWithRecovery(baseUrl, "/cache/probe", {
             root: bestDrive.root, freeBytes: bestDrive.freeBytes, totalBytes: bestDrive.totalBytes
-          }, 30000);
+          }, 30000, recovery);
         }
         state = { ...best, label: bestDrive.label };
         configuredUrl = best.mode === "usb" ? baseUrl : "";
       } else {
-        await control(baseUrl, "/cache/disable", {}).catch(() => {});
+        // A 409 or failed local transport does not prove the existing cache
+        // is safe to disable. Preserve in-flight playback and retry later.
+        if (!busy && !serviceUnavailable) {
+          await control(baseUrl, "/cache/disable", {}).catch(() => {});
+        }
         configuredUrl = "";
       }
       if (attempt !== generation || !this.isEnabled()) {
@@ -227,15 +331,30 @@ export const TizenUsbTorrentCache = {
       return state;
     })().catch((error) => {
       configuredUrl = "";
-      state = { mode: "memory", reason: String(error?.message || error) };
+      state = retryableServiceError(error) ? unavailableServiceState()
+        : { mode: "memory", reason: String(error?.message || error) };
       return state;
     }).finally(() => { pending = null; });
     return pending;
   },
   async getState(baseUrl) {
     lastUrl = baseUrl;
+    if (this.isEnabled() && baseUrl) await this.configure(baseUrl);
+    if (state.issue === "service-unavailable") {
+      // Do not launch another expensive service start for the status endpoint
+      // immediately after a failed probe. The next settings refresh retries
+      // after the bounded configure backoff.
+      return { ...state, enabled: this.isEnabled(), configured: false,
+        active: null, cacheBytes: 0, profile: "memory" };
+    }
     let server = null;
-    try { server = await control(baseUrl, "/cache/status"); } catch (_) {}
+    try { server = await controlWithRecovery(baseUrl, "/cache/status"); }
+    catch (error) {
+      if (retryableServiceError(error) && this.isEnabled()) {
+        configuredUrl = "";
+        state = unavailableServiceState();
+      }
+    }
     return { ...state, enabled: this.isEnabled(), configured: Boolean(server?.configured),
       active: server?.active || null,
       cacheBytes: server?.cacheBytes || state.cacheBytes || 0,

@@ -416,6 +416,8 @@ object TmdbCollectionSourceResolver {
             popularity = popularity,
             voteCount = voteCount,
             imdbRating = voteAverage?.let { ((it * 10).roundToInt() / 10.0).toString() },
+            genreIds = genreIds,
+            isAdult = adult == true,
         )
     }
 
@@ -434,6 +436,8 @@ object TmdbCollectionSourceResolver {
             popularity = popularity,
             voteCount = voteCount,
             imdbRating = voteAverage?.let { ((it * 10).roundToInt() / 10.0).toString() },
+            genreIds = genreIds,
+            isAdult = adult == true,
         )
     }
 
@@ -463,6 +467,8 @@ object TmdbCollectionSourceResolver {
             popularity = popularity,
             voteCount = voteCount,
             imdbRating = voteAverage?.let { ((it * 10).roundToInt() / 10.0).toString() },
+            genreIds = genreIds,
+            isAdult = adult == true,
         )
     }
 
@@ -492,6 +498,8 @@ object TmdbCollectionSourceResolver {
             popularity = popularity,
             voteCount = voteCount,
             imdbRating = voteAverage?.let { ((it * 10).roundToInt() / 10.0).toString() },
+            genreIds = genreIds,
+            isAdult = adult == true,
         )
     }
 
@@ -667,6 +675,8 @@ private data class TmdbPersonCreditCast(
     @SerialName("vote_average") val voteAverage: Double? = null,
     @SerialName("vote_count") val voteCount: Int? = null,
     val popularity: Double? = null,
+    val adult: Boolean? = null,
+    @SerialName("genre_ids") val genreIds: List<Int> = emptyList(),
 )
 
 @Serializable
@@ -686,6 +696,8 @@ private data class TmdbPersonCreditCrew(
     @SerialName("vote_average") val voteAverage: Double? = null,
     @SerialName("vote_count") val voteCount: Int? = null,
     val popularity: Double? = null,
+    val adult: Boolean? = null,
+    @SerialName("genre_ids") val genreIds: List<Int> = emptyList(),
 )
 
 @Serializable
@@ -704,6 +716,8 @@ private data class TmdbListItem(
     @SerialName("vote_average") val voteAverage: Double? = null,
     @SerialName("vote_count") val voteCount: Int? = null,
     val popularity: Double? = null,
+    val adult: Boolean? = null,
+    @SerialName("genre_ids") val genreIds: List<Int> = emptyList(),
 )
 
 @Serializable
@@ -717,4 +731,6 @@ private data class TmdbCollectionPart(
     @SerialName("vote_average") val voteAverage: Double? = null,
     @SerialName("vote_count") val voteCount: Int? = null,
     val popularity: Double? = null,
+    val adult: Boolean? = null,
+    @SerialName("genre_ids") val genreIds: List<Int> = emptyList(),
 )

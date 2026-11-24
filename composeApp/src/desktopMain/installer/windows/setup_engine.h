@@ -56,6 +56,7 @@ struct Existing {
     std::wstring launcher;
     bool startMenu = true;
     bool desktop = true;
+    bool tvInstaller = false;
 
     bool legacy = false;  // installed by the jpackage MSI/EXE
     std::wstring legacyProductCode;
@@ -76,12 +77,15 @@ struct PayloadSource {
     std::wstring problem;
 };
 
-enum class Phase { Idle, Closing, Extracting, Legacy, Finishing, Removing, Done };
+enum class Phase {
+    Idle, Downloading, UnpackingTv, Closing, Extracting, Legacy, Installing, InstallingTv, Finishing, Removing, Done
+};
 
 struct InstallRequest {
     std::wstring dir;
     bool startMenu = true;
     bool desktop = true;
+    bool tvInstaller = false;
 };
 
 class Engine {
@@ -91,10 +95,12 @@ public:
     const Identity& identity() const { return identity_; }
     const PayloadSource& source() const { return source_; }
     const Existing& existing() const { return existing_; }
+    bool hasTvInstaller() const;
+    bool canDownloadTvInstaller() const;
 
     std::wstring defaultDir() const;
     // Empty when the folder can take the install, otherwise a sentence for the UI.
-    std::wstring validateDir(const std::wstring& dir) const;
+    std::wstring validateDir(const std::wstring& dir, bool withTvInstaller = false) const;
     bool isAppRunning(const std::wstring& dir) const;
 
     bool install(const InstallRequest& request);
@@ -107,11 +113,11 @@ public:
     std::wstring currentFile() const;
 
 private:
-    bool extract(const std::wstring& staging);
+    bool extract(const std::wstring& staging, double startProgress);
     bool writeUninstaller(const std::wstring& dir);
     void removeLegacyMsi();
-    bool swapInto(const std::wstring& staging, const std::wstring& dir);
-    bool mergeInto(const std::wstring& staging, const std::wstring& dir);
+    bool swapInto(const std::wstring& staging, const std::wstring& dir, bool withTvInstaller);
+    bool mergeInto(const std::wstring& staging, const std::wstring& dir, bool withTvInstaller);
     void writeShortcuts(const InstallRequest& request);
     void registerUninstall(const InstallRequest& request);
     bool closeRunning(const std::vector<std::wstring>& dirs);

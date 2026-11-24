@@ -2779,6 +2779,7 @@
     <string name="home.removeContinueWatching">Remove from Continue Watching</string>
     <string name="player.track.audioDescription">Audio description</string>
     <string name="player.track.commentary">Commentary</string>
+    <string name="player.track.original">Original</string>
     <string name="player.track.stereo">Stereo</string>
     <string name="player.track.surround">Surround</string>
     <string name="sidebar.profileFallback">Profile</string>
@@ -3443,6 +3444,8 @@
     <string name="sources_plays_best_title">This TV plays best</string>
     <string name="sources_plays_best_body">%1$s. Sources it may not play are marked.</string>
     <string name="sources_warning_plays_as_hdr10">Plays as HDR10</string>
+    <string name="sources_warning_video_may_not_play">Video may not play</string>
+    <string name="sources_warning_4k_not_supported">4K is not supported by this TV</string>
     <string name="sources_warning_audio_may_not_play">Audio may not play</string>
     <string name="usb_cache_offer_title">USB storage connected</string>
     <string name="usb_cache_offer_description">Use this USB drive for temporary torrent caching? Starlit will measure its speed before playback, keep free space available, and fall back to RAM if needed.</string>
@@ -3452,4 +3455,28 @@
     <string name="player_chapter_intro">Intro</string>
     <string name="player_chapter_recap">Recap</string>
     <string name="player_chapter_credits">Credits</string>
+    <string name="tv_phone_manage_title">Manage with phone</string>
+    <string name="tv_phone_scan_instruction">Scan the QR code to manage add-ons and plugins.</string>
+    <string name="tv_phone_pairing_code">Code: {{code}}</string>
+    <string name="tv_phone_preparing">Connecting…</string>
+    <string name="tv_phone_waiting">Waiting for phone</string>
+    <string name="tv_phone_approval_required">Approve the phone on this TV.</string>
+    <string name="tv_phone_verify_title">Approve phone?</string>
+    <string name="tv_phone_verify_code">Match this code on your phone:</string>
+    <string name="tv_phone_approve">Approve</string>
+    <string name="tv_phone_connected">Phone connected</string>
+    <string name="tv_phone_connected_hint">Manage add-ons and plugins on your phone.</string>
+    <string name="tv_phone_change_applied">Change applied.</string>
+    <string name="tv_phone_action_failed">Could not apply change.</string>
+    <string name="tv_phone_unavailable">Connection unavailable</string>
+    <string name="tv_phone_disconnect">Disconnect</string>
+    <string name="tv_phone_connection_error">Check the connection and try again.</string>
+
+    <!-- Optional, privacy-limited reliability diagnostics (TV). -->
+    <string name="diagnostics_consent_usage">Anonymous diagnostics</string>
+    <string name="diagnostics_consent_usage_detail">App launches; Technical errors, warnings and playback/download outcomes by app version and platform. No screen visits or persistent device ID.</string>
+    <string name="diagnostics_consent_privacy">No titles, searches, accounts, URLs or raw logs. A temporary random token limits abuse; records are kept up to 30 days.</string>
+    <string name="addon_tracking_consent_title">Tracking addon</string>
+    <string name="addon_tracking_consent_body">%1$s can receive your playback actions (play, pause, stop and position) and library updates (added, removed, watched, unwatched). This information leaves Starlit and goes to the addon provider.</string>
+    <string name="addon_tracking_consent_checkbox">I agree to share playback and library activity with this addon</string>
 </resources>

@@ -205,6 +205,7 @@ internal fun TrackingProviderCards(
         )
         MdbListProviderCard(Modifier.fillMaxWidth())
         com.nuvio.app.features.myanimelist.MyAnimeListSettingsCard()
+        com.nuvio.app.features.myanimelist.ListServicesSettingsCard()
     }
 
     if (showSyncInfo) {

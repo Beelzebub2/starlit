@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="addons_tracking_consent_title">ส่วนเสริมติดตามกิจกรรม</string>
+    <string name="addons_tracking_consent_body">%1$s อาจได้รับข้อมูลการเล่น (เริ่ม หยุดชั่วคราว หยุด และตำแหน่ง) และการเปลี่ยนแปลงคลัง (เพิ่ม ลบ ดูแล้ว ยังไม่ดู) ข้อมูลนี้จะถูกส่งออกจาก Starlit ไปยังผู้ให้บริการส่วนเสริม</string>
+    <string name="addons_tracking_consent_checkbox">ฉันยินยอมแบ่งปันกิจกรรมการเล่นและคลังกับส่วนเสริมนี้</string>
+</resources>

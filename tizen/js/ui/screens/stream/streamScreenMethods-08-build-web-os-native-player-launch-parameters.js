@@ -242,7 +242,7 @@ export function createStreamScreenMethods08() {
       const summaryLine = describeStreamSummary(summary);
       const warnings = getPlaybackWarnings(summary);
       const qualityBlock = summary.resolution
-        ? `<div class="stream-route-quality" aria-hidden="true"><span class="stream-route-quality-res">${escapeHtml(summary.resolution)}</span>${summary.dynamicRange ? `<span class="stream-route-quality-range">${escapeHtml(summary.dynamicRange)}</span>` : ""}</div>`
+        ? `<div class="stream-route-quality" data-tier="${escapeHtml(summary.resolutionId || "")}"${summary.dynamicRange && summary.dynamicRange !== "SDR" ? ' data-hdr="true"' : ""} aria-hidden="true"><span class="stream-route-quality-res">${escapeHtml(summary.resolution)}</span>${summary.dynamicRange ? `<span class="stream-route-quality-range">${escapeHtml(summary.dynamicRange)}</span>` : ""}</div>`
         : "";
       const metaParts = [summary.sizeText, stream.addonName || ""].filter(Boolean);
       const metaLine =

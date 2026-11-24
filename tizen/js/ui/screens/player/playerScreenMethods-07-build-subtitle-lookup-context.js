@@ -26,9 +26,7 @@ export function createPlayerScreenMethods07() {
       const type = normalizeItemType(this.params?.itemType || "movie");
       const identity = this.buildPlaybackIdentityContext();
       const rawItemId = String(this.params?.itemId || "").trim();
-      const baseItemId = rawItemId ? String(rawItemId.split(":")[0] || "").trim() : "";
-      const imdbItemId = normalizePlayableImdbId(identity.imdbId);
-      const id = imdbItemId || baseItemId || rawItemId || "";
+      const id = rawItemId || identity.imdbId || String(this.params?.videoId || "").trim();
       const currentStream = this.getCurrentStreamCandidate();
       const rawStream = currentStream?.raw || currentStream || {};
       const behaviorHints = {
@@ -43,7 +41,7 @@ export function createPlayerScreenMethods07() {
         // The exact episode id used by the player is authoritative, matching Android TV.
         if (routeVideoId) {
           videoId = routeVideoId;
-        } else if (id && Number.isFinite(season) && season > 0 && Number.isFinite(episode) && episode > 0) {
+        } else if (id && identity.season != null && identity.episode != null) {
           videoId = `${id}:${season}:${episode}`;
         }
       }
@@ -51,8 +49,10 @@ export function createPlayerScreenMethods07() {
         type,
         id,
         videoId,
-        season: this.params?.season ?? null,
-        episode: this.params?.episode ?? null,
+        imdbId: identity.imdbId,
+        tmdbId: identity.tmdbId,
+        season: identity.season,
+        episode: identity.episode,
         title: this.params?.playerTitle || this.params?.itemTitle || null,
         year: this.params?.playerReleaseYear || this.params?.year || null,
         videoHash: behaviorHints.videoHash || currentStream?.videoHash || rawStream.videoHash || this.params?.videoHash || null,
@@ -368,7 +368,7 @@ export function createPlayerScreenMethods07() {
       const videoId = this.params?.videoId || "";
       const isSeries = isSeriesItemType(identity.itemType);
       const hasIdentity = isSeries
-        ? Boolean(identity.imdbId && identity.season && identity.episode)
+        ? Boolean((identity.imdbId || identity.tmdbId || contentId || videoId) && identity.season != null && identity.episode)
         : Boolean(identity.imdbId || identity.tmdbId || contentId || videoId);
       if (!hasIdentity) {
         this.skipIntroApiIntervals = [];
@@ -379,14 +379,15 @@ export function createPlayerScreenMethods07() {
         if (this.skipIntervalsRequestToken !== requestToken) {
           return;
         }
-        this.skipIntervals = mergeSkipIntervals(this.skipIntroApiIntervals, this.skipIntroChapterIntervals, !isSeries);
+        this.skipIntervals = mergeSkipIntervals(this.skipIntroApiIntervals, this.skipIntroChapterIntervals);
         this.updateActiveSkipInterval(this.getPlaybackCurrentSeconds());
       };
       const apiPromise = hasIdentity
         ? (isSeries
             ? skipIntroRepository.getSkipIntervals(identity.imdbId, identity.season, identity.episode, {
-                contentId: this.params?.itemId,
-                videoId: this.params?.videoId
+                contentId,
+                videoId,
+                tmdbId: identity.tmdbId
               })
             : skipIntroRepository.getMovieSkipIntervals({
                 imdbId: identity.imdbId,
@@ -415,7 +416,7 @@ export function createPlayerScreenMethods07() {
           return;
         }
         const durationMs = Math.round(Number(this.getPlaybackDurationSeconds() || 0) * 1000);
-        this.skipIntroChapterIntervals = chapterSkipIntervals(chapters, durationMs);
+        this.skipIntroChapterIntervals = chapterSkipIntervals(chapters, durationMs, !isSeries);
         if (this.skipIntroChapterIntervals.length) {
           applyIntervals();
         }
@@ -441,13 +442,13 @@ export function createPlayerScreenMethods07() {
       // first frames, so the panel list must be published here too.
       this.applyPlayerChapters?.(chapters);
       const durationMs = Math.round(Number(this.getPlaybackDurationSeconds() || 0) * 1000);
-      const chapterIntervals = chapterSkipIntervals(chapters, durationMs);
+      const isSeries = isSeriesItemType(this.buildPlaybackIdentityContext().itemType);
+      const chapterIntervals = chapterSkipIntervals(chapters, durationMs, !isSeries);
       if (!chapterIntervals.length) {
         return;
       }
-      const isSeries = isSeriesItemType(this.buildPlaybackIdentityContext().itemType);
       this.skipIntroChapterIntervals = chapterIntervals;
-      this.skipIntervals = mergeSkipIntervals(this.skipIntroApiIntervals, this.skipIntroChapterIntervals, !isSeries);
+      this.skipIntervals = mergeSkipIntervals(this.skipIntroApiIntervals, this.skipIntroChapterIntervals);
       this.updateActiveSkipInterval(this.getPlaybackCurrentSeconds());
     }
   };

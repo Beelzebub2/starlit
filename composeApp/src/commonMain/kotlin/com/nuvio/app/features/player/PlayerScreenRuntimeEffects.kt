@@ -1,5 +1,6 @@
 package com.nuvio.app.features.player
 
+import com.nuvio.app.features.addons.AddonPlayerAction
 import com.nuvio.app.core.i18n.localizedSeasonEpisodeCode
 import com.nuvio.app.core.diagnostics.UsageDiagnostics
 import com.nuvio.app.core.diagnostics.UsageEvent
@@ -28,7 +29,7 @@ import com.nuvio.app.features.player.skip.AutoSkipSegmentType
 import com.nuvio.app.features.player.skip.NextEpisodeInfo
 import com.nuvio.app.features.player.skip.PlayerNextEpisodeRules
 import com.nuvio.app.features.player.skip.SkipIntroRepository
-import com.nuvio.app.features.player.skip.alignOpeningsToChapters
+import com.nuvio.app.features.player.skip.resolvePlaybackSkipIntervals
 import com.nuvio.app.features.player.skip.autoSkipKey
 import com.nuvio.app.features.player.skip.autoSkipKeysCompletedBy
 import com.nuvio.app.features.player.skip.shouldAutoSkip
@@ -113,23 +114,52 @@ internal fun PlayerScreenRuntime.BindPlayerRuntimeEffects() {
             isLoading = playbackSnapshot.isLoading,
             thresholdPercent = myAnimeListPlaybackUpdateThresholdPercent(),
         )
+    var malEpisodeStartObserved by remember(
+        profileId, parentMetaType, parentMetaId, activeVideoId, activeSeasonNumber, activeEpisodeNumber,
+    ) { mutableStateOf(false) }
+    val malPlayingNearBeginning = !privatePlayback && isDesktop &&
+        playbackSnapshotKey == activePlaybackKey &&
+        playbackSnapshot.isPlaying && !playbackSnapshot.isLoading &&
+        playbackSnapshot.durationMs > 0L &&
+        playbackSnapshot.positionMs in 0L..(playbackSnapshot.durationMs / 5L)
+    LaunchedEffect(profileId, parentMetaId, activeVideoId, activeSeasonNumber, activeEpisodeNumber, malPlayingNearBeginning) {
+        if (malPlayingNearBeginning) malEpisodeStartObserved = true
+    }
+    // Starting a rewatch and completing an episode are distinct events. The latter must
+    // not be inferred from the configurable 55-95% start threshold alone. A stream
+    // resumed near its end must not count as another completed rewatch.
+    val malCompletionReached = eligibleForMalUpdate && malEpisodeStartObserved &&
+        shouldUpdateMalAfterPlayback(
+            positionMs = playbackSnapshot.positionMs,
+            durationMs = playbackSnapshot.durationMs,
+            isPlaying = playbackSnapshot.isPlaying,
+            isLoading = playbackSnapshot.isLoading,
+            thresholdPercent = 95,
+        )
+    val malPlaybackPhase = when {
+        malCompletionReached -> 2
+        eligibleForMalUpdate && malEpisodeStartObserved -> 1
+        else -> 0
+    }
     LaunchedEffect(
         profileId, parentMetaType, parentMetaId, activePlaybackKey,
-        playerMeta, eligibleForMalUpdate,
+        playerMeta, malPlaybackPhase, activeSeasonNumber, activeEpisodeNumber,
     ) {
         val meta = playerMeta
-        if (!eligibleForMalUpdate ||
+        if (malPlaybackPhase == 0 ||
             meta == null || !isLikelyMyAnimeListAnime(meta)) return@LaunchedEffect
-        val key = "$profileId:$parentMetaType:$parentMetaId:$activePlaybackKey"
+        val key = "$profileId:$parentMetaType:$parentMetaId:$activePlaybackKey:$malPlaybackPhase"
         if (key in malRewatchAttempted) return@LaunchedEffect
         try {
-            markMyAnimeListRewatchOnPlayback(
+            if (markMyAnimeListRewatchOnPlayback(
                 meta = meta,
                 playbackProfileId = profileId,
                 positionMs = playbackSnapshot.positionMs,
                 durationMs = playbackSnapshot.durationMs,
-            )
-            malRewatchAttempted += key
+                seasonNumber = activeSeasonNumber,
+                episodeNumber = activeEpisodeNumber,
+                completionReached = malPlaybackPhase == 2,
+            )) malRewatchAttempted += key
         } catch (e: CancellationException) {
             throw e
         } catch (_: Exception) {
@@ -330,7 +360,12 @@ internal fun PlayerScreenRuntime.BindPlayerRuntimeEffects() {
         addonSubtitleFetchKey,
     ) {
         if (activeSourceUrl.startsWith("file:") && externalSubtitles.isNotEmpty()) return@LaunchedEffect
-        val fetchKey = addonSubtitleFetchKey ?: return@LaunchedEffect
+        val fetchKey = addonSubtitleFetchKey
+        if (fetchKey == null) {
+            SubtitleRepository.clear()
+            autoFetchedAddonSubtitlesForKey = null
+            return@LaunchedEffect
+        }
         if (autoFetchedAddonSubtitlesForKey == fetchKey) return@LaunchedEffect
         autoFetchedAddonSubtitlesForKey = fetchKey
         fetchAddonSubtitlesForActiveItem()
@@ -509,14 +544,22 @@ private fun PlayerScreenRuntime.BindPlayerUiVisibilityEffects() {
             flushWatchProgress(TrackingScrobbleAction.PAUSE)
         }
 
-        if (playbackSnapshot.isPlaying && pendingSeekScrobbleRestart) {
+        if (playbackSnapshot.isPlaying &&
+            (!previousIsPlaying || activeAddonPlayerEventTarget == null)
+        ) {
+            emitAddonPlayerEvent(AddonPlayerAction.START)
+        }
+
+        if (playbackSnapshot.isPlaying && canPersistPlaybackProgress() && pendingSeekScrobbleRestart) {
             pendingSeekScrobbleRestart = false
             if (hasRequestedScrobbleStartForCurrentItem) {
                 emitTrackingSeekScrobbleStart()
             } else {
                 emitTrackingScrobbleStart()
             }
-        } else if (!previousIsPlaying && playbackSnapshot.isPlaying) {
+        } else if (playbackSnapshot.isPlaying && canPersistPlaybackProgress() &&
+            !hasRequestedScrobbleStartForCurrentItem
+        ) {
             emitTrackingScrobbleStart()
         }
 
@@ -569,6 +612,7 @@ private fun PlayerScreenRuntime.BindPlayerMetadataAndSkipEffects() {
         parentMetaId,
         parentMetaType,
         contentType,
+        activeSourceUrl,
         playerSettingsUiState.skipIntroEnabled,
         playerSettingsUiState.animeSkipEnabled,
         playerSettingsUiState.animeSkipClientId,
@@ -609,16 +653,22 @@ private fun PlayerScreenRuntime.BindPlayerMetadataAndSkipEffects() {
         activeSourceUrl,
         playbackSnapshot.durationMs,
         playbackSnapshot.isLoading,
+        playerSettingsUiState.skipIntroEnabled,
     ) {
-        if (playerControllerSourceUrl != activeSourceUrl || playbackSnapshot.durationMs <= 0) {
+        if (!playerSettingsUiState.skipIntroEnabled ||
+            playerControllerSourceUrl != activeSourceUrl || playbackSnapshot.durationMs <= 0
+        ) {
             skipIntervals = emptyList()
             return@LaunchedEffect
         }
         // Keep the current file's alignment and button dismissal during buffering.
         if (playbackSnapshot.isLoading) return@LaunchedEffect
-        val chapters = playerController?.getChapterStarts().orEmpty()
-        // Keep provider data unchanged so switching sources always uses that file's chapters.
-        skipIntervals = providerSkipIntervals.alignOpeningsToChapters(chapters)
+        skipIntervals = resolvePlaybackSkipIntervals(
+            providerIntervals = providerSkipIntervals,
+            chapters = playerController?.getPlaybackChapters().orEmpty(),
+            durationMs = playbackSnapshot.durationMs,
+            isMovie = (contentType ?: parentMetaType).equals("movie", ignoreCase = true),
+        )
     }
 
     LaunchedEffect(
@@ -925,6 +975,8 @@ internal fun PlayerScreenRuntime.tryRefreshCredentialedSourceAfterError(message:
             stopActiveP2pStream()
             activeSourceUrl = refreshedUrl
             activeSourceAudioUrl = null
+            externalSubtitles = stream.externalSubtitles
+            activeSubtitleRequestExtra = stream.subtitleRequestExtra()
             activeSourceHeaders = sanitizePlaybackHeaders(stream.behaviorHints.proxyHeaders?.request)
             activeSourceResponseHeaders = sanitizePlaybackResponseHeaders(stream.behaviorHints.proxyHeaders?.response)
             activeStreamType = stream.streamType

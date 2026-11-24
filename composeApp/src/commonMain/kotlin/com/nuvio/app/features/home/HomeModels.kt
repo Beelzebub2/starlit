@@ -24,6 +24,9 @@ data class MetaPreview(
     val watchLaterEpisode: com.nuvio.app.features.watchlater.WatchLaterEpisode? = null,
     /** Date explicitly supplied by a catalogue/list provider; never inferred from fetch time. */
     val dateAdded: String? = null,
+    val ageRating: String? = null,
+    val isAdult: Boolean = false,
+    val genreIds: List<Int> = emptyList(),
 )
 
 fun MetaPreview.stableKey(): String = "$type:$id"

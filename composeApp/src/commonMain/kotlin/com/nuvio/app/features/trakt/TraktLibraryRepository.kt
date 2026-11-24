@@ -7,12 +7,14 @@ import com.nuvio.app.features.library.LibraryItem
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
@@ -50,6 +52,17 @@ data class TraktLibraryUiState(
     val errorMessage: String? = null,
 )
 
+/**
+ * Desired membership that changes only [watchlistKey]: every other known list (tabs plus whatever the title is
+ * already in) keeps exactly its current value, so nothing but the watchlist can be added or removed.
+ */
+internal fun watchlistOnlyMembership(
+    tabKeys: Collection<String>,
+    membership: Set<String>,
+    watchlistKey: String,
+    inWatchlist: Boolean,
+): Map<String, Boolean> = (tabKeys + membership).associateWith { key -> key in membership } + (watchlistKey to inWatchlist)
+
 object TraktLibraryRepository {
     private val log = Logger.withTag("TraktLibrary")
     private val json = Json {
@@ -62,7 +75,9 @@ object TraktLibraryRepository {
     val uiState: StateFlow<TraktLibraryUiState> = _uiState.asStateFlow()
 
     private var hasLoaded = false
+    private val refreshJobMutex = Mutex()
     private val refreshMutex = Mutex()
+    private var refreshJob: Job? = null
     private var lastRefreshAtMs: Long = 0L
     private var lastListTabsRefreshAtMs: Long = 0L
 
@@ -132,6 +147,22 @@ object TraktLibraryRepository {
 
     private suspend fun refresh(force: Boolean) {
         ensureLoaded()
+        val job = refreshJobMutex.withLock {
+            val runningRefresh = refreshJob?.takeIf(Job::isActive)
+            if (runningRefresh != null) {
+                // Automatic callers must not queue behind an already running request: while the
+                // network is unavailable the request can stay suspended and every queued waiter
+                // would be retained, eventually exhausting the heap.
+                if (!force) return
+                runningRefresh
+            } else {
+                scope.launch { refreshOnce(force) }.also { refreshJob = it }
+            }
+        }
+        job.join()
+    }
+
+    private suspend fun refreshOnce(force: Boolean) {
         refreshMutex.withLock {
             val now = TraktPlatformClock.nowEpochMs()
             val current = _uiState.value
@@ -241,6 +272,44 @@ object TraktLibraryRepository {
         }
     }
 
+    /**
+     * Adds [item] to or removes it from the Trakt watchlist and nothing else. Unlike [applyMembershipChanges],
+     * no other list key is diffed or written, so a refresh landing mid-call can never drop a personal-list entry.
+     */
+    suspend fun setWatchlistMembership(item: LibraryItem, inWatchlist: Boolean) {
+        ensureLoaded()
+        val headers = TraktAuthRepository.authorizedHeaders() ?: throw IllegalStateException("Trakt is not connected")
+        ensureFresh()
+
+        var wasInWatchlist = false
+        _uiState.update { state ->
+            wasInWatchlist = WATCHLIST_KEY in state.membershipByContent[contentKey(item.id, item.type)].orEmpty()
+            watchlistOnlyState(state, item, inWatchlist)
+        }
+        try {
+            if (inWatchlist) addToWatchlist(headers, item) else removeFromWatchlist(headers, item)
+        } catch (error: Throwable) {
+            _uiState.update { state -> watchlistOnlyState(state, item, wasInWatchlist) }
+            throw error
+        }
+    }
+
+    /** [state] with only the watchlist membership of [item] changed; every other list keeps its current value. */
+    internal fun watchlistOnlyState(
+        state: TraktLibraryUiState,
+        item: LibraryItem,
+        inWatchlist: Boolean,
+    ): TraktLibraryUiState = applyOptimisticMembershipChanges(
+        state = state,
+        item = item,
+        desiredMembership = watchlistOnlyMembership(
+            tabKeys = state.listTabs.map(TraktListTab::key),
+            membership = state.membershipByContent[contentKey(item.id, item.type)].orEmpty(),
+            watchlistKey = WATCHLIST_KEY,
+            inWatchlist = inWatchlist,
+        ),
+    )
+
     private fun applyOptimisticMembershipChanges(
         state: TraktLibraryUiState,
         item: LibraryItem,
@@ -293,7 +362,7 @@ object TraktLibraryRepository {
         return base.copy(savedAtEpochMs = savedAt)
     }
 
-    private fun rebuildUiState(
+    internal fun rebuildUiState(
         listTabs: List<TraktListTab>,
         entriesByList: Map<String, List<LibraryItem>>,
     ): TraktLibraryUiState {

@@ -20,6 +20,8 @@ param(
     [string] $LegacyUpgradeCode = '',
     [string] $Arch = 'x64',
     [string] $Vcvars = '',
+    # Explicit opt-in for an independently built, unverified TV preview tool.
+    [string] $TvInstallerDir = '',
     # Local UI work only: keep payload.bin from the last run instead of packing again.
     [switch] $ReusePayload
 )
@@ -55,6 +57,24 @@ if ([string]::IsNullOrWhiteSpace($Vcvars) -or -not (Test-Path -LiteralPath $Vcva
 New-Item -ItemType Directory -Force -Path $WorkDir | Out-Null
 $WorkDir = (Resolve-Path -LiteralPath $WorkDir).Path
 
+# Keep the jpackage app image untouched: a failed optional component build must
+# not pollute the next Windows installer build or ship a stale TV executable.
+$packageImage = $AppImage
+if (-not [string]::IsNullOrWhiteSpace($TvInstallerDir)) {
+    $TvInstallerDir = (Resolve-Path -LiteralPath $TvInstallerDir -ErrorAction Stop).Path
+    if (-not (Test-Path -LiteralPath (Join-Path $TvInstallerDir 'Starlit TV Installer.exe'))) {
+        throw 'The TV installer directory is missing its app executable.'
+    }
+    $packageImage = Join-Path $WorkDir 'app-with-tv-installer'
+    if (Test-Path -LiteralPath $packageImage) { Remove-Item -LiteralPath $packageImage -Recurse -Force }
+    New-Item -ItemType Directory -Path $packageImage | Out-Null
+    Copy-Item -Path (Join-Path $AppImage '*') -Destination $packageImage -Recurse -Force
+    $tools = Join-Path $packageImage 'tools\Starlit TV Installer'
+    New-Item -ItemType Directory -Path $tools -Force | Out-Null
+    Copy-Item -Path (Join-Path $TvInstallerDir '*') -Destination $tools -Recurse -Force
+    Write-Host 'Including optional TV installer preview in the Windows setup payload'
+}
+
 # The resource script reads the version from here, so the stub's file
 # properties match the release.
 $numeric = @(($Version -replace '[-+].*$', '').Split('.') | ForEach-Object { [int]$_ })
@@ -67,7 +87,7 @@ while ($numeric.Count -lt 4) { $numeric += 0 }
 ) | Set-Content -LiteralPath (Join-Path $WorkDir 'setup_version.h') -Encoding ASCII
 
 $flags = '/nologo /EHsc /std:c++17 /O2 /MT /W3 /DUNICODE /D_UNICODE /DNOMINMAX /DWIN32_LEAN_AND_MEAN /D_CRT_SECURE_NO_WARNINGS'
-$libs = 'Ole32.lib User32.lib Gdi32.lib Dwmapi.lib Shell32.lib Shlwapi.lib Advapi32.lib Cabinet.lib Msi.lib Shcore.lib Version.lib'
+$libs = 'Ole32.lib User32.lib Gdi32.lib Dwmapi.lib Shell32.lib Shlwapi.lib Advapi32.lib Winhttp.lib Cabinet.lib Msi.lib Shcore.lib Version.lib'
 # Setup runs from Downloads or %TEMP%, where a planted DLL could shadow a system
 # one: load static imports from System32 only, and delay-load the DLLs that are
 # not KnownDLLs so they resolve after SetDefaultDllDirectories in wWinMain.
@@ -81,7 +101,7 @@ $bat = Join-Path $WorkDir 'build-installer.bat'
     "rc /nologo /i `"$WorkDir`" /fo `"$WorkDir\setup.res`" setup.rc"
     'if errorlevel 1 exit /b %errorlevel%'
     "cd /d `"$WorkDir`""
-    "cl $flags /I`"$webView2Include`" `"$source\setup.cpp`" `"$source\setup_engine.cpp`" setup.res /Fesetup.exe /link /SUBSYSTEM:WINDOWS /MANIFEST:NO $dllSafety `"$webView2Loader`" $libs"
+    "cl $flags /I`"$webView2Include`" `"$source\setup.cpp`" `"$source\setup_engine.cpp`" `"$source\tv_installer_download.cpp`" setup.res /Fesetup.exe /link /SUBSYSTEM:WINDOWS /MANIFEST:NO $dllSafety `"$webView2Loader`" $libs"
     'if errorlevel 1 exit /b %errorlevel%'
     "cl $flags `"$source\pack.cpp`" /Fepack.exe /link Cabinet.lib"
     'exit /b %errorlevel%'
@@ -96,7 +116,7 @@ if ($ReusePayload -and (Test-Path -LiteralPath $payload)) {
     Write-Host 'Reusing the existing payload'
 } else {
     Write-Host "Packing $AppImage"
-    & (Join-Path $WorkDir 'pack.exe') $AppImage $payload "name=$ProductName" "version=$Version" "publisher=$Publisher" "exe=$LauncherExe" "legacyUpgradeCode=$LegacyUpgradeCode"
+    & (Join-Path $WorkDir 'pack.exe') $packageImage $payload "name=$ProductName" "version=$Version" "publisher=$Publisher" "exe=$LauncherExe" "legacyUpgradeCode=$LegacyUpgradeCode"
     if ($LASTEXITCODE -ne 0) { throw "Packing the app image failed with exit code $LASTEXITCODE." }
 }
 

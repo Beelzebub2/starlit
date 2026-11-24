@@ -86,15 +86,51 @@ internal object TraktWatchedShowSnapshotRepository {
         pageClient = TraktWatchedPageClient(platformTraktWatchedHttpEngine),
     )
 
+    /** Separate `extended=full` snapshot so the shared one above keeps returning exactly what its consumers expect. */
+    private val detailedStore = TraktWatchedShowSnapshotStore(
+        pageClient = TraktWatchedPageClient(platformTraktWatchedHttpEngine),
+        extended = TRAKT_WATCHED_SHOWS_DETAILS_EXTENDED,
+    )
+
     suspend fun get(headers: Map<String, String>): List<TraktWatchedShowSnapshotItem> = store.get(headers)
 
-    fun clear() = store.clear()
+    /** Aired episode counts of every watched show, keyed by content id (see [traktAiredEpisodeCounts]). */
+    suspend fun airedEpisodeCounts(headers: Map<String, String>): Map<String, Int> =
+        traktAiredEpisodeCounts(detailedStore.get(headers))
+
+    fun clear() {
+        store.clear()
+        detailedStore.clear()
+    }
+}
+
+/** `extended` value for the detailed watched-shows read; full show info carries `aired_episodes`. */
+internal const val TRAKT_WATCHED_SHOWS_DETAILS_EXTENDED = "full"
+
+/**
+ * Aired episode counts keyed by every content-id form (`tt1`, `tmdb:11`, `trakt:1`). An id that two shows
+ * report with different counts is left out rather than guessed.
+ */
+internal fun traktAiredEpisodeCounts(items: List<TraktWatchedShowSnapshotItem>): Map<String, Int> {
+    val countsById = mutableMapOf<String, MutableSet<Int>>()
+    items.forEach { item ->
+        val show = item.show ?: return@forEach
+        val aired = show.airedEpisodes?.takeIf { it > 0 } ?: return@forEach
+        val ids = show.ids ?: return@forEach
+        listOfNotNull(
+            ids.imdb?.trim()?.takeIf(String::isNotBlank),
+            ids.tmdb?.let { "tmdb:$it" },
+            ids.trakt?.let { "trakt:$it" },
+        ).forEach { id -> countsById.getOrPut(id) { mutableSetOf() }.add(aired) }
+    }
+    return countsById.filterValues { it.size == 1 }.mapValues { (_, counts) -> counts.single() }
 }
 
 internal class TraktWatchedShowSnapshotStore(
     private val pageClient: TraktWatchedPageClient,
     private val nowEpochMs: () -> Long = TraktPlatformClock::nowEpochMs,
     private val cacheTtlMs: Long = WATCHED_SHOW_SNAPSHOT_CACHE_TTL_MS,
+    private val extended: String = WATCHED_SHOWS_EXTENDED,
 ) {
     private val json = Json {
         ignoreUnknownKeys = true
@@ -178,7 +214,7 @@ internal class TraktWatchedShowSnapshotStore(
         var page = 1
         while (page <= WATCHED_MAX_PAGES) {
             val response = pageClient.get(
-                url = "$TRAKT_BASE_URL/sync/watched/shows?page=$page&limit=$WATCHED_PAGE_LIMIT&extended=$WATCHED_SHOWS_EXTENDED",
+                url = "$TRAKT_BASE_URL/sync/watched/shows?page=$page&limit=$WATCHED_PAGE_LIMIT&extended=$extended",
                 headers = headers,
             )
             val pageItems = json.decodeFromString<List<TraktWatchedShowSnapshotItem>>(response.body)
@@ -248,6 +284,8 @@ internal data class TraktWatchedSnapshotMedia(
     @SerialName("title") val title: String? = null,
     @SerialName("year") val year: Int? = null,
     @SerialName("ids") val ids: TraktWatchedSnapshotIds? = null,
+    /** Read from the `extended=full` snapshot for the Trakt list; other consumers of this DTO do not use it. */
+    @SerialName("aired_episodes") val airedEpisodes: Int? = null,
 )
 
 @Serializable

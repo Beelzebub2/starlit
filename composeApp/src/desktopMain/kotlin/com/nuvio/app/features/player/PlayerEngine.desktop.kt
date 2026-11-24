@@ -43,6 +43,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.withContext
+import nuvio.composeapp.generated.resources.*
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 actual fun PlatformPlayerSurface(
@@ -130,7 +132,10 @@ private fun NativePlayerSurface(
 ) {
     val platformDensity = LocalNuvioPlatformDensity.current
     val host = remember { NativePlayerHost() }
-    val controller = remember(host) { NativePlayerController(host) }
+    val playbackErrorMessage = rememberUpdatedState(stringResource(Res.string.player_unable_to_play_stream))
+    val controller = remember(host) {
+        NativePlayerController(host, playbackErrorMessage = { playbackErrorMessage.value })
+    }
     val hostFirstPaintComplete = remember { mutableStateOf(false) }
     val hostFirstFullSizePaintComplete = remember { mutableStateOf(false) }
     val playbackHeaders = remember(sourceHeaders) { sanitizePlaybackHeaders(sourceHeaders) }
@@ -149,8 +154,13 @@ private fun NativePlayerSurface(
     val discordShareEnabled by DiscordShareModeSettings.enabled.collectAsState()
     val discordShareShowWindow by DiscordShareModeSettings.showWindow.collectAsState()
     val surroundUpmixEnabled by SurroundUpmixSettings.enabled.collectAsState()
+    val automaticSurroundEnabled by SurroundUpmixSettings.automaticEnabled.collectAsState()
     val virtualHeadsetUpmixEnabled by SurroundUpmixSettings.headsetEnabled.collectAsState()
     val virtualHeadsetFivePointOneEnabled by SurroundUpmixSettings.headsetFivePointOneEnabled.collectAsState()
+    val automaticSurroundLabel = stringResource(Res.string.settings_playback_surround_automatic)
+    val automaticSurroundActive = stringResource(Res.string.settings_playback_surround_automatic_active)
+    val automaticSurroundFallback = stringResource(Res.string.settings_playback_surround_automatic_fallback)
+    val automaticSurroundChecking = stringResource(Res.string.settings_playback_surround_automatic_checking)
 
     SideEffect {
         onControllerReady(controller)
@@ -218,10 +228,26 @@ private fun NativePlayerSurface(
         }
     }
 
-    LaunchedEffect(controller, surroundUpmixEnabled, virtualHeadsetUpmixEnabled, virtualHeadsetFivePointOneEnabled) {
+    LaunchedEffect(
+        controller,
+        automaticSurroundLabel,
+        automaticSurroundActive,
+        automaticSurroundFallback,
+        automaticSurroundChecking,
+    ) {
+        controller.setAutomaticSurroundLabels(
+            automaticSurroundLabel,
+            automaticSurroundActive,
+            automaticSurroundFallback,
+            automaticSurroundChecking,
+        )
+    }
+
+    LaunchedEffect(controller, automaticSurroundEnabled, surroundUpmixEnabled, virtualHeadsetUpmixEnabled, virtualHeadsetFivePointOneEnabled) {
         withContext(Dispatchers.IO) {
             controller.setSurroundUpmixMode(
                 when {
+                    automaticSurroundEnabled -> 4
                     virtualHeadsetFivePointOneEnabled -> 3
                     virtualHeadsetUpmixEnabled -> 2
                     surroundUpmixEnabled -> 1

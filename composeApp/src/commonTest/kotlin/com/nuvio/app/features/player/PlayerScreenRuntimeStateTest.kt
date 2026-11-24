@@ -304,10 +304,73 @@ class PlayerScreenRuntimeStateTest {
 
         runtime.initialSeekApplied = true
         runtime.updatePlaybackSnapshot(
-            PlayerPlaybackSnapshot(isPlaying = true, positionMs = 442_000L, durationMs = 1_200_000L),
+            PlayerPlaybackSnapshot(isLoading = false, isPlaying = true, positionMs = 442_000L, durationMs = 1_200_000L),
         )
 
         assertEquals(442_000L, runtime.currentLaunch(testPlayerLaunch()).initialPositionMs)
+    }
+
+    @Test
+    fun startupSnapshotsCannotOverwriteResumeBeforeThePlayerReachesIt() {
+        val runtime = PlayerScreenRuntime(testPlayerScreenArgs().copy(initialPositionMs = 610_000L))
+        runtime.initialSeekApplied = true // Native player accepted start=, but has not decoded the seek yet.
+
+        runtime.updatePlaybackSnapshot(PlayerPlaybackSnapshot(
+            isPlaying = true, isLoading = false, positionMs = 32_000L, durationMs = 1_500_000L,
+        ))
+        assertFalse(runtime.canPersistPlaybackProgress())
+        assertEquals(610_000L, runtime.currentLaunch(testPlayerLaunch()).initialPositionMs)
+
+        runtime.updatePlaybackSnapshot(PlayerPlaybackSnapshot(
+            isPlaying = true, isLoading = true, positionMs = 609_000L, durationMs = 1_500_000L,
+        ))
+        assertFalse(runtime.canPersistPlaybackProgress())
+
+        runtime.updatePlaybackSnapshot(PlayerPlaybackSnapshot(
+            isPlaying = true, isLoading = false, positionMs = 609_000L, durationMs = 1_500_000L,
+        ))
+        assertTrue(runtime.canPersistPlaybackProgress())
+        assertEquals(609_000L, runtime.currentLaunch(testPlayerLaunch()).initialPositionMs)
+
+        // Manual rewind after successful resume is an intentional new progress position.
+        runtime.updatePlaybackSnapshot(PlayerPlaybackSnapshot(
+            isPlaying = true, isLoading = false, positionMs = 90_000L, durationMs = 1_500_000L,
+        ))
+        assertTrue(runtime.canPersistPlaybackProgress())
+    }
+
+    @Test
+    fun fractionalResumeAlsoWaitsForTheExpectedDecodedPosition() {
+        val runtime = PlayerScreenRuntime(testPlayerScreenArgs().copy(
+            initialProgressFraction = 0.5f,
+        ))
+        runtime.initialSeekApplied = true
+
+        runtime.updatePlaybackSnapshot(PlayerPlaybackSnapshot(
+            isPlaying = true, isLoading = false, positionMs = 30_000L, durationMs = 1_200_000L,
+        ))
+        assertFalse(runtime.canPersistPlaybackProgress())
+
+        runtime.updatePlaybackSnapshot(PlayerPlaybackSnapshot(
+            isPlaying = true, isLoading = false, positionMs = 599_000L, durationMs = 1_200_000L,
+        ))
+        assertTrue(runtime.canPersistPlaybackProgress())
+    }
+
+    @Test
+    fun freshPlaybackCanSaveOnlyCurrentReadySnapshots() {
+        val runtime = PlayerScreenRuntime(testPlayerScreenArgs())
+        assertFalse(runtime.canPersistPlaybackProgress())
+        runtime.updatePlaybackSnapshot(PlayerPlaybackSnapshot(
+            isPlaying = true, isLoading = true, positionMs = 3_000L, durationMs = 1_200_000L,
+        ))
+        assertFalse(runtime.canPersistPlaybackProgress())
+        runtime.updatePlaybackSnapshot(PlayerPlaybackSnapshot(
+            isPlaying = true, isLoading = false, positionMs = 3_000L, durationMs = 1_200_000L,
+        ))
+        assertTrue(runtime.canPersistPlaybackProgress())
+        runtime.activeSourceUrl = "https://example.com/other-episode.mp4"
+        assertFalse(runtime.canPersistPlaybackProgress())
     }
 
     @Test

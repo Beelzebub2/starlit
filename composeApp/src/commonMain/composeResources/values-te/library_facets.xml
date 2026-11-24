@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="library_filter_genre">శైలి</string>
+    <string name="library_filter_year">సంవత్సరం</string>
+    <string name="library_filter_watched">చూసినవి</string>
+    <string name="library_filter_all">అన్నీ</string>
+    <string name="library_watched_filter_watched">చూసినవి</string>
+    <string name="library_watched_filter_unwatched">చూడనివి</string>
+</resources>

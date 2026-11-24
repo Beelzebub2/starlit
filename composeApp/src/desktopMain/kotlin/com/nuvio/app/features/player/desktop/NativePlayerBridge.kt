@@ -88,6 +88,7 @@ internal object NativePlayerBridge {
     external fun audioTracksJson(handle: Long): String
     external fun subtitleTracksJson(handle: Long): String
     external fun chapterStarts(handle: Long): DoubleArray
+    external fun chaptersJson(handle: Long): String
     external fun selectAudioTrack(handle: Long, trackId: Int)
     external fun selectSubtitleTrack(handle: Long, trackId: Int)
     external fun addSubtitleUrl(handle: Long, url: String)
@@ -133,6 +134,8 @@ internal object NativePlayerBridge {
     fun ensureLoaded() = Unit
 
     fun preloadAsync() {
+        // Load the bridge for window chrome, but start WebView2 only when a player needs it.
+        if (DesktopHostOs.current == DesktopHostOs.WINDOWS) return
         if (!preloadStarted.compareAndSet(false, true)) return
         Thread {
             val controlsPage = runCatching { controlsPageAssets }
@@ -140,9 +143,7 @@ internal object NativePlayerBridge {
                 ?: return@Thread
             // Linux warms the WebKitGTK engine through the same entry point
             // (the bridge maps warmupWebView2 to a hidden WebKitGTK view).
-            if (DesktopHostOs.current == DesktopHostOs.WINDOWS ||
-                DesktopHostOs.current == DesktopHostOs.LINUX
-            ) {
+            if (DesktopHostOs.current == DesktopHostOs.LINUX) {
                 runCatching { warmupWebView2(controlsPage.url) }
             }
         }.apply {
@@ -150,9 +151,7 @@ internal object NativePlayerBridge {
             isDaemon = true
             start()
         }
-        if (DesktopHostOs.current == DesktopHostOs.WINDOWS ||
-            DesktopHostOs.current == DesktopHostOs.LINUX
-        ) {
+        if (DesktopHostOs.current == DesktopHostOs.LINUX) {
             Runtime.getRuntime().addShutdownHook(
                 Thread {
                     runCatching { shutdownWebView2Warmup() }
@@ -300,6 +299,7 @@ internal object NativePlayerBridge {
                 .toByteArray(Charsets.UTF_8),
             "controls.js" to readResourceBytes("/player-ui/controls.js"),
             "diagnostics.js" to readResourceBytes("/player-ui/diagnostics.js"),
+            "track-labels.js" to readResourceBytes("/player-ui/track-labels.js"),
             "fonts/jetbrains_sans_regular.ttf" to readResourceBytes(
                 "/composeResources/nuvio.composeapp.generated.resources/font/jetbrains_sans_regular.ttf",
             ),

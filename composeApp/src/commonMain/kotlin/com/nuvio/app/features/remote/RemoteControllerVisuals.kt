@@ -153,6 +153,7 @@ internal object RemoteIcons {
     }
     val Bluetooth by lazy { remoteIcon("RemoteBluetooth", 1.9f, IconStroke("M7 7.5l10 9-5 4.5V3l5 4.5-10 9")) }
     val Pc by lazy { remoteIcon("RemotePc", 1.9f, IconStroke(rect(2.5f, 4f, 19f, 13f, 2.5f)), IconStroke("M8.5 20.5h7M12 17v3.5")) }
+    val Tv by lazy { remoteIcon("RemoteTv", 1.9f, IconStroke(rect(2f, 4.5f, 20f, 14f, 2f)), IconStroke("M9 21h6M12 18.5V21")) }
     val Remote by lazy {
         remoteIcon(
             "RemoteHandset", 2f,
@@ -256,6 +257,41 @@ internal object RemoteIcons {
 
     /** The small play mark drawn inside [Pc]'s screen, on the same grid. */
     val PcScreenPlay by lazy { remoteIcon("RemotePcScreenPlay", 1f, IconStroke("M10.5 8.3v4.4l3.8-2.2z", filled = true)) }
+
+    // TV remote keys.
+    val Home by lazy {
+        remoteIcon(
+            "RemoteHome", 1.9f,
+            IconStroke("M4 10.4 12 4l8 6.4V19a1.5 1.5 0 0 1-1.5 1.5H15v-5.2H9v5.2H5.5A1.5 1.5 0 0 1 4 19z"),
+        )
+    }
+    val Return by lazy { remoteIcon("RemoteReturn", 2f, IconStroke("M9 14 4 9l5-5"), IconStroke("M4 9h10.5a5.5 5.5 0 0 1 0 11H11")) }
+    val Plus by lazy { remoteIcon("RemotePlus", 2.2f, IconStroke("M12 5.5v13M5.5 12h13")) }
+    val Minus by lazy { remoteIcon("RemoteMinus", 2.2f, IconStroke("M5.5 12h13")) }
+    val FastRewind by lazy {
+        remoteIcon(
+            "RemoteFastRewind", 1.6f,
+            IconStroke("M11.5 6.8v10.4L4 12z", filled = true),
+            IconStroke("M20 6.8v10.4L12.5 12z", filled = true),
+        )
+    }
+    val FastForward by lazy {
+        remoteIcon(
+            "RemoteFastForward", 1.6f,
+            IconStroke("M12.5 6.8v10.4L20 12z", filled = true),
+            IconStroke("M4 6.8v10.4L11.5 12z", filled = true),
+        )
+    }
+
+    /** A TV with a play mark on its screen: Starlit itself running on the television. */
+    val StarlitTv by lazy {
+        remoteIcon(
+            "RemoteStarlitTv", 1.9f,
+            IconStroke(rect(2f, 4.5f, 20f, 14f, 2f)),
+            IconStroke("M9 21h6M12 18.5V21"),
+            IconStroke("M10.4 9.1v4.8l4.1-2.4z", filled = true, width = 1.2f),
+        )
+    }
 }
 
 // --- Motion helpers -----------------------------------------------------------------------------
@@ -878,9 +914,14 @@ internal fun RemoteIdleIllustration(modifier: Modifier = Modifier) {
     }
 }
 
-/** Searching for PCs: rings travel outwards from the PC and a dashed orbit turns slowly. */
+/** Searching for a device: rings travel outwards from [icon] and a dashed orbit turns slowly. */
 @Composable
-internal fun RemoteSearchRadar(searching: Boolean, connected: Boolean, modifier: Modifier = Modifier) {
+internal fun RemoteSearchRadar(
+    searching: Boolean,
+    connected: Boolean,
+    modifier: Modifier = Modifier,
+    icon: ImageVector = RemoteIcons.Pc,
+) {
     val tokens = MaterialTheme.nuvio
     val waveColor = if (connected) tokens.colors.success else tokens.colors.accent
     val orbit = tokens.colors.textPrimary.copy(alpha = 0.14f)
@@ -934,7 +975,7 @@ internal fun RemoteSearchRadar(searching: Boolean, connected: Boolean, modifier:
             contentAlignment = Alignment.Center,
         ) {
             Icon(
-                RemoteIcons.Pc,
+                icon,
                 contentDescription = null,
                 tint = if (connected) tokens.colors.success else tokens.colors.textPrimary,
                 modifier = Modifier.size(30.dp),

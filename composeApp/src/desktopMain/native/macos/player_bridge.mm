@@ -117,6 +117,7 @@ static constexpr double kMaxVolumePercent = 200.0;
 - (BOOL)isEnded;
 - (NSString *)audioTracksJson;
 - (NSString *)subtitleTracksJson;
+- (NSString *)chaptersJson;
 - (std::vector<double>)chapterStarts;
 - (void)selectAudioTrackId:(int)trackId;
 - (void)selectSubtitleTrackId:(int)trackId;
@@ -1544,7 +1545,8 @@ static void setMpvOptionString(mpv_handle *mpv, const char *name, const char *va
         setMpvOptionString(_mpv, "cache-pause-initial", "yes");
         setMpvOptionString(_mpv, "cache-pause-wait", "8");
     }
-    setMpvOptionString(_mpv, "hr-seek", "no");
+    // Keep absolute resume seeks accurate without slowing relative keyframe jumps.
+    setMpvOptionString(_mpv, "hr-seek", "absolute");
 
     if (headerLines.count > 0) {
         NSMutableArray *escaped = [NSMutableArray arrayWithCapacity:headerLines.count];
@@ -1925,7 +1927,7 @@ static void setMpvOptionString(mpv_handle *mpv, const char *name, const char *va
 - (void)seekToMilliseconds:(long long)positionMs {
     if (!_mpv) return;
     std::string seconds = std::to_string((double)positionMs / 1000.0);
-    const char *command[] = {"seek", seconds.c_str(), "absolute+keyframes", NULL};
+    const char *command[] = {"seek", seconds.c_str(), "absolute+exact", NULL};
     mpv_command(_mpv, command);
     _cachedPositionSeconds.store(fmax((double)positionMs / 1000.0, 0.0));
 }
@@ -1984,6 +1986,13 @@ static void nuvioMpvWakeup(void *ctx) {
         mpv_event *event = mpv_wait_event(mpv, 0);
         if (!event || event->event_id == MPV_EVENT_NONE) break;
         switch (event->event_id) {
+            case MPV_EVENT_END_FILE: {
+                const auto *end = static_cast<const mpv_event_end_file *>(event->data);
+                if (end && end->reason == MPV_END_FILE_REASON_ERROR) {
+                    [self sendPlayerEvent:@"mpvEndFileError" value:end->error];
+                }
+                break;
+            }
             case MPV_EVENT_PROPERTY_CHANGE: {
                 mpv_event_property *prop = (mpv_event_property *)event->data;
                 if (event->reply_userdata == 2 && prop && prop->format == MPV_FORMAT_STRING) {
@@ -2214,6 +2223,20 @@ static void nuvioMpvWakeup(void *ctx) {
 
 - (NSString *)subtitleTracksJson {
     return [self tracksJsonForType:@"sub"];
+}
+
+- (NSString *)chaptersJson {
+    NSMutableArray *chapters = [NSMutableArray array];
+    long long count = [self int64Property:"chapter-list/count" fallback:0];
+    for (long long index = 0; index < count; ++index) {
+        NSString *prefix = [NSString stringWithFormat:@"chapter-list/%lld", index];
+        double start = [self doubleProperty:[prefix stringByAppendingString:@"/time"].UTF8String fallback:-1.0];
+        if (!std::isfinite(start) || start < 0) continue;
+        NSString *title = [self stringProperty:[prefix stringByAppendingString:@"/title"].UTF8String fallback:@""];
+        [chapters addObject:@{@"startTime": @(start), @"title": title}];
+    }
+    NSData *data = [NSJSONSerialization dataWithJSONObject:chapters options:0 error:nil];
+    return data ? [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] : @"[]";
 }
 
 - (std::vector<double>)chapterStarts {
@@ -3351,6 +3374,13 @@ Java_com_nuvio_app_features_player_desktop_NativePlayerBridge_subtitleTracksJson
     if (handle == 0) return env->NewStringUTF("[]");
     MpvWebPlayer *player = (__bridge MpvWebPlayer *)(void *)(intptr_t)handle;
     NSString *json = [player subtitleTracksJson] ?: @"[]";
+    return env->NewStringUTF(json.UTF8String);
+}
+
+extern "C" JNIEXPORT jstring JNICALL
+Java_com_nuvio_app_features_player_desktop_NativePlayerBridge_chaptersJson(JNIEnv *env, jobject, jlong handle) {
+    MpvWebPlayer *player = (__bridge MpvWebPlayer *)(void *)(intptr_t)handle;
+    NSString *json = [player chaptersJson] ?: @"[]";
     return env->NewStringUTF(json.UTF8String);
 }
 

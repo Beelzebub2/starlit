@@ -19,6 +19,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.nuvio.app.features.remote.DesktopRemote
+import com.nuvio.app.features.remote.StarlitRemoteHandoff
+import com.nuvio.app.features.remote.StarlitTvPlayback
 import com.nuvio.app.features.remote.RemoteChoice
 import com.nuvio.app.features.remote.RemotePlayback
 import com.nuvio.app.features.remote.RemotePlaybackHandoff
@@ -267,6 +269,7 @@ internal fun PlayerScreenRuntime.RenderPlayerRuntimeUi() {
         shortSeekSeconds = playerSettingsUiState.shortSeekSeconds,
         mediumSeekSeconds = playerSettingsUiState.mediumSeekSeconds,
         longSeekSeconds = playerSettingsUiState.longSeekSeconds,
+        controlsScalePercent = playerSettingsUiState.controlsScalePercent,
         episodeText = if (hasPlaybackStarted) episodeText else "",
         streamTitle = activeStreamTitle,
         providerName = activeProviderName,
@@ -331,6 +334,12 @@ internal fun PlayerScreenRuntime.RenderPlayerRuntimeUi() {
         speedPanelTitle = stringResource(Res.string.compose_player_playback_speed),
         audioTracksPanelTitle = stringResource(Res.string.compose_player_audio_tracks),
         noAudioTracksLabel = stringResource(Res.string.compose_player_no_audio_tracks_available),
+        tracksPanelTitle = stringResource(Res.string.player_tracks_title),
+        audioSectionLabel = stringResource(Res.string.compose_player_audio),
+        trackBadgeSdhLabel = stringResource(Res.string.player_track_badge_sdh),
+        trackBadgeCommentaryLabel = stringResource(Res.string.player_track_badge_commentary),
+        trackBadgeOriginalLabel = stringResource(Res.string.player_track_badge_original),
+        trackBadgeDescriptionLabel = stringResource(Res.string.player_track_badge_description),
         subtitlesPanelTitle = stringResource(Res.string.compose_player_subtitles),
         subtitleLanguagesLabel = stringResource(Res.string.compose_player_languages),
         subtitleBuiltInTabLabel = stringResource(Res.string.compose_player_built_in),
@@ -751,6 +760,7 @@ private fun PlayerScreenRuntime.RenderPlayerControls(displayedPositionMs: Long, 
     val isInPip = rememberIsInPictureInPicture()
     val controlToggles = playerControlToggles()
     val remoteConnected = DesktopRemote.connected.collectAsState().value
+    val tvRemoteConnected = StarlitTvPlayback.connected.collectAsState().value
     val handoffSentText = stringResource(Res.string.remote_handoff_sent)
     val handoffUnavailableText = stringResource(Res.string.remote_handoff_unavailable)
     var showPlaybackDiagnostics by remember(activePlaybackKey) { mutableStateOf(false) }
@@ -856,7 +866,8 @@ private fun PlayerScreenRuntime.RenderPlayerControls(displayedPositionMs: Long, 
             } else {
                 null
             },
-            onHandoffClick = if (!privatePlayback && !isDesktop && !isIos && remoteConnected &&
+            onHandoffClick = if (!privatePlayback && !isDesktop && !isIos &&
+                (remoteConnected || tvRemoteConnected) &&
                 !activeVideoId.isNullOrBlank() && contentType in setOf("movie", "series")) {
                 {
                     val request = RemotePlaybackHandoff(
@@ -869,8 +880,8 @@ private fun PlayerScreenRuntime.RenderPlayerControls(displayedPositionMs: Long, 
                         episode = activeEpisodeNumber,
                         resumePositionMs = playbackSnapshot.positionMs.coerceIn(0L, 43_200_000L),
                     )
-                    val sent = DesktopRemote.requestHandoff(request)
-                    if (!sent) NuvioToastController.show(DesktopRemote.status.value)
+                    val sent = StarlitRemoteHandoff.request(request)
+                    if (!sent) NuvioToastController.show(handoffUnavailableText)
                 }
             } else null,
             onDiagnosticsClick = { showPlaybackDiagnostics = true },
@@ -2072,13 +2083,8 @@ private fun PlayerScreenRuntime.RenderPlayerModals(displayedPositionMs: Long) {
         showAudioModal = showAudioModal,
         audioTracks = audioTracks,
         selectedAudioIndex = selectedAudioIndex,
-        onAudioTrackSelected = { index ->
-            selectUserAudioTrack(index)
-            scope.launch {
-                kotlinx.coroutines.delay(200)
-                showAudioModal = false
-            }
-        },
+        // Audio and subtitles share one panel, so choosing audio keeps it open for subtitles.
+        onAudioTrackSelected = { index -> selectUserAudioTrack(index) },
         onAudioModalDismissed = { showAudioModal = false },
         showSubtitleModal = showSubtitleModal,
         subtitleTracks = subtitleTracks,

@@ -19,6 +19,9 @@ import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasScrollToIndexAction
+import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onAllNodesWithText
@@ -79,6 +82,9 @@ class DesktopSettingsUiTest {
             sidebar("Playback").assertIsSelected()
             onNodeWithText("Auto-play Next Episode").assertIsDisplayed()
             onNodeWithTag("settings-search-focused").assertIsDisplayed()
+            // The result lives on another Playback tab than the default one.
+            scrollPageToTop()
+            tab("Next episode & skips").assertIsSelected()
         }
 
     @Test
@@ -239,6 +245,15 @@ class DesktopSettingsUiTest {
     private fun ComposeUiTest.sidebar(label: String): SemanticsNodeInteraction =
         onNode(hasText(label) and SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Tab))
 
+    /** The page list is the only lazy list on screen; its first item holds the header and tabs. */
+    private fun ComposeUiTest.scrollPageToTop() {
+        onAllNodes(hasScrollToIndexAction()).onFirst().performScrollToIndex(0)
+        waitForIdle()
+    }
+
+    /** Page tabs use the same semantics as sidebar links. */
+    private fun ComposeUiTest.tab(label: String): SemanticsNodeInteraction = sidebar(label)
+
     private fun ComposeUiTest.open(label: String) {
         sidebar(label).performScrollTo().performClick()
         waitForIdle()
@@ -253,23 +268,39 @@ class DesktopSettingsUiTest {
     @Test
     fun sidebarListsEveryPageAndHighlightsTheOpenOne() = runDesktopComposeUiTest(width = 1440, height = 900) {
         showSettings()
-        // An empty settings screen lands on Account.
-        sidebar("Account").assertIsSelected()
-        onNodeWithText("Your sign-in and account details.").assertIsDisplayed()
-        capture("01-account")
+        // An empty settings screen lands on Overview.
+        sidebar("Overview").assertIsSelected()
+        onNodeWithText("Your account, connected services and the settings you change most.").assertIsDisplayed()
+        onNodeWithText("Quick settings").performScrollTo().assertIsDisplayed()
+        capture("01-overview")
 
         listOf(
-            "Tracking", "Playback", "Continue watching", "Appearance", "Home screen", "Collections",
-            "Details page", "Poster cards", "Hover previews", "Add-ons", "Debrid", "Source list",
-            "TMDB", "MDBList", "Advanced", "Updates", "About",
+            "Account", "Tracking", "Playback", "Continue watching", "Appearance", "Home screen",
+            "Posters & previews", "Details page", "Add-ons", "Debrid", "Metadata & ratings",
+            "Advanced", "Updates", "About",
         ).forEach { sidebar(it).performScrollTo().assertExists() }
+        // Merged or moved pages no longer have sidebar entries of their own.
+        listOf("Collections", "Source list", "Poster cards", "Hover previews", "TMDB", "MDBList")
+            .forEach { sidebar(it).assertDoesNotExist() }
+
+        open("Account")
+        onNodeWithText("Your sign-in and account details.").assertIsDisplayed()
 
         open("Playback")
         sidebar("Playback").assertIsSelected()
-        sidebar("Account").assertIsNotSelected()
+        sidebar("Overview").assertIsNotSelected()
         // Breadcrumb plus the sidebar group label.
         onAllNodesWithText("Watching").assertCountEquals(2)
+        tab("Subtitles & audio").assertIsSelected()
         capture("02-playback")
+
+        // Source list is the Streams tab of Playback.
+        tab("Streams & auto-play").performClick()
+        waitForIdle()
+        tab("Streams & auto-play").assertIsSelected()
+        onNodeWithText("Addon logo").performScrollTo().assertIsDisplayed()
+        sidebar("Playback").assertIsSelected()
+        capture("02b-playback-streams")
 
         open("Appearance")
         // Pages listed in the sidebar are not repeated as links on the Appearance page.
@@ -277,8 +308,22 @@ class DesktopSettingsUiTest {
         onNode(hasText("Hover Preview")).assertDoesNotExist()
         capture("03-appearance")
 
-        open("Source list")
-        capture("04-source-list")
+        open("Posters & previews")
+        tab("Poster cards").assertIsSelected()
+        tab("Hover previews").performClick()
+        waitForIdle()
+        tab("Hover previews").assertIsSelected()
+        sidebar("Posters & previews").assertIsSelected()
+        capture("04-posters-previews")
+
+        open("Metadata & ratings")
+        tab("TMDB").assertIsSelected()
+        tab("MDBList").performClick()
+        waitForIdle()
+        tab("MDBList").assertIsSelected()
+        sidebar("Metadata & ratings").assertIsSelected()
+        capture("04b-metadata-ratings")
+
         open("Add-ons")
         onNodeWithText("Move add-ons to another device").performScrollTo().assertIsDisplayed()
         onNodeWithText("Export add-ons").assertIsDisplayed()
@@ -309,10 +354,50 @@ class DesktopSettingsUiTest {
         waitForIdle()
         onNodeWithText("Privacy Policy").assertIsDisplayed()
 
-        open("Collections")
+        // Collections opens its editor from the Home screen page.
+        open("Home screen")
+        onNode(hasText("Collections") and hasClickAction()).performScrollTo().performClick()
         onNodeWithContentDescription("Switch profile").performClick()
         assertEquals(listOf("check-updates", "collections", "switch-profile"), clicks)
     }
+
+    @Test
+    fun overviewLinksToStatusPagesAndOpensTheSubtitleTab() = runDesktopComposeUiTest(width = 1440, height = 900) {
+        showSettings()
+        onNode(hasText("Debrid") and SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button))
+            .performClick()
+        waitForIdle()
+        sidebar("Debrid").assertIsSelected()
+
+        open("Overview")
+        onNode(hasText("Subtitle language") and hasClickAction()).performScrollTo().performClick()
+        waitUntil(timeoutMillis = 8_000) {
+            onAllNodes(hasTestTag("settings-search-focused")).fetchSemanticsNodes().isNotEmpty()
+        }
+        sidebar("Playback").assertIsSelected()
+        onNodeWithTag("settings-search-focused").assertIsDisplayed()
+        scrollPageToTop()
+        tab("Subtitles & audio").assertIsSelected()
+    }
+
+    @Test
+    fun searchingASourceListSettingOpensThePlaybackStreamsTab() =
+        runDesktopComposeUiTest(width = 1100, height = 760) {
+            showSettings()
+            onNode(hasContentDescription("Search settings...")).performTextInput("Addon logo")
+            waitForIdle()
+            onNode(
+                hasText("Addon logo") and !hasContentDescription("Search settings...") and hasClickAction(),
+            ).performClick()
+            waitUntil(timeoutMillis = 8_000) {
+                onAllNodes(hasTestTag("settings-search-focused")).fetchSemanticsNodes().isNotEmpty()
+            }
+            sidebar("Playback").assertIsSelected()
+            onNodeWithTag("settings-search-focused").assertIsDisplayed()
+            capture("10-search-source-list-result")
+            scrollPageToTop()
+            tab("Streams & auto-play").assertIsSelected()
+        }
 
     @Test
     fun privacyPolicyOpensTheOfficialStarlitWebsite() {
@@ -336,6 +421,10 @@ class DesktopSettingsUiTest {
         runDesktopComposeUiTest(width = 1440, height = 900) {
             showSettings()
             open("Playback")
+            // Labelled "Video & P2P" when P2P streaming is available, else "Video".
+            onNode(hasText("Video", substring = true) and SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Tab))
+                .performClick()
+            waitForIdle()
             onNodeWithText("RTX Video Super Resolution").performScrollTo().assertIsDisplayed()
             onNodeWithText("Graphics hardware").performScrollTo().assertIsDisplayed()
             waitUntil(timeoutMillis = 15_000) {

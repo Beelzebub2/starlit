@@ -227,3 +227,86 @@ test('failure exporter handles incomplete lines, rejects bad records and resumes
     await rm(dir, { recursive: true, force: true });
   }
 });
+
+test('success exporter locks and commits the cursor after acknowledged ingestion', async () => {
+  const calls = [];
+  let released = false;
+  const client = { async query(sql, values) {
+    calls.push({ sql, values });
+    if (sql.includes('FOR UPDATE')) return { rowCount: 1, rows: [{ source: 'success' }] };
+    if (sql.includes('FROM starlit_analytics.export_cursor')) {
+      return { rows: [{ cursor_time: at.toISOString(), cursor_id: eventId }] };
+    }
+    if (sql.includes('login_successes')) {
+      return { rows: [{ event_id: eventId, login_at: at.toISOString(), login_method: 'email', ip_address: null }] };
+    }
+    return { rowCount: 1, rows: [] };
+  }, release() { released = true; } };
+  const db = { async connect() { return client; } };
+  const count = await exportSuccessfulLogins(db, { async send(records) {
+    assert.equal(records.length, 1);
+    calls.push({ sql: 'INGEST_ACCEPTED' });
+  } }, () => null, now);
+  assert.equal(count, 1);
+  assert.deepEqual(calls.map(x => x.sql.includes('FOR UPDATE') ? 'LOCK' :
+    x.sql.includes('FROM starlit_analytics.export_cursor') ? 'READ' :
+    x.sql.includes('login_successes') ? 'FETCH' :
+    x.sql.startsWith('UPDATE ') ? 'UPDATE' : x.sql),
+  ['BEGIN', 'LOCK', 'READ', 'FETCH', 'INGEST_ACCEPTED', 'UPDATE', 'COMMIT']);
+  assert.equal(released, true);
+});
+
+test('accepted success batch followed by failed cursor commit fails closed', async () => {
+  const statements = [];
+  let released = false;
+  const client = { async query(sql) {
+    statements.push(sql);
+    if (sql.includes('FOR UPDATE')) return { rowCount: 1 };
+    if (sql.includes('FROM starlit_analytics.export_cursor')) {
+      return { rows: [{ cursor_time: at.toISOString(), cursor_id: eventId }] };
+    }
+    if (sql.includes('login_successes')) {
+      return { rows: [{ event_id: eventId, login_at: at.toISOString(), login_method: 'email' }] };
+    }
+    if (sql === 'COMMIT') throw new Error('untrusted database failure with secrets');
+    return { rowCount: 1 };
+  }, release() { released = true; } };
+  await assert.rejects(exportSuccessfulLogins({ async connect() { return client; } }, {
+    async send(records) { assert.equal(records.length, 1); },
+  }, () => null, now), e => e.code === 'AUTH_AUDIT_CURSOR_UNCERTAIN' &&
+    !/secrets/i.test(e.message));
+  assert.equal(statements.at(-1), 'ROLLBACK');
+  assert.equal(released, true);
+});
+
+test('accepted success batch with zero cursor rows refuses silent replays', async () => {
+  const db = { async query(sql) {
+    if (sql.includes('FROM starlit_analytics.export_cursor')) {
+      return { rows: [{ cursor_time: at.toISOString(), cursor_id: eventId }] };
+    }
+    if (sql.includes('login_successes')) {
+      return { rows: [{ event_id: eventId, login_at: at.toISOString(), login_method: 'email' }] };
+    }
+    return { rowCount: 0 };
+  } };
+  await assert.rejects(exportSuccessfulLogins(db, { async send() {} }, () => null, now),
+    e => e.code === 'AUTH_AUDIT_CURSOR_UNCERTAIN');
+});
+
+test('accepted failure records followed by cursor error refuse replay', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'starlit-audit-'));
+  const path = join(dir, 'failures.jsonl');
+  try {
+    await writeFile(path, JSON.stringify({request_id: requestId, at: at.toISOString(), status: 401, grant: 'password', ip: null})+'\n');
+    const db = { async query(sql) {
+      if (sql.includes('SELECT file_inode')) return { rows: [{ file_inode: null, file_offset: 0 }] };
+      throw new Error('cursor read only');
+    } };
+    let deliveries = 0;
+    await assert.rejects(exportFailedLogins(db, { async send(records) {
+      deliveries++;
+      assert.equal(records.length, 1);
+    } }, path, () => null, now), e => e.code === 'AUTH_AUDIT_CURSOR_UNCERTAIN');
+    assert.equal(deliveries, 1);
+  } finally { await rm(dir, { recursive: true, force: true }); }
+});

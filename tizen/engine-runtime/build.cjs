@@ -24,7 +24,16 @@ var index = patch('index.js', [
   ["var rimraf = require('rimraf')", 'var rimraf = null'],
   ['var ontorrent = function (torrent) {', 'var ontorrent = function (torrent) {\n    if (destroyed) return\n    try { if (opts.validateTorrent) opts.validateTorrent(torrent) } catch (err) { engine.emit("error", err); return }'],
   ['    var reservations = torrent.pieces.map(function () {', '    engine.invalidate = function (index) {\n      if (destroyed || pieces[index]) return\n      pieces[index] = piece(index === torrent.pieces.length - 1 ? pieceRemainder : pieceLength)\n      reservations[index] = []\n      engine.bitfield.set(index, false)\n      engine.selection.forEach(function (s) { if (index >= s.from && index <= s.to) s.offset = Math.min(s.offset, index - s.from) })\n      refresh()\n    }\n    var reservations = torrent.pieces.map(function () {'],
-  ['    var oninterestchange = function () {', '    engine.releasePending = function () {\n      pieces.forEach(function (p, i) { if (p && p._buffer) { pieces[i] = piece(p.length); reservations[i] = [] } })\n      refresh()\n    }\n    var oninterestchange = function () {'],
+  ['    var oninterestchange = function () {', `    engine.releasePending = function () {
+      swarm.wires.forEach(function (wire) {
+        wire.requests.slice().forEach(function (request) {
+          wire.cancel(request.piece, request.offset, request.length)
+        })
+      })
+      pieces.forEach(function (p, i) { if (p && p._buffer) { pieces[i] = piece(p.length); reservations[i] = [] } })
+      refresh()
+    }
+    var oninterestchange = function () {`],
   ['    ontorrent(parseTorrent(buf))', '    try { ontorrent(parseTorrent(buf)) } catch (err) { return engine.emit("error", err) }\n    if (opts.memoryOnly) return'],
   ['    fs.readFile(torrentPath, function (_, buf) {', '    if (opts.memoryOnly) {\n      process.nextTick(function () { if (!destroyed) { swarm.resume(); discovery.setTorrent(link) } })\n    } else fs.readFile(torrentPath, function (_, buf) {'],
   ['  var removeTmp = function (cb) {', '  var removeTmp = function (cb) {\n    if (opts.memoryOnly) return process.nextTick(cb || noop)'],

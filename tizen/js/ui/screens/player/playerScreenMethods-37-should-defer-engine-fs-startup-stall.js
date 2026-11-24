@@ -1,5 +1,6 @@
 /* eslint-disable no-unused-vars */
 import * as internals from "./playerScreenContext.js";
+import { canContinueTizenFirstFrameWait } from "../../../core/player/tizenFirstFrameBudget.js";
 const TIZEN_AVPLAY_DIRECT_STARTUP_STALL_TIMEOUT_MS = 20000;
 export function createPlayerScreenMethods37() {
   const {
@@ -11,6 +12,8 @@ export function createPlayerScreenMethods37() {
   } = internals;
   return {
     shouldDeferEngineFsStartupStall(stats = null) {
+      if (Environment.isTizen() && !canContinueTizenFirstFrameWait(this.tizenFirstFrameStartedAt)) return false;
+      if (Number(this.engineFsStallExtensions || 0) >= 10) return false;
       const snapshot = this.getEngineFsStallSnapshot(stats);
       if (!snapshot) {
         return false;
@@ -23,12 +26,10 @@ export function createPlayerScreenMethods37() {
         previous && snapshot.downloaded >= 0 && previous.downloaded >= 0 && snapshot.downloaded > previous.downloaded;
       const activelyDownloading = snapshot.downloadSpeed > 0 || progressIncreased || downloadedIncreased;
       const swarmIsAlive = snapshot.peers > 0 || snapshot.unique > 0 || snapshot.connectionTries > 0 || snapshot.peerSearchRunning;
-      if (activelyDownloading) {
-        return true;
-      }
-      return swarmIsAlive && Number(this.engineFsStallExtensions || 0) < 10;
+      return activelyDownloading || swarmIsAlive;
     },
     shouldRetryEngineFsStartupError(stats = null) {
+      if (Environment.isTizen() && !canContinueTizenFirstFrameWait(this.tizenFirstFrameStartedAt)) return false;
       const retryCount = Number(this.engineFsStartupErrorRetries || 0);
       const snapshot = this.getEngineFsStallSnapshot(stats);
       if (!snapshot) {
@@ -46,6 +47,7 @@ export function createPlayerScreenMethods37() {
       return retryCount < 10 && (activelyDownloading || hasDownloadedData || swarmIsAlive);
     },
     scheduleEngineFsStartupRetry({ mediaErrorCode = 0, stats = null } = {}) {
+      if (Environment.isTizen() && !canContinueTizenFirstFrameWait(this.tizenFirstFrameStartedAt)) return false;
       if (!this.currentEngineFsStream || !this.activePlaybackUrl) {
         return false;
       }
@@ -61,11 +63,14 @@ export function createPlayerScreenMethods37() {
       const snapshot = this.getEngineFsStallSnapshot(stats);
       const startupMediaErrorWithEmptyEngine =
         Number(mediaErrorCode) > 0 && snapshot && snapshot.downloaded <= 0 && snapshot.progress <= 0 && snapshot.downloadSpeed <= 0;
-      const recreateLocalEngineFs =
-        (!stats || (startupMediaErrorWithEmptyEngine && retry <= 3)) &&
-        Environment.isWebOS() &&
-        this.currentEngineFsStream.kind === "webos-enginefs" &&
-        Boolean(sourceCandidate);
+      const recreateLocalEngineFs = Boolean(sourceCandidate) && (
+        (Environment.isWebOS() && this.currentEngineFsStream.kind === "webos-enginefs" &&
+          (!stats || (startupMediaErrorWithEmptyEngine && retry <= 3))) ||
+        // After a failed same-session retry on Tizen, an unavailable local
+        // torrent needs a fresh ticket instead of replaying a stale URL.
+        (Environment.isTizen() && this.currentEngineFsStream.kind === "tizen-streaming-server" &&
+          !stats && retry === 2)
+      );
       this.lastPlaybackErrorAt = 0;
       this.loadingVisible = true;
       this.paused = false;

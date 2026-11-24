@@ -158,7 +158,14 @@ internal fun LazyListScope.appearanceSettingsContent(
                         onCheckedChange = onLiquidGlassNativeTabBarToggle,
                     )
                 }
-                if (isDesktop) {
+                if (isDesktop && isTablet) {
+                    SettingsGroupDivider(isTablet = isTablet)
+                    DesktopNavigationLayoutPicker(
+                        title = stringResource(Res.string.settings_appearance_desktop_navigation),
+                        selected = desktopNavigationLayout,
+                        onSelect = ThemeSettingsRepository::setDesktopNavigationLayout,
+                    )
+                } else if (isDesktop) {
                     SettingsGroupDivider(isTablet = isTablet)
                     val desktopNavDescription = if (isTablet) {
                         stringResource(desktopNavigationLayout.labelRes)

@@ -13,6 +13,7 @@ export function createPlayerScreenMethods35() {
     logEngineFsDebug,
     getP2pInfoHash,
     t,
+    Environment,
     streamDirectPlaybackUrl
   } = internals;
   return {
@@ -44,12 +45,20 @@ export function createPlayerScreenMethods35() {
       if (!streamCandidate) {
         return;
       }
+      const tizenResolveId = Environment.isTizen()
+        ? (this.tizenStreamResolveId = Number(this.tizenStreamResolveId || 0) + 1) : 0;
+      if (tizenResolveId) {
+        this.abortTizenTorrentProbe?.();
+        this.abortTizenTorrentProbe = null;
+      }
+      const isCurrentSelection = () => this.isActiveMountToken(mountToken) &&
+        (!tizenResolveId || this.tizenStreamResolveId === tizenResolveId);
       streamRepository.setLocalPluginSearchPaused(true);
       const forceEngineFsResolve = options?.forceEngineFsResolve === true;
       let targetUrl = forceEngineFsResolve ? "" : streamDirectPlaybackUrl(streamCandidate);
       if (canResolveMediaServerStream(streamCandidate)) {
         const isCurrentRequest = () =>
-          this.isActiveMountToken(mountToken) &&
+          isCurrentSelection() &&
           (!options.serverFallbackUrl ||
             (this.activePlaybackUrl === options.serverFallbackUrl && this.getCurrentStreamCandidate()?.id === streamCandidate.id));
         try {
@@ -86,7 +95,11 @@ export function createPlayerScreenMethods35() {
       if (!targetUrl) {
         const resolveContext = {
           season: this.params?.season == null ? null : Number(this.params.season),
-          episode: this.params?.episode == null ? null : Number(this.params.episode)
+          episode: this.params?.episode == null ? null : Number(this.params.episode),
+          isCurrentRequest: isCurrentSelection,
+          setTizenProbeAbort: (abort) => {
+            if (isCurrentSelection()) this.abortTizenTorrentProbe = abort;
+          }
         };
         const canUseEngineFs = WebOsEngineFsResolver.canResolveStream(streamCandidate);
         const canUseTizenP2p = TizenStreamingServerResolver.canResolveStream(streamCandidate);
@@ -110,7 +123,7 @@ export function createPlayerScreenMethods35() {
         };
         if (DirectDebridResolver.canResolveStream(streamCandidate, resolveContext)) {
           const result = await DirectDebridResolver.resolve(streamCandidate, resolveContext);
-          if (!this.isActiveMountToken(mountToken)) {
+          if (!isCurrentSelection()) {
             return;
           }
           if (result.status === "success" && result.stream?.url) {
@@ -178,7 +191,7 @@ export function createPlayerScreenMethods35() {
           const result = canUseEngineFs
             ? await WebOsEngineFsResolver.resolve(streamCandidate, resolveContext)
             : await TizenStreamingServerResolver.resolve(streamCandidate, resolveContext);
-          if (!this.isActiveMountToken(mountToken)) {
+          if (!isCurrentSelection()) {
             stopPreResolveEngineFsKeepAlive();
             const resolvedEngineFs = result?.stream?.engineFs || null;
             if (resolvedEngineFs?.infoHash) {
@@ -220,7 +233,7 @@ export function createPlayerScreenMethods35() {
           }
         }
         if (!targetUrl) {
-          if (!this.isActiveMountToken(mountToken)) {
+          if (!isCurrentSelection()) {
             return;
           }
           const startupMessage =

@@ -14,6 +14,15 @@ import androidx.compose.ui.test.*
 import androidx.compose.ui.unit.dp
 import com.nuvio.app.core.ui.NuvioTheme
 import com.nuvio.app.core.ui.nuvio
+import com.nuvio.app.features.lists.ListEntryCard
+import com.nuvio.app.features.lists.ListSort
+import com.nuvio.app.features.lists.ListStatus
+import com.nuvio.app.features.lists.ListSummaryRow
+import com.nuvio.app.features.lists.ListToolbar
+import com.nuvio.app.features.lists.malListCapabilities
+import com.nuvio.app.features.lists.malListSummary
+import com.nuvio.app.features.lists.toListEntry
+import com.nuvio.app.features.lists.toListStatus
 import java.io.File
 import javax.imageio.ImageIO
 import kotlin.test.Test
@@ -43,9 +52,10 @@ class MalListLayoutTest {
         entry(5, "Kono Subarashii Sekai ni Shukufuku wo! 2", "KonoSuba: God's Blessing on This Wonderful World! 2",
             MalStatus.COMPLETED, 10, 10, 10, 2017, "winter", 8.3),
         entry(6, "Black Clover 2nd Season", null, MalStatus.ON_HOLD, 0, 4, 0, 2018, "spring", null),
-    ).let { list -> list.map { if (it.anime.id == 5) it.copy(listStatus = it.listStatus.copy(isRewatching = true)) else it } }
+    ).let { list -> list.map { if (it.anime.id == 5) it.copy(listStatus = it.listStatus.copy(isRewatching = true, numTimesRewatched = 3)) else it } }
 
     private val stats = MalAnimeStatistics(7, 120, 3, 2, 40, 172, 2650, 45.32, 7.91)
+    private val sorts = MalListSort.entries.map { ListSort(it.name, it.label) }
 
     @Test fun cardsKeepTheirControlsInsideAtDesktopWidths() {
         for (width in listOf(1600, 1100, 820)) {
@@ -59,8 +69,18 @@ class MalListLayoutTest {
                                 color = MaterialTheme.nuvio.colors.textPrimary,
                                 modifier = Modifier.padding(start = 28.dp, top = 24.dp, bottom = 4.dp),
                             )
-                            MalProfileSummary("Lucifer_uwu", stats, Modifier.padding(horizontal = 28.dp).padding(bottom = 16.dp))
-                            MalListToolbar(MalStatus.WATCHING, {}, stats, MalListSort.UPDATED, {}, Modifier.padding(horizontal = 28.dp))
+                            ListSummaryRow(malListSummary("Lucifer_uwu", stats), Modifier.padding(horizontal = 28.dp).padding(bottom = 16.dp))
+                            ListToolbar(
+                                statuses = MalStatus.entries.map { it.toListStatus() },
+                                selected = ListStatus.WATCHING,
+                                onSelect = {},
+                                counts = malListSummary(null, stats).counts,
+                                sorts = sorts,
+                                sort = sorts.first(),
+                                onSort = {},
+                                tagPrefix = "mal",
+                                modifier = Modifier.padding(horizontal = 28.dp),
+                            )
                             Spacer(Modifier.height(16.dp))
                             LazyVerticalGrid(
                                 columns = GridCells.Adaptive(500.dp),
@@ -69,7 +89,10 @@ class MalListLayoutTest {
                                 verticalArrangement = Arrangement.spacedBy(14.dp),
                             ) {
                                 items(entries, key = { it.anime.id }) { entry ->
-                                    MalEntryCard(entry, saving = entry.anime.id == 2, onChange = {}, onEdit = {}, onOpen = {}, onRemove = {})
+                                    ListEntryCard(
+                                        entry.toListEntry(), malListCapabilities, saving = entry.anime.id == 2, onChange = {}, onOpen = {},
+                                        onRemoveFromHistory = null, onEditDetails = {}, onRemoveEntry = {},
+                                    )
                                 }
                             }
                         }
@@ -110,7 +133,7 @@ class MalListLayoutTest {
             }
         }
         waitForIdle()
-        listOf("Status", "Episodes watched", "Your score", "Rewatching", "Remove from list", "Save").forEach {
+        listOf("Status", "Episodes watched", "Your score", "Rewatching", "Rewatches: 3", "Finish rewatch", "Remove from list", "Save").forEach {
             onNodeWithText(it).assertExists()
         }
         val directory = File("build/reports/mal-list").apply { mkdirs() }

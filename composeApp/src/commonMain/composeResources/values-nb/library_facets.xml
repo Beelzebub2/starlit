@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="library_filter_genre">Sjanger</string>
+    <string name="library_filter_year">År</string>
+    <string name="library_filter_watched">Sett</string>
+    <string name="library_filter_all">Alle</string>
+    <string name="library_watched_filter_watched">Sett</string>
+    <string name="library_watched_filter_unwatched">Ikke sett</string>
+</resources>

@@ -93,11 +93,14 @@ state. A missing token skips TMDB without imposing a cooldown or preventing TVma
 
 The VPS Node gateway exposes `POST /telemetry/events` for opted-in clients. It
 accepts only fixed event names, platform, app version and a random 128-bit
-installation ID. It rejects unknown fields and any media, account, search or
-URL data. The ID is HMAC-hashed **on the gateway** before being sent to the
-separate, private `starlit_usage` logs stream in the self-hosted OpenObserve
-instance. Raw IDs, IP addresses, user agents, request headers and URLs are not
-exported. Crash reporting remains an independent Sentry opt-in.
+**session-only** abuse-control token. Tizen and webOS are supported alongside
+Android, desktop and iOS. It rejects unknown fields and any media, account,
+search or URL data. The token is HMAC-hashed **only in gateway memory** for
+short-lived rate limits; neither the token nor its hash is exported to the
+separate, private `starlit_usage` OpenObserve stream. Raw IDs, IP addresses,
+user agents, request headers, source URLs and exception messages are not
+exported. TV diagnostics use a separate opt-in and only fixed error/warning
+categories; TV builds do not install Sentry or upload crash dumps.
 
 Configure these server-only variables in the existing root-private
 `/etc/starlit/runtime.env` (mode 0600):
@@ -143,6 +146,11 @@ operator summary endpoint. Restrict stream access to authorized operators.
 Health signals (schema 2) contain only event, severity, component, app version
 and platform. Requests use a random per-session token, hashed only in memory for
 abuse protection. Neither the token nor its hash is stored in OpenObserve.
+The Tizen/webOS reporter queues at most 12 codes in RAM, deduplicates identical
+codes for 60 seconds and sends one at most every 20 seconds only off the
+playback/source screens and while visible. A maximum of 30 attempts is permitted
+per app session, and failures are dropped. No additional backend services,
+device identifiers or log-message ingestion endpoints are introduced.
 Old clients' screen-visit, playback-open and queue-snapshot events are
 acknowledged but discarded by the gateway. No titles, URLs, searches,
 free-form errors or account identifiers are accepted.

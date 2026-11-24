@@ -1,5 +1,6 @@
 /* eslint-disable no-unused-vars */
 import * as internals from "./playerScreenContext.js";
+import { canContinueTizenFirstFrameWait, tizenFirstFrameRemainingMs } from "../../../core/player/tizenFirstFrameBudget.js";
 export function createPlayerScreenMethods38() {
   const {
     PlayerController,
@@ -19,15 +20,21 @@ export function createPlayerScreenMethods38() {
         return;
       }
       const startup = !this.hasPresentedPlaybackFrame;
-      const timeoutMs =
+      const requestedTimeoutMs =
         Number.isFinite(Number(timeoutOverrideMs)) && Number(timeoutOverrideMs) > 0
           ? Number(timeoutOverrideMs)
           : this.getPlaybackStallTimeoutMs({ startup });
+      const firstFrameTimeRemaining = startup && Environment.isTizen()
+        ? tizenFirstFrameRemainingMs(this.tizenFirstFrameStartedAt) : null;
+      const timeoutMs = firstFrameTimeRemaining === null
+        ? requestedTimeoutMs : Math.max(1, Math.min(requestedTimeoutMs, firstFrameTimeRemaining));
       this.playbackStallTimer = setTimeout(async () => {
         this.playbackStallTimer = null;
         if (this.isExternalFrameMode() || !this.loadingVisible || !this.activePlaybackUrl) {
           return;
         }
+        const firstFrameBudgetActive = !startup || !Environment.isTizen() ||
+          canContinueTizenFirstFrameWait(this.tizenFirstFrameStartedAt);
         const readyState =
           typeof PlayerController.getPlaybackReadyState === "function"
             ? Number(PlayerController.getPlaybackReadyState() || 0)
@@ -39,7 +46,7 @@ export function createPlayerScreenMethods38() {
             this.updateUiTick();
             return;
           }
-          if (!Environment.isWebOS() && (readyState >= 3 || (this.currentEngineFsStream && this.isEngineFsStartupReady()))) {
+          if (firstFrameBudgetActive && !Environment.isWebOS() && (readyState >= 3 || (this.currentEngineFsStream && this.isEngineFsStartupReady()))) {
             this.schedulePlaybackStallGuard({ timeoutMs: 1000 });
             return;
           }
@@ -52,10 +59,15 @@ export function createPlayerScreenMethods38() {
         }
         if (startup && this.currentEngineFsStream) {
           const stats = await this.fetchCurrentEngineFsStats();
-          if (!stats && Environment.isWebOS() && this.scheduleEngineFsStartupRetry({ mediaErrorCode: 0, stats: null })) {
+          if (firstFrameBudgetActive && !stats && Environment.isTizen() &&
+              this.shouldRetryEngineFsStartupError(null) &&
+              this.scheduleEngineFsStartupRetry({ mediaErrorCode: 2, stats: null })) {
             return;
           }
-          if (this.shouldDeferEngineFsStartupStall(stats)) {
+          if (firstFrameBudgetActive && !stats && Environment.isWebOS() && this.scheduleEngineFsStartupRetry({ mediaErrorCode: 0, stats: null })) {
+            return;
+          }
+          if (firstFrameBudgetActive && this.shouldDeferEngineFsStartupStall(stats)) {
             this.engineFsStallExtensions = Number(this.engineFsStallExtensions || 0) + 1;
             logEngineFsDebug("EngineFS startup still buffering; extending stall guard", {
               playbackUrl: this.activePlaybackUrl,
@@ -111,7 +123,7 @@ export function createPlayerScreenMethods38() {
           });
           return;
         }
-        if (startup && this.retryTizenAvPlayThroughLocalProxy?.()) {
+        if (startup && firstFrameBudgetActive && this.retryTizenAvPlayThroughLocalProxy?.()) {
           return;
         }
         const currentPlaybackEngine = String(PlayerController.playbackEngine || "");
@@ -169,7 +181,7 @@ export function createPlayerScreenMethods38() {
           skipAutomaticPlaybackRecovery = true;
         }
         const targetEngine =
-          !playbackEngineValidated && !terminalHlsHttpFailure && typeof PlayerController.getAlternativePlaybackEngine === "function"
+          firstFrameBudgetActive && !playbackEngineValidated && !terminalHlsHttpFailure && typeof PlayerController.getAlternativePlaybackEngine === "function"
             ? PlayerController.getAlternativePlaybackEngine(this.activePlaybackUrl)
             : null;
         if (targetEngine && !skipAutomaticPlaybackRecovery) {
@@ -213,7 +225,7 @@ export function createPlayerScreenMethods38() {
           });
           return;
         }
-        if (this.tryServerPlaybackFallback?.()) return;
+        if (firstFrameBudgetActive && this.tryServerPlaybackFallback?.()) return;
         this.releaseStartupAudioGate({ resume: false });
         if (startup) {
           this.markPlaybackSourceFailed(this.activePlaybackUrl);

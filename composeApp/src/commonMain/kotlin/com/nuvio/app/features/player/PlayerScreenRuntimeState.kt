@@ -7,6 +7,8 @@ import androidx.compose.ui.hapticfeedback.HapticFeedback
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import com.nuvio.app.features.addons.AddonPlayerAction
+import com.nuvio.app.features.addons.AddonPlayerEventTarget
 import com.nuvio.app.features.addons.AddonsUiState
 import com.nuvio.app.features.details.MetaDetails
 import com.nuvio.app.features.details.MetaDetailsUiState
@@ -100,6 +102,7 @@ internal class PlayerScreenRuntime(
     val initialPositionMs: Long get() = args.initialPositionMs
     val initialProgressFraction: Float? get() = args.initialProgressFraction
     var externalSubtitles by mutableStateOf(args.externalSubtitles)
+    var activeSubtitleRequestExtra by mutableStateOf(args.subtitleRequestExtra)
     val isSeries: Boolean get() = parentMetaType == "series"
 
     lateinit var scope: CoroutineScope
@@ -200,6 +203,8 @@ internal class PlayerScreenRuntime(
     var initialSeekApplied by mutableStateOf(
         initialPositionMs <= 0L && ((initialProgressFraction ?: 0f) <= 0f),
     )
+    // Accepting a resume seek does not mean the decoded player has reached it.
+    var initialResumePositionConfirmed by mutableStateOf(initialSeekApplied)
     var lastProgressPersistEpochMs by mutableStateOf(0L)
     var previousIsPlaying by mutableStateOf(false)
     var hasRequestedScrobbleStartForCurrentItem by mutableStateOf(false)
@@ -207,6 +212,8 @@ internal class PlayerScreenRuntime(
     var pendingSeekScrobbleRestart by mutableStateOf(false)
     var hasSentCompletionScrobbleForCurrentItem by mutableStateOf(false)
     var currentTrackingMedia by mutableStateOf<TrackingMediaReference?>(null)
+    var activeAddonPlayerEventTarget: AddonPlayerEventTarget? = null
+    var lastAddonPlayerAction: AddonPlayerAction? = null
 
     var showSourcesPanel by mutableStateOf(false)
     var showEpisodesPanel by mutableStateOf(false)
@@ -269,7 +276,7 @@ internal class PlayerScreenRuntime(
     var isUserExplicitAudioSelection by mutableStateOf(false)
     var isUserExplicitSubtitleSelection by mutableStateOf(false)
     var hasScannedTextTracksOnce by mutableStateOf(false)
-    var autoFetchedAddonSubtitlesForKey by mutableStateOf<String?>(null)
+    var autoFetchedAddonSubtitlesForKey by mutableStateOf<AddonSubtitleFetchKey?>(null)
     var trackPreferenceRestoreApplied by mutableStateOf(false)
     var subtitleDelayMs by mutableStateOf(0)
     var subtitleAutoSyncState by mutableStateOf(SubtitleAutoSyncUiState())

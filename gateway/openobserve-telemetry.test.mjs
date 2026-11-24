@@ -49,13 +49,45 @@ test('accepts only fixed event codes, versions and platform fields', () => {
   }
   assert.equal(validateTelemetryEvent({ ...validEvent, installationId: 'user@example.com' }), false);
   assert.equal(validateTelemetryEvent({ ...validEvent, version: '../../../config' }), false);
+  for (const platform of ['tizen', 'webos']) {
+    for (const event of ['app_open', 'playback_failed', 'tv_runtime_error',
+      'tv_playback_stalled', 'tv_usb_cache_warning']) {
+      assert.equal(validateTelemetryEvent({ ...validEvent, platform, event }), true,
+        platform + '/' + event);
+    }
+  }
+  assert.equal(validateTelemetryEvent({ ...validEvent, platform: 'browser' }), false);
+  assert.equal(validateTelemetryEvent({ ...validEvent, platform: 'tizen',
+    event: 'tv_runtime_error', message: 'token://PRIVATE' }), false);
+  assert.equal(validateTelemetryEvent({ ...validEvent, platform: 'webos',
+    event: 'tv_runtime_error', stack: 'local-path' }), false);
+});
+test('TV warning and error telemetry uses server categories only', async () => {
+  const count = deliveries.length;
+  const events = ['tv_runtime_error', 'tv_startup_slow', 'tv_playback_stalled',
+    'tv_plugin_failed', 'tv_usb_cache_warning', 'tv_subtitle_failed'];
+  for (const event of events) {
+    assert.equal((await send({ ...validEvent, platform: 'tizen', event })).status, 202);
+  }
+  const records = deliveries.slice(count).map(({ options }) => JSON.parse(options.body)[0]);
+  for (const record of records) {
+    assert.deepEqual(Object.keys(record).sort(), [
+      'app', 'component', 'event', 'platform', 'schema_version', 'severity', 'version',
+    ]);
+    assert.equal(record.platform, 'tizen');
+    assert.equal(record.schema_version, 2);
+  }
+  assert.equal(records[0].severity, 'error');
+  assert.equal(records[1].severity, 'warning');
+  assert.equal(records[3].component, 'plugin');
 });
 
 test('forwards categorical health signals without storing device or session identifiers', async () => {
+  const count = deliveries.length;
   assert.equal((await send()).status, 202);
   assert.equal((await send({ ...validEvent, event: 'playback_ready' })).status, 202);
-  assert.equal(deliveries.length, 2);
-  const [first, second] = deliveries;
+  assert.equal(deliveries.length, count + 2);
+  const [first, second] = deliveries.slice(count);
   assert.equal(first.url, ingestUrl);
   assert.equal(first.options.headers.Authorization, authorization);
   assert.equal(first.options.redirect, 'error');

@@ -18,6 +18,7 @@ data class MetaDetails(
     val status: String? = null,
     val imdbRating: String? = null,
     val ageRating: String? = null,
+    val isAdult: Boolean = false,
     val runtime: String? = null,
     val externalRatings: List<MetaExternalRating> = emptyList(),
     val genres: List<String> = emptyList(),
@@ -66,6 +67,8 @@ data class MetaTrailer(
     val seasonNumber: Int? = null,
     val displayName: String? = null,
     val iso6391: String? = null,
+    val directUrl: String? = null,
+    val fromTmdb: Boolean = false,
 )
 
 data class MetaPerson(

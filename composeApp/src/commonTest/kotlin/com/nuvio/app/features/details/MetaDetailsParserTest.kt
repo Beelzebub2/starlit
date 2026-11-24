@@ -16,6 +16,44 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class MetaDetailsParserTest {
+    @Test
+    fun combinesAddonTrailerFieldsWithoutTurningDirectMediaOrThumbnailsIntoPreviewUrls() {
+        val details = MetaDetailsParser.parse(
+            """
+            {
+              "meta": {
+                "id": "demo", "name": "Sample Film", "type": "movie",
+                "trailers": [
+                  { "source": "sample-id", "name": "Legacy", "type": "Trailer" },
+                  { "url": "https://cdn.example.test/first.mp4?signature=AbC%2Fxyz", "type": "Trailer",
+                    "title": "First", "thumbnail": "https://artwork.example.test/not-a-preview.jpg" },
+                  { "url": "file:///local.mp4", "name": "Invalid", "type": "Trailer" },
+                  { "source": "https://video.example.test/watch?v=sample-id", "name": "Invalid YouTube link", "type": "Trailer" }
+                ],
+                "trailerStreams": [
+                  { "ytId": "https://youtu.be/sample-id", "type": "Trailer", "title": "Same legacy video" },
+                  { "url": "https://cdn.example.test/first.mp4?signature=AbC%2Fxyz", "name": "Duplicate", "type": "Trailer" },
+                  { "url": "http://cdn.example.test/second.m3u8", "type": "Trailer", "description": "Second" },
+                  { "url": "https:///no-host", "name": "Invalid host", "type": "Trailer" },
+                  { "url": {}, "name": [], "type": "Trailer" }
+                ]
+              }
+            }
+            """.trimIndent(),
+        )
+
+        assertEquals(listOf("Legacy", "First", "Second"), details.trailers.map { it.name })
+        assertEquals("https://www.youtube.com/watch?v=sample-id", selectHeroTrailer(details.trailers)?.youtubePlaybackUrl())
+        val media = details.trailers.drop(1)
+        assertEquals(
+            listOf("https://cdn.example.test/first.mp4?signature=AbC%2Fxyz", "http://cdn.example.test/second.m3u8"),
+            media.map { it.directUrl },
+        )
+        assertTrue(media.all { it.youtubeThumbnailUrl() == null })
+        assertNull(selectHeroTrailer(media))
+    }
+
+
 
     @Test
     fun `parse rejects null meta object without json object cast crash`() {

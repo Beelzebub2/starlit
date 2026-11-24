@@ -1163,10 +1163,10 @@ private struct NativeProfileSwitcherView: View {
 
             if let lockedProfile = model.lockedProfile {
                 Divider()
-                Text("Enter PIN for \(lockedProfile.name)")
+                Text(String(format: String(localized: "profile_unlock_prompt"), lockedProfile.name))
                     .font(.subheadline.weight(.semibold))
 
-                SecureField("4-digit PIN", text: Binding(
+                SecureField(String(localized: "profile_unlock_pin_hint"), text: Binding(
                     get: { model.pin },
                     set: model.updatePin
                 ))
@@ -1186,9 +1186,9 @@ private struct NativeProfileSwitcherView: View {
                 }
 
                 HStack {
-                    Button("Cancel", action: model.cancelUnlock)
+                    Button(String(localized: "profile_unlock_cancel"), action: model.cancelUnlock)
                     Spacer()
-                    Button("Unlock") {
+                    Button(String(localized: "profile_unlock_confirm")) {
                         model.unlock(onComplete: dismiss.callAsFunction)
                     }
                     .disabled(model.pin.count != 4 || model.isSubmitting)

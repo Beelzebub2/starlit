@@ -8,7 +8,11 @@ on:
       - '.github/release.yml'
       - '.github/workflows/release-notes-check.yml'
       - '.github/workflows/windows-release.yml'
+      - '.github/workflows/tizen.yml'
+      - '.github/workflows/webos.yml'
+      - '.github/workflows/webos-installer.yml'
       - 'docs/RELEASE-NOTES.md'
+      - 'docs/TV-DEVELOPER-PREVIEW-NOTICE.md'
       - 'docs/RELEASING.md'
       - 'composeApp/Configuration/DesktopVersion.properties'
 

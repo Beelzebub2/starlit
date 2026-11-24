@@ -36,6 +36,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.nuvio.app.core.ui.AppTheme
+import com.nuvio.app.isDesktop
 import com.nuvio.app.core.ui.CustomThemeColors
 import com.nuvio.app.core.ui.NuvioTokens
 import com.nuvio.app.core.ui.ThemeColors
@@ -67,7 +68,16 @@ internal fun AppearanceThemePicker(
     var showEditor by rememberSaveable(profileId, gradientEnabled) { mutableStateOf(false) }
     val themes = availableAppThemes(memberAccess.entitlements)
     val themeSpacing = if (isTablet) NuvioTokens.Space.s16 else NuvioTokens.Space.s12
-    BoxWithConstraints(
+    if (isDesktop && isTablet) {
+        DesktopThemeCardGrid(
+            themes = themes,
+            selectedTheme = selectedTheme,
+            customColors = customColors,
+            onThemeClick = { theme ->
+                if (theme == AppTheme.CUSTOM) showEditor = true else onThemeSelected(theme)
+            },
+        )
+    } else BoxWithConstraints(
         modifier = Modifier
             .fillMaxWidth()
             .padding(

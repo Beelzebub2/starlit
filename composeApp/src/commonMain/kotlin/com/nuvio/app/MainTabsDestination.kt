@@ -255,7 +255,7 @@ internal fun MainTabsDestination(
                     selected = selectedTab == AppScreenTab.MyAnimeList,
                     onClick = { onTabSelected(AppScreenTab.MyAnimeList) },
                     icon = Icons.AutoMirrored.Filled.PlaylistAddCheck,
-                    label = "MyAnimeList",
+                    label = com.nuvio.app.features.myanimelist.listsTabLabel(),
                 ))
             }
         }

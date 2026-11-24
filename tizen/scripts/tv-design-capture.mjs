@@ -10,6 +10,9 @@
 //   node scripts/tv-design-capture.mjs --sizes=2560x1080 --screens=home,sources
 //   node scripts/tv-design-capture.mjs --theme=GOLD --interface=large --overscan=0.05
 //   node scripts/tv-design-capture.mjs --legacy              # no flex gap / grid (Tizen 4)
+//   node scripts/tv-design-capture.mjs --constrained         # pre-2022 Samsung motion tier
+//   node scripts/tv-design-capture.mjs --all                 # every screen and Settings section
+//   node scripts/tv-design-capture.mjs --perf --screens=none # main-thread cost of held-key navigation
 //
 // Everything shown is made-up sample content; no network is used unless
 // --fonts lets the Inter web font load. Chromium cannot stand in for Samsung
@@ -39,6 +42,45 @@ const ALL_SCREENS = Object.freeze([
   "settings",
   "signin"
 ]);
+// Secondary screens, every Settings section and the movie details page.
+// Captured with --all or by naming them in --screens.
+const SETTINGS_SECTIONS = Object.freeze([
+  "account",
+  "profiles",
+  "watchParty",
+  "appearance",
+  "display",
+  "ambient",
+  "layout",
+  "contentDiscovery",
+  "plugins",
+  "integration",
+  "streams",
+  "playback",
+  "trakt",
+  "advanced",
+  "about"
+]);
+// Routes that open without parameters, captured as they are.
+const PLAIN_ROUTES = Object.freeze([
+  "catalogOrder",
+  "plugins",
+  "licensesAttributions",
+  "authSignIn",
+  "experienceModeSelection",
+  "collectionEditor"
+]);
+const EXTENDED_SCREENS = Object.freeze([
+  "movie",
+  ...PLAIN_ROUTES,
+  "library",
+  "discover",
+  "seeall",
+  "profiles",
+  "collections",
+  "addons",
+  ...SETTINGS_SECTIONS.map((section) => `settings-${section}`)
+]);
 function readOptions(argv) {
   const options = {
     sizes: ["1920x1080"],
@@ -49,6 +91,8 @@ function readOptions(argv) {
     textSize: "default",
     reduceMotion: false,
     legacy: false,
+    constrained: false,
+    perf: false,
     fonts: false,
     outline: false,
     tag: ""
@@ -58,12 +102,15 @@ function readOptions(argv) {
     if (name === "matrix") options.sizes = [...ACCEPTANCE_SIZES];
     else if (name === "sizes") options.sizes = value.split(",").filter(Boolean);
     else if (name === "screens") options.screens = value.split(",").filter(Boolean);
+    else if (name === "all") options.screens = [...ALL_SCREENS, ...EXTENDED_SCREENS];
     else if (name === "theme") options.theme = value.toUpperCase();
     else if (name === "interface") options.interfaceSize = value;
     else if (name === "overscan") options.overscan = Number(value) || 0;
     else if (name === "text") options.textSize = value;
     else if (name === "reduce-motion") options.reduceMotion = true;
     else if (name === "legacy") options.legacy = true;
+    else if (name === "constrained") options.constrained = true;
+    else if (name === "perf") options.perf = true;
     else if (name === "fonts") options.fonts = true;
     else if (name === "outline") options.outline = true;
     else if (name === "tag") options.tag = value;
@@ -345,6 +392,117 @@ function outlineInPage({ selector, maxDepth }) {
   walk(start, 0);
   return lines.join("\n");
 }
+// ---- Navigation cost ---------------------------------------------------------
+//
+// Chromium throttled 6x stands in for a TV CPU. Each scenario holds a D-pad
+// direction (one press per key-repeat interval) and reports the main-thread
+// time it cost: script, style recalculation and layout, from the DevTools
+// Performance domain. Compare two builds on the same machine, not absolute
+// numbers between machines.
+const PERF_RUNS = 3;
+const PERF_METRICS = [
+  "TaskDuration",
+  "ScriptDuration",
+  "RecalcStyleDuration",
+  "LayoutDuration",
+  "LayoutCount",
+  "RecalcStyleCount"
+];
+async function measureNavigationCost(page, context, navigate, origin, size) {
+  const cdp = await context.newCDPSession(page);
+  await cdp.send("Performance.enable");
+  const read = async () => {
+    const { metrics } = await cdp.send("Performance.getMetrics");
+    return Object.fromEntries(
+      metrics.filter((entry) => PERF_METRICS.includes(entry.name)).map((entry) => [entry.name, entry.value])
+    );
+  };
+  const scenarios = [
+    {
+      name: "settings: hold Down through the sections",
+      setup: () => navigate("settings", { section: "account" }),
+      key: "ArrowDown",
+      presses: 10
+    },
+    {
+      name: "settings: hold Down through Layout rows",
+      setup: async () => {
+        await navigate("settings", { section: "layout" });
+        await page.waitForTimeout(600);
+        await page.keyboard.press("ArrowRight");
+      },
+      key: "ArrowDown",
+      presses: 6
+    },
+    {
+      name: "sources: hold Down through the list",
+      setup: () =>
+        navigate("stream", {
+          itemId: "sample-series-0",
+          itemType: "series",
+          videoId: "sample-series-0:2:4",
+          itemTitle: "Hollow Coast",
+          season: 2,
+          episode: 4,
+          episodeTitle: "The Undertow",
+          backdrop: `${origin}/fixture/art/wide-6.svg`
+        }),
+      key: "ArrowDown",
+      presses: 6
+    },
+    {
+      name: "details: hold Right along the episodes",
+      setup: async () => {
+        await navigate("detail", { itemId: "sample-series-0", itemType: "series" });
+        await page.waitForTimeout(900);
+        await page.keyboard.press("ArrowDown");
+        await page.keyboard.press("ArrowDown");
+      },
+      key: "ArrowRight",
+      presses: 6
+    }
+  ];
+  const results = [];
+  await cdp.send("Emulation.setCPUThrottlingRate", { rate: 6 });
+  try {
+    for (const scenario of scenarios) {
+      const runs = [];
+      for (let run = 0; run < PERF_RUNS; run += 1) {
+        await scenario.setup();
+        await page.waitForTimeout(1500);
+        const before = await read();
+        for (let index = 0; index < scenario.presses; index += 1) {
+          await page.keyboard.press(scenario.key);
+          await page.waitForTimeout(110);
+        }
+        await page.waitForTimeout(900);
+        const after = await read();
+        runs.push(
+          Object.fromEntries(
+            PERF_METRICS.map((name) => [
+              name,
+              name.endsWith("Count") ? after[name] - before[name] : Math.round((after[name] - before[name]) * 1000)
+            ])
+          )
+        );
+      }
+      // Median run by total main-thread time.
+      runs.sort((left, right) => left.TaskDuration - right.TaskDuration);
+      const delta = runs[Math.floor(runs.length / 2)];
+      results.push({ size, screen: `perf: ${scenario.name}`, presses: scenario.presses, ...delta, pageErrors: [] });
+      console.log(
+        `${scenario.name.padEnd(44)} task ${String(delta.TaskDuration).padStart(5)} ms  ` +
+          `script ${String(delta.ScriptDuration).padStart(5)} ms  ` +
+          `style ${String(delta.RecalcStyleDuration).padStart(4)} ms (${delta.RecalcStyleCount})  ` +
+          `layout ${String(delta.LayoutDuration).padStart(4)} ms (${delta.LayoutCount})`
+      );
+    }
+  } finally {
+    await cdp.send("Emulation.setCPUThrottlingRate", { rate: 1 });
+  }
+  return results;
+}
+
 // ---- Capture ---------------------------------------------------------------
 async function main() {
   const options = readOptions(process.argv.slice(2));
@@ -404,6 +562,17 @@ async function main() {
         // Chromium is not a Samsung TV: opt in to its playback hints so the
         // "Plays as HDR10" / "Audio may not play" markers can be checked.
         window.__STARLIT_TV_PLAYBACK_PROFILE__ = "samsung";
+        if (seed.constrained) {
+          // The classes js/app.js sets on a pre-2022 Samsung set.
+          const constrain = () => {
+            ["performance-constrained", "legacy-tizen"].forEach((name) => {
+              document.documentElement.classList.add(name);
+              if (document.body) document.body.classList.add(name);
+            });
+          };
+          document.addEventListener("DOMContentLoaded", constrain);
+          setInterval(constrain, 200);
+        }
         if (seed.legacy) {
           // Keep the "no flex gap / no grid" fallbacks on, as Tizen 4 would.
           const keep = () => {
@@ -417,6 +586,7 @@ async function main() {
         }
       }, {
         legacy: options.legacy,
+        constrained: options.constrained,
         display: {
           interfaceSize: options.interfaceSize,
           overscan: options.overscan,
@@ -517,7 +687,9 @@ async function main() {
           itemTitle: "Hollow Coast",
           season: 2,
           episode: 4,
-          episodeTitle: "The Undertow"
+          episodeTitle: "The Undertow",
+          // The details screen passes the episode artwork along, as here.
+          backdrop: `${origin}/fixture/art/wide-6.svg`
         });
         await page.waitForFunction(() => document.querySelector("#stream .stream-route-card"));
         await capture("sources", "#stream");
@@ -552,6 +724,58 @@ async function main() {
       if (wants("settings")) {
         await navigate("settings", { section: "display" });
         await capture("settings", "#settings");
+        // Into the section: the list highlight rests, the first row takes focus.
+        await page.keyboard.press("ArrowRight");
+        await page.keyboard.press("ArrowDown");
+        await capture("settings-row", "#settings");
+      }
+      if (wants("movie")) {
+        await navigate("detail", { itemId: "sample-movie-2", itemType: "movie" });
+        await page.waitForFunction(() =>
+          document.querySelector("#detail")?.textContent.includes("Paper Lanterns")
+        );
+        await capture("movie", "#detail");
+      }
+      if (wants("library")) {
+        await navigate("library", {});
+        await capture("library", "#library");
+      }
+      if (wants("discover")) {
+        await navigate("discover", {});
+        await capture("discover", "#discover");
+      }
+      if (wants("seeall")) {
+        await navigate("catalogSeeAll", {
+          addonBaseUrl: `${origin}/fixture`,
+          addonId: "org.example.starlit.design-fixture",
+          addonName: "Sample add-on",
+          catalogId: "popular",
+          catalogName: "Popular",
+          type: "movie"
+        });
+        await capture("seeall", "#catalogSeeAll");
+      }
+      if (wants("profiles")) {
+        await navigate("profileSelection", { skipInitialProfileSync: true });
+        await capture("profiles", "#profileSelection");
+      }
+      if (wants("collections")) {
+        await navigate("collections", {});
+        await capture("collections", "#collections");
+      }
+      if (wants("addons")) {
+        await navigate("plugin", {});
+        await capture("addons", "#plugin");
+      }
+      for (const route of PLAIN_ROUTES) {
+        if (!wants(route)) continue;
+        await navigate(route, {});
+        await capture(route, `#${route}`);
+      }
+      for (const section of SETTINGS_SECTIONS) {
+        if (!wants(`settings-${section}`)) continue;
+        await navigate("settings", { section });
+        await capture(`settings-${section}`, "#settings");
       }
       if (wants("signin")) {
         await navigate("account", {});
@@ -592,6 +816,9 @@ async function main() {
         await capture("player", "#player");
         await page.keyboard.press("Escape");
         await page.waitForTimeout(300);
+      }
+      if (options.perf) {
+        report.push(...(await measureNavigationCost(page, context, navigate, origin, size)));
       }
       if (errors.length) {
         console.error(`[${size}] page errors:\n  ${errors.join("\n  ")}`);

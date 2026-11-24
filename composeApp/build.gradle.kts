@@ -1420,6 +1420,8 @@ kotlin {
                 implementation(libs.androidx.appcompat)
                 implementation(libs.androidx.activity.compose)
                 implementation("com.google.android.gms:play-services-code-scanner:16.1.0")
+                // Encodes the TV/phone sign-in QR code (desktop already ships the same encoder).
+                implementation("com.google.zxing:core:3.5.4")
                 implementation("com.google.android.gms:play-services-cast-framework:23.0.0")
                 implementation(libs.androidx.credentials.core)
                 implementation(libs.androidx.credentials.play.services.auth)
@@ -1430,6 +1432,7 @@ kotlin {
                 implementation("com.squareup.okhttp3:okhttp:4.12.0")
                 implementation("com.google.code.gson:gson:2.11.0")
                 implementation("io.github.peerless2012:ass-media:0.5.1")
+                implementation("io.github.peerless2012:ass-kt:0.5.1")
                 implementation(libs.ktor.client.okhttp)
                 implementation(libs.sentry.android)
                 implementation(libs.androidx.media3.exoplayer.hls)
@@ -1839,6 +1842,12 @@ fun registerWindowsInstallerTask(name: String, distributableTask: String, distri
                 addAll(listOf("-WebView2Root", windowsWebView2Root.absolutePath))
                 addAll(listOf("-ProductName", desktopPackageName, "-Publisher", desktopVendor))
                 addAll(listOf("-LegacyUpgradeCode", windowsMsiUpgradeUuid, "-Arch", windowsPlayerBridgeArch))
+                providers.gradleProperty("nuvio.windows.tvInstallerDir").orNull
+                    ?.takeIf { it.isNotBlank() }
+                    ?.let {
+                        inputs.dir(it)
+                        addAll(listOf("-TvInstallerDir", it))
+                    }
                 windowsVcvarsPath?.let { addAll(listOf("-Vcvars", it)) }
             },
         )

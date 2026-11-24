@@ -1,21 +1,26 @@
 name: Samsung Tizen
 on:
+  workflow_call:
+    inputs:
+      release_tag:
+        description: Exact version tag whose unsigned Tizen package is built for the main release
+        required: true
+        type: string
   pull_request:
-    paths: ['tizen/**', '.github/workflows/tizen.yml', 'composeApp/src/desktopMain/kotlin/com/nuvio/app/features/myanimelist/**']
+    paths: ['tizen/**', '.github/workflows/tizen.yml', '.github/workflows/windows-release.yml', 'composeApp/src/desktopMain/kotlin/com/nuvio/app/features/myanimelist/**']
   push:
     branches: [Dev]
-    tags: ['v*']
     paths: ['tizen/**', '.github/workflows/tizen.yml']
-  release:
-    types: [published]
   workflow_dispatch:
 permissions:
   contents: read
 concurrency:
-  group: tizen-${{ github.ref }}-${{ github.event_name }}
+  group: tizen-${{ inputs.release_tag || github.ref }}-${{ github.event_name }}
   cancel-in-progress: true
 jobs:
   build:
+    # Unsigned developer packages are included with tagged releases as clearly
+    # marked previews; Store/stable acceptance remains a separate physical gate.
     runs-on: ubuntu-latest
     env:
       TRAKT_CLIENT_ID: ${{ vars.TRAKT_CLIENT_ID }}
@@ -25,7 +30,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          ref: ${{ github.event.release.tag_name || github.ref }}
+          ref: ${{ inputs.release_tag && format('refs/tags/{0}', inputs.release_tag) || github.ref }}
       - uses: actions/setup-node@v6
         with:
           node-version: '24'
@@ -39,9 +44,9 @@ jobs:
       - run: npm run lint
       - run: npm test
       - name: Match native stable release version
-        if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'release'
+        if: startsWith(github.ref, 'refs/tags/v') || inputs.release_tag != ''
         env:
-          RELEASE_TAG: ${{ github.event.release.tag_name || github.ref_name }}
+          RELEASE_TAG: ${{ inputs.release_tag || github.ref_name }}
         run: node scripts/starlit-release-version.mjs "$RELEASE_TAG"
       - run: npm run package:tizen
       - run: npm run verify:package
@@ -54,40 +59,14 @@ jobs:
       - run: npm run test:browser
       - uses: actions/upload-artifact@v7
         with:
-          name: Starlit-Tizen-unsigned
-          path: tizen/artifacts/*
+          name: ${{ inputs.release_tag && 'starlit-tizen-preview' || 'Starlit-Tizen-unsigned' }}
+          path: |
+            tizen/artifacts/Starlit-Tizen-*.wgt
+            tizen/artifacts/SHA256SUMS-Tizen
+            tizen/artifacts/apps2samsung-feed.json
           if-no-files-found: error
       - uses: actions/upload-artifact@v7
         with:
           name: Starlit-Tizen-browser-evidence
           path: tizen/test-results/**
           if-no-files-found: error
-  publish:
-    if: github.event_name == 'release' && !github.event.release.prerelease
-    needs: build
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          ref: ${{ github.event.release.tag_name }}
-      - uses: actions/setup-node@v6
-        with:
-          node-version: '24'
-      - uses: actions/download-artifact@v8
-        with:
-          name: Starlit-Tizen-unsigned
-          path: tizen/artifacts
-      - name: Require exact physical-device acceptance before release publication
-        working-directory: tizen
-        env:
-          RELEASE_TAG: ${{ github.event.release.tag_name }}
-        run: |
-          node scripts/starlit-release-version.mjs "$RELEASE_TAG"
-          node scripts/starlit-release-gate.mjs
-      - name: Attach verified TV package to the matching stable release
-        env:
-          GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: ${{ github.event.release.tag_name }}
-        run: gh release upload "$RELEASE_TAG" tizen/artifacts/Starlit-Tizen-*.wgt tizen/artifacts/SHA256SUMS-Tizen tizen/artifacts/apps2samsung-feed.json --repo "${{ github.repository }}"

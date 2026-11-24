@@ -1,21 +1,26 @@
 name: LG webOS TV
 on:
+  workflow_call:
+    inputs:
+      release_tag:
+        description: Exact version tag whose unsigned webOS package is built for the main release
+        required: true
+        type: string
   pull_request:
-    paths: ['tizen/**', '.github/workflows/webos.yml']
+    paths: ['tizen/**', '.github/workflows/webos.yml', '.github/workflows/windows-release.yml']
   push:
     branches: [Dev]
-    tags: ['v*']
     paths: ['tizen/**', '.github/workflows/webos.yml']
-  release:
-    types: [published]
   workflow_dispatch:
 permissions:
   contents: read
 concurrency:
-  group: webos-${{ github.ref }}-${{ github.event_name }}
+  group: webos-${{ inputs.release_tag || github.ref }}-${{ github.event_name }}
   cancel-in-progress: true
 jobs:
   build:
+    # Package identity/checksums are verified, but physical LG device support is
+    # not certified. Main releases label these artifacts as developer previews.
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -23,7 +28,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          ref: ${{ github.event.release.tag_name || github.ref }}
+          ref: ${{ inputs.release_tag && format('refs/tags/{0}', inputs.release_tag) || github.ref }}
       - uses: actions/setup-node@v6
         with:
           node-version: '24'
@@ -35,72 +40,17 @@ jobs:
       - run: npm test
       - run: npm run test:webos
       - name: Require stable app version on tagged release
-        if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'release'
+        if: startsWith(github.ref, 'refs/tags/v') || inputs.release_tag != ''
         env:
-          RELEASE_TAG: ${{ github.event.release.tag_name || github.ref_name }}
+          RELEASE_TAG: ${{ inputs.release_tag || github.ref_name }}
         run: node scripts/starlit-release-version.mjs "$RELEASE_TAG"
       - run: npm run package:webos
       - run: npm run verify:package:webos
       - uses: actions/upload-artifact@v7
         with:
-          name: Starlit-WebOS-unverified
+          name: ${{ inputs.release_tag && 'starlit-webos-preview' || 'Starlit-WebOS-unverified' }}
           path: |
             tizen/artifacts/Starlit-WebOS-*.ipk
             tizen/artifacts/SHA256SUMS-WebOS
             tizen/artifacts/webos-package-metadata.json
           if-no-files-found: error
-  release-eligibility:
-    if: github.event_name == 'release' && !github.event.release.prerelease
-    runs-on: ubuntu-latest
-    outputs:
-      accepted: ${{ steps.acceptance.outputs.accepted }}
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          ref: ${{ github.event.release.tag_name }}
-      - name: Check whether a device-accepted LG package is configured
-        id: acceptance
-        shell: bash
-        run: |
-          node - <<'NODE'
-          const fs = require('node:fs');
-          const path = 'tizen/release/webos-acceptance.json';
-          let accepted = false;
-          try {
-            const evidence = JSON.parse(fs.readFileSync(path, 'utf8'));
-            accepted = evidence.status === 'PASS';
-          } catch {
-            accepted = false;
-          }
-          fs.appendFileSync(process.env.GITHUB_OUTPUT, 'accepted=' + accepted + '\n');
-          console.log(accepted ? 'LG device acceptance present; enforce exact IPK release gate.' : 'LG package is not device-accepted; skip LG publishing without failing the parent release.');
-          NODE
-  publish:
-    if: github.event_name == 'release' && !github.event.release.prerelease && needs.release-eligibility.outputs.accepted == 'true'
-    needs: [build, release-eligibility]
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          ref: ${{ github.event.release.tag_name }}
-      - uses: actions/setup-node@v6
-        with:
-          node-version: '24'
-      - uses: actions/download-artifact@v8
-        with:
-          name: Starlit-WebOS-unverified
-          path: tizen/artifacts
-      - name: Require exact physical webOS TV acceptance
-        working-directory: tizen
-        env:
-          RELEASE_TAG: ${{ github.event.release.tag_name }}
-        run: |
-          node scripts/starlit-release-version.mjs "$RELEASE_TAG"
-          node scripts/starlit-webos-release-gate.mjs
-      - name: Publish accepted LG webOS package
-        env:
-          GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: ${{ github.event.release.tag_name }}
-        run: gh release upload "$RELEASE_TAG" tizen/artifacts/Starlit-WebOS-*.ipk tizen/artifacts/SHA256SUMS-WebOS --repo "${{ github.repository }}"

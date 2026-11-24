@@ -1,14 +1,24 @@
 "use strict";
 const path = require("node:path");
-const { app, BrowserWindow, dialog, ipcMain, session } = require("electron");
-const { operate } = require("./installer.cjs");
+const { app, BrowserWindow, dialog, ipcMain, session, shell } = require("electron");
 const { platformInfo, localLanIps } = require("./platforms.cjs");
+const { isSamsungSignInUrl } = require("./samsung-auth.cjs");
 
 let mainWindow;
+let scanning = false;
+let operating = false;
+let pendingSamsungSignInUrl = "";
 async function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1100, height: 820, minWidth: 800, minHeight: 650,
-    backgroundColor: "#0b101b", autoHideMenuBar: true,
+    title: "Starlit TV Installer", backgroundColor: "#0d0d0d", autoHideMenuBar: true,
+    icon: path.join(__dirname, "..", "build", "icon.ico"),
+    // Windows supports the matching branded caption; on macOS and Linux use
+    // native system decorations so close/minimize and dragging remain usable.
+    ...(process.platform === "win32" ? {
+      titleBarStyle: "hidden",
+      titleBarOverlay: { color: "#0d0d0d", symbolColor: "#f5f7f8", height: 43 }
+    } : {}),
     webPreferences: {
       preload: path.join(__dirname, "preload.cjs"),
       sandbox: true, contextIsolation: true, nodeIntegration: false
@@ -19,10 +29,56 @@ async function createWindow() {
   await mainWindow.loadFile(path.join(__dirname, "index.html"));
 }
 app.whenReady().then(async () => {
+  if (process.platform === "win32") app.setAppUserModelId("app.starlit.tvinstaller");
   session.defaultSession.setPermissionRequestHandler((_wc, _permission, callback) => callback(false));
   ipcMain.handle("tv:local-ips", event => {
     if (event.sender !== mainWindow?.webContents) throw new Error("Untrusted window");
     return localLanIps();
+  });
+  ipcMain.handle("tv:discover", async (event, request) => {
+    if (event.sender !== mainWindow?.webContents) return { ok: false, error: "Untrusted window" };
+    if (scanning) return { ok: false, error: "A TV scan is already running" };
+    const platform = request?.platform;
+    if (platform !== "tizen" && platform !== "webos") {
+      return { ok: false, error: "Choose Samsung or LG before scanning" };
+    }
+    const scanId = Number.isSafeInteger(request?.scanId) ? request.scanId : 0;
+    scanning = true;
+    try {
+      const { discoverTvs } = require("./discovery.cjs");
+      const result = await discoverTvs({
+        platform,
+        samsungOptions: {
+          toolsDir: path.join(app.getPath("userData"), "tools"),
+          deepScan: platform === "tizen" && request.deepScan === true
+        },
+        onDevice: device => {
+          if (!event.sender.isDestroyed()) event.sender.send("tv:discovered", { scanId, device });
+        },
+        onStatus: message => {
+          if (!event.sender.isDestroyed()) {
+            event.sender.send("tv:scan-status", { scanId, message: String(message).slice(0, 500) });
+          }
+        }
+      });
+      return { ok: true, result };
+    } catch (error) {
+      return { ok: false, error: String(error.message || error).slice(0, 300) };
+    } finally {
+      scanning = false;
+    }
+  });
+  ipcMain.handle("tv:open-samsung-sign-in", async event => {
+    if (event.sender !== mainWindow?.webContents) return { ok: false, error: "Untrusted window" };
+    if (!operating || !isSamsungSignInUrl(pendingSamsungSignInUrl)) {
+      return { ok: false, error: "No active Samsung sign-in. Start installation with a Samsung certificate first." };
+    }
+    try {
+      await shell.openExternal(pendingSamsungSignInUrl);
+      return { ok: true };
+    } catch {
+      return { ok: false, error: "Could not open your browser. Check your default browser settings and retry." };
+    }
   });
   ipcMain.handle("tv:choose-package", async (event, platform) => {
     if (event.sender !== mainWindow?.webContents) throw new Error("Untrusted window");
@@ -36,14 +92,31 @@ app.whenReady().then(async () => {
   });
   ipcMain.handle("tv:operate", async (event, request) => {
     if (event.sender !== mainWindow?.webContents) return { ok: false, error: "Untrusted window" };
+    if (operating) return { ok: false, error: "A TV operation is already running" };
+    operating = true;
+    pendingSamsungSignInUrl = "";
     try {
+      const { operate } = require("./installer.cjs");
       const result = await operate(request, {
-        samsungOps: { toolsDir: path.join(app.getPath("userData"), "tools") },
-        onStatus: message => event.sender.send("tv:log", String(message).slice(0, 500))
+        samsungOps: {
+          toolsDir: path.join(app.getPath("userData"), "tools"),
+          onSignInUrl: url => {
+            if (!isSamsungSignInUrl(url)) return;
+            pendingSamsungSignInUrl = url;
+            if (!event.sender.isDestroyed()) event.sender.send("tv:auth", { available: true });
+          }
+        },
+        onStatus: message => {
+          if (!event.sender.isDestroyed()) event.sender.send("tv:log", String(message).slice(0, 500));
+        }
       });
       return { ok: true, result };
     } catch (error) {
       return { ok: false, error: String(error.message || error).slice(0, 650) };
+    } finally {
+      operating = false;
+      pendingSamsungSignInUrl = "";
+      if (!event.sender.isDestroyed()) event.sender.send("tv:auth", { available: false });
     }
   });
   await createWindow();

@@ -1,7 +1,13 @@
 name: Starlit TV Installer (Samsung and LG)
 on:
+  workflow_call:
+    inputs:
+      release_tag:
+        description: Exact version tag for the separately labeled Windows TV installer preview
+        required: true
+        type: string
   pull_request:
-    paths: ['tv-installer/**', '.github/workflows/webos-installer.yml']
+    paths: ['tv-installer/**', '.github/workflows/webos-installer.yml', '.github/workflows/windows-release.yml']
   push:
     branches: [Dev]
     paths: ['tv-installer/**', '.github/workflows/webos-installer.yml']
@@ -9,7 +15,7 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: tv-installer-${{ github.ref }}
+  group: tv-installer-${{ inputs.release_tag || github.ref }}-${{ github.event_name }}
   cancel-in-progress: true
 jobs:
   windows:
@@ -19,6 +25,8 @@ jobs:
         working-directory: tv-installer
     steps:
       - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.release_tag && format('refs/tags/{0}', inputs.release_tag) || github.ref }}
       - uses: actions/setup-node@v6
         with:
           node-version: '24'
@@ -27,9 +35,100 @@ jobs:
       - run: npm ci --no-audit --no-fund
       - run: npm run lint
       - run: npm test
-      - run: npm run dist:win
+      - name: Build preview package
+        shell: pwsh
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag || github.ref_name }}
+        run: |
+          $version = if ($env:RELEASE_TAG -match '^v(\d+\.\d+\.\d+)$') { $Matches[1] } else { (Get-Content package.json | ConvertFrom-Json).version }
+          if ('${{ inputs.release_tag }}' -and $env:RELEASE_TAG -notmatch '^v\d+\.\d+\.\d+$') { throw 'Release tag must be vMAJOR.MINOR.PATCH.' }
+          npm run dist:win -- "--config.extraMetadata.version=$version"
+          if ($LASTEXITCODE -ne 0) { throw 'TV installer packaging failed.' }
+          $assetNames = @(
+            "Starlit-TV-Installer-Setup-Windows-$version.exe",
+            "Starlit-TV-Installer-Windows-$version.exe"
+          )
+          $unpacked = Join-Path dist 'win-unpacked'
+          if (-not (Test-Path -LiteralPath (Join-Path $unpacked 'Starlit TV Installer.exe'))) {
+            throw 'Unpacked TV installer executable is missing.'
+          }
+          $archiveName = "Starlit-TV-Installer-Unpacked-Windows-$version.zip"
+          $archive = Join-Path dist $archiveName
+          Compress-Archive -Path (Join-Path $unpacked '*') -DestinationPath $archive -CompressionLevel Optimal
+          $assetNames += $archiveName
+          New-Item -ItemType Directory -Path dist/release -Force | Out-Null
+          $checksums = foreach ($asset in $assetNames) {
+            $source = Join-Path dist $asset
+            if (-not (Test-Path -LiteralPath $source) -or (Get-Item $source).Length -lt 50000000) {
+              throw "TV installer preview asset is missing or truncated: $asset"
+            }
+            Copy-Item -LiteralPath $source -Destination (Join-Path dist/release $asset)
+            $sha = (Get-FileHash -LiteralPath $source -Algorithm SHA256).Hash.ToLowerInvariant()
+            "$sha  $asset"
+          }
+          $checksums | Set-Content -Path dist/release/SHA256SUMS-TV-Installer -Encoding ascii
       - uses: actions/upload-artifact@v7
         with:
-          name: Starlit-TV-Installer-Windows-unverified
-          path: tv-installer/dist/Starlit-TV-Installer-Windows-*.exe
+          name: ${{ inputs.release_tag && 'starlit-tv-installer-preview' || 'Starlit-TV-Installer-Windows-unverified' }}
+          path: tv-installer/dist/release/*
+          if-no-files-found: error
+
+  portable-unix:
+    name: ${{ matrix.target }} TV installer preview
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            target: linux
+          - os: macos-15
+            target: mac
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: tv-installer
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.release_tag && format('refs/tags/{0}', inputs.release_tag) || github.ref }}
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: tv-installer/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - run: npm run lint
+      - run: npm test
+      - name: Verify command-line entry point
+        run: npm run cli -- --help
+      - name: Verify official Samsung CLI executes on the target OS
+        run: node scripts/verify-samsung-cli.cjs
+      - name: Build portable developer previews
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag || github.ref_name }}
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+        run: |
+          set -euo pipefail
+          if [[ "$RELEASE_TAG" =~ ^v([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+            version="${BASH_REMATCH[1]}"
+          else
+            if [[ -n "${{ inputs.release_tag }}" ]]; then
+              echo '::error::Invalid release tag'; exit 1
+            fi
+            version="$(node -p 'require("./package.json").version')"
+          fi
+          if [[ '${{ matrix.target }}' == 'linux' ]]; then
+            npm run dist:linux -- --x64 "--config.extraMetadata.version=$version"
+            node scripts/stage-portable.cjs linux "$version"
+          else
+            npm run dist:mac -- --x64 --arm64 "--config.extraMetadata.version=$version"
+            node scripts/stage-portable.cjs mac "$version"
+          fi
+      - uses: actions/upload-artifact@v7
+        with:
+          name: ${{ inputs.release_tag && format('starlit-tv-installer-{0}-preview', matrix.target) || format('Starlit-TV-Installer-{0}-unverified', matrix.target) }}
+          path: tv-installer/dist/release/*
           if-no-files-found: error

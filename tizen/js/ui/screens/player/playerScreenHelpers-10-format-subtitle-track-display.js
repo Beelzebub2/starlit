@@ -66,6 +66,7 @@ import { DebridStreamPresentation } from "../../../core/debrid/directDebridStrea
 import { TrackingScrobbleService } from "../../../data/repository/trackingScrobbleService.js";
 import { WebOsEngineFsResolver } from "../../../core/p2p/webosEngineFsResolver.js";
 import { TizenStreamingServerResolver } from "../../../core/p2p/tizenStreamingServerResolver.js";
+import { isLocalTizenTorrentPlaybackUrl } from "../../../core/p2p/tizenTorrentPlaybackReadiness.js";
 import { TizenEngineFsService } from "../../../platform/tizen/tizenEngineFsService.js";
 import { requestWebOsCompanionService, subscribeWebOsCompanionService } from "../../../platform/webos/webosCompanionService.js";
 import { WebOsLunaService } from "../../../platform/webos/webosLunaService.js";
@@ -238,6 +239,9 @@ export function isMagnetUrl(value = "") {
 }
 export function directPlaybackUrl(value = "") {
   const url = String(value || "").trim();
+  // A loopback torrent URL contains an engine-scoped ticket. A new TV boot
+  // must resolve the source again rather than handing the expired URL to AVPlay.
+  if (Environment.isTizen() && isLocalTizenTorrentPlaybackUrl(url)) return "";
   return url && !isMagnetUrl(url) ? url : "";
 }
 export function streamDirectPlaybackUrl(stream = {}) {

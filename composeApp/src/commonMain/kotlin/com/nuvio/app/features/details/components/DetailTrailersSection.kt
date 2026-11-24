@@ -46,6 +46,7 @@ import com.nuvio.app.core.ui.nuvioDesktopDragScroll
 import com.nuvio.app.core.ui.nuvioHorizontalScrollBleed
 import com.nuvio.app.core.ui.rememberPosterCardStyleUiState
 import com.nuvio.app.features.details.MetaTrailer
+import com.nuvio.app.features.details.youtubeThumbnailUrl
 import nuvio.composeapp.generated.resources.*
 import nuvio.composeapp.generated.resources.detail_tab_trailer
 import nuvio.composeapp.generated.resources.detail_trailer_category_count
@@ -59,6 +60,7 @@ fun DetailTrailersSection(
     modifier: Modifier = Modifier,
     showHeader: Boolean = true,
     horizontalScrollPadding: Dp = 0.dp,
+    fallbackArtwork: String? = null,
 ) {
     if (trailers.isEmpty()) return
 
@@ -177,6 +179,7 @@ fun DetailTrailersSection(
                 ) { _, trailer ->
                     TrailerCard(
                         trailer = trailer,
+                        fallbackArtwork = fallbackArtwork,
                         cardWidth = sizing.cardWidth,
                         cornerRadius = sizing.cardRadius,
                         titleFontSize = sizing.titleFontSize,
@@ -192,6 +195,7 @@ fun DetailTrailersSection(
 @Composable
 private fun TrailerCard(
     trailer: MetaTrailer,
+    fallbackArtwork: String?,
     cardWidth: androidx.compose.ui.unit.Dp,
     cornerRadius: androidx.compose.ui.unit.Dp,
     titleFontSize: androidx.compose.ui.unit.TextUnit,
@@ -213,7 +217,7 @@ private fun TrailerCard(
                 .clickable(onClick = onClick),
         ) {
             AsyncImage(
-                model = "https://img.youtube.com/vi/${trailer.key}/hqdefault.jpg",
+                model = trailer.youtubeThumbnailUrl() ?: fallbackArtwork,
                 contentDescription = trailer.displayName ?: trailer.name,
                 modifier = Modifier
                     .fillMaxWidth()

@@ -4,9 +4,7 @@ import com.nuvio.app.features.addons.ManagedAddon
 import com.nuvio.app.features.addons.AddonRepository
 import com.nuvio.app.features.addons.enabledAddons
 import com.nuvio.app.features.catalog.CatalogTarget
-import com.nuvio.app.features.catalog.CatalogPage
 import com.nuvio.app.features.catalog.fetchCatalogPage
-import com.nuvio.app.features.catalog.mergeCatalogItems
 import com.nuvio.app.core.poster.CustomPosterUrlRepository
 import com.nuvio.app.core.poster.withCustomPosterUrls
 import com.nuvio.app.features.collection.Collection
@@ -17,8 +15,11 @@ import com.nuvio.app.features.collection.catalogRouteKey
 import com.nuvio.app.features.collection.findCollectionCatalog
 import com.nuvio.app.features.trakt.TraktPublicListSourceResolver
 import com.nuvio.app.features.tmdb.TmdbMetadataService
+import com.nuvio.app.features.profiles.KidsContentPolicy
 import com.nuvio.app.features.watchprogress.CurrentDateProvider
 import com.nuvio.app.isDesktop
+import kotlinx.atomicfu.locks.SynchronizedObject
+import kotlinx.atomicfu.locks.synchronized
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -39,6 +40,9 @@ object HomeRepository {
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
+    // Entry points and asynchronous publications use the same lock, including profile clear.
+    private val shelfLock = SynchronizedObject()
+    private var shelfGeneration: Any = Any()
     private var activeJob: Job? = null
     private var activeRequestKey: String? = null
     private var currentRequestKey: String? = null
@@ -49,22 +53,32 @@ object HomeRepository {
     private var heroFallbackLoading = false
     private var collectionHeroJob: Job? = null
     private var collectionHeroRequestKey: String? = null
+    private var collectionHeroGeneration: Any = Any()
     private var lastPublishedCatalogHeroEmpty: Boolean = true
     private var lastErrorMessage: String? = null
 
-    fun refresh(addons: List<ManagedAddon>, force: Boolean = false) {
+    fun refresh(addons: List<ManagedAddon>, force: Boolean = false): Unit = synchronized(shelfLock) refresh@{
         val activeAddons = addons.enabledAddons().filterNot {
-            isDesktop && it.manifest?.id == "tools.rrm.nuvio.anime-aired-today"
+            (isDesktop && it.manifest?.id == "tools.rrm.nuvio.anime-aired-today") ||
+                (KidsContentPolicy.isEnabled() && it.manifest?.behaviorHints?.adult == true)
         }
         val requests = buildHomeCatalogDefinitions(activeAddons)
         currentDefinitions = requests
         val requestCacheKeys = requests.mapTo(mutableSetOf(), HomeCatalogDefinition::cacheKey)
         cachedSections = cachedSections.filterKeys(requestCacheKeys::contains)
         val requestKey = requests.joinToString(separator = "|", transform = HomeCatalogDefinition::cacheKey)
+        val sameRequestActive = isDesktop && currentRequestKey == requestKey && activeJob?.isActive == true
         currentRequestKey = requestKey
 
-        if (!force && activeRequestKey == requestKey && _uiState.value.isLoading) return
+        if (!force && ((activeRequestKey == requestKey && _uiState.value.isLoading) || sameRequestActive)) return@refresh
+        val generation = Any()
+        shelfGeneration = generation
         activeRequestKey = requestKey
+        collectionHeroJob?.cancel()
+        collectionHeroJob = null
+        collectionHeroGeneration = Any()
+        collectionHeroRequestKey = null
+        heroFallbackLoading = false
 
         if (requests.isEmpty()) {
             activeJob?.cancel()
@@ -82,60 +96,88 @@ object HomeRepository {
                 refreshSources = true,
                 requestKey = requestKey,
             )
-            return
+            return@refresh
         }
 
         activeJob?.cancel()
-        _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+        _uiState.update { it.copy(isLoading = true, heroFallbackLoading = false, errorMessage = null) }
+        val seedSections = cachedSections
         activeJob = scope.launch {
             val prioritizedRequests = prioritizeDefinitions(
                 definitions = requests,
                 snapshot = HomeCatalogSettingsRepository.snapshot(),
                 forcedRefresh = force,
-                cachedKeys = cachedSections.keys,
+                cachedKeys = seedSections.keys,
             )
-            val loadedSections = linkedMapOf<String, HomeCatalogSection>().apply {
-                putAll(cachedSections)
-            }
+            val loadedSections = LinkedHashMap(seedSections)
+            val desktopTails = mutableMapOf<String, DesktopShelfTail>()
             var firstErrorMessage: String? = null
             fetchHomeRowsIndependently(
                 requests = prioritizedRequests,
                 maxConcurrent = HOME_CATALOG_FETCH_BATCH_SIZE,
                 timeoutMs = HOME_CATALOG_FETCH_TIMEOUT_MS,
-                fetch = { it.toSection(forceRefresh = force) },
+                fetch = { it.toRow(forceRefresh = force) },
             ) { request, result ->
-                if (activeRequestKey != requestKey) return@fetchHomeRowsIndependently
-                result.getOrNull()?.let { section ->
-                    loadedSections[request.cacheKey] = section
+                synchronized(shelfLock) publish@{
+                    if (shelfGeneration !== generation) return@publish
+                    result.getOrNull()?.let { loaded ->
+                        val key = request.cacheKey
+                        val retained = if (isDesktop && !force && loaded.nextSkip != null) {
+                            loadedSections[key]?.retainingDesktopTail(loaded.section)
+                        } else {
+                            null
+                        }
+                        loadedSections[key] = retained ?: loaded.section
+                        if (retained == null && loaded.nextSkip != null) {
+                            desktopTails[key] = DesktopShelfTail(request, loaded.section, loaded.nextSkip)
+                        }
+                    }
+                    if (firstErrorMessage == null) firstErrorMessage = result.exceptionOrNull()?.message
+                    cachedSections = loadedSections.toMap()
+                    lastErrorMessage = firstErrorMessage
+                    // Keep the existing independent healthy-row publication.
+                    publishCurrentState(isLoading = true, requestKey = requestKey)
                 }
-                if (firstErrorMessage == null) {
-                    firstErrorMessage = result.exceptionOrNull()?.message
-                }
-                cachedSections = loadedSections.toMap()
-                lastErrorMessage = firstErrorMessage
-                // Publish healthy rows as they finish, independently of a slow addon.
-                publishCurrentState(isLoading = true, requestKey = requestKey)
             }
 
-            if (activeRequestKey != requestKey) return@launch
+            synchronized(shelfLock) {
+                if (shelfGeneration !== generation) return@launch
+                cachedSections = loadedSections.toMap()
+                lastErrorMessage = firstErrorMessage
+                activeRequestKey = null
+                publishCurrentState(isLoading = false, requestKey = requestKey)
+                ensureCollectionHeroFallback(
+                    addons = activeAddons,
+                    forceRefresh = force,
+                    refreshSources = true,
+                    requestKey = requestKey,
+                )
+            }
 
-            cachedSections = loadedSections.toMap()
-            lastErrorMessage = firstErrorMessage
-            activeRequestKey = null
-            publishCurrentState(
-                isLoading = false,
-                requestKey = requestKey,
-            )
-            ensureCollectionHeroFallback(
-                addons = activeAddons,
-                forceRefresh = force,
-                refreshSources = true,
-                requestKey = requestKey,
-            )
+            // Use the existing bounded, independent scheduler for the second
+            // stage as well. A final page must not delay any initial row.
+            val tailsInPriorityOrder = prioritizedRequests.mapNotNull { desktopTails[it.cacheKey] }
+            fetchHomeRowsIndependently(
+                requests = tailsInPriorityOrder,
+                maxConcurrent = HOME_CATALOG_FETCH_BATCH_SIZE,
+                timeoutMs = HOME_CATALOG_FETCH_TIMEOUT_MS,
+                fetch = { tail -> tail.complete(forceRefresh = force) },
+            ) { tail, result ->
+                val completed = result.getOrNull() ?: return@fetchHomeRowsIndependently
+                synchronized(shelfLock) publish@{
+                    if (shelfGeneration !== generation || cachedSections[tail.definition.cacheKey] != tail.initial) {
+                        return@publish
+                    }
+                    if (completed != tail.initial) {
+                        cachedSections = cachedSections + (tail.definition.cacheKey to completed)
+                        publishCurrentState(isLoading = false, requestKey = requestKey, preserveHero = true)
+                    }
+                }
+            }
         }
     }
 
-    fun applyCurrentSettings() {
+    fun applyCurrentSettings(): Unit = synchronized(shelfLock) {
         publishCurrentState(
             isLoading = _uiState.value.isLoading,
             requestKey = currentRequestKey,
@@ -148,7 +190,8 @@ object HomeRepository {
         )
     }
 
-    fun clear() {
+    fun clear(): Unit = synchronized(shelfLock) {
+        shelfGeneration = Any()
         activeJob?.cancel()
         activeJob = null
         activeRequestKey = null
@@ -161,6 +204,7 @@ object HomeRepository {
         collectionHeroJob?.cancel()
         collectionHeroJob = null
         collectionHeroRequestKey = null
+        collectionHeroGeneration = Any()
         lastPublishedCatalogHeroEmpty = true
         lastErrorMessage = null
         _uiState.value = HomeUiState()
@@ -169,6 +213,7 @@ object HomeRepository {
     private fun publishCurrentState(
         isLoading: Boolean,
         requestKey: String?,
+        preserveHero: Boolean = false,
     ) {
         val snapshot = HomeCatalogSettingsRepository.snapshot()
         val todayIsoDate = if (snapshot.hideUnreleasedContent) CurrentDateProvider.todayIsoDate() else null
@@ -182,11 +227,14 @@ object HomeRepository {
             todayIsoDate = todayIsoDate,
             requestKey = requestKey,
         )
-        val sections = projection.sections
-        val catalogHeroItems = projection.catalogHeroItems
+        val sections = projection.sections.mapNotNull { section ->
+            section.copy(items = KidsContentPolicy.filter(section.items)).takeIf { it.items.isNotEmpty() }
+        }
+        val catalogHeroItems = KidsContentPolicy.filter(projection.catalogHeroItems)
         lastPublishedCatalogHeroEmpty = snapshot.heroEnabled && catalogHeroItems.isEmpty()
+        val existingHero = if (preserveHero) KidsContentPolicy.filter(_uiState.value.heroItems) else emptyList()
         val heroItems = if (snapshot.heroEnabled) {
-            catalogHeroItems.ifEmpty { cachedCollectionHeroItems }
+            existingHero.ifEmpty { catalogHeroItems.ifEmpty { KidsContentPolicy.filter(cachedCollectionHeroItems) } }
         } else {
             emptyList()
         }
@@ -201,40 +249,26 @@ object HomeRepository {
         if (_uiState.value != nextState) _uiState.value = nextState
     }
 
-    private suspend fun HomeCatalogDefinition.toSection(forceRefresh: Boolean): HomeCatalogSection {
+    private data class LoadedRow(val section: HomeCatalogSection, val nextSkip: Int? = null)
+
+    private data class DesktopShelfTail(
+        val definition: HomeCatalogDefinition,
+        val initial: HomeCatalogSection,
+        val nextSkip: Int,
+    )
+
+    private suspend fun HomeCatalogDefinition.toRow(forceRefresh: Boolean): LoadedRow {
         CustomPosterUrlRepository.ensureLoaded()
         val pattern = CustomPosterUrlRepository.patternForScreen(com.nuvio.app.core.poster.CustomPosterScreen.HOME)
-        val page = if (isDesktop) {
-            fetchDesktopHomePreview(forceRefresh)
-        } else {
-            fetchCatalogPage(
-                manifestUrl = manifestUrl,
-                type = type,
-                catalogId = catalogId,
-                maxItems = HOME_CATALOG_PREVIEW_FETCH_LIMIT,
-                forceRefresh = forceRefresh,
-            )
-        }
+        val page = fetchCatalogPage(
+            manifestUrl = manifestUrl,
+            type = type,
+            catalogId = catalogId,
+            maxItems = if (isDesktop) DESKTOP_HOME_SHELF_ITEM_LIMIT else HOME_CATALOG_PREVIEW_FETCH_LIMIT,
+            forceRefresh = forceRefresh,
+        )
         val items = if (pattern.isNotBlank()) page.items.withCustomPosterUrls(pattern) else page.items
-        if (items.isEmpty()) {
-            return HomeCatalogSection(
-                key = key,
-                title = defaultTitle,
-                subtitle = addonName,
-                addonName = addonName,
-                target = CatalogTarget.Addon(
-                    manifestUrl = manifestUrl,
-                    contentType = type,
-                    catalogId = catalogId,
-                    supportsPagination = supportsPagination,
-                ),
-                items = emptyList(),
-                availableItemCount = 0,
-                hasMore = false,
-            )
-        }
-
-        return HomeCatalogSection(
+        val section = HomeCatalogSection(
             key = key,
             title = defaultTitle,
             subtitle = addonName,
@@ -246,38 +280,30 @@ object HomeRepository {
                 supportsPagination = supportsPagination,
             ),
             items = items,
-            availableItemCount = page.rawItemCount,
-            hasMore = supportsPagination && page.nextSkip != null,
+            availableItemCount = if (!isDesktop && items.isEmpty()) 0 else page.rawItemCount,
+            hasMore = (isDesktop || items.isNotEmpty()) && supportsPagination && page.nextSkip != null,
+        )
+        return LoadedRow(
+            section = section,
+            nextSkip = page.nextSkip?.takeIf {
+                isDesktop && section.hasMore && it > 0 && items.size < DESKTOP_HOME_SHELF_ITEM_LIMIT
+            },
         )
     }
 
-    private suspend fun HomeCatalogDefinition.fetchDesktopHomePreview(forceRefresh: Boolean): CatalogPage {
-        var items = emptyList<MetaPreview>()
-        var rawItemCount = 0
-        var nextSkip: Int? = null
-        var pagesFetched = 0
-        do {
+    private suspend fun DesktopShelfTail.complete(forceRefresh: Boolean): HomeCatalogSection {
+        val pattern = CustomPosterUrlRepository.patternForScreen(com.nuvio.app.core.poster.CustomPosterScreen.HOME)
+        return completeDesktopHomeShelf(initial, nextSkip) { skip, limit ->
             val page = fetchCatalogPage(
-                manifestUrl = manifestUrl,
-                type = type,
-                catalogId = catalogId,
-                skip = nextSkip,
-                maxItems = DESKTOP_HOME_CATALOG_PREVIEW_FETCH_LIMIT - items.size,
+                manifestUrl = definition.manifestUrl,
+                type = definition.type,
+                catalogId = definition.catalogId,
+                skip = skip,
+                maxItems = limit,
                 forceRefresh = forceRefresh,
             )
-            items = mergeCatalogItems(items, page.items)
-            rawItemCount += page.rawItemCount
-            nextSkip = page.nextSkip
-            pagesFetched++
-        } while (
-            supportsPagination && nextSkip != null && items.size < DESKTOP_HOME_CATALOG_PREVIEW_FETCH_LIMIT &&
-            pagesFetched < DESKTOP_HOME_CATALOG_PREVIEW_MAX_PAGES
-        )
-        return CatalogPage(
-            items = items.take(DESKTOP_HOME_CATALOG_PREVIEW_FETCH_LIMIT),
-            rawItemCount = rawItemCount,
-            nextSkip = nextSkip,
-        )
+            if (pattern.isBlank()) page else page.copy(items = page.items.withCustomPosterUrls(pattern))
+        }
     }
 
     private fun ensureCollectionHeroFallback(
@@ -288,6 +314,7 @@ object HomeRepository {
     ) {
         if (!lastPublishedCatalogHeroEmpty) {
             collectionHeroJob?.cancel()
+            collectionHeroGeneration = Any()
             heroFallbackLoading = false
             if (_uiState.value.heroFallbackLoading) {
                 publishCurrentState(isLoading = _uiState.value.isLoading, requestKey = requestKey)
@@ -313,6 +340,8 @@ object HomeRepository {
 
         collectionHeroJob?.cancel()
         collectionHeroRequestKey = nextRequestKey
+        val heroGeneration = Any()
+        collectionHeroGeneration = heroGeneration
         cachedCollectionHeroItems = emptyList()
         heroFallbackLoading = true
         publishCurrentState(
@@ -350,13 +379,16 @@ object HomeRepository {
                 catch (cancel: CancellationException) { throw cancel }
                 catch (_: Exception) { emptyList() }
             } else emptyList()
-            if (collectionHeroRequestKey != nextRequestKey) return@launch
-            cachedCollectionHeroItems = fromCollections.ifEmpty { fallback.ifEmpty { builtIn } }
-            heroFallbackLoading = false
-            publishCurrentState(
-                isLoading = _uiState.value.isLoading,
-                requestKey = requestKey,
-            )
+            synchronized(shelfLock) {
+                if (collectionHeroGeneration !== heroGeneration || currentRequestKey != requestKey) return@launch
+                cachedCollectionHeroItems = fromCollections.ifEmpty { fallback.ifEmpty { builtIn } }
+                heroFallbackLoading = false
+                publishCurrentState(
+                    isLoading = _uiState.value.isLoading,
+                    requestKey = requestKey,
+                    preserveHero = isDesktop && !_uiState.value.isLoading,
+                )
+            }
         }
     }
 
@@ -473,8 +505,6 @@ private const val HOME_COLLECTION_HERO_SOURCE_ITEM_LIMIT = 8
 private const val HOME_CATALOG_FETCH_BATCH_SIZE = 4
 private const val HOME_CATALOG_FETCH_TIMEOUT_MS = 30_000L
 private const val HOME_CATALOG_PREVIEW_FETCH_LIMIT = 18
-private const val DESKTOP_HOME_CATALOG_PREVIEW_FETCH_LIMIT = 64
-private const val DESKTOP_HOME_CATALOG_PREVIEW_MAX_PAGES = 4
 
 internal fun prioritizeDefinitions(
     definitions: List<HomeCatalogDefinition>,
