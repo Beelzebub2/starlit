@@ -3477,4 +3477,5 @@
     <string name="settings_playback_controls_size_value">%1$d%</string>
     <string name="settings_playback_controls_size_preview">預覽</string>
     <string name="settings_playback_controls_size_reset">重設</string>
+    <string name="compose_player_customize_ass_styles">使用自訂 ASS/SSA 樣式</string>
 </resources>

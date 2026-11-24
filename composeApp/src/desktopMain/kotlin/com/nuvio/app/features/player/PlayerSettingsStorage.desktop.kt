@@ -49,6 +49,7 @@ internal actual object PlayerSettingsStorage {
     private const val subtitleOutlineEnabledKey = "subtitle_outline_enabled"
     private const val subtitleOutlineWidthKey = "subtitle_outline_width"
     private const val subtitleBoldKey = "subtitle_bold"
+    private const val customizeAssStylesKey = "subtitle_customize_ass_styles"
     private const val subtitleFontSizeSpKey = "subtitle_font_size_sp"
     private const val subtitleBottomOffsetKey = "subtitle_bottom_offset"
     private const val subtitleStripSdhKey = "subtitle_strip_sdh"
@@ -129,6 +130,7 @@ internal actual object PlayerSettingsStorage {
         subtitleOutlineEnabledKey,
         subtitleOutlineWidthKey,
         subtitleBoldKey,
+        customizeAssStylesKey,
         subtitleFontSizeSpKey,
         subtitleBottomOffsetKey,
         subtitleStripSdhKey,
@@ -257,6 +259,12 @@ internal actual object PlayerSettingsStorage {
     actual fun saveSubtitleOutlineWidth(width: Int) = saveInt(subtitleOutlineWidthKey, width)
     actual fun loadSubtitleBold(): Boolean? = loadBoolean(subtitleBoldKey)
     actual fun saveSubtitleBold(enabled: Boolean) = saveBoolean(subtitleBoldKey, enabled)
+    actual fun loadCustomizeAssStyles(): Boolean? = loadBoolean(customizeAssStylesKey)
+
+    actual fun saveCustomizeAssStyles(enabled: Boolean) {
+        saveBoolean(customizeAssStylesKey, enabled)
+    }
+
     actual fun loadSubtitleFontSizeSp(): Int? = loadInt(subtitleFontSizeSpKey)
     actual fun saveSubtitleFontSizeSp(fontSizeSp: Int) = saveInt(subtitleFontSizeSpKey, fontSizeSp)
     actual fun loadSubtitleBottomOffset(): Int? = loadInt(subtitleBottomOffsetKey)

@@ -3455,4 +3455,5 @@
     <string name="settings_playback_controls_size_value">%1$d%</string>
     <string name="settings_playback_controls_size_preview">Pratinjau</string>
     <string name="settings_playback_controls_size_reset">Atur ulang</string>
+    <string name="compose_player_customize_ass_styles">Gunakan gaya ASS/SSA khusus</string>
 </resources>

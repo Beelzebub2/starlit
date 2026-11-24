@@ -3455,4 +3455,5 @@
     <string name="settings_playback_controls_size_value">%1$d%</string>
     <string name="settings_playback_controls_size_preview">Esikatselu</string>
     <string name="settings_playback_controls_size_reset">Palauta</string>
+    <string name="compose_player_customize_ass_styles">Käytä mukautettua ASS/SSA-tyyliä</string>
 </resources>

@@ -3264,4 +3264,5 @@
     <string name="lists_stat_episodes_watched">episodes watched</string>
     <string name="lists_stat_movies_watched">movies watched</string>
     <string name="lists_stat_rated_titles">rated titles</string>
+    <string name="compose_player_customize_ass_styles">Use custom ASS/SSA styling</string>
 </resources>

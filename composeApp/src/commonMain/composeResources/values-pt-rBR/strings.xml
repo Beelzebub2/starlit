@@ -3457,4 +3457,5 @@
     <string name="lists_stat_episodes_watched">episódios assistidos</string>
     <string name="lists_stat_movies_watched">filmes assistidos</string>
     <string name="lists_stat_rated_titles">títulos avaliados</string>
+    <string name="compose_player_customize_ass_styles">Usar estilo personalizado de ASS/SSA</string>
 </resources>

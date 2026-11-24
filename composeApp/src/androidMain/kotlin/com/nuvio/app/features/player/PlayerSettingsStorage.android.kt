@@ -48,6 +48,7 @@ actual object PlayerSettingsStorage {
     private const val subtitleOutlineEnabledKey = "subtitle_outline_enabled"
     private const val subtitleOutlineWidthKey = "subtitle_outline_width"
     private const val subtitleBoldKey = "subtitle_bold"
+    private const val customizeAssStylesKey = "subtitle_customize_ass_styles"
     private const val subtitleFontSizeSpKey = "subtitle_font_size_sp"
     private const val subtitleBottomOffsetKey = "subtitle_bottom_offset"
     private const val subtitleStripSdhKey = "subtitle_strip_sdh"
@@ -131,6 +132,7 @@ actual object PlayerSettingsStorage {
         subtitleOutlineEnabledKey,
         subtitleOutlineWidthKey,
         subtitleBoldKey,
+        customizeAssStylesKey,
         subtitleFontSizeSpKey,
         subtitleBottomOffsetKey,
         subtitleStripSdhKey,
@@ -565,6 +567,16 @@ actual object PlayerSettingsStorage {
             ?.edit()
             ?.putBoolean(ProfileScopedKey.of(subtitleBoldKey), enabled)
             ?.apply()
+    }
+
+    actual fun loadCustomizeAssStyles(): Boolean? =
+        preferences?.let { sharedPreferences ->
+            val key = ProfileScopedKey.of(customizeAssStylesKey)
+            if (sharedPreferences.contains(key)) sharedPreferences.getBoolean(key, false) else null
+        }
+
+    actual fun saveCustomizeAssStyles(enabled: Boolean) {
+        preferences?.edit()?.putBoolean(ProfileScopedKey.of(customizeAssStylesKey), enabled)?.apply()
     }
 
     actual fun loadSubtitleFontSizeSp(): Int? =

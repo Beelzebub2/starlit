@@ -3469,4 +3469,5 @@
     <string name="settings_playback_controls_size_value">%1$d%</string>
     <string name="settings_playback_controls_size_preview">Előnézet</string>
     <string name="settings_playback_controls_size_reset">Visszaállítás</string>
+    <string name="compose_player_customize_ass_styles">Egyéni ASS/SSA-stílus használata</string>
 </resources>

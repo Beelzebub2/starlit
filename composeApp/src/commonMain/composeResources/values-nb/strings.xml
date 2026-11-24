@@ -3474,4 +3474,5 @@ Du bruker denne funksjonen helt på eget ansvar. P2P kan deaktiveres når som he
     <string name="settings_playback_controls_size_value">%1$d%</string>
     <string name="settings_playback_controls_size_preview">Forhåndsvisning</string>
     <string name="settings_playback_controls_size_reset">Tilbakestill</string>
+    <string name="compose_player_customize_ass_styles">Bruk egendefinert ASS/SSA-stil</string>
 </resources>
