@@ -211,7 +211,7 @@ internal class PlayerScreenRuntime(
     var scrobbleStartRequestGeneration by mutableStateOf(0L)
     var pendingSeekScrobbleRestart by mutableStateOf(false)
     var initialTrackingPlaybackPercent by mutableStateOf<Double?>(null)
-    var simklMovieRewatchChoice by mutableStateOf<Pair<String, Long>?>(null)
+    var simklMovieRewatchChoice by mutableStateOf<Pair<PlaybackKey, Long>?>(null)
     var hasSentCompletionScrobbleForCurrentItem by mutableStateOf(false)
     var currentTrackingMedia by mutableStateOf<TrackingMediaReference?>(null)
     var activeAddonPlayerEventTarget: AddonPlayerEventTarget? = null
