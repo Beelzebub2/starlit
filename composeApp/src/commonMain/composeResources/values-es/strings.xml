@@ -3479,4 +3479,29 @@ Utilizas esta función bajo tu propia responsabilidad. P2P se puede desactivar e
     <string name="compose_player_customize_ass_styles">Usar estilo personalizado de ASS/SSA</string>
     <string name="settings_tracking_simkl_rewatches">Registrar en Simkl las películas que vuelves a ver</string>
     <string name="player_track_this_simkl_rewatch">Registrar esta película como vista de nuevo en Simkl</string>
+    <plurals name="addons_desktop_catalog_count">
+        <item quantity="one">%1$d catálogo</item>
+        <item quantity="many">%1$d de catálogos</item>
+        <item quantity="other">%1$d catálogos</item>
+    </plurals>
+    <plurals name="collections_desktop_collection_count">
+        <item quantity="one">%1$d colección</item>
+        <item quantity="many">%1$d de colecciones</item>
+        <item quantity="other">%1$d colecciones</item>
+    </plurals>
+    <plurals name="collections_desktop_folder_count">
+        <item quantity="one">%1$d carpeta</item>
+        <item quantity="many">%1$d de carpetas</item>
+        <item quantity="other">%1$d carpetas</item>
+    </plurals>
+    <plurals name="details_season_count">
+        <item quantity="one">%1$d temporada</item>
+        <item quantity="many">%1$d de temporadas</item>
+        <item quantity="other">%1$d temporadas</item>
+    </plurals>
+    <plurals name="library_desktop_title_count">
+        <item quantity="one">%1$d título</item>
+        <item quantity="many">%1$d de títulos</item>
+        <item quantity="other">%1$d títulos</item>
+    </plurals>
 </resources>
