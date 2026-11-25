@@ -2310,12 +2310,12 @@ Du bruker denne funksjonen helt på eget ansvar. P2P kan deaktiveres når som he
     <string name="updates_title_status">Oppdateringsstatus</string>
     <string name="updates_waiting_for_stable">Du mottar neste stabile utgivelse når den blir tilgjengelig</string>
     <plurals name="cw_airs_in_days">
-        <item quantity="one">Sendes om %d dag</item>
-        <item quantity="other">Sendes om %d dager</item>
+        <item quantity="one">Sendes om %1$d dag</item>
+        <item quantity="other">Sendes om %1$d dager</item>
     </plurals>
     <plurals name="cw_airs_in_days_short">
-        <item quantity="one">Om %d dag</item>
-        <item quantity="other">Om %d dager</item>
+        <item quantity="one">Om %1$d dag</item>
+        <item quantity="other">Om %1$d dager</item>
     </plurals>
     <plurals name="entity_browse_title_count">
         <item quantity="one">%d tittel</item>

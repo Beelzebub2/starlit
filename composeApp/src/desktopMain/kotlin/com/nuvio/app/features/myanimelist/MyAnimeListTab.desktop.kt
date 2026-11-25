@@ -68,9 +68,12 @@ import nuvio.composeapp.generated.resources.Res
 import nuvio.composeapp.generated.resources.action_cancel
 import nuvio.composeapp.generated.resources.action_save
 import nuvio.composeapp.generated.resources.compose_player_episodes
+import nuvio.composeapp.generated.resources.lists_connect
+import nuvio.composeapp.generated.resources.lists_remove_entry
 import nuvio.composeapp.generated.resources.mal_rewatch_count
 import nuvio.composeapp.generated.resources.mal_rewatch_finish
 import nuvio.composeapp.generated.resources.mal_rewatch_in_progress
+import nuvio.composeapp.generated.resources.source_mal
 import org.jetbrains.compose.resources.stringResource
 
 private val ScoreGold = Color(0xFFF5C518)
@@ -186,7 +189,7 @@ private fun MalConnectPrompt(connection: MalConnectionState, onConnect: () -> Un
             TextButton(onClick = MyAnimeListRepository::cancelConnect) { Text(stringResource(Res.string.action_cancel)) }
         } else {
             NuvioCompactActionButton(
-                label = "Connect MyAnimeList",
+                label = stringResource(Res.string.lists_connect, stringResource(Res.string.source_mal)),
                 icon = Icons.Rounded.Link,
                 onClick = onConnect,
                 enabled = !connection.busy,
@@ -368,7 +371,7 @@ internal fun MalEntryEditorDialog(
         }
 
         TextButton(onClick = onRemove, modifier = Modifier.offset(x = (-12).dp)) {
-            Text("Remove from list", color = colors.danger)
+            Text(stringResource(Res.string.lists_remove_entry), color = colors.danger)
         }
         DialogButtons {
             DialogButton(text = stringResource(Res.string.action_cancel), onClick = onDismiss)

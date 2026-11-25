@@ -1894,15 +1894,17 @@
     <string name="cw_airs_today">Se difuzează azi</string>
     <string name="cw_airs_tomorrow">Se difuzează mâine</string>
     <plurals name="cw_airs_in_days">
-        <item quantity="one">Se difuzează într-o zi</item>
-        <item quantity="other">Se difuzează în %1$d zile</item>
+        <item quantity="one">Se difuzează peste %1$d zi</item>
+        <item quantity="few">Se difuzează peste %1$d zile</item>
+        <item quantity="other">Se difuzează peste %1$d de zile</item>
     </plurals>
     <string name="cw_airs_date_short">%1$s</string>
     <string name="cw_airs_today_short">Azi</string>
     <string name="cw_airs_tomorrow_short">Mâine</string>
     <plurals name="cw_airs_in_days_short">
-        <item quantity="one">Într-o zi</item>
-        <item quantity="other">În %1$d zile</item>
+        <item quantity="one">Peste %1$d zi</item>
+        <item quantity="few">Peste %1$d zile</item>
+        <item quantity="other">Peste %1$d de zile</item>
     </plurals>
     <string name="cw_new_episode">Episod nou</string>
     <string name="cw_new_season">Sezon nou</string>
