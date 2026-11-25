@@ -3519,4 +3519,34 @@
     <string name="compose_player_customize_ass_styles">Использовать пользовательский стиль ASS/SSA</string>
     <string name="settings_tracking_simkl_rewatches">Отслеживать повторные просмотры фильмов в Simkl</string>
     <string name="player_track_this_simkl_rewatch">Отметить этот фильм как повторно просмотренный в Simkl</string>
+    <plurals name="details_season_count">
+        <item quantity="one">%1$d сезон</item>
+        <item quantity="few">%1$d сезона</item>
+        <item quantity="many">%1$d сезонов</item>
+        <item quantity="other">%1$d сезона</item>
+    </plurals>
+    <plurals name="collections_desktop_collection_count">
+        <item quantity="one">%1$d коллекция</item>
+        <item quantity="few">%1$d коллекции</item>
+        <item quantity="many">%1$d коллекций</item>
+        <item quantity="other">%1$d коллекции</item>
+    </plurals>
+    <plurals name="collections_desktop_folder_count">
+        <item quantity="one">%1$d папка</item>
+        <item quantity="few">%1$d папки</item>
+        <item quantity="many">%1$d папок</item>
+        <item quantity="other">%1$d папки</item>
+    </plurals>
+    <plurals name="addons_desktop_catalog_count">
+        <item quantity="one">%1$d каталог</item>
+        <item quantity="few">%1$d каталога</item>
+        <item quantity="many">%1$d каталогов</item>
+        <item quantity="other">%1$d каталога</item>
+    </plurals>
+    <plurals name="library_desktop_title_count">
+        <item quantity="one">%1$d название</item>
+        <item quantity="few">%1$d названия</item>
+        <item quantity="many">%1$d названий</item>
+        <item quantity="other">%1$d названия</item>
+    </plurals>
 </resources>
