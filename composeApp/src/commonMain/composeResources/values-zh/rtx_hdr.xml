@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_playback_nvidia_rtx_hdr">RTX Video HDR</string>
+    <string name="settings_playback_nvidia_rtx_hdr_desc">使用 NVIDIA RTX AI 将 SDR 视频转换为 HDR。需要在 Windows 中启用 HDR 并使用支持 HDR 的显示器。</string>
+</resources>

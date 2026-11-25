@@ -12,14 +12,16 @@ class NativePlayerEndFileErrorTest {
     @Test
     fun acceptsOnlyOneAsynchronousErrorFromTheCurrentSource() {
         val sinks = (1..2).map { AtomicReference<NativePlayerEventSink>() }
+        val hdrPreferences = (1..2).map { AtomicReference<Boolean>() }
         val started = (1..2).map { CountDownLatch(1) }
         val releaseNative = (1..2).map { CountDownLatch(1) }
         val messages = mutableListOf<String>()
         val controller = NativePlayerController(
             host = NativePlayerHost(),
-            nativeCreate = { _, uri, _, _, _, _, _, _, sink ->
+            nativeCreate = { _, uri, _, _, _, _, _, _, hdrEnabled, sink ->
                 val index = if (uri.endsWith("/old")) 0 else 1
                 sinks[index].set(sink)
+                hdrPreferences[index].set(hdrEnabled)
                 started[index].countDown()
                 releaseNative[index].await(5, TimeUnit.SECONDS)
                 41L + index
@@ -36,6 +38,7 @@ class NativePlayerEndFileErrorTest {
             initialPositionMs = 0L,
             decoderPriority = 0,
             nvidiaRtxSuperResolutionEnabled = false,
+            nvidiaRtxHdrEnabled = path == "current",
             onError = { messages += path + ": " + it },
         )
         fun report(index: Int) = checkNotNull(sinks[index].get()).onPlayerEvent("mpvEndFileError", -13.0)
@@ -48,6 +51,7 @@ class NativePlayerEndFileErrorTest {
             report(0)
             releaseNative[0].countDown()
             assertTrue(started[1].await(2, TimeUnit.SECONDS))
+            assertEquals(listOf(false, true), hdrPreferences.map { it.get() })
             report(1)
             report(1)
             SwingUtilities.invokeAndWait {}
@@ -70,7 +74,7 @@ class NativePlayerEndFileErrorTest {
         val messages = mutableListOf<String?>()
         val controller = NativePlayerController(
             host = NativePlayerHost(),
-            nativeCreate = { _, _, _, _, _, _, _, _, eventSink ->
+            nativeCreate = { _, _, _, _, _, _, _, _, _, eventSink ->
                 sink.set(eventSink)
                 started.countDown()
                 releaseNative.await(5, TimeUnit.SECONDS)

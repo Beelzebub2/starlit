@@ -4,6 +4,7 @@
 #include <windows.h>
 #include <windowsx.h>
 #include <dwmapi.h>
+#include <dxgi.h>
 #include <mmdeviceapi.h>
 #include <audioclient.h>
 #include <functiondiscoverykeys_devpkey.h>
@@ -15,6 +16,7 @@
 #include "discord_share_protocol.h"
 #include "discord_share_safety.h"
 #include "surround_upmix_policy.h"
+#include "rtx_video_filter_policy.h"
 
 #include <algorithm>
 #include <atomic>
@@ -41,6 +43,35 @@
 
 using Microsoft::WRL::Callback;
 using Microsoft::WRL::ComPtr;
+
+// A profile can sync to a different PC. Never select the NVIDIA adapter
+// for the new HDR feature unless a local physical RTX adapter is visible.
+static bool hasLocalNvidiaRtxAdapter() {
+    HMODULE module = LoadLibraryExW(L"dxgi.dll", nullptr, LOAD_LIBRARY_SEARCH_SYSTEM32);
+    if (!module) return false;
+    bool detected = false;
+    {
+        using CreateFactory = HRESULT (WINAPI *)(REFIID, void **);
+        auto createFactory = reinterpret_cast<CreateFactory>(GetProcAddress(module, "CreateDXGIFactory1"));
+        ComPtr<IDXGIFactory1> factory;
+        if (createFactory && SUCCEEDED(createFactory(
+                __uuidof(IDXGIFactory1), reinterpret_cast<void **>(factory.GetAddressOf())))) {
+            for (UINT index = 0; ; ++index) {
+                ComPtr<IDXGIAdapter1> adapter;
+                if (FAILED(factory->EnumAdapters1(index, adapter.GetAddressOf()))) break;
+                DXGI_ADAPTER_DESC1 description{};
+                if (SUCCEEDED(adapter->GetDesc1(&description)) &&
+                    description.VendorId == 0x10de && !(description.Flags & DXGI_ADAPTER_FLAG_SOFTWARE) &&
+                    std::wstring(description.Description).find(L"RTX") != std::wstring::npos) {
+                    detected = true;
+                    break;
+                }
+            }
+        }
+    }
+    FreeLibrary(module);
+    return detected;
+}
 
 extern "C" {
 typedef struct mpv_handle mpv_handle;
@@ -80,6 +111,7 @@ typedef enum mpv_event_id {
     MPV_EVENT_NONE = 0,
     MPV_EVENT_SHUTDOWN = 1,
     MPV_EVENT_END_FILE = 7,
+    MPV_EVENT_VIDEO_RECONFIG = 17,
     MPV_EVENT_FILE_LOADED = 8,
     MPV_EVENT_PROPERTY_CHANGE = 22,
     MPV_EVENT_QUEUE_OVERFLOW = 24,
@@ -1083,6 +1115,7 @@ public:
         JavaVM *vm,
         int decoderPriority,
         bool nvidiaRtxSuperResolutionEnabled,
+        bool nvidiaRtxHdrEnabled,
         jobject sink,
         jmethodID method
     ) {
@@ -1099,8 +1132,8 @@ public:
         auto initState = std::make_shared<InitializationState>();
         auto self = shared_from_this();
         uiThread = std::thread(
-            [self, sourceUrl, headerLines, playWhenReady, initialPositionMs, controlsUrl, decoderPriority, nvidiaRtxSuperResolutionEnabled, initState]() {
-                self->runNativeUiThread(sourceUrl, headerLines, playWhenReady, initialPositionMs, controlsUrl, decoderPriority, nvidiaRtxSuperResolutionEnabled, initState);
+            [self, sourceUrl, headerLines, playWhenReady, initialPositionMs, controlsUrl, decoderPriority, nvidiaRtxSuperResolutionEnabled, nvidiaRtxHdrEnabled, initState]() {
+                self->runNativeUiThread(sourceUrl, headerLines, playWhenReady, initialPositionMs, controlsUrl, decoderPriority, nvidiaRtxSuperResolutionEnabled, nvidiaRtxHdrEnabled, initState);
             }
         );
 
@@ -1412,11 +1445,7 @@ public:
         if (!rtxVideoConfigured || stopping.load()) return false;
         std::lock_guard<std::mutex> lock(mpvMutex);
         if (!mpv) return false;
-        return mpvApi().setPropertyString(
-            mpv,
-            "vf",
-            original ? "" : "d3d11vpp=scale=2:scaling-mode=nvidia"
-        ) >= 0;
+        return applyRtxVideoFilterLocked(original, true);
     }
 
     bool isPaused() {
@@ -1727,6 +1756,7 @@ private:
     std::mutex mpvMutex;
     mpv_handle *mpv = nullptr;
     bool rtxVideoConfigured = false;
+    starlit::RtxVideoFilterState rtxVideoFilters;
     std::thread eventThread;
     std::atomic_bool controlsTracksDirty = true;
     std::atomic_bool observingControlsTracks = false;
@@ -2063,11 +2093,12 @@ private:
         std::string controlsUrl,
         int decoderPriority,
         bool nvidiaRtxSuperResolutionEnabled,
+        bool nvidiaRtxHdrEnabled,
         std::shared_ptr<InitializationState> initState
     ) {
         std::string failure;
         try {
-            initializeOnNativeUiThread(sourceUrl, headerLines, playWhenReady, initialPositionMs, controlsUrl, decoderPriority, nvidiaRtxSuperResolutionEnabled);
+            initializeOnNativeUiThread(sourceUrl, headerLines, playWhenReady, initialPositionMs, controlsUrl, decoderPriority, nvidiaRtxSuperResolutionEnabled, nvidiaRtxHdrEnabled);
         } catch (const std::exception &error) {
             failure = error.what();
             cleanupUiResources();
@@ -2098,7 +2129,8 @@ private:
         long long initialPositionMs,
         const std::string &controlsUrl,
         int decoderPriority,
-        bool nvidiaRtxSuperResolutionEnabled
+        bool nvidiaRtxSuperResolutionEnabled,
+        bool nvidiaRtxHdrEnabled
     ) {
         registerWindowClasses();
         uiThreadId = GetCurrentThreadId();
@@ -2150,7 +2182,7 @@ private:
         }
 
         startWebView(controlsUrl);
-        startMpv(sourceUrl, headerLines, playWhenReady, initialPositionMs, decoderPriority, nvidiaRtxSuperResolutionEnabled);
+        startMpv(sourceUrl, headerLines, playWhenReady, initialPositionMs, decoderPriority, nvidiaRtxSuperResolutionEnabled, nvidiaRtxHdrEnabled);
         auto weakPlayer = weak_from_this();
         HWND rootWindow = GetAncestor(hostHwnd, GA_ROOT);
         systemMediaSession.start(rootWindow, [weakPlayer](starlit::MediaCommand command, int64_t positionMs) {
@@ -2358,9 +2390,14 @@ private:
         bool playWhenReady,
         long long initialPositionMs,
         int decoderPriority,
-        bool nvidiaRtxSuperResolutionEnabled
+        bool nvidiaRtxSuperResolutionEnabled,
+        bool nvidiaRtxHdrEnabled
     ) {
         MpvApi &api = mpvApi();
+        // Respect an explicit software-decoding preference.
+        const bool enableRtxHdr =
+            nvidiaRtxHdrEnabled && decoderPriority != 2 && hasLocalNvidiaRtxAdapter();
+        const bool rtxVideoEnabled = nvidiaRtxSuperResolutionEnabled || enableRtxHdr;
         {
             std::lock_guard<std::mutex> lock(mpvMutex);
             // libmpv parses numeric options using the C locale. On Windows,
@@ -2382,7 +2419,7 @@ private:
             setMpvOptionStringLocked("keep-open", "yes");
             setMpvOptionStringLocked("volume-max", "200");
             setMpvOptionStringLocked("vo", "gpu-next");
-            if (nvidiaRtxSuperResolutionEnabled) {
+            if (rtxVideoEnabled) {
                 setMpvOptionStringLocked("gpu-api", "d3d11");
                 setMpvOptionStringLocked("hwdec", "d3d11va");
                 setMpvOptionStringLocked("d3d11-adapter", "NVIDIA");
@@ -2392,8 +2429,11 @@ private:
             }
             setMpvOptionStringLocked("hwdec-codecs", "all");
 
-            if (nvidiaRtxSuperResolutionEnabled) {
-                setMpvOptionStringLocked("vf", "d3d11vpp=scale=2:scaling-mode=nvidia");
+            rtxVideoFilters.enhanceResolution = nvidiaRtxSuperResolutionEnabled;
+            rtxVideoFilters.convertHdr = enableRtxHdr;
+            const auto initialFilter = starlit::rtxVideoFilter(nvidiaRtxSuperResolutionEnabled, false);
+            if (!initialFilter.empty() && api.setOptionString(mpv, "vf", initialFilter.c_str()) >= 0) {
+                rtxVideoFilters.applied = initialFilter;
             }
             setMpvOptionStringLocked("target-colorspace-hint", "yes");
             if (decoderPriority == 0) {
@@ -2719,6 +2759,22 @@ private:
         }
     }
 
+    bool applyRtxVideoFilterLocked(bool compareOriginal, bool explicitRetry) {
+        return rtxVideoFilters.apply(compareOriginal, explicitRetry, [this](const std::string &filter) {
+            return mpvApi().setPropertyString(mpv, "vf", filter.c_str()) >= 0;
+        });
+    }
+
+    void updateRtxVideoFilter() {
+        std::lock_guard<std::mutex> lock(mpvMutex);
+        if (!mpv || !rtxVideoFilters.convertHdr) return;
+
+        const std::string transfer = stringPropertyLocked("video-dec-params/gamma", "");
+        const std::string decoder = stringPropertyLocked("hwdec-current", "");
+        rtxVideoFilters.setSource(decoder == "d3d11va" && starlit::rtxKnownSdrTransfer(transfer));
+        applyRtxVideoFilterLocked(rtxVideoFilters.compareOriginalResolution, false);
+    }
+
     void drainMpvEvents() {
         while (!stopping.load()) {
             mpv_handle *current = nullptr;
@@ -2734,6 +2790,9 @@ private:
             if (!event) continue;
             if (event->event_id == MPV_EVENT_SHUTDOWN) {
                 return;
+            }
+            if (event->event_id == MPV_EVENT_VIDEO_RECONFIG) {
+                updateRtxVideoFilter();
             }
             if (event->event_id == MPV_EVENT_PROPERTY_CHANGE || event->event_id == MPV_EVENT_FILE_LOADED ||
                 event->event_id == MPV_EVENT_END_FILE || event->event_id == MPV_EVENT_QUEUE_OVERFLOW) {
@@ -2814,6 +2873,10 @@ private:
 
     std::string stringProperty(const char *name, const std::string &fallback) {
         std::lock_guard<std::mutex> lock(mpvMutex);
+        return stringPropertyLocked(name, fallback);
+    }
+
+    std::string stringPropertyLocked(const char *name, const std::string &fallback) {
         if (!mpv) return fallback;
         char *value = nullptr;
         int propertyResult = mpvApi().getProperty(mpv, name, MPV_FORMAT_STRING, &value);
@@ -3127,6 +3190,7 @@ Java_com_nuvio_app_features_player_desktop_NativePlayerBridge_create(
     jstring controlsPageUrl,
     jint decoderPriority,
     jboolean nvidiaRtxSuperResolutionEnabled,
+    jboolean nvidiaRtxHdrEnabled,
     jobject eventSink
 ) {
     HWND hostHwnd = (HWND)(intptr_t)hostViewPtr;
@@ -3162,6 +3226,7 @@ Java_com_nuvio_app_features_player_desktop_NativePlayerBridge_create(
             javaVm,
             decoderPriority,
             nvidiaRtxSuperResolutionEnabled == JNI_TRUE,
+            nvidiaRtxHdrEnabled == JNI_TRUE,
             eventSinkRef,
             eventMethod
         );

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_playback_nvidia_rtx_hdr">RTX Video HDR</string>
+    <string name="settings_playback_nvidia_rtx_hdr_desc">NVIDIA RTX AIతో SDR వీడియోను HDRగా మారుస్తుంది. Windowsలో HDR ఆన్ చేసి ఉండాలి మరియు HDRకు మద్దతు ఇచ్చే డిస్‌ప్లే అవసరం.</string>
+</resources>
