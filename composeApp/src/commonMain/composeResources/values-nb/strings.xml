@@ -3479,4 +3479,24 @@ Du bruker denne funksjonen helt på eget ansvar. P2P kan deaktiveres når som he
     <string name="compose_player_customize_ass_styles">Bruk egendefinert ASS/SSA-stil</string>
     <string name="settings_tracking_simkl_rewatches">Registrer gjensyn med filmer i Simkl</string>
     <string name="player_track_this_simkl_rewatch">Registrer denne filmen som et gjensyn i Simkl</string>
+    <plurals name="addons_desktop_catalog_count">
+        <item quantity="one">%1$d katalog</item>
+        <item quantity="other">%1$d kataloger</item>
+    </plurals>
+    <plurals name="collections_desktop_collection_count">
+        <item quantity="one">%1$d samling</item>
+        <item quantity="other">%1$d samlinger</item>
+    </plurals>
+    <plurals name="collections_desktop_folder_count">
+        <item quantity="one">%1$d mappe</item>
+        <item quantity="other">%1$d mapper</item>
+    </plurals>
+    <plurals name="details_season_count">
+        <item quantity="one">%1$d sesong</item>
+        <item quantity="other">%1$d sesonger</item>
+    </plurals>
+    <plurals name="library_desktop_title_count">
+        <item quantity="one">%1$d tittel</item>
+        <item quantity="other">%1$d titler</item>
+    </plurals>
 </resources>

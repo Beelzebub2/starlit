@@ -3460,4 +3460,36 @@
     <string name="compose_player_customize_ass_styles">Använd anpassad ASS/SSA-stil</string>
     <string name="settings_tracking_simkl_rewatches">Registrera omtittningar av filmer i Simkl</string>
     <string name="player_track_this_simkl_rewatch">Registrera omtittningen av den här filmen i Simkl</string>
+    <plurals name="addons_desktop_catalog_count">
+        <item quantity="one">%1$d katalog</item>
+        <item quantity="other">%1$d kataloger</item>
+    </plurals>
+    <plurals name="collections_desktop_collection_count">
+        <item quantity="one">%1$d samling</item>
+        <item quantity="other">%1$d samlingar</item>
+    </plurals>
+    <plurals name="collections_desktop_folder_count">
+        <item quantity="one">%1$d mapp</item>
+        <item quantity="other">%1$d mappar</item>
+    </plurals>
+    <plurals name="details_season_count">
+        <item quantity="one">%1$d säsong</item>
+        <item quantity="other">%1$d säsonger</item>
+    </plurals>
+    <plurals name="library_desktop_title_count">
+        <item quantity="one">%1$d titel</item>
+        <item quantity="other">%1$d titlar</item>
+    </plurals>
+    <plurals name="entity_browse_title_count">
+        <item quantity="one">%d titel</item>
+        <item quantity="other">%d titlar</item>
+    </plurals>
+    <plurals name="cw_airs_in_days">
+        <item quantity="one">Sänds om %1$d dag</item>
+        <item quantity="other">Sänds om %1$d dagar</item>
+    </plurals>
+    <plurals name="cw_airs_in_days_short">
+        <item quantity="one">Om %1$d dag</item>
+        <item quantity="other">Om %1$d dagar</item>
+    </plurals>
 </resources>
