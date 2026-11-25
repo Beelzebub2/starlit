@@ -24,7 +24,7 @@
         <p class="intro" data-i18n="intro">Enter the code shown on your television, or scan the QR code with your phone.</p>
         <form id="connect-form" class="connect-form">
           <label for="pair-code" data-i18n="codeLabel">TV pairing code</label>
-          <input id="pair-code" name="code" autocomplete="one-time-code" autocapitalize="characters" spellcheck="false" required maxlength="64" placeholder="XXXXXXXX">
+          <input id="pair-code" name="code" dir="ltr" autocomplete="one-time-code" autocapitalize="characters" spellcheck="false" required maxlength="64" placeholder="XXXXXXXX">
           <button id="connect-button" type="submit" data-i18n="connect">Connect to TV</button>
         </form>
         <p class="footnote" data-i18n="safety">You must approve the connection on your television. This session cannot change other devices.</p>
@@ -32,7 +32,7 @@
       <section id="pending-screen" hidden aria-labelledby="pending-title">
         <div class="eyebrow" data-i18n="request">Pairing request</div>
         <h1 id="pending-title" data-i18n="check">Verify on your television</h1>
-        <div class="verify-code" id="verify-code"></div>
+        <div class="verify-code" id="verify-code" dir="ltr"></div>
         <p class="intro" data-i18n="approve">Confirm this matching code on the TV, then choose Approve.</p>
         <p class="device-name" id="requested-tv"></p>
         <button class="secondary" id="cancel-request" type="button" data-i18n="cancel">Cancel</button>
@@ -46,7 +46,7 @@
         <div id="addon-panel" role="tabpanel">
           <form id="addon-form" class="install-form">
             <label for="addon-url" data-i18n="addonUrl">Add-on manifest URL</label>
-            <div class="input-row"><input id="addon-url" inputmode="url" type="url" placeholder="https://example.org/manifest.json" required><button data-i18n="preview">Preview</button></div>
+            <div class="input-row"><input id="addon-url" dir="ltr" inputmode="url" type="url" placeholder="https://example.org/manifest.json" required><button data-i18n="preview">Preview</button></div>
           </form>
           <section id="preview-addon" class="preview" hidden aria-live="polite"></section>
           <div class="section-heading"><h2 data-i18n="installedAddons">Installed add-ons</h2><span id="addon-count"></span></div>
@@ -56,7 +56,7 @@
           <p id="plugin-limitation" class="notice" hidden></p>
           <form id="plugin-form" class="install-form">
             <label for="plugin-url" data-i18n="pluginUrl">Plugin repository URL</label>
-            <div class="input-row"><input id="plugin-url" inputmode="url" type="url" placeholder="https://example.org/manifest.json" required><button data-i18n="preview">Preview</button></div>
+            <div class="input-row"><input id="plugin-url" dir="ltr" inputmode="url" type="url" placeholder="https://example.org/manifest.json" required><button data-i18n="preview">Preview</button></div>
           </form>
           <section id="preview-plugin" class="preview" hidden aria-live="polite"></section>
           <div class="section-heading"><h2 data-i18n="installedPlugins">Repositories</h2><span id="plugin-count"></span></div>
