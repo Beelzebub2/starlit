@@ -3467,4 +3467,28 @@
     <string name="compose_player_customize_ass_styles">தனிப்பயன் ASS/SSA பாணியைப் பயன்படுத்தவும்</string>
     <string name="settings_tracking_simkl_rewatches">திரைப்படங்களை மீண்டும் பார்ப்பதை Simkl-இல் பதிவு செய்</string>
     <string name="player_track_this_simkl_rewatch">இந்தப் படத்தை Simkl-இல் மீண்டும் பார்த்ததாகப் பதிவு செய்</string>
+    <plurals name="details_season_count">
+        <item quantity="one">%1$d சீசன்</item>
+        <item quantity="other">%1$d சீசன்கள்</item>
+    </plurals>
+    <plurals name="collections_desktop_collection_count">
+        <item quantity="one">%1$d சேகரிப்பு</item>
+        <item quantity="other">%1$d சேகரிப்புகள்</item>
+    </plurals>
+    <plurals name="collections_desktop_folder_count">
+        <item quantity="one">%1$d கோப்புறை</item>
+        <item quantity="other">%1$d கோப்புறைகள்</item>
+    </plurals>
+    <plurals name="addons_desktop_catalog_count">
+        <item quantity="one">%1$d பட்டியல்</item>
+        <item quantity="other">%1$d பட்டியல்கள்</item>
+    </plurals>
+    <plurals name="library_desktop_title_count">
+        <item quantity="one">%1$d தலைப்பு</item>
+        <item quantity="other">%1$d தலைப்புகள்</item>
+    </plurals>
+    <plurals name="cw_airs_in_days">
+        <item quantity="one">%1$d நாளில் ஒளிபரப்பாகும்</item>
+        <item quantity="other">%1$d நாட்களில் ஒளிபரப்பாகும்</item>
+    </plurals>
 </resources>
