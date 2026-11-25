@@ -2061,7 +2061,11 @@
     <string name="cw_airs_today">يُعرض اليوم</string>
     <string name="cw_airs_tomorrow">يُعرض غداً</string>
     <plurals name="cw_airs_in_days">
-        <item quantity="one">يُعرض بعد %1$d يوم</item>
+        <item quantity="zero">يُعرض بعد %1$d يوم</item>
+        <item quantity="one">يُعرض بعد يوم واحد (%1$d)</item>
+        <item quantity="two">يُعرض بعد يومين (%1$d)</item>
+        <item quantity="few">يُعرض بعد %1$d أيام</item>
+        <item quantity="many">يُعرض بعد %1$d يومًا</item>
         <item quantity="other">يُعرض بعد %1$d يوم</item>
     </plurals>
     <string name="cw_airs_date_short">%1$s</string>
@@ -3492,4 +3496,44 @@
     <string name="compose_player_customize_ass_styles">استخدم تنسيق ASS/SSA المخصص</string>
     <string name="settings_tracking_simkl_rewatches">تتبّع إعادة مشاهدة الأفلام على Simkl</string>
     <string name="player_track_this_simkl_rewatch">سجّل هذا الفيلم كمشاهدة متكررة على Simkl</string>
+    <plurals name="details_season_count">
+        <item quantity="zero">%1$d موسم</item>
+        <item quantity="one">موسم (%1$d)</item>
+        <item quantity="two">موسمان (%1$d)</item>
+        <item quantity="few">%1$d مواسم</item>
+        <item quantity="many">%1$d موسمًا</item>
+        <item quantity="other">%1$d موسم</item>
+    </plurals>
+    <plurals name="collections_desktop_collection_count">
+        <item quantity="zero">%1$d مجموعة</item>
+        <item quantity="one">مجموعة (%1$d)</item>
+        <item quantity="two">مجموعتان (%1$d)</item>
+        <item quantity="few">%1$d مجموعات</item>
+        <item quantity="many">%1$d مجموعةً</item>
+        <item quantity="other">%1$d مجموعة</item>
+    </plurals>
+    <plurals name="collections_desktop_folder_count">
+        <item quantity="zero">%1$d مجلد</item>
+        <item quantity="one">مجلد (%1$d)</item>
+        <item quantity="two">مجلدان (%1$d)</item>
+        <item quantity="few">%1$d مجلدات</item>
+        <item quantity="many">%1$d مجلدًا</item>
+        <item quantity="other">%1$d مجلد</item>
+    </plurals>
+    <plurals name="addons_desktop_catalog_count">
+        <item quantity="zero">%1$d كتالوج</item>
+        <item quantity="one">كتالوج (%1$d)</item>
+        <item quantity="two">كتالوجان (%1$d)</item>
+        <item quantity="few">%1$d كتالوجات</item>
+        <item quantity="many">%1$d كتالوجًا</item>
+        <item quantity="other">%1$d كتالوج</item>
+    </plurals>
+    <plurals name="library_desktop_title_count">
+        <item quantity="zero">%1$d عنوان</item>
+        <item quantity="one">عنوان (%1$d)</item>
+        <item quantity="two">عنوانان (%1$d)</item>
+        <item quantity="few">%1$d عناوين</item>
+        <item quantity="many">%1$d عنوانًا</item>
+        <item quantity="other">%1$d عنوان</item>
+    </plurals>
 </resources>
