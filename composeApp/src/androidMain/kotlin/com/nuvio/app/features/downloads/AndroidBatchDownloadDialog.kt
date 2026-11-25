@@ -45,6 +45,15 @@ import com.nuvio.app.features.plugins.PluginRepository
 import com.nuvio.app.features.streams.streamAddonInstanceId
 import com.nuvio.app.features.streams.supportsStream
 import com.nuvio.app.features.watchprogress.CurrentDateProvider
+import nuvio.composeapp.generated.resources.Res
+import nuvio.composeapp.generated.resources.action_cancel
+import nuvio.composeapp.generated.resources.compose_player_episodes
+import nuvio.composeapp.generated.resources.details_seasons
+import nuvio.composeapp.generated.resources.downloads_clear_selection
+import nuvio.composeapp.generated.resources.downloads_select_all
+import nuvio.composeapp.generated.resources.episodes_season
+import nuvio.composeapp.generated.resources.episodes_specials
+import org.jetbrains.compose.resources.stringResource
 
 internal fun androidBatchEpisodeKey(video: MetaVideo): String =
     "${video.season}:${video.episode}:${video.id}"
@@ -124,11 +133,11 @@ internal fun AndroidBatchDownloadDialog(
         message = meta.name,
     ) {
         if (!movie) {
-            DialogSectionLabel("Season")
+            DialogSectionLabel(stringResource(Res.string.details_seasons))
             LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(seasons) { number ->
                     Chip(
-                        label = if (number == 0) "Specials" else "Season $number",
+                        label = if (number == 0) stringResource(Res.string.episodes_specials) else stringResource(Res.string.episodes_season, number),
                         selected = season == number,
                         onClick = { season = number },
                     )
@@ -137,9 +146,9 @@ internal fun AndroidBatchDownloadDialog(
             val seasonKeys = seasonEpisodes.map(::androidBatchEpisodeKey).toSet()
             val allSeasonSelected = seasonKeys.isNotEmpty() && seasonKeys.all { it in selected }
             Row(verticalAlignment = Alignment.CenterVertically) {
-                DialogSectionLabel("Episodes", Modifier.weight(1f))
+                DialogSectionLabel(stringResource(Res.string.compose_player_episodes), Modifier.weight(1f))
                 NuvioCompactActionButton(
-                    label = if (allSeasonSelected) "Clear season" else "Select all available",
+                    label = stringResource(if (allSeasonSelected) Res.string.downloads_clear_selection else Res.string.downloads_select_all),
                     icon = null,
                     size = NuvioActionSize.Small,
                     tone = NuvioCompactActionTone.Ghost,
@@ -208,7 +217,7 @@ internal fun AndroidBatchDownloadDialog(
         }
         DialogHint("Direct videos and torrents can be saved for offline playback. Torrent sources require P2P enabled in Settings.")
         DialogButtons {
-            DialogButton(text = "Cancel", onClick = onDismiss)
+            DialogButton(text = stringResource(Res.string.action_cancel), onClick = onDismiss)
             DialogButton(
                 text = "Download (${eligible.size})",
                 style = DialogButtonStyle.Primary,
