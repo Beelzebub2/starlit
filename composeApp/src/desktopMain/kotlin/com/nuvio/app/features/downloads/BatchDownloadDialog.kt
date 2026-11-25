@@ -59,8 +59,16 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import nuvio.composeapp.generated.resources.Res
-import nuvio.composeapp.generated.resources.downloads_select_all
+import nuvio.composeapp.generated.resources.action_cancel
+import nuvio.composeapp.generated.resources.action_close
+import nuvio.composeapp.generated.resources.compose_player_downloaded
 import nuvio.composeapp.generated.resources.downloads_clear_selection
+import nuvio.composeapp.generated.resources.downloads_enqueue_already_added
+import nuvio.composeapp.generated.resources.downloads_mobile_paused
+import nuvio.composeapp.generated.resources.downloads_select_all
+import nuvio.composeapp.generated.resources.episodes_season
+import nuvio.composeapp.generated.resources.episodes_specials
+import nuvio.composeapp.generated.resources.streams_episode_fallback_title
 import org.jetbrains.compose.resources.stringResource
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TriStateCheckbox
@@ -287,7 +295,7 @@ private fun DialogHeader(meta: MetaDetails, movie: Boolean, episodes: List<Batch
             )
         }
         IconButton(onClick = onDismiss) {
-            Icon(Icons.Rounded.Close, contentDescription = "Close", tint = tokens.colors.textSecondary)
+            Icon(Icons.Rounded.Close, contentDescription = stringResource(Res.string.action_close), tint = tokens.colors.textSecondary)
         }
     }
 }
@@ -467,7 +475,9 @@ private fun EpisodeRow(episode: BatchEpisode, fallbackArt: String?, checked: Boo
         }
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
             Text(
-                text = video.title.ifBlank { video.episode?.let { "Episode $it" } ?: "Episode" },
+                text = video.title.ifBlank {
+                    video.episode?.let { "Episode $it" } ?: stringResource(Res.string.streams_episode_fallback_title)
+                },
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Medium,
                 color = if (enabled || episode.state == EpisodeDownloadState.Downloaded) tokens.colors.textPrimary else tokens.colors.textMuted,
@@ -475,7 +485,9 @@ private fun EpisodeRow(episode: BatchEpisode, fallbackArt: String?, checked: Boo
                 overflow = TextOverflow.Ellipsis,
             )
             val facts = listOfNotNull(
-                video.season?.let { seasonLabel(it).replace("Season ", "S") },
+                video.season?.let {
+                    if (it == 0) stringResource(Res.string.episodes_specials) else "S$it"
+                },
                 video.episode?.let { "E$it" },
                 video.released?.takeIf { it.isNotBlank() }?.let { runCatching { formatReleaseDateForDisplay(it) }.getOrNull() },
                 video.runtime?.takeIf { it > 0 }?.let { "$it min" },
@@ -498,10 +510,10 @@ private fun EpisodeStatusBadge(episode: BatchEpisode) {
     val tokens = MaterialTheme.nuvio
     val (icon, label, color) = when (episode.state) {
         EpisodeDownloadState.Available -> return
-        EpisodeDownloadState.Downloaded -> Triple(Icons.Rounded.CheckCircle, "Downloaded", tokens.colors.success)
+        EpisodeDownloadState.Downloaded -> Triple(Icons.Rounded.CheckCircle, stringResource(Res.string.compose_player_downloaded), tokens.colors.success)
         EpisodeDownloadState.Downloading -> Triple(Icons.Rounded.Download, "Downloading", tokens.colors.info)
         EpisodeDownloadState.Queued -> Triple(Icons.Rounded.Schedule, "In queue", tokens.colors.info)
-        EpisodeDownloadState.Paused -> Triple(Icons.Rounded.Pause, "Paused", tokens.colors.textSecondary)
+        EpisodeDownloadState.Paused -> Triple(Icons.Rounded.Pause, stringResource(Res.string.downloads_mobile_paused), tokens.colors.textSecondary)
         EpisodeDownloadState.Failed -> Triple(Icons.Rounded.ErrorOutline, "Failed · retry", tokens.colors.warning)
         EpisodeDownloadState.NotAired -> Triple(
             Icons.Rounded.Schedule,
@@ -789,10 +801,10 @@ private fun DialogFooter(movie: Boolean, chosen: List<BatchEpisode>, picking: Bo
                 }
             }
         }
-        DialogButton("Cancel", onDismiss, modifier = Modifier.widthIn(min = 112.dp))
+        DialogButton(stringResource(Res.string.action_cancel), onDismiss, modifier = Modifier.widthIn(min = 112.dp))
         DialogButton(
             text = when {
-                movie -> if (chosen.isEmpty()) "Already in Downloads" else "Download movie"
+                movie -> if (chosen.isEmpty()) stringResource(Res.string.downloads_enqueue_already_added) else "Download movie"
                 chosen.isEmpty() -> "Download"
                 else -> "Download ${downloadCountLabel(chosen.size, false)}"
             },
@@ -856,7 +868,12 @@ internal fun compactFolderPath(path: String, maxLength: Int = 34): String {
     return "$head$separator…$separator$tail"
 }
 
-private fun seasonLabel(season: Int): String = if (season == 0) "Specials" else "Season $season"
+@Composable
+private fun seasonLabel(season: Int): String = if (season == 0) {
+    stringResource(Res.string.episodes_specials)
+} else {
+    stringResource(Res.string.episodes_season, season)
+}
 
 private fun selectedSeasonsSummary(chosen: List<BatchEpisode>): String? {
     val seasons = chosen.map { it.season }.distinct().sorted()

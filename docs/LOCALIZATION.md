@@ -30,6 +30,12 @@ locale-specific plural translation is supplied.
   an automated draft.
 - Run `py -3 scripts/check_localizations.py` to detect key drift, leaked
   translation markers, and formatting mismatches in the additional catalogs.
+- Run `python3 scripts/check_translation_parity.py --strict --base-ref <before-change SHA>`
+  to check strings in all values XML files, including feature-specific catalogs.
+  Add `--report-json` with an output path for per-locale string and plural
+  coverage. Existing plural fallbacks are reported separately; new or revised
+  groups must be localized. Preserve locale-specific plural quantities and
+  include an `other` case.
 - Validate builds with the Compose resource generator and test switching
   between device language, Portuguese, Chinese variants and Persian on the
   supported platforms.
