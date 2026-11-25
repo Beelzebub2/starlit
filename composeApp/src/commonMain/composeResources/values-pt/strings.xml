@@ -3468,4 +3468,34 @@
     <string name="compose_player_customize_ass_styles">Usar estilo ASS/SSA personalizado</string>
     <string name="settings_tracking_simkl_rewatches">Registar visualizações repetidas de filmes no Simkl</string>
     <string name="player_track_this_simkl_rewatch">Registar nova visualização deste filme no Simkl</string>
+    <plurals name="addons_desktop_catalog_count">
+        <item quantity="one">%1$d catálogo</item>
+        <item quantity="many">%1$d catálogos</item>
+        <item quantity="other">%1$d catálogos</item>
+    </plurals>
+    <plurals name="collections_desktop_collection_count">
+        <item quantity="one">%1$d coleção</item>
+        <item quantity="many">%1$d coleções</item>
+        <item quantity="other">%1$d coleções</item>
+    </plurals>
+    <plurals name="collections_desktop_folder_count">
+        <item quantity="one">%1$d pasta</item>
+        <item quantity="many">%1$d pastas</item>
+        <item quantity="other">%1$d pastas</item>
+    </plurals>
+    <plurals name="details_season_count">
+        <item quantity="one">%1$d temporada</item>
+        <item quantity="many">%1$d temporadas</item>
+        <item quantity="other">%1$d temporadas</item>
+    </plurals>
+    <plurals name="entity_browse_title_count">
+        <item quantity="one">%d título</item>
+        <item quantity="many">%d títulos</item>
+        <item quantity="other">%d títulos</item>
+    </plurals>
+    <plurals name="library_desktop_title_count">
+        <item quantity="one">%1$d título</item>
+        <item quantity="many">%1$d títulos</item>
+        <item quantity="other">%1$d títulos</item>
+    </plurals>
 </resources>
