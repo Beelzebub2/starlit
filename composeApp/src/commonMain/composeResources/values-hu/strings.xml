@@ -3474,4 +3474,24 @@
     <string name="compose_player_customize_ass_styles">Egyéni ASS/SSA-stílus használata</string>
     <string name="settings_tracking_simkl_rewatches">Filmek újranézésének követése a Simklben</string>
     <string name="player_track_this_simkl_rewatch">A film újranézésének rögzítése a Simklben</string>
+    <plurals name="addons_desktop_catalog_count">
+        <item quantity="one">%1$d katalógus</item>
+        <item quantity="other">%1$d katalógus</item>
+    </plurals>
+    <plurals name="collections_desktop_collection_count">
+        <item quantity="one">%1$d gyűjtemény</item>
+        <item quantity="other">%1$d gyűjtemény</item>
+    </plurals>
+    <plurals name="collections_desktop_folder_count">
+        <item quantity="one">%1$d mappa</item>
+        <item quantity="other">%1$d mappa</item>
+    </plurals>
+    <plurals name="details_season_count">
+        <item quantity="one">%1$d évad</item>
+        <item quantity="other">%1$d évad</item>
+    </plurals>
+    <plurals name="library_desktop_title_count">
+        <item quantity="one">%1$d cím</item>
+        <item quantity="other">%1$d cím</item>
+    </plurals>
 </resources>
