@@ -101,7 +101,7 @@ test('Windows release uses pinned same-repository LFS runtimes and verifies both
   const workflow = readFileSync(new URL('./workflows/windows-release.yml', import.meta.url), 'utf8');
   assert.match(workflow, /git lfs fetch origin "refs\/tags\/\$env:RELEASE_TAG"/,
     'release Windows job must retrieve exact tagged LFS objects from its own repository');
-  assert.match(workflow, /07c68bb211f23a218ded0a36eb12207dc3aeb44e5318ffca6ce9dcc7c3173906/,
+  assert.match(workflow, /59d68b9670699b30d2c3d47bd29b1856dbde92ade136fa57711413a5c3e07b10/,
     'libmpv pinned SHA-256 must be checked');
   assert.match(workflow, /13031185a54abe0f729f9f3bdb7271a349a89ac8c559327d773c66007ed604f4/,
     'TorrServer pinned SHA-256 must be checked');

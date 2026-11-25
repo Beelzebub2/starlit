@@ -63,7 +63,7 @@ jobs:
           git lfs checkout
           if ($LASTEXITCODE -ne 0) { throw 'Native runtime checkout failed.' }
           $mpv = Get-Item composeApp/src/desktopMain/native/windows/runtime/libmpv-2.dll
-          if ($mpv.Length -ne 115320296 -or (Get-FileHash $mpv.FullName -Algorithm SHA256).Hash.ToLowerInvariant() -ne '07c68bb211f23a218ded0a36eb12207dc3aeb44e5318ffca6ce9dcc7c3173906') { throw 'Pinned libmpv checksum or size mismatch.' }
+          if ($mpv.Length -ne 159640576 -or (Get-FileHash $mpv.FullName -Algorithm SHA256).Hash.ToLowerInvariant() -ne '59d68b9670699b30d2c3d47bd29b1856dbde92ade136fa57711413a5c3e07b10') { throw 'Pinned libmpv checksum or size mismatch.' }
           $torrent = 'composeApp/src/desktopMain/resources/torrserver/windows-amd64/TorrServer.exe'
           if ((Get-Item $torrent).Length -ne 58025472 -or (Get-FileHash $torrent -Algorithm SHA256).Hash.ToLowerInvariant() -ne '13031185a54abe0f729f9f3bdb7271a349a89ac8c559327d773c66007ed604f4') { throw 'Pinned torrent engine checksum or size mismatch.' }
       - uses: actions/setup-java@v5

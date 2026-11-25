@@ -82,7 +82,7 @@ def main():
         raise SystemExit("This bundled-libmpv probe requires Windows")
     repo = Path(__file__).resolve().parent.parent
     runtime = repo / "composeApp/src/desktopMain/native/windows/runtime/libmpv-2.dll"
-    if not runtime.is_file() or runtime.stat().st_size != 115320296:
+    if not runtime.is_file() or runtime.stat().st_size != 159640576:
         raise AssertionError("Pinned Windows libmpv must be fetched and verified first")
     library = ctypes.WinDLL(str(runtime))
 

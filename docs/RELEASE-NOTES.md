@@ -1,3 +1,23 @@
+## Starlit 1.34.0
+
+### Windows playback and sharing
+
+- Add optional RTX Video HDR conversion for compatible NVIDIA GPUs with a supported D3D11 playback path. It applies to SDR sources only; native HDR is not converted again. Enable Windows HDR on a compatible display to see HDR output.
+- Add optional VB-CABLE routing for Discord screen sharing when the separate VB-CABLE driver is installed. The existing audio route remains available.
+- Improve desktop playback recovery and responsiveness when changing sources.
+
+### Library, subtitles, and TV
+
+- Filter the library by genre, year, and watched status.
+- Adjust ASS subtitle sizing and optionally apply subtitle styling on supported players.
+- Open add-on trailers only when requested, and explicitly mark eligible movie rewatches when using Simkl.
+- Improve TV subtitle labels, episode-rating alignment, artwork handling, trailer focus, and network backoff. Existing Jellyfin and Emby credentials remain on each device; cross-device server metadata requires a compatible backend.
+
+### Compatibility and distribution
+
+- The Windows HDR and Discord options are optional; physical HDR display and Discord listener acceptance are separate from package checks.
+- Samsung Tizen, LG webOS, and the Windows TV installer continue to ship separately as developer previews, not as device-verified stable packages. No iOS App Store or macOS release is included.
+
 ## Starlit 1.33.0
 
 ### Desktop player and Windows installer
