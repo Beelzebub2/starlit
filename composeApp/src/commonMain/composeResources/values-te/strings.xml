@@ -3464,4 +3464,28 @@
     <string name="compose_player_customize_ass_styles">అనుకూల ASS/SSA శైలిని ఉపయోగించండి</string>
     <string name="settings_tracking_simkl_rewatches">Simklలో సినిమాలను మళ్లీ చూసినప్పుడు నమోదు చేయండి</string>
     <string name="player_track_this_simkl_rewatch">ఈ చిత్రాన్ని Simklలో మళ్లీ చూసినట్లు నమోదు చేయండి</string>
+    <plurals name="details_season_count">
+        <item quantity="one">%1$d సీజన్</item>
+        <item quantity="other">%1$d సీజన్లు</item>
+    </plurals>
+    <plurals name="collections_desktop_collection_count">
+        <item quantity="one">%1$d సేకరణ</item>
+        <item quantity="other">%1$d సేకరణలు</item>
+    </plurals>
+    <plurals name="collections_desktop_folder_count">
+        <item quantity="one">%1$d ఫోల్డర్</item>
+        <item quantity="other">%1$d ఫోల్డర్లు</item>
+    </plurals>
+    <plurals name="addons_desktop_catalog_count">
+        <item quantity="one">%1$d కేటలాగ్</item>
+        <item quantity="other">%1$d కేటలాగ్‌లు</item>
+    </plurals>
+    <plurals name="library_desktop_title_count">
+        <item quantity="one">%1$d శీర్షిక</item>
+        <item quantity="other">%1$d శీర్షికలు</item>
+    </plurals>
+    <plurals name="cw_airs_in_days">
+        <item quantity="one">%1$d రోజులో ప్రసారం అవుతుంది</item>
+        <item quantity="other">%1$d రోజుల్లో ప్రసారం అవుతుంది</item>
+    </plurals>
 </resources>
