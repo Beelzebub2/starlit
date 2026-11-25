@@ -136,7 +136,7 @@ internal actual suspend fun markMyAnimeListRewatchOnPlayback(
     var clientSecret by remember { mutableStateOf("") }
     val uri = LocalUriHandler.current
     var error by remember { mutableStateOf<String?>(null) }
-    AlertDialog(onDismissRequest = onDismiss, title = { Text("Connect MyAnimeList") }, text = {
+    AlertDialog(onDismissRequest = onDismiss, title = { Text(stringResource(Res.string.lists_connect, stringResource(Res.string.source_mal))) }, text = {
         Column(Modifier.heightIn(max = 480.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Text("In MyAnimeList API setup, choose App Type Other (recommended, no secret). Existing Web apps require their client secret. Your MAL password stays on MyAnimeList.")
             TextButton(onClick = { uri.openUri("https://myanimelist.net/apiconfig") }) { Text("Open MyAnimeList API setup") }
