@@ -3472,4 +3472,24 @@
     <string name="compose_player_customize_ass_styles">Χρήση προσαρμοσμένου στυλ ASS/SSA</string>
     <string name="settings_tracking_simkl_rewatches">Καταγραφή επαναπροβολών ταινιών στο Simkl</string>
     <string name="player_track_this_simkl_rewatch">Καταγραφή αυτής της ταινίας ως επαναπροβολή στο Simkl</string>
+    <plurals name="addons_desktop_catalog_count">
+        <item quantity="one">%1$d κατάλογος</item>
+        <item quantity="other">%1$d κατάλογοι</item>
+    </plurals>
+    <plurals name="collections_desktop_collection_count">
+        <item quantity="one">%1$d συλλογή</item>
+        <item quantity="other">%1$d συλλογές</item>
+    </plurals>
+    <plurals name="collections_desktop_folder_count">
+        <item quantity="one">%1$d φάκελος</item>
+        <item quantity="other">%1$d φάκελοι</item>
+    </plurals>
+    <plurals name="details_season_count">
+        <item quantity="one">%1$d σεζόν</item>
+        <item quantity="other">%1$d σεζόν</item>
+    </plurals>
+    <plurals name="library_desktop_title_count">
+        <item quantity="one">%1$d τίτλος</item>
+        <item quantity="other">%1$d τίτλοι</item>
+    </plurals>
 </resources>

@@ -3503,4 +3503,24 @@
     <string name="compose_player_customize_ass_styles">Използване на персонализиран стил за ASS/SSA</string>
     <string name="settings_tracking_simkl_rewatches">Отчитане на повторните гледания на филми в Simkl</string>
     <string name="player_track_this_simkl_rewatch">Запиши този филм като повторно гледане в Simkl</string>
+    <plurals name="addons_desktop_catalog_count">
+        <item quantity="one">%1$d каталог</item>
+        <item quantity="other">%1$d каталога</item>
+    </plurals>
+    <plurals name="collections_desktop_collection_count">
+        <item quantity="one">%1$d колекция</item>
+        <item quantity="other">%1$d колекции</item>
+    </plurals>
+    <plurals name="collections_desktop_folder_count">
+        <item quantity="one">%1$d папка</item>
+        <item quantity="other">%1$d папки</item>
+    </plurals>
+    <plurals name="details_season_count">
+        <item quantity="one">%1$d сезон</item>
+        <item quantity="other">%1$d сезона</item>
+    </plurals>
+    <plurals name="library_desktop_title_count">
+        <item quantity="one">%1$d заглавие</item>
+        <item quantity="other">%1$d заглавия</item>
+    </plurals>
 </resources>
