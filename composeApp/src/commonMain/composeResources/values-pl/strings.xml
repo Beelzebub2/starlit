@@ -3089,7 +3089,7 @@
     <string name="remote_playback_fullscreen_exit">Wyjdź z pełnego ekranu na PC</string>
     <string name="remote_playback_idle_body">Uruchom wideo na swoim komputerze, a tutaj pojawią się jego elementy sterujące.</string>
     <string name="remote_playback_idle_title">Jeszcze nic nie odtwarza</string>
-    <string name="remote_playback_mute">Wyciszenie lub wyłączenie wyciszenia</string>
+    <string name="remote_playback_mute">Włącz lub wyłącz wyciszenie</string>
     <string name="remote_playback_next">Następny odcinek</string>
     <string name="remote_playback_now_playing">Teraz odtwarzam na twoim komputerze</string>
     <string name="remote_playback_options">Opcje odtwarzania</string>

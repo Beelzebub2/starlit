@@ -3097,7 +3097,7 @@
     <string name="remote_qr_image_description">Сопряжение с настольным компьютером QR код для %1$s</string>
     <string name="remote_qr_manage">Управление подключением</string>
     <string name="remote_qr_no_network">Подключите этот компьютер к Wi-Fi или Ethernet, затем снова откройте пульт телефона, чтобы отобразить код QR.</string>
-    <string name="remote_qr_phone_remote">Пульт дистанционного управления телефоном</string>
+    <string name="remote_qr_phone_remote">Телефон как пульт</string>
     <string name="remote_qr_scan">Сканировать рабочий стол QR кода</string>
     <string name="remote_qr_scan_failed">Не удалось прочитать код Starlit рабочего стола QR. Попробуйте еще раз, обновите сервисы Google Play или введите локальный IP-адрес компьютера ниже.</string>
     <string name="remote_qr_show">Подключите телефон</string>

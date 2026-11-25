@@ -2432,7 +2432,7 @@
     <string name="remote_playback_fullscreen_exit">Beenden Sie den Vollbildmodus auf dem PC</string>
     <string name="remote_playback_idle_body">Starten Sie ein Video auf Ihrem PC und seine Steuerelemente werden hier angezeigt.</string>
     <string name="remote_playback_idle_title">Es wird noch nichts abgespielt</string>
-    <string name="remote_playback_mute">Stummschalten oder Stummschalten aufheben</string>
+    <string name="remote_playback_mute">Ton ein- oder ausschalten</string>
     <string name="remote_playback_next">Nächste Folge</string>
     <string name="remote_playback_now_playing">Wird jetzt auf Ihrem PC abgespielt</string>
     <string name="remote_playback_options">Wiedergabeoptionen</string>
