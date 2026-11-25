@@ -3504,4 +3504,28 @@ Nagbalik ang</string>
     <string name="compose_player_customize_ass_styles">Gumamit ng pasadyang estilo ng ASS/SSA</string>
     <string name="settings_tracking_simkl_rewatches">Itala sa Simkl ang mga muling pinanood na pelikula</string>
     <string name="player_track_this_simkl_rewatch">Itala sa Simkl na muling pinanood ang pelikulang ito</string>
+    <plurals name="details_season_count">
+        <item quantity="one">%1$d season</item>
+        <item quantity="other">%1$d season</item>
+    </plurals>
+    <plurals name="collections_desktop_collection_count">
+        <item quantity="one">%1$d koleksyon</item>
+        <item quantity="other">%1$d koleksyon</item>
+    </plurals>
+    <plurals name="collections_desktop_folder_count">
+        <item quantity="one">%1$d folder</item>
+        <item quantity="other">%1$d folder</item>
+    </plurals>
+    <plurals name="addons_desktop_catalog_count">
+        <item quantity="one">%1$d katalogo</item>
+        <item quantity="other">%1$d katalogo</item>
+    </plurals>
+    <plurals name="library_desktop_title_count">
+        <item quantity="one">%1$d pamagat</item>
+        <item quantity="other">%1$d pamagat</item>
+    </plurals>
+    <plurals name="cw_airs_in_days">
+        <item quantity="one">Ipapalabas pagkalipas ng %1$d araw</item>
+        <item quantity="other">Ipapalabas pagkalipas ng %1$d araw</item>
+    </plurals>
 </resources>

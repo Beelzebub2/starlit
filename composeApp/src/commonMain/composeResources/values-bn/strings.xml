@@ -3462,4 +3462,24 @@
     <string name="compose_player_customize_ass_styles">কাস্টম ASS/SSA স্টাইল ব্যবহার করুন</string>
     <string name="settings_tracking_simkl_rewatches">Simkl-এ সিনেমা পুনরায় দেখার হিসাব রাখুন</string>
     <string name="player_track_this_simkl_rewatch">এই সিনেমাটি Simkl-এ পুনরায় দেখা হিসেবে নথিভুক্ত করুন</string>
+    <plurals name="details_season_count">
+        <item quantity="one">%1$dটি সিজন</item>
+        <item quantity="other">%1$dটি সিজন</item>
+    </plurals>
+    <plurals name="collections_desktop_collection_count">
+        <item quantity="one">%1$dটি কালেকশন</item>
+        <item quantity="other">%1$dটি কালেকশন</item>
+    </plurals>
+    <plurals name="collections_desktop_folder_count">
+        <item quantity="one">%1$dটি ফোল্ডার</item>
+        <item quantity="other">%1$dটি ফোল্ডার</item>
+    </plurals>
+    <plurals name="addons_desktop_catalog_count">
+        <item quantity="one">%1$dটি ক্যাটালগ</item>
+        <item quantity="other">%1$dটি ক্যাটালগ</item>
+    </plurals>
+    <plurals name="library_desktop_title_count">
+        <item quantity="one">%1$dটি শিরোনাম</item>
+        <item quantity="other">%1$dটি শিরোনাম</item>
+    </plurals>
 </resources>
