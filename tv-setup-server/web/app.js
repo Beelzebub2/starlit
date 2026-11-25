@@ -51,7 +51,7 @@ Object.assign(copy, globalThis.STARLIT_TV_SETUP_TRANSLATIONS || {});
 function selectLocale(preferred = navigator.languages?.length ? navigator.languages : [navigator.language]) {
   for (const candidate of preferred) {
     const raw = String(candidate || "").trim().toLowerCase().replace(/_/g, "-");
-    const normalized = raw === "pt-pt" ? "pt" : raw.startsWith("zh-hant") || raw === "zh-hk" ? "zh-tw" :
+    const normalized = raw === "pt-pt" ? "pt" : raw.startsWith("zh-hant") || ["zh-tw", "zh-hk", "zh-mo"].includes(raw) ? "zh-tw" :
       raw.startsWith("zh-hans") || raw.startsWith("zh-") || raw === "zh" ? "zh-cn" :
       raw === "sr" || raw.startsWith("sr-") ? "sr-latn" :
       raw === "nb" || raw.startsWith("nb-") ? "no" :

@@ -20,7 +20,7 @@ The TV remains authoritative for repository validation and changes, preserving p
 
 ## Languages
 
-The phone setup page selects the browser's preferred language from the TV-supported locales. Its English and Portuguese (Portugal) copy lives in web/app.js, with the remaining 36 locales in the static same-origin web/translations.js bundle. The page also sets right-to-left layout for Arabic and Hebrew. Keep every copy key synchronized when adding a new setup step; the translations test verifies locale coverage and regional selection.
+The phone setup page selects the browser's preferred language from the TV-supported locales. Its English and Portuguese (Portugal) copy lives in web/app.js, with the remaining 36 locales in the static same-origin web/translations.js bundle. The page sets right-to-left layout for Arabic and Hebrew, while pairing codes and URL inputs stay left-to-right. Keep every copy key synchronized when adding a new setup step; the translations test verifies locale coverage, regional selection, and text directions.
 
 ## Local tests
 

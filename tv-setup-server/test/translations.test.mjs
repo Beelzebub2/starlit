@@ -57,10 +57,35 @@ test("the browser loads translations before the app and chooses specific regiona
   assert.equal(choose(["es-MX"]), "es-419");
   assert.equal(choose(["fr-CA"]), "fr");
   assert.equal(choose(["zh-Hant"]), "zh-tw");
+  assert.equal(choose(["zh-TW"]), "zh-tw");
+  assert.equal(choose(["zh-HK"]), "zh-tw");
+  assert.equal(choose(["zh-MO"]), "zh-tw");
+  assert.equal(choose(["zh-Hans-TW"]), "zh-cn");
   assert.equal(choose(["zh-SG"]), "zh-cn");
   assert.equal(choose(["iw-IL"]), "he");
   assert.equal(choose(["in-ID"]), "id");
   assert.equal(choose(["nb-NO"]), "no");
   assert.equal(choose(["sr-Latn-RS"]), "sr-latn");
   assert.equal(choose(["xx-XX"]), "en");
+});
+
+test("localized document direction keeps pairing codes and URLs left-to-right", () => {
+  const extra = extraDictionaries();
+  const end = app.indexOf("document.title =");
+  assert.ok(end > app.indexOf("const locale = selectLocale();"));
+  const rtl = new Set(["ar", "he"]);
+  for (const locale of [...Object.keys(enAndPortuguese), ...Object.keys(extra), "ar-EG", "iw-IL", "xx-XX"]) {
+    const documentElement = {};
+    const expectedLocale = {"ar-EG":"ar", "iw-IL":"he", "xx-XX":"en"}[locale] ?? locale;
+    vm.runInNewContext(app.slice(0, end), {
+      STARLIT_TV_SETUP_TRANSLATIONS: extra,
+      navigator: { language: locale, languages: [locale] },
+      document: { documentElement },
+    });
+    assert.equal(documentElement.lang, expectedLocale === "pt" ? "pt-PT" : expectedLocale, locale);
+    assert.equal(documentElement.dir, rtl.has(expectedLocale) ? "rtl" : "ltr", locale);
+  }
+  for (const id of ["pair-code", "verify-code", "addon-url", "plugin-url"]) {
+    assert.match(html.match(new RegExp('<[^>]* id="' + id + '"[^>]*>'))?.[0] || "", /\bdir="ltr"/);
+  }
 });
