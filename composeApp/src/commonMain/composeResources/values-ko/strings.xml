@@ -3455,4 +3455,28 @@
     <string name="compose_player_customize_ass_styles">사용자 지정 ASS/SSA 스타일 사용</string>
     <string name="settings_tracking_simkl_rewatches">Simkl에 영화 다시 보기 기록</string>
     <string name="player_track_this_simkl_rewatch">이 영화를 Simkl에 다시 보기로 기록</string>
+    <plurals name="addons_desktop_catalog_count">
+        <item quantity="other">카탈로그 %1$d개</item>
+    </plurals>
+    <plurals name="collections_desktop_collection_count">
+        <item quantity="other">컬렉션 %1$d개</item>
+    </plurals>
+    <plurals name="collections_desktop_folder_count">
+        <item quantity="other">폴더 %1$d개</item>
+    </plurals>
+    <plurals name="details_season_count">
+        <item quantity="other">시즌 %1$d개</item>
+    </plurals>
+    <plurals name="entity_browse_title_count">
+        <item quantity="other">작품 %d개</item>
+    </plurals>
+    <plurals name="library_desktop_title_count">
+        <item quantity="other">작품 %1$d개</item>
+    </plurals>
+    <plurals name="cw_airs_in_days">
+        <item quantity="other">%1$d일 후 방송</item>
+    </plurals>
+    <plurals name="cw_airs_in_days_short">
+        <item quantity="other">%1$d일 후</item>
+    </plurals>
 </resources>
