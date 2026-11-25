@@ -3478,4 +3478,29 @@
     <string name="compose_player_customize_ass_styles">Folosește stilul personalizat ASS/SSA</string>
     <string name="settings_tracking_simkl_rewatches">Înregistrează filmele revăzute în Simkl</string>
     <string name="player_track_this_simkl_rewatch">Înregistrează acest film ca revăzut în Simkl</string>
+    <plurals name="addons_desktop_catalog_count">
+        <item quantity="one">%1$d catalog</item>
+        <item quantity="few">%1$d cataloage</item>
+        <item quantity="other">%1$d de cataloage</item>
+    </plurals>
+    <plurals name="collections_desktop_collection_count">
+        <item quantity="one">%1$d colecție</item>
+        <item quantity="few">%1$d colecții</item>
+        <item quantity="other">%1$d de colecții</item>
+    </plurals>
+    <plurals name="collections_desktop_folder_count">
+        <item quantity="one">%1$d dosar</item>
+        <item quantity="few">%1$d dosare</item>
+        <item quantity="other">%1$d de dosare</item>
+    </plurals>
+    <plurals name="details_season_count">
+        <item quantity="one">%1$d sezon</item>
+        <item quantity="few">%1$d sezoane</item>
+        <item quantity="other">%1$d de sezoane</item>
+    </plurals>
+    <plurals name="library_desktop_title_count">
+        <item quantity="one">%1$d titlu</item>
+        <item quantity="few">%1$d titluri</item>
+        <item quantity="other">%1$d de titluri</item>
+    </plurals>
 </resources>
