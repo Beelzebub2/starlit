@@ -3511,4 +3511,29 @@
     <string name="compose_player_customize_ass_styles">Utiliser un style ASS/SSA personnalisé</string>
     <string name="settings_tracking_simkl_rewatches">Enregistrer les films revus dans Simkl</string>
     <string name="player_track_this_simkl_rewatch">Enregistrer ce film comme revu dans Simkl</string>
+    <plurals name="addons_desktop_catalog_count">
+        <item quantity="one">%1$d catalogue</item>
+        <item quantity="many">%1$d de catalogues</item>
+        <item quantity="other">%1$d catalogues</item>
+    </plurals>
+    <plurals name="collections_desktop_collection_count">
+        <item quantity="one">%1$d collection</item>
+        <item quantity="many">%1$d de collections</item>
+        <item quantity="other">%1$d collections</item>
+    </plurals>
+    <plurals name="collections_desktop_folder_count">
+        <item quantity="one">%1$d dossier</item>
+        <item quantity="many">%1$d de dossiers</item>
+        <item quantity="other">%1$d dossiers</item>
+    </plurals>
+    <plurals name="details_season_count">
+        <item quantity="one">%1$d saison</item>
+        <item quantity="many">%1$d de saisons</item>
+        <item quantity="other">%1$d saisons</item>
+    </plurals>
+    <plurals name="library_desktop_title_count">
+        <item quantity="one">%1$d titre</item>
+        <item quantity="many">%1$d de titres</item>
+        <item quantity="other">%1$d titres</item>
+    </plurals>
 </resources>
