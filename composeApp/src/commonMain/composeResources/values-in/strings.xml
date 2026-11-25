@@ -3460,4 +3460,22 @@
     <string name="compose_player_customize_ass_styles">Gunakan gaya ASS/SSA khusus</string>
     <string name="settings_tracking_simkl_rewatches">Catat tontonan ulang film di Simkl</string>
     <string name="player_track_this_simkl_rewatch">Catat film ini sebagai tontonan ulang di Simkl</string>
+    <plurals name="addons_desktop_catalog_count">
+        <item quantity="other">%1$d katalog</item>
+    </plurals>
+    <plurals name="collections_desktop_collection_count">
+        <item quantity="other">%1$d koleksi</item>
+    </plurals>
+    <plurals name="collections_desktop_folder_count">
+        <item quantity="other">%1$d folder</item>
+    </plurals>
+    <plurals name="details_season_count">
+        <item quantity="other">%1$d musim</item>
+    </plurals>
+    <plurals name="entity_browse_title_count">
+        <item quantity="other">%d judul</item>
+    </plurals>
+    <plurals name="library_desktop_title_count">
+        <item quantity="other">%1$d judul</item>
+    </plurals>
 </resources>
