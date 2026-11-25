@@ -3500,4 +3500,24 @@
     <string name="compose_player_customize_ass_styles">Dùng kiểu ASS/SSA tùy chỉnh</string>
     <string name="settings_tracking_simkl_rewatches">Ghi lại lượt xem lại phim trên Simkl</string>
     <string name="player_track_this_simkl_rewatch">Ghi phim này là đã xem lại trên Simkl</string>
+    <plurals name="addons_desktop_catalog_count">
+        <item quantity="one">%1$d danh mục</item>
+        <item quantity="other">%1$d danh mục</item>
+    </plurals>
+    <plurals name="collections_desktop_collection_count">
+        <item quantity="one">%1$d bộ sưu tập</item>
+        <item quantity="other">%1$d bộ sưu tập</item>
+    </plurals>
+    <plurals name="collections_desktop_folder_count">
+        <item quantity="one">%1$d thư mục</item>
+        <item quantity="other">%1$d thư mục</item>
+    </plurals>
+    <plurals name="details_season_count">
+        <item quantity="one">%1$d mùa</item>
+        <item quantity="other">%1$d mùa</item>
+    </plurals>
+    <plurals name="library_desktop_title_count">
+        <item quantity="one">%1$d tựa phim</item>
+        <item quantity="other">%1$d tựa phim</item>
+    </plurals>
 </resources>
