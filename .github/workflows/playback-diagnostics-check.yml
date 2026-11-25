@@ -88,7 +88,7 @@ jobs:
           git lfs checkout
           if ($LASTEXITCODE -ne 0) { throw 'Pinned libmpv LFS checkout failed.' }
           $mpv = Get-Item 'composeApp/src/desktopMain/native/windows/runtime/libmpv-2.dll'
-          if ($mpv.Length -ne 115320296 -or (Get-FileHash $mpv.FullName -Algorithm SHA256).Hash.ToLowerInvariant() -ne '07c68bb211f23a218ded0a36eb12207dc3aeb44e5318ffca6ce9dcc7c3173906') {
+          if ($mpv.Length -ne 159640576 -or (Get-FileHash $mpv.FullName -Algorithm SHA256).Hash.ToLowerInvariant() -ne '59d68b9670699b30d2c3d47bd29b1856dbde92ade136fa57711413a5c3e07b10') {
             throw 'Pinned libmpv checksum or size mismatch.'
           }
       - uses: actions/setup-java@v5
