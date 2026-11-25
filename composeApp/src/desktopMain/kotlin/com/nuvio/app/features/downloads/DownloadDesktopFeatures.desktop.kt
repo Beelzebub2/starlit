@@ -48,6 +48,7 @@ import kotlinx.coroutines.*
 import nuvio.composeapp.generated.resources.Res
 import nuvio.composeapp.generated.resources.downloads_auto_watch_later_description
 import nuvio.composeapp.generated.resources.downloads_auto_watch_later_title
+import nuvio.composeapp.generated.resources.downloads_mobile_parallel
 import org.jetbrains.compose.resources.stringResource
 import java.io.File
 import com.nuvio.app.core.ui.DesktopFileDialogs
@@ -305,13 +306,14 @@ private fun ParallelDownloadsPicker(value: Int, onSelect: (Int) -> Unit) {
     ) {
         ParallelDownloadChoices.forEach { count ->
             val selected = count == value
+            val optionDescription = stringResource(Res.string.downloads_mobile_parallel, count)
             Box(
                 modifier = Modifier
                     .size(width = 40.dp, height = 32.dp)
                     .clip(CircleShape)
                     .background(if (selected) tokens.colors.accent else Color.Transparent)
                     .selectable(selected = selected, role = Role.RadioButton, onClick = { onSelect(count) })
-                    .semantics { contentDescription = "$count at once" },
+                    .semantics { contentDescription = optionDescription },
                 contentAlignment = Alignment.Center,
             ) {
                 Text("$count", style = MaterialTheme.typography.labelLarge,
