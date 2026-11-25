@@ -3482,4 +3482,28 @@
     <string name="compose_player_customize_ass_styles">ใช้รูปแบบ ASS/SSA ที่กำหนดเอง</string>
     <string name="settings_tracking_simkl_rewatches">บันทึกการดูภาพยนตร์ซ้ำใน Simkl</string>
     <string name="player_track_this_simkl_rewatch">บันทึกภาพยนตร์เรื่องนี้เป็นการดูซ้ำใน Simkl</string>
+    <plurals name="addons_desktop_catalog_count">
+        <item quantity="other">%1$d แคตตาล็อก</item>
+    </plurals>
+    <plurals name="collections_desktop_collection_count">
+        <item quantity="other">%1$d คอลเลกชัน</item>
+    </plurals>
+    <plurals name="collections_desktop_folder_count">
+        <item quantity="other">%1$d โฟลเดอร์</item>
+    </plurals>
+    <plurals name="details_season_count">
+        <item quantity="other">%1$d ซีซั่น</item>
+    </plurals>
+    <plurals name="entity_browse_title_count">
+        <item quantity="other">%d เรื่อง</item>
+    </plurals>
+    <plurals name="library_desktop_title_count">
+        <item quantity="other">%1$d เรื่อง</item>
+    </plurals>
+    <plurals name="cw_airs_in_days">
+        <item quantity="other">ออกอากาศในอีก %1$d วัน</item>
+    </plurals>
+    <plurals name="cw_airs_in_days_short">
+        <item quantity="other">ในอีก %1$d วัน</item>
+    </plurals>
 </resources>
