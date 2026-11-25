@@ -2265,8 +2265,8 @@
     <string name="cw_airs_today">آج نشر ہوگی</string>
     <string name="cw_airs_tomorrow">کل نشر ہوگی</string>
     <plurals name="cw_airs_in_days">
-        <item quantity="one">Airs in %1$d Day</item>
-        <item quantity="other">Airs in %1$d Days</item>
+        <item quantity="one">%1$d دن بعد نشر ہوگا</item>
+        <item quantity="other">%1$d دن بعد نشر ہوگا</item>
     </plurals>
     <string name="cw_airs_date_short">%1$s</string>
     <string name="cw_airs_today_short">آج</string>
@@ -3452,4 +3452,24 @@
     <string name="compose_player_customize_ass_styles">حسبِ ضرورت ASS/SSA انداز استعمال کریں</string>
     <string name="settings_tracking_simkl_rewatches">Simkl میں فلمیں دوبارہ دیکھنے کا ریکارڈ رکھیں</string>
     <string name="player_track_this_simkl_rewatch">اس فلم کو Simkl میں دوبارہ دیکھے گئے کے طور پر درج کریں</string>
+    <plurals name="details_season_count">
+        <item quantity="one">%1$d سیزن</item>
+        <item quantity="other">%1$d سیزن</item>
+    </plurals>
+    <plurals name="collections_desktop_collection_count">
+        <item quantity="one">%1$d کلیکشن</item>
+        <item quantity="other">%1$d کلیکشن</item>
+    </plurals>
+    <plurals name="collections_desktop_folder_count">
+        <item quantity="one">%1$d فولڈر</item>
+        <item quantity="other">%1$d فولڈر</item>
+    </plurals>
+    <plurals name="addons_desktop_catalog_count">
+        <item quantity="one">%1$d کیٹلاگ</item>
+        <item quantity="other">%1$d کیٹلاگ</item>
+    </plurals>
+    <plurals name="library_desktop_title_count">
+        <item quantity="one">%1$d عنوان</item>
+        <item quantity="other">%1$d عنوانات</item>
+    </plurals>
 </resources>
