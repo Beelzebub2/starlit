@@ -3181,8 +3181,10 @@
     <string name="remote_vpn_tile">프라이빗 VPN</string>
     <string name="remote_vpn_tile_caption">다른 네트워크에서 연결</string>
     <string name="settings_advanced_discord_audio_share">Discord 전체 화면 대화 지원(실험적)</string>
-    <string name="settings_advanced_discord_audio_share_description">Discord 전체 화면의 경우: 원래 서라운드 오디오를 유지하고 5.1/7.1 미디어에서 전면 중앙 대화 채널만 추가합니다. 도우미는 숨겨진 상태로 실행되며 왼쪽/오른쪽 음악 채널을 반복하지 않습니다. Discord 플러그인이 필요하지 않습니다. 사용하지 않은 Steam 스트리밍 스피커 출력이 필요합니다. 일부 믹스에는 중앙에도 음악이 포함되어 있습니다. 청취자에게 확인하십시오.</string>
-    <string name="settings_advanced_discord_audio_share_unavailable">Discord 호환 오디오를 시작할 수 없습니다. Steam 스트리밍 스피커가 사용 가능하며 기본 사운드 출력이 아닌지 확인하세요.</string>
+    <string name="settings_advanced_discord_audio_share_description">Discord에서 전체 화면을 공유할 때 원래의 서라운드 사운드를 유지합니다. 5.1/7.1의 전면 중앙 채널만 VB-CABLE Input(우선) 또는 Steam Streaming Speakers로 보냅니다. VB-CABLE은 별도로 설치해야 합니다. 가상 장치의 소리 캡처 여부는 달라질 수 있으니 통화 상대에게 확인해 달라고 하세요.</string>
+    <string name="settings_advanced_discord_audio_share_unavailable">Discord 오디오 도우미를 시작할 수 없습니다. VB-CABLE(CABLE Input)을 설치하거나 Steam Streaming Speakers를 사용하세요. 가상 출력은 활성 상태여야 하며 Windows 기본 출력이면 안 됩니다.</string>
+    <string name="settings_advanced_discord_audio_share_setup">VB-CABLE 설정(공식 웹사이트)</string>
+    <string name="settings_advanced_discord_audio_share_setup_description">기부로 지원하는 VB-Audio의 선택 사항입니다. 관리자 권한으로 수동 설치한 후 Windows를 다시 시작하세요. Starlit은 드라이버를 설치하거나 기본 오디오 장치를 변경하지 않습니다.</string>
     <string name="settings_advanced_discord_audio_share_window">별도의 풀 스테레오 공유 창 표시</string>
     <string name="settings_advanced_discord_audio_share_window_description">끄기(전체 화면에 권장): 숨겨진 도우미가 누락된 중앙 대화만 보냅니다. 켜짐: 도우미가 풀 스테레오를 출력하고 &quot;Starlit - Discord 공유&quot;를 표시합니다. Discord에서 해당 응용 프로그램 창만 공유하지 않으면 소리가 두 배가 될 수 있습니다.</string>
     <string name="settings_continue_watching_hide_live_description">계속 시청에서 라이브 채널로 명시적으로 식별된 스트림을 제외합니다.</string>

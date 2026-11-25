@@ -2040,8 +2040,10 @@
     <string name="remote_window_local_address">ローカル PC アドレス</string>
     <string name="remote_window_trouble_caption">ファイアウォール ルール、ネットワーク タイプ、およびポート</string>
     <string name="settings_advanced_discord_audio_share">Discord 全画面ダイアログのサポート (実験的)</string>
-    <string name="settings_advanced_discord_audio_share_description">Discord 画面全体: オリジナルのサラウンド オーディオを保持し、5.1/7.1 メディアからフロントセンターのダイアログ チャンネルのみを追加します。ヘルパーは非表示で実行され、左/右の音楽チャンネルを繰り返すことはありません。 Discord プラグインは必要ありません。未使用の Steam ストリーミング スピーカー出力が必要です。ミックスによっては、中央に音楽が含まれているものもあります。リスナーに確認してもらいます。</string>
-    <string name="settings_advanced_discord_audio_share_unavailable">Discord 互換のオーディオを開始できませんでした。 Steam ストリーミング スピーカーが利用可能であり、デフォルトのサウンド出力ではないことを確認してください。</string>
+    <string name="settings_advanced_discord_audio_share_description">Discordで画面全体を共有するときも、元のサラウンド音声はそのまま再生されます。5.1/7.1のフロントセンターチャンネルのみを、VB-CABLE Input（優先）または Steam Streaming Speakers に送ります。VB-CABLE は別途インストールが必要です。仮想デバイスの音声を取り込めるかは環境によって異なるため、通話相手に聞こえるか確認してください。</string>
+    <string name="settings_advanced_discord_audio_share_unavailable">Discord の音声ヘルパーを起動できませんでした。VB-CABLE（CABLE Input）をインストールするか、Steam Streaming Speakers を使用してください。仮想出力は有効で、Windows の既定の出力に設定されていない必要があります。</string>
+    <string name="settings_advanced_discord_audio_share_setup">VB-CABLE を設定（公式サイト）</string>
+    <string name="settings_advanced_discord_audio_share_setup_description">寄付によって支えられている VB-Audio の任意のソフトウェアです。管理者として手動でインストールし、Windows を再起動してください。Starlit がドライバーをインストールしたり、既定のオーディオデバイスを変更したりすることはありません。</string>
     <string name="settings_advanced_discord_audio_share_window">別のフルステレオ共有ウィンドウを表示する</string>
     <string name="settings_advanced_discord_audio_share_window_description">オフ (画面全体に推奨): 欠けている中央ダイアログのみが非表示のヘルパーによって送信されます。オン: ヘルパーはフルステレオを出力し、「Starlit - Discord 共有」を表示します。 Discord のアプリケーション ウィンドウのみを共有してください。共有しない場合、音が二重になる可能性があります。</string>
     <string name="settings_continue_watching_hide_live_description">ライブ チャンネルとして明示的に識別されたストリームを継続視聴から除外します。</string>

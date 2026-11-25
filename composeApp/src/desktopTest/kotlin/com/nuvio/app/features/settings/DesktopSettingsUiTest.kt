@@ -411,6 +411,7 @@ class DesktopSettingsUiTest {
             showSettings()
             open("Advanced")
             onNodeWithText("Discord fullscreen dialogue support (experimental)").performScrollTo().assertIsDisplayed()
+            onNodeWithText("Set up VB-CABLE (official website)").performScrollTo().assertIsDisplayed()
         }
     }
 

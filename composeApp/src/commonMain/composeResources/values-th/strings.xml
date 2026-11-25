@@ -3208,8 +3208,10 @@
     <string name="remote_vpn_tile">VPN ส่วนตัว</string>
     <string name="remote_vpn_tile_caption">เชื่อมต่อจากเครือข่ายอื่น</string>
     <string name="settings_advanced_discord_audio_share">Discord รองรับบทสนทนาแบบเต็มหน้าจอ (ทดลอง)</string>
-    <string name="settings_advanced_discord_audio_share_description">สำหรับ Discord ทั้งหน้าจอ: คงเสียงเซอร์ราวด์ดั้งเดิมของคุณไว้ และเพิ่มเฉพาะช่องบทสนทนาตรงกลางด้านหน้าจากสื่อ 5.1/7.1 ตัวช่วยทำงานซ่อนอยู่และไม่เคยเล่นซ้ำช่องเพลงซ้าย/ขวา ไม่จำเป็นต้องมีปลั๊กอิน Discord ต้องการเอาต์พุต Steam Streaming Speakers ที่ไม่ได้ใช้ มิกซ์บางรายการมีเพลงอยู่ตรงกลางด้วย ตรวจสอบกับผู้ฟัง</string>
-    <string name="settings_advanced_discord_audio_share_unavailable">Discord-ไม่สามารถเริ่มเสียงที่เข้ากันได้ ตรวจสอบว่าลำโพงสตรีมมิ่ง Steam พร้อมใช้งานและไม่ใช่เอาต์พุตเสียงเริ่มต้นของคุณ</string>
+    <string name="settings_advanced_discord_audio_share_description">เมื่อแชร์ทั้งหน้าจอใน Discord เสียงรอบทิศทางเดิมจะยังคงเล่นตามปกติ เฉพาะช่องเสียงกลางด้านหน้าของระบบ 5.1/7.1 จะถูกส่งไปยัง VB-CABLE Input (แนะนำ) หรือ Steam Streaming Speakers ต้องติดตั้ง VB-CABLE แยกต่างหาก การจับเสียงจากอุปกรณ์เสมือนอาจแตกต่างกัน ให้คนในสายช่วยตรวจสอบเสียง</string>
+    <string name="settings_advanced_discord_audio_share_unavailable">เริ่มตัวช่วยเสียง Discord ไม่ได้ ให้ติดตั้ง VB-CABLE (CABLE Input) หรือใช้ Steam Streaming Speakers เอาต์พุตเสมือนต้องเปิดใช้งานและต้องไม่ใช่เอาต์พุตเริ่มต้นของ Windows</string>
+    <string name="settings_advanced_discord_audio_share_setup">ตั้งค่า VB-CABLE (เว็บไซต์ทางการ)</string>
+    <string name="settings_advanced_discord_audio_share_setup_description">ซอฟต์แวร์เสริมของ VB-Audio ที่ได้รับการสนับสนุนจากเงินบริจาค ติดตั้งด้วยตนเองในฐานะผู้ดูแลระบบแล้วเริ่ม Windows ใหม่ Starlit ไม่ติดตั้งไดรเวอร์และไม่เปลี่ยนอุปกรณ์เสียงเริ่มต้น</string>
     <string name="settings_advanced_discord_audio_share_window">แสดงหน้าต่างการแชร์สเตอริโอเต็มรูปแบบแยกต่างหาก</string>
     <string name="settings_advanced_discord_audio_share_window_description">ปิด (แนะนำสำหรับทั้งหน้าจอ): ตัวช่วยที่ซ่อนอยู่จะส่งเฉพาะบทสนทนาตรงกลางที่ขาดหายไป เปิด: ตัวช่วยจะส่งเสียงสเตอริโอเต็มรูปแบบและแสดง &quot;Starlit - Discord Share&quot;; แชร์เฉพาะหน้าต่างแอปพลิเคชันนั้นใน Discord ไม่เช่นนั้นเสียงอาจเพิ่มเป็นสองเท่า</string>
     <string name="settings_continue_watching_hide_live_description">ยกเว้นสตรีมที่ระบุอย่างชัดเจนว่าเป็นช่องถ่ายทอดสดจากการรับชมต่อ</string>

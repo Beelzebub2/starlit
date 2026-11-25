@@ -860,8 +860,10 @@
     <string name="remote_window_local_address">כתובת מחשב מקומית</string>
     <string name="remote_window_trouble_caption">כללי חומת אש, סוג רשת ויציאות</string>
     <string name="settings_advanced_discord_audio_share">Discord תמיכה בדיאלוג במסך מלא (ניסיוני)</string>
-    <string name="settings_advanced_discord_audio_share_description">עבור Discord מסך שלם: שומר על אודיו ההיקפי המקורי שלך ומוסיף רק את ערוץ הדיאלוג הקדמי-מרכזי ממדיה 5.1/7.1. העוזר פועל נסתר ולא חוזר על ערוצי המוזיקה השמאלי/ימני. אין צורך בפלאגין Discord. צריך פלט רמקולים לא בשימוש של Steam Streaming. כמה מיקסים מכילים גם מוזיקה במרכז; לאמת עם מאזין.</string>
-    <string name="settings_advanced_discord_audio_share_unavailable">לא ניתן היה להפעיל שמע תואם Discord. בדוק שרמקולי Steam Streaming זמינים ואינם פלט הסאונד המוגדר כברירת מחדל.</string>
+    <string name="settings_advanced_discord_audio_share_description">בעת שיתוף המסך כולו ב-Discord, צליל ההיקף המקורי נשמר. רק הערוץ הקדמי המרכזי של 5.1/7.1 נשלח אל VB-CABLE Input (מועדף) או Steam Streaming Speakers. את VB-CABLE מתקינים בנפרד. קליטת השמע מהתקנים וירטואליים עשויה להשתנות; כדאי לבקש ממישהו בשיחה לבדוק את הצליל.</string>
+    <string name="settings_advanced_discord_audio_share_unavailable">לא ניתן להפעיל את עוזר השמע של Discord. יש להתקין VB-CABLE (CABLE Input) או להשתמש ב-Steam Streaming Speakers. הפלט הווירטואלי חייב להיות פעיל ואסור שיהיה פלט ברירת המחדל ב-Windows.</string>
+    <string name="settings_advanced_discord_audio_share_setup">הגדרת VB-CABLE (האתר הרשמי)</string>
+    <string name="settings_advanced_discord_audio_share_setup_description">תוכנה אופציונלית של VB-Audio הנתמכת בתרומות. יש להתקין אותה ידנית כמנהל מערכת ולהפעיל מחדש את Windows. Starlit לא מתקין מנהלי התקנים ולא משנה התקני שמע המוגדרים כברירת מחדל.</string>
     <string name="settings_advanced_discord_audio_share_window">הצג חלון שיתוף סטריאו מלא נפרד</string>
     <string name="settings_advanced_discord_audio_share_window_description">כבוי (מומלץ עבור מסך כולו): רק דיאלוג מרכזי חסר נשלח על ידי עוזר נסתר. פועל: העוזר מוציא סטריאו מלא ומציג &quot;Starlit - Discord שתף&quot;; שתף רק את חלון היישום הזה ב-Discord או שהצליל עשוי להכפיל את עצמו.</string>
     <string name="settings_continue_watching_hide_live_description">אל תכלול זרמים המזוהים במפורש כערוצים חיים מ\'המשך צפייה\'.</string>

@@ -3208,8 +3208,10 @@
     <string name="remote_vpn_tile">私人 VPN</string>
     <string name="remote_vpn_tile_caption">從另一個網路連接</string>
     <string name="settings_advanced_discord_audio_share">Discord 全螢幕對話支援（實驗性）</string>
-    <string name="settings_advanced_discord_audio_share_description">適用於 Discord 整個畫面：保留原始環繞音訊並僅新增 5.1/7.1 媒體的前部中央對話頻道。助手隱藏運行並且從不重複左/右音樂頻道。不需要 Discord 插件。需要未使用的 Steam 串流揚聲器輸出。有些混音的中心也包含音樂；與聽眾驗證。</string>
-    <string name="settings_advanced_discord_audio_share_unavailable">Discord 相容音訊無法啟動。檢查 Steam 串流揚聲器是否可用且不是您的預設聲音輸出。</string>
+    <string name="settings_advanced_discord_audio_share_description">在 Discord 分享整個畫面時保留原始環繞音效，只將 5.1/7.1 的前置中央聲道送到 VB-CABLE Input（優先）或 Steam Streaming Speakers。須另外安裝 VB-CABLE。虛擬裝置的擷取效果可能不同，請通話中的對方確認。</string>
+    <string name="settings_advanced_discord_audio_share_unavailable">無法啟動 Discord 音訊輔助程式。請安裝 VB-CABLE（CABLE Input）或使用 Steam Streaming Speakers。虛擬輸出須啟用，且不得是 Windows 預設輸出。</string>
+    <string name="settings_advanced_discord_audio_share_setup">設定 VB-CABLE（官方網站）</string>
+    <string name="settings_advanced_discord_audio_share_setup_description">VB-Audio 的選用捐贈軟體。請以系統管理員身分手動安裝並重新啟動 Windows。Starlit 不會安裝驅動程式或變更預設音訊裝置。</string>
     <string name="settings_advanced_discord_audio_share_window">顯示單獨的全立體聲共享窗口</string>
     <string name="settings_advanced_discord_audio_share_window_description">關閉（建議用於整個螢幕）：隱藏助手僅發送缺少的中心對話。開：助手輸出全立體聲，並顯示“Starlit - Discord分享”；僅共享 Discord 中的應用程式窗口，否則聲音可能會加倍。</string>
     <string name="settings_continue_watching_hide_live_description">從繼續觀看中排除明確標識為直播頻道的串流。</string>

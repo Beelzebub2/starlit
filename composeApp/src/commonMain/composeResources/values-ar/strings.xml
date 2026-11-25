@@ -2250,8 +2250,10 @@
     <string name="remote_window_local_address">عنوان الكمبيوتر المحلي</string>
     <string name="remote_window_trouble_caption">قواعد جدار الحماية ونوع الشبكة والمنافذ</string>
     <string name="settings_advanced_discord_audio_share">Discord دعم الحوار بملء الشاشة (تجريبي)</string>
-    <string name="settings_advanced_discord_audio_share_description">بالنسبة إلى Discord الشاشة بأكملها: يحتفظ بالصوت المحيطي الأصلي ويضيف قناة الحوار المركزية الأمامية فقط من الوسائط 5.1/7.1. يعمل المساعد مخفيًا ولا يكرر أبدًا قنوات الموسيقى اليسرى/اليمنى. لا يلزم وجود مكون إضافي Discord. يحتاج إلى مخرج مكبرات صوت Steam Streaming غير مستخدمة. تحتوي بعض الخلطات على موسيقى في المنتصف أيضًا؛ تحقق مع المستمع.</string>
-    <string name="settings_advanced_discord_audio_share_unavailable">Discord - تعذر بدء تشغيل الصوت المتوافق. تأكد من توفر مكبرات الصوت Steam Streaming وأنها ليست مخرج الصوت الافتراضي لديك.</string>
+    <string name="settings_advanced_discord_audio_share_description">عند مشاركة الشاشة بالكامل في Discord، يبقى الصوت المحيطي الأصلي كما هو. تُرسل القناة الأمامية الوسطى فقط من صوت 5.1/7.1 إلى VB-CABLE Input (الخيار المفضل) أو Steam Streaming Speakers. يُثبّت VB-CABLE بشكل منفصل. قد يختلف التقاط الصوت من الأجهزة الافتراضية، لذا اطلب من أحد المشاركين التأكد من الصوت.</string>
+    <string name="settings_advanced_discord_audio_share_unavailable">تعذّر تشغيل مساعد صوت Discord. ثبّت VB-CABLE (CABLE Input) أو استخدم Steam Streaming Speakers. يجب أن يكون المخرج الافتراضي نشطًا وألا يكون مخرج الصوت الافتراضي في Windows.</string>
+    <string name="settings_advanced_discord_audio_share_setup">إعداد VB-CABLE (الموقع الرسمي)</string>
+    <string name="settings_advanced_discord_audio_share_setup_description">برنامج اختياري من VB-Audio تدعمه التبرعات. ثبّته يدويًا بصلاحيات المسؤول، ثم أعد تشغيل Windows. لا يثبّت Starlit برامج تشغيل ولا يغيّر أجهزة الصوت الافتراضية.</string>
     <string name="settings_advanced_discord_audio_share_window">إظهار نافذة مشاركة استريو كاملة منفصلة</string>
     <string name="settings_advanced_discord_audio_share_window_description">إيقاف (موصى به للشاشة بأكملها): يتم إرسال الحوار المركزي المفقود فقط بواسطة مساعد مخفي. تشغيل: يقوم المساعد بإخراج صوت استريو كامل ويعرض &quot;Starlit - Discord مشاركة&quot;؛ قم بمشاركة نافذة التطبيق هذه فقط في Discord وإلا فقد يتضاعف الصوت.</string>
     <string name="settings_continue_watching_hide_live_description">استبعاد عمليات البث التي تم تحديدها صراحةً على أنها قنوات مباشرة من متابعة المشاهدة.</string>
