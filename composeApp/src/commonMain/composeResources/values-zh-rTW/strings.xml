@@ -3482,4 +3482,28 @@
     <string name="compose_player_customize_ass_styles">使用自訂 ASS/SSA 樣式</string>
     <string name="settings_tracking_simkl_rewatches">在 Simkl 中記錄重看的電影</string>
     <string name="player_track_this_simkl_rewatch">在 Simkl 中將這部電影記為重看</string>
+    <plurals name="addons_desktop_catalog_count">
+        <item quantity="other">%1$d 個目錄</item>
+    </plurals>
+    <plurals name="collections_desktop_collection_count">
+        <item quantity="other">%1$d 組收藏</item>
+    </plurals>
+    <plurals name="collections_desktop_folder_count">
+        <item quantity="other">%1$d 個資料夾</item>
+    </plurals>
+    <plurals name="details_season_count">
+        <item quantity="other">%1$d 季</item>
+    </plurals>
+    <plurals name="entity_browse_title_count">
+        <item quantity="other">%d 部作品</item>
+    </plurals>
+    <plurals name="library_desktop_title_count">
+        <item quantity="other">%1$d 部作品</item>
+    </plurals>
+    <plurals name="cw_airs_in_days">
+        <item quantity="other">在 %1$d 天後播出</item>
+    </plurals>
+    <plurals name="cw_airs_in_days_short">
+        <item quantity="other">%1$d 天後</item>
+    </plurals>
 </resources>
