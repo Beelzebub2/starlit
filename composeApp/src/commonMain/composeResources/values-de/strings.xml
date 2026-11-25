@@ -3467,4 +3467,28 @@
     <string name="compose_player_customize_ass_styles">Benutzerdefinierten ASS/SSA-Stil verwenden</string>
     <string name="settings_tracking_simkl_rewatches">Erneut angesehene Filme in Simkl erfassen</string>
     <string name="player_track_this_simkl_rewatch">Diesen Film als erneut angesehen in Simkl erfassen</string>
+    <plurals name="addons_desktop_catalog_count">
+        <item quantity="one">%1$d Katalog</item>
+        <item quantity="other">%1$d Kataloge</item>
+    </plurals>
+    <plurals name="collections_desktop_collection_count">
+        <item quantity="one">%1$d Sammlung</item>
+        <item quantity="other">%1$d Sammlungen</item>
+    </plurals>
+    <plurals name="collections_desktop_folder_count">
+        <item quantity="one">%1$d Ordner</item>
+        <item quantity="other">%1$d Ordner</item>
+    </plurals>
+    <plurals name="details_season_count">
+        <item quantity="one">%1$d Staffel</item>
+        <item quantity="other">%1$d Staffeln</item>
+    </plurals>
+    <plurals name="entity_browse_title_count">
+        <item quantity="one">%d Titel</item>
+        <item quantity="other">%d Titel</item>
+    </plurals>
+    <plurals name="library_desktop_title_count">
+        <item quantity="one">%1$d Titel</item>
+        <item quantity="other">%1$d Titel</item>
+    </plurals>
 </resources>

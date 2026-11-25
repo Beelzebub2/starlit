@@ -3497,4 +3497,28 @@ Had permintaan</string>
     <string name="compose_player_customize_ass_styles">Gunakan gaya ASS/SSA tersuai</string>
     <string name="settings_tracking_simkl_rewatches">Jejaki tontonan semula filem dalam Simkl</string>
     <string name="player_track_this_simkl_rewatch">Rekod filem ini sebagai tontonan semula dalam Simkl</string>
+    <plurals name="addons_desktop_catalog_count">
+        <item quantity="other">%1$d katalog</item>
+    </plurals>
+    <plurals name="collections_desktop_collection_count">
+        <item quantity="other">%1$d koleksi</item>
+    </plurals>
+    <plurals name="collections_desktop_folder_count">
+        <item quantity="other">%1$d folder</item>
+    </plurals>
+    <plurals name="details_season_count">
+        <item quantity="other">%1$d musim</item>
+    </plurals>
+    <plurals name="entity_browse_title_count">
+        <item quantity="other">%d tajuk</item>
+    </plurals>
+    <plurals name="library_desktop_title_count">
+        <item quantity="other">%1$d tajuk</item>
+    </plurals>
+    <plurals name="cw_airs_in_days">
+        <item quantity="other">Disiarkan dalam %1$d hari</item>
+    </plurals>
+    <plurals name="cw_airs_in_days_short">
+        <item quantity="other">Dalam %1$d hari</item>
+    </plurals>
 </resources>
