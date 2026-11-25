@@ -1902,6 +1902,8 @@
     <string name="cw_airs_tomorrow">Vysílá se zítra</string>
     <plurals name="cw_airs_in_days">
         <item quantity="one">Vysílá se za %1$d den</item>
+        <item quantity="few">Vysílá se za %1$d dny</item>
+        <item quantity="many">Vysílá se za %1$d dne</item>
         <item quantity="other">Vysílá se za %1$d dní</item>
     </plurals>
     <string name="cw_airs_date_short">%1$s</string>
@@ -3513,4 +3515,34 @@
     <string name="compose_player_customize_ass_styles">Použít vlastní styl ASS/SSA</string>
     <string name="settings_tracking_simkl_rewatches">Sledovat opakovaná zhlédnutí filmů v Simkl</string>
     <string name="player_track_this_simkl_rewatch">Zapsat tento film do Simkl jako znovu zhlédnutý</string>
+    <plurals name="addons_desktop_catalog_count">
+        <item quantity="one">%1$d katalog</item>
+        <item quantity="few">%1$d katalogy</item>
+        <item quantity="many">%1$d katalogu</item>
+        <item quantity="other">%1$d katalogů</item>
+    </plurals>
+    <plurals name="collections_desktop_collection_count">
+        <item quantity="one">%1$d sbírka</item>
+        <item quantity="few">%1$d sbírky</item>
+        <item quantity="many">%1$d sbírky</item>
+        <item quantity="other">%1$d sbírek</item>
+    </plurals>
+    <plurals name="collections_desktop_folder_count">
+        <item quantity="one">%1$d složka</item>
+        <item quantity="few">%1$d složky</item>
+        <item quantity="many">%1$d složky</item>
+        <item quantity="other">%1$d složek</item>
+    </plurals>
+    <plurals name="details_season_count">
+        <item quantity="one">%1$d série</item>
+        <item quantity="few">%1$d série</item>
+        <item quantity="many">%1$d série</item>
+        <item quantity="other">%1$d sérií</item>
+    </plurals>
+    <plurals name="library_desktop_title_count">
+        <item quantity="one">%1$d titul</item>
+        <item quantity="few">%1$d tituly</item>
+        <item quantity="many">%1$d titulu</item>
+        <item quantity="other">%1$d titulů</item>
+    </plurals>
 </resources>
