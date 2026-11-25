@@ -1873,6 +1873,8 @@
     <string name="cw_airs_tomorrow">Vysielanie zajtra</string>
     <plurals name="cw_airs_in_days">
         <item quantity="one">Vysielanie o %1$d deň</item>
+        <item quantity="few">Vysielanie o %1$d dni</item>
+        <item quantity="many">Vysielanie o %1$d dňa</item>
         <item quantity="other">Vysielanie o %1$d dní</item>
     </plurals>
     <string name="cw_airs_date_short">%1$s</string>
@@ -3514,4 +3516,34 @@
     <string name="compose_player_customize_ass_styles">Použiť vlastný štýl ASS/SSA</string>
     <string name="settings_tracking_simkl_rewatches">Sledovať opakované pozretia filmov v Simkl</string>
     <string name="player_track_this_simkl_rewatch">Zaznamenať tento film v Simkl ako znovu pozretý</string>
+    <plurals name="addons_desktop_catalog_count">
+        <item quantity="one">%1$d katalóg</item>
+        <item quantity="few">%1$d katalógy</item>
+        <item quantity="many">%1$d katalógu</item>
+        <item quantity="other">%1$d katalógov</item>
+    </plurals>
+    <plurals name="collections_desktop_collection_count">
+        <item quantity="one">%1$d kolekcia</item>
+        <item quantity="few">%1$d kolekcie</item>
+        <item quantity="many">%1$d kolekcie</item>
+        <item quantity="other">%1$d kolekcií</item>
+    </plurals>
+    <plurals name="collections_desktop_folder_count">
+        <item quantity="one">%1$d priečinok</item>
+        <item quantity="few">%1$d priečinky</item>
+        <item quantity="many">%1$d priečinka</item>
+        <item quantity="other">%1$d priečinkov</item>
+    </plurals>
+    <plurals name="details_season_count">
+        <item quantity="one">%1$d séria</item>
+        <item quantity="few">%1$d série</item>
+        <item quantity="many">%1$d série</item>
+        <item quantity="other">%1$d sérií</item>
+    </plurals>
+    <plurals name="library_desktop_title_count">
+        <item quantity="one">%1$d titul</item>
+        <item quantity="few">%1$d tituly</item>
+        <item quantity="many">%1$d titulu</item>
+        <item quantity="other">%1$d titulov</item>
+    </plurals>
 </resources>
