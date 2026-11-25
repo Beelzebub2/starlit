@@ -32,7 +32,10 @@ jobs:
           node-version: '24'
           cache: npm
           cache-dependency-path: tv-installer/package-lock.json
+      - run: node scripts/prepare-webos-cli.mjs
       - run: npm ci --no-audit --no-fund
+      - run: npm audit --omit=dev --audit-level=low
+      - run: node scripts/verify-webos-cli.cjs
       - run: npm run lint
       - run: npm test
       - name: Build preview package
@@ -52,6 +55,8 @@ jobs:
           if (-not (Test-Path -LiteralPath (Join-Path $unpacked 'Starlit TV Installer.exe'))) {
             throw 'Unpacked TV installer executable is missing.'
           }
+          node scripts/verify-webos-cli.cjs --windows-bundle $unpacked
+          if ($LASTEXITCODE -ne 0) { throw 'Packaged LG CLI smoke failed.' }
           $archiveName = "Starlit-TV-Installer-Unpacked-Windows-$version.zip"
           $archive = Join-Path dist $archiveName
           Compress-Archive -Path (Join-Path $unpacked '*') -DestinationPath $archive -CompressionLevel Optimal
@@ -98,7 +103,10 @@ jobs:
           node-version: '24'
           cache: npm
           cache-dependency-path: tv-installer/package-lock.json
+      - run: node scripts/prepare-webos-cli.mjs
       - run: npm ci --no-audit --no-fund
+      - run: npm audit --omit=dev --audit-level=low
+      - run: node scripts/verify-webos-cli.cjs
       - run: npm run lint
       - run: npm test
       - name: Verify command-line entry point
