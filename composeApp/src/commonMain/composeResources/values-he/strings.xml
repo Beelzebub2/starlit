@@ -3470,4 +3470,34 @@
     <string name="compose_player_customize_ass_styles">שימוש בסגנון ASS/SSA מותאם אישית</string>
     <string name="settings_tracking_simkl_rewatches">מעקב אחר צפיות חוזרות בסרטים ב־Simkl</string>
     <string name="player_track_this_simkl_rewatch">רישום הסרט הזה כצפייה חוזרת ב־Simkl</string>
+    <plurals name="details_season_count">
+        <item quantity="one">%1$d עונה</item>
+        <item quantity="two">%1$d עונות</item>
+        <item quantity="other">%1$d עונות</item>
+    </plurals>
+    <plurals name="collections_desktop_collection_count">
+        <item quantity="one">%1$d אוסף</item>
+        <item quantity="two">%1$d אוספים</item>
+        <item quantity="other">%1$d אוספים</item>
+    </plurals>
+    <plurals name="collections_desktop_folder_count">
+        <item quantity="one">%1$d תיקייה</item>
+        <item quantity="two">%1$d תיקיות</item>
+        <item quantity="other">%1$d תיקיות</item>
+    </plurals>
+    <plurals name="addons_desktop_catalog_count">
+        <item quantity="one">%1$d קטלוג</item>
+        <item quantity="two">%1$d קטלוגים</item>
+        <item quantity="other">%1$d קטלוגים</item>
+    </plurals>
+    <plurals name="library_desktop_title_count">
+        <item quantity="one">%1$d כותרת</item>
+        <item quantity="two">%1$d כותרות</item>
+        <item quantity="other">%1$d כותרות</item>
+    </plurals>
+    <plurals name="cw_airs_in_days">
+        <item quantity="one">ישודר בעוד %1$d יום</item>
+        <item quantity="two">ישודר בעוד %1$d ימים</item>
+        <item quantity="other">ישודר בעוד %1$d ימים</item>
+    </plurals>
 </resources>
