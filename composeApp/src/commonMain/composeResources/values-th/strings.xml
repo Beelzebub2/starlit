@@ -3506,4 +3506,6 @@
     <plurals name="cw_airs_in_days_short">
         <item quantity="other">ในอีก %1$d วัน</item>
     </plurals>
+    <string name="downloads_desktop_parallel_title">ดาวน์โหลดพร้อมกัน</string>
+    <string name="downloads_desktop_choose_folder">เลือกโฟลเดอร์ดาวน์โหลด</string>
 </resources>

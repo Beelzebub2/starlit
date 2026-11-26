@@ -3491,4 +3491,6 @@
         <item quantity="one">%1$d Titel</item>
         <item quantity="other">%1$d Titel</item>
     </plurals>
+    <string name="downloads_desktop_parallel_title">Gleichzeitige Downloads</string>
+    <string name="downloads_desktop_choose_folder">Downloadordner auswählen</string>
 </resources>

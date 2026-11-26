@@ -3521,4 +3521,6 @@
         <item quantity="many">%1$d tytułów</item>
         <item quantity="other">%1$d tytułu</item>
     </plurals>
+    <string name="downloads_desktop_parallel_title">Jednoczesne pobieranie</string>
+    <string name="downloads_desktop_choose_folder">Wybierz folder pobierania</string>
 </resources>

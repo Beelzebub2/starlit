@@ -3482,4 +3482,6 @@
         <item quantity="one">%1$dটি শিরোনাম</item>
         <item quantity="other">%1$dটি শিরোনাম</item>
     </plurals>
+    <string name="downloads_desktop_parallel_title">একসঙ্গে ডাউনলোড</string>
+    <string name="downloads_desktop_choose_folder">ডাউনলোডের ফোল্ডার বেছে নিন</string>
 </resources>

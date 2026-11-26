@@ -3536,4 +3536,6 @@
         <item quantity="many">%1$d عنوانًا</item>
         <item quantity="other">%1$d عنوان</item>
     </plurals>
+    <string name="downloads_desktop_parallel_title">التنزيلات المتزامنة</string>
+    <string name="downloads_desktop_choose_folder">اختر مجلد التنزيلات</string>
 </resources>

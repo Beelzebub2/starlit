@@ -3492,4 +3492,6 @@
         <item quantity="one">Om %1$d dag</item>
         <item quantity="other">Om %1$d dagar</item>
     </plurals>
+    <string name="downloads_desktop_parallel_title">Samtidiga nedladdningar</string>
+    <string name="downloads_desktop_choose_folder">Välj nedladdningsmapp</string>
 </resources>

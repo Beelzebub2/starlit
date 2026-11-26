@@ -48,7 +48,10 @@ import kotlinx.coroutines.*
 import nuvio.composeapp.generated.resources.Res
 import nuvio.composeapp.generated.resources.downloads_auto_watch_later_description
 import nuvio.composeapp.generated.resources.downloads_auto_watch_later_title
+import nuvio.composeapp.generated.resources.downloads_desktop_choose_folder
+import nuvio.composeapp.generated.resources.downloads_desktop_parallel_title
 import nuvio.composeapp.generated.resources.downloads_mobile_parallel
+import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
 import java.io.File
 import com.nuvio.app.core.ui.DesktopFileDialogs
@@ -260,7 +263,7 @@ internal actual object DownloadDesktopFeatures {
         Row(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
             Icon(Icons.Rounded.Speed, null, tint = tokens.colors.textSecondary, modifier = Modifier.size(22.dp))
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text("Downloads at once", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, maxLines = 1)
+                Text(stringResource(Res.string.downloads_desktop_parallel_title), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, maxLines = 1)
                 Text("Running a few together keeps your connection busy when one source slows down.",
                     style = MaterialTheme.typography.bodySmall, color = tokens.colors.textMuted)
             }
@@ -324,7 +327,7 @@ private fun ParallelDownloadsPicker(value: Int, onSelect: (Int) -> Unit) {
 }
 
 internal suspend fun chooseDownloadFolder(current: String): File? =
-    DesktopFileDialogs.folder("Choose download folder", current)
+    DesktopFileDialogs.folder(getString(Res.string.downloads_desktop_choose_folder), current)
 
 internal fun batchDownloadEpisodes(meta: MetaDetails, selectedIds: Set<String>, today: String): List<MetaVideo> =
     meta.videos.filter { downloadEpisodeKey(it) in selectedIds && it.id.isNotBlank() && it.isReleasedBy(today) }

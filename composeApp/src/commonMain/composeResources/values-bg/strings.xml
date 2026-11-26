@@ -3523,4 +3523,6 @@
         <item quantity="one">%1$d заглавие</item>
         <item quantity="other">%1$d заглавия</item>
     </plurals>
+    <string name="downloads_desktop_parallel_title">Едновременни изтегляния</string>
+    <string name="downloads_desktop_choose_folder">Изберете папка за изтегляния</string>
 </resources>

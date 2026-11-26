@@ -3511,4 +3511,6 @@
     <plurals name="library_desktop_title_count">
         <item quantity="other">%1$d作品</item>
     </plurals>
+    <string name="downloads_desktop_parallel_title">同時ダウンロード</string>
+    <string name="downloads_desktop_choose_folder">ダウンロード先を選択</string>
 </resources>

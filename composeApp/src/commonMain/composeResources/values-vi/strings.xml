@@ -3520,4 +3520,6 @@
         <item quantity="one">%1$d tựa phim</item>
         <item quantity="other">%1$d tựa phim</item>
     </plurals>
+    <string name="downloads_desktop_parallel_title">Tải xuống đồng thời</string>
+    <string name="downloads_desktop_choose_folder">Chọn thư mục tải xuống</string>
 </resources>

@@ -3521,4 +3521,6 @@ Had permintaan</string>
     <plurals name="cw_airs_in_days_short">
         <item quantity="other">Dalam %1$d hari</item>
     </plurals>
+    <string name="downloads_desktop_parallel_title">Muat turun serentak</string>
+    <string name="downloads_desktop_choose_folder">Pilih folder muat turun</string>
 </resources>

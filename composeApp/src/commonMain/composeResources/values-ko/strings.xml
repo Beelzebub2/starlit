@@ -3479,4 +3479,6 @@
     <plurals name="cw_airs_in_days_short">
         <item quantity="other">%1$d일 후</item>
     </plurals>
+    <string name="downloads_desktop_parallel_title">동시 다운로드</string>
+    <string name="downloads_desktop_choose_folder">다운로드 폴더 선택</string>
 </resources>

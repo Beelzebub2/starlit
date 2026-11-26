@@ -3502,4 +3502,6 @@
         <item quantity="many">Em %1$d dias</item>
         <item quantity="other">Em %1$d dias</item>
     </plurals>
+    <string name="downloads_desktop_parallel_title">Downloads simultâneos</string>
+    <string name="downloads_desktop_choose_folder">Escolher pasta de downloads</string>
 </resources>

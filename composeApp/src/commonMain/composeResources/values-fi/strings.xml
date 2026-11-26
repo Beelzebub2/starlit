@@ -3484,4 +3484,6 @@
         <item quantity="one">Esitetään %1$d päivän kuluttua</item>
         <item quantity="other">Esitetään %1$d päivän kuluttua</item>
     </plurals>
+    <string name="downloads_desktop_parallel_title">Samanaikaiset lataukset</string>
+    <string name="downloads_desktop_choose_folder">Valitse latauskansio</string>
 </resources>

@@ -3491,4 +3491,6 @@
         <item quantity="one">%1$d நாளில் ஒளிபரப்பாகும்</item>
         <item quantity="other">%1$d நாட்களில் ஒளிபரப்பாகும்</item>
     </plurals>
+    <string name="downloads_desktop_parallel_title">ஒரே நேரத்தில் பதிவிறக்கங்கள்</string>
+    <string name="downloads_desktop_choose_folder">பதிவிறக்கக் கோப்புறையைத் தேர்ந்தெடுக்கவும்</string>
 </resources>

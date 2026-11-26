@@ -3506,4 +3506,6 @@
     <plurals name="cw_airs_in_days_short">
         <item quantity="other">%1$d 天后</item>
     </plurals>
+    <string name="downloads_desktop_parallel_title">同时下载</string>
+    <string name="downloads_desktop_choose_folder">选择下载文件夹</string>
 </resources>
