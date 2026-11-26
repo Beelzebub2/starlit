@@ -51,6 +51,10 @@ import nuvio.composeapp.generated.resources.downloads_auto_watch_later_title
 import nuvio.composeapp.generated.resources.downloads_desktop_choose_folder
 import nuvio.composeapp.generated.resources.downloads_desktop_parallel_title
 import nuvio.composeapp.generated.resources.downloads_mobile_parallel
+import nuvio.composeapp.generated.resources.downloads_mobile_pause_all
+import nuvio.composeapp.generated.resources.downloads_mobile_resume_all
+import nuvio.composeapp.generated.resources.downloads_open_directory
+import nuvio.composeapp.generated.resources.downloads_open_directory_failed
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
 import java.io.File
@@ -173,8 +177,8 @@ internal actual object DownloadDesktopFeatures {
     val failed = items.count { it.status == DownloadStatus.Failed }
     val ready = items.count { it.status == DownloadStatus.Completed }
     val queueButtons: @Composable () -> Unit = {
-        DownloadsPillButton("Pause all", Icons.Rounded.Pause, DownloadsRepository::pauseActiveDownloads, enabled = transferring > 0)
-        DownloadsPillButton("Resume all", Icons.Rounded.PlayArrow, DownloadsRepository::resumeAll, enabled = paused > 0)
+        DownloadsPillButton(stringResource(Res.string.downloads_mobile_pause_all), Icons.Rounded.Pause, DownloadsRepository::pauseActiveDownloads, enabled = transferring > 0)
+        DownloadsPillButton(stringResource(Res.string.downloads_mobile_resume_all), Icons.Rounded.PlayArrow, DownloadsRepository::resumeAll, enabled = paused > 0)
     }
     val folderButtons: @Composable () -> Unit = {
         DownloadsPillButton(if (picking) "Choosing…" else "Change folder", null, enabled = !picking, onClick = {
@@ -197,8 +201,9 @@ internal actual object DownloadDesktopFeatures {
                 finally { picking = false }
             }
         })
-        DownloadsPillButton("Open folder", null, onClick = { scope.launch(Dispatchers.IO) {
-            if (!openDownloadDirectory(File(folder))) withContext(Dispatchers.Main) { error = "Download folder is unavailable" }
+        val openDirectoryError = stringResource(Res.string.downloads_open_directory_failed)
+        DownloadsPillButton(stringResource(Res.string.downloads_open_directory), null, onClick = { scope.launch(Dispatchers.IO) {
+            if (!openDownloadDirectory(File(folder))) withContext(Dispatchers.Main) { error = openDirectoryError }
         } })
     }
     BoxWithConstraints(
