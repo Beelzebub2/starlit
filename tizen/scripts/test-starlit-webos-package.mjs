@@ -43,8 +43,14 @@ test("webOS packaging tools are locked for clean installs", async () => {
   }
   const installer = JSON.parse(await readFile(new URL("../../tv-installer/package.json", import.meta.url), "utf8"));
   const installerLock = JSON.parse(await readFile(new URL("../../tv-installer/package-lock.json", import.meta.url), "utf8"));
-  assert.equal(installer.dependencies["@webos-tools/cli"], "3.2.6");
-  assert.equal(installerLock.packages[""].dependencies["@webos-tools/cli"], "3.2.6");
+  const localCli = "file:.generated/webos-cli-3.2.6-starlit.1.tgz";
+  assert.equal(installer.dependencies["@webos-tools/cli"], localCli);
+  assert.equal(installerLock.packages[""].dependencies["@webos-tools/cli"], localCli);
+  const cliLock = installerLock.packages["node_modules/@webos-tools/cli"];
+  assert.equal(cliLock.version, "3.2.6");
+  assert.equal(cliLock.resolved, localCli);
+  assert.match(cliLock.integrity, /^sha512-/);
+  assert.equal(cliLock.hasShrinkwrap, undefined);
   const installerRequire = createRequire(new URL("../../tv-installer/package.json", import.meta.url));
   assert.ok(installerRequire.resolve("@webos-tools/cli/package.json"));
 });

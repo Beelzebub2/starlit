@@ -7,10 +7,10 @@ on:
         required: true
         type: string
   pull_request:
-    paths: ['tizen/**', '.github/workflows/webos.yml', '.github/workflows/windows-release.yml']
+    paths: ['tizen/**', 'tv-installer/**', '.github/workflows/webos.yml', '.github/workflows/windows-release.yml']
   push:
     branches: [Dev]
-    paths: ['tizen/**', '.github/workflows/webos.yml']
+    paths: ['tizen/**', 'tv-installer/**', '.github/workflows/webos.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -35,7 +35,10 @@ jobs:
           cache: npm
           cache-dependency-path: tizen/package-lock.json
       - run: npm ci --ignore-scripts
+      - run: node ../tv-installer/scripts/prepare-webos-cli.mjs
       - run: npm ci --omit=dev --ignore-scripts --prefix ../tv-installer
+      - run: npm audit --omit=dev --audit-level=low --prefix ../tv-installer
+      - run: node ../tv-installer/scripts/verify-webos-cli.cjs
       - run: npm run lint
       - run: npm test
       - run: npm run test:webos

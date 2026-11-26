@@ -10,6 +10,7 @@ Install Node 24 and Git. From `tizen/` install the app toolchain and the separat
 
 ```sh
 npm ci --ignore-scripts
+node ../tv-installer/scripts/prepare-webos-cli.mjs
 npm ci --omit=dev --ignore-scripts --prefix ../tv-installer
 npm run lint
 npm test
@@ -17,6 +18,8 @@ npm run test:webos
 npm run package:webos
 npm run verify:package:webos
 ```
+
+The packaging command already uses the scoped `tizen/scripts/node24-ares-compat.cjs` preload for legacy `util.isDate`, `rimraf`, and `mkdirp` APIs under Node 24. The desktop install/pair/launch subprocess does not load that preload.
 
 The `fetch:webos` step downloads the license-preserving upstream service at the pinned commit, verifies the Git SHA, and caches it in the ignored `.cache/webos-upstream/` folder. The service includes a prebuilt bundled media runtime and LGPL FFmpeg/WebAssembly files. Review their security and license notices before distribution. Account sync is configured for Starlit, never Nuvio's login or cloud identity.
 

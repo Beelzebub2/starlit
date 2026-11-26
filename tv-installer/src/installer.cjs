@@ -41,7 +41,11 @@ function resolveAresBinary(command) {
   if (!relative || path.isAbsolute(relative) || relative.includes("..")) {
     throw new Error("webOS CLI missing " + command);
   }
-  return path.join(path.dirname(packagePath), relative);
+  // In packaged Electron the subprocess starts in the real unpacked dependency tree.
+  // All runtime dependencies are unpacked together, including npm-hoisted modules.
+  const sourceDir = path.dirname(packagePath);
+  const packageDir = process.versions.electron ? sourceDir.replace(/([\\/])app\.asar([\\/])/i, "$1app.asar.unpacked$2") : sourceDir;
+  return path.join(packageDir, relative);
 }
 async function runAres(command, args, { onStatus = () => {}, passphrase = "" } = {}) {
   const entrypoint = resolveAresBinary(command);

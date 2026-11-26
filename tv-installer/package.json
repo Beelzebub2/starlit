@@ -9,7 +9,7 @@
     "prestart": "node scripts/copy-brand-fonts.cjs",
     "start": "electron .",
     "test": "node --test test/*.test.cjs",
-    "lint": "node --check src/cli.cjs && node --check src/main.cjs && node --check src/preload.cjs && node --check src/renderer.js && node --check src/installer.cjs && node --check src/ipk.cjs && node --check src/wgt.cjs && node --check src/samsung.cjs && node --check src/samsung-auth.cjs && node --check src/platforms.cjs && node --check src/discovery.cjs && node --check src/releases.cjs && node --check scripts/copy-brand-fonts.cjs && node --check scripts/stage-portable.cjs && node --check scripts/verify-samsung-cli.cjs",
+    "lint": "node --check src/cli.cjs && node --check src/main.cjs && node --check src/preload.cjs && node --check src/renderer.js && node --check src/installer.cjs && node --check src/ipk.cjs && node --check src/wgt.cjs && node --check src/samsung.cjs && node --check src/samsung-auth.cjs && node --check src/platforms.cjs && node --check src/discovery.cjs && node --check src/releases.cjs && node --check scripts/copy-brand-fonts.cjs && node --check scripts/stage-portable.cjs && node --check scripts/verify-samsung-cli.cjs && node --check scripts/prepare-webos-cli.mjs && node --check scripts/verify-webos-cli.cjs",
     "predist:win": "node scripts/copy-brand-fonts.cjs",
     "dist:win": "electron-builder --win nsis portable --publish never",
     "cli": "node src/cli.cjs",
@@ -20,7 +20,7 @@
   },
   "dependencies": {
     "@xmldom/xmldom": "0.9.12",
-    "@webos-tools/cli": "3.2.6",
+    "@webos-tools/cli": "file:.generated/webos-cli-3.2.6-starlit.1.tgz",
     "jszip": "3.10.1"
   },
   "devDependencies": {
@@ -36,7 +36,7 @@
     },
     "asar": true,
     "asarUnpack": [
-      "node_modules/@webos-tools/cli/**"
+      "node_modules/**"
     ],
     "files": [
       "src/**/*",
@@ -80,5 +80,26 @@
   },
   "bin": {
     "starlit-tv-installer": "src/cli.cjs"
+  },
+  "overrides": {
+    "express@5.3.0": {
+      "proxy-addr": "2.0.8",
+      "qs": "6.16.1"
+    },
+    "body-parser@2.4.0": {
+      "qs": "6.16.1"
+    },
+    "rimraf@6.1.4": {
+      "glob": "14.0.6"
+    },
+    "glob@14.0.6": {
+      "minimatch": "11.0.9"
+    },
+    "minimatch@11.0.9": {
+      "brace-expansion": "5.0.12"
+    },
+    "minimatch@3.1.5": {
+      "brace-expansion": "1.1.21"
+    }
   }
 }

@@ -22,7 +22,7 @@ export function resolveWebOsToolsBinary(binaryName) {
     rootDir, "..", "tv-installer", "node_modules", "@webos-tools", "cli", "package.json"
   );
   if (!existsSync(packageJsonPath)) {
-    throw new Error("webOS tools unavailable. Run npm ci --omit=dev --prefix ../tv-installer.");
+    throw new Error("webOS tools unavailable. Run node ../tv-installer/scripts/prepare-webos-cli.mjs and npm ci --omit=dev --ignore-scripts --prefix ../tv-installer.");
   }
   const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8"));
   const binPath = packageJson.bin?.[binaryName];

@@ -48,6 +48,7 @@ still **not** a hardware-accepted stable component.
 
 Requires Node.js 24 and a Windows PC on the same private LAN as the TV. Run from the tv-installer directory:
 
+    node scripts/prepare-webos-cli.mjs
     npm ci
     npm run lint
     npm test
@@ -85,7 +86,7 @@ The Starlit WGT is intentionally unsigned when built by CI; signing is per TV. I
 2. Select **Find TVs** and choose the LG television, or enter its private IP manually. Confirm the saved device name and Developer Mode passphrase, then click **Pair with LG TV**.
 3. Select a Starlit IPK and click **Install or update Starlit**. Its app ID is **app.starlit.webos**, distinct from Samsung and other TV apps.
 
-LG uses the official pinned webOS CLI. Starlit does not save the Key Server passphrase. For details see the [LG webOS guide](../tizen/docs/WEBOS.md).
+LG uses the pinned webOS CLI source with a Starlit-controlled dependency lock. Starlit does not save the Key Server passphrase. For details see the [LG webOS guide](../tizen/docs/WEBOS.md).
 
 ## Downloading and updating
 
@@ -95,6 +96,7 @@ Updates are **manual** in the desktop installer. LG sideloads do not automatical
 
 ## Windows portable build
 
+    node scripts/prepare-webos-cli.mjs
     npm ci
     npm run lint
     npm test
@@ -106,6 +108,6 @@ The dist directory contains **Starlit-TV-Installer-Setup-Windows-*.exe**, a conv
 
 ### Security and runtime limitations
 
-The installer uses a patched Electron runtime, but the official `@webos-tools/cli` still publishes an independently shrinkwrapped dependency tree with unresolved npm advisories (including critical and high severity). Root-level npm overrides do not replace that shrinkwrap. The installer only invokes the allowlisted `ares-setup-device`, `ares-novacom`, `ares-install`, and `ares-launch` commands; it does not intentionally expose the CLI's HTTP server. This limits known entry points but **does not prove the transitive advisories unexploitable**. The stable installer remains blocked pending the dependency review and physical-device acceptance.
+The LG CLI is prepared locally from the fixed upstream 3.2.6 npm archive, verified against both its SHA-256 and published lock integrity. The generated archive is ignored by Git; its exact integrity and production dependencies are pinned by this installer's lockfile. The repack preserves upstream source, licenses and notices. It removes the nested shrinkwrap and POSIX hook that made packaged configuration writable by other users, and updates affected dependencies. Run `npm audit --omit=dev` after a clean install. Preview packaging and a clean audit are not LG device acceptance or stable installer approval. The installer still runs only its four allowlisted LG operations.
 
 The CLI's `ssh2` dependency includes optional native CPU detection which cannot currently be rebuilt against the patched Electron V8 ABI. The portable installer therefore skips dependency rebuilding and relies on SSH's non-native fallback. Basic Windows packaging and unit tests do not replace a real LG pairing/install test.
