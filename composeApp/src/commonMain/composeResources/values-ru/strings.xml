@@ -3549,4 +3549,6 @@
         <item quantity="many">%1$d названий</item>
         <item quantity="other">%1$d названия</item>
     </plurals>
+    <string name="downloads_desktop_parallel_title">Одновременные загрузки</string>
+    <string name="downloads_desktop_choose_folder">Выберите папку для загрузок</string>
 </resources>

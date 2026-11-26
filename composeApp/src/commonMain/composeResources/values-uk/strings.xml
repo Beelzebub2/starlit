@@ -3546,4 +3546,6 @@
         <item quantity="many">Вийде в ефір через %1$d днів</item>
         <item quantity="other">Вийде в ефір через %1$d дня</item>
     </plurals>
+    <string name="downloads_desktop_parallel_title">Одночасні завантаження</string>
+    <string name="downloads_desktop_choose_folder">Виберіть папку для завантажень</string>
 </resources>

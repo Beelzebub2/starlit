@@ -3488,4 +3488,6 @@
         <item quantity="one">%1$d రోజులో ప్రసారం అవుతుంది</item>
         <item quantity="other">%1$d రోజుల్లో ప్రసారం అవుతుంది</item>
     </plurals>
+    <string name="downloads_desktop_parallel_title">ఒకేసారి డౌన్‌లోడ్‌లు</string>
+    <string name="downloads_desktop_choose_folder">డౌన్‌లోడ్ ఫోల్డర్‌ను ఎంచుకోండి</string>
 </resources>

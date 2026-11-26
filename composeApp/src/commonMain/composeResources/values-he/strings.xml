@@ -3500,4 +3500,6 @@
         <item quantity="two">ישודר בעוד %1$d ימים</item>
         <item quantity="other">ישודר בעוד %1$d ימים</item>
     </plurals>
+    <string name="downloads_desktop_parallel_title">הורדות במקביל</string>
+    <string name="downloads_desktop_choose_folder">בחירת תיקייה להורדות</string>
 </resources>

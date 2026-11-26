@@ -3484,4 +3484,6 @@
         <item quantity="one">Itaonyeshwa baada ya siku %1$d</item>
         <item quantity="other">Itaonyeshwa baada ya siku %1$d</item>
     </plurals>
+    <string name="downloads_desktop_parallel_title">Upakuaji kwa wakati mmoja</string>
+    <string name="downloads_desktop_choose_folder">Chagua folda ya vipakuliwa</string>
 </resources>

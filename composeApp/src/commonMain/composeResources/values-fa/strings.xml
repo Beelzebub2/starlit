@@ -3488,4 +3488,6 @@
         <item quantity="one">%1$d روز دیگر پخش می‌شود</item>
         <item quantity="other">%1$d روز دیگر پخش می‌شود</item>
     </plurals>
+    <string name="downloads_desktop_parallel_title">بارگیری‌های هم‌زمان</string>
+    <string name="downloads_desktop_choose_folder">پوشهٔ بارگیری‌ها را انتخاب کنید</string>
 </resources>

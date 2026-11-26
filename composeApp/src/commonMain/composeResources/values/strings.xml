@@ -3269,4 +3269,6 @@
     <string name="compose_player_customize_ass_styles">Use custom ASS/SSA styling</string>
     <string name="settings_tracking_simkl_rewatches">Track Simkl movie rewatches</string>
     <string name="player_track_this_simkl_rewatch">Log this movie as a Simkl rewatch</string>
+    <string name="downloads_desktop_parallel_title">Simultaneous downloads</string>
+    <string name="downloads_desktop_choose_folder">Choose download folder</string>
 </resources>

@@ -3531,4 +3531,6 @@ Bu özelliği tamamen kendi sorumluluğunuzda kullanırsınız. P2P istediğiniz
         <item quantity="one">%1$d yapım</item>
         <item quantity="other">%1$d yapım</item>
     </plurals>
+    <string name="downloads_desktop_parallel_title">Eşzamanlı indirmeler</string>
+    <string name="downloads_desktop_choose_folder">İndirme klasörünü seçin</string>
 </resources>

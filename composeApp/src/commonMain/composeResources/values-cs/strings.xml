@@ -3545,4 +3545,6 @@
         <item quantity="many">%1$d titulu</item>
         <item quantity="other">%1$d titulů</item>
     </plurals>
+    <string name="downloads_desktop_parallel_title">Souběžná stahování</string>
+    <string name="downloads_desktop_choose_folder">Vyberte složku pro stahování</string>
 </resources>

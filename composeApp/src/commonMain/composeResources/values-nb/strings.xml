@@ -3499,4 +3499,6 @@ Du bruker denne funksjonen helt på eget ansvar. P2P kan deaktiveres når som he
         <item quantity="one">%1$d tittel</item>
         <item quantity="other">%1$d titler</item>
     </plurals>
+    <string name="downloads_desktop_parallel_title">Samtidige nedlastinger</string>
+    <string name="downloads_desktop_choose_folder">Velg nedlastingsmappe</string>
 </resources>

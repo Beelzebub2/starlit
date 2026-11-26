@@ -3504,4 +3504,6 @@ Utilizas esta función bajo tu propia responsabilidad. P2P se puede desactivar e
         <item quantity="many">%1$d de títulos</item>
         <item quantity="other">%1$d títulos</item>
     </plurals>
+    <string name="downloads_desktop_parallel_title">Descargas simultáneas</string>
+    <string name="downloads_desktop_choose_folder">Elige la carpeta de descargas</string>
 </resources>

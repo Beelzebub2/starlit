@@ -3510,4 +3510,6 @@
         <item quantity="many">%d di titoli</item>
         <item quantity="other">%d titoli</item>
     </plurals>
+    <string name="downloads_desktop_parallel_title">Download simultanei</string>
+    <string name="downloads_desktop_choose_folder">Scegli la cartella dei download</string>
 </resources>

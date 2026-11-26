@@ -3528,4 +3528,6 @@ Nagbalik ang</string>
         <item quantity="one">Ipapalabas pagkalipas ng %1$d araw</item>
         <item quantity="other">Ipapalabas pagkalipas ng %1$d araw</item>
     </plurals>
+    <string name="downloads_desktop_parallel_title">Sabay-sabay na pag-download</string>
+    <string name="downloads_desktop_choose_folder">Piliin ang folder ng mga download</string>
 </resources>
